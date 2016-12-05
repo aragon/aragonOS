@@ -9,7 +9,7 @@ contract Company {
   mapping (uint8 => address) public stocks;
   uint8 public stockIndex;
 
-  event NewStock(address stockAddress, uint8 stockIndex);
+  event IssuedStock(address stockAddress, uint8 stockIndex);
 
   function addStock(address newStock) {
     if (Stock(newStock).company() != address(this)) throw;
@@ -17,11 +17,12 @@ contract Company {
     stocks[stockIndex] = newStock;
     stockIndex += 1;
 
-    NewStock(newStock, stockIndex - 1);
+    IssuedStock(newStock, stockIndex - 1);
   }
 
   function issueStock(uint8 _stock, uint256 _amount) {
     IssueableStock(stocks[_stock]).issueStock(_amount);
+    IssuedStock(stocks[_stock], _stock);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) {
