@@ -1,12 +1,12 @@
 pragma solidity ^0.4.6;
 
 import "zeppelin-solidity/contracts/token/BasicToken.sol";
+import "./Shareholders.sol";
 
-contract Stock is BasicToken {
-  address company;
+contract Stock is BasicToken, Shareholders {
+  address public company;
 
-  uint8 stockId;
-  uint8 votesPerShare;
+  uint8 public votesPerShare;
 
   mapping (uint256 => uint64) pollingUntil;
   mapping (uint256 => mapping (uint8 => uint256)) votes;

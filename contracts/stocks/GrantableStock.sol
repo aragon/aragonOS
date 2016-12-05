@@ -19,8 +19,8 @@ contract GrantableStock is Stock {
 
   function grantVestedStock(address _to, uint256 _value, uint64 _cliff, uint64 _vesting) onlyCompany {
     if (_cliff < now) throw;
-    if (_vesting < now) throw;
-    if (_cliff > _vesting) throw;
+    if (_vesting < now) throw;
+    if (_cliff > _vesting) throw;
 
     grants[_to][grantsIndex[_to]] = StockGrant({date: uint64(now), value: _value, cliff: _cliff, vesting: _vesting});
     grantsIndex[_to] = safeAdd(grantsIndex[_to], 1);
