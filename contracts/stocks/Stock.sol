@@ -5,7 +5,8 @@ import "./Shareholders.sol";
 
 contract Stock is BasicToken, Shareholders {
   address public company;
-
+  string public name;
+  string public symbol;
   uint8 public votesPerShare;
 
   mapping (uint256 => uint64) pollingUntil;
