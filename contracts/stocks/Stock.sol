@@ -9,9 +9,9 @@ contract Stock is BasicToken, Shareholders {
   string public symbol;
   uint8 public votesPerShare;
 
-  mapping (uint256 => uint64) pollingUntil;
-  mapping (uint256 => mapping (uint8 => uint256)) votes;
-  mapping (address => mapping (uint256 => bool)) voters;
+  mapping (uint256 => uint64) public pollingUntil;
+  mapping (uint256 => mapping (uint8 => uint256)) public votes;
+  mapping (address => mapping (uint256 => bool)) public voters;
 
   event NewPoll(uint256 id, uint64 closes);
   event VoteCasted(uint256 id, address voter, uint256 votes);
@@ -22,9 +22,8 @@ contract Stock is BasicToken, Shareholders {
   }
 
   function beginPoll(uint256 pollId, uint64 pollingCloses) onlyCompany {
-    if (pollingUntil[pollId] > 0) throw; // pollId already exists
-    if (pollingCloses <= now) throw; // poll cannot close in the past
-
+    // if (pollingUntil[pollId] > 0) throw; // pollId already exists
+    //if (pollingCloses <= now) throw; // poll cannot close in the past
     pollingUntil[pollId] = pollingCloses;
 
     NewPoll(pollId, pollingCloses);
