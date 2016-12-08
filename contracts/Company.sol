@@ -6,63 +6,63 @@ import "./stocks/Stock.sol";
 
 import "./stocks/IssueableStock.sol";
 import "./stocks/GrantableStock.sol";
-import "./votes/BinaryVote.sol";
+import "./votes/BinaryVoting.sol";
 
 contract Company is AbstractCompany {
   mapping (uint8 => address) public stocks;
   uint8 public stockIndex;
 
-  mapping (uint256 => address) public votes;
-  mapping (address => uint256) public reverseVotes;
+  mapping (uint256 => address) public votings;
+  mapping (address => uint256) public reverseVotings;
   mapping (uint256 => bool) public voteExecuted;
-  uint256 public voteIndex;
+  uint256 public votingIndex;
 
   event Log(uint256 v);
 
   function Company() {
-    voteIndex = 1;
+    votingIndex = 0;
   }
 
   modifier vote(uint8 option, uint256 support, uint256 base) {
-    uint256 voteId = reverseVotes[msg.sender];
+    uint256 votingId = reverseVotings[msg.sender];
 
-    if (voteId == 0) throw;
-    if (voteExecuted[voteId]) throw;
+    if (votingId == 0) throw;
+    if (voteExecuted[votingId]) throw;
 
-    var (v, possibleVotes) = countVotes(voteId, option);
-    uint256 neededVotes = possibleVotes * support / base;
-    if (v < neededVotes) throw;
+    var (v, possibleVotings) = countVotes(votingId, option);
+    uint256 neededVotings = possibleVotings * support / base;
+    if (v < neededVotings) throw;
 
-    voteExecuted[voteId] = true;
+    voteExecuted[votingId] = true;
     _;
   }
 
   /*
-  modifier onlyShareholder(uint256 withCapital, uint256 withVotes) {
+  modifier onlyShareholder(uint256 withCapital, uint256 withVotings) {
   }
   */
 
-  function countVotes(uint256 voteId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
-      votes += stock.votes(voteId, optionId);
+      votes += stock.votes(votingId, optionId);
       totalPossibleVotes += (stock.totalSupply() - stock.balanceOf(this)) * stock.votesPerShare();
     }
   }
 
-  function beginPoll(address vote, uint64 closes) {
-    Vote v = Vote(vote);
+  function beginPoll(address voting, uint64 closes) {
+    Voting v = Voting(voting);
     Log(1);
 
     for (uint8 i = 0; i < stockIndex; i++) {
-      Stock(stocks[i]).beginPoll(voteIndex, closes);
+      Stock(stocks[i]).beginPoll(votingIndex, closes);
     }
 
     Log(2);
 
-    votes[voteIndex] = vote;
-    reverseVotes[vote] = voteIndex;
-    voteIndex += 1;
+    votings[votingIndex] = voting;
+    reverseVotings[voting] = votingIndex;
+    votingIndex += 1;
   }
 
   event IssuedStock(address stockAddress, uint8 stockIndex);
@@ -77,7 +77,7 @@ contract Company is AbstractCompany {
     IssuedStock(newStock, stockIndex - 1);
   }
 
-  function issueStock(uint8 _stock, uint256 _amount) public vote(uint8(BinaryVote.VoteOption.Favor), 2, 3) {
+  function issueStock(uint8 _stock, uint256 _amount) public vote(uint8(BinaryVoting.VotingOption.Favor), 2, 3) {
     IssueableStock(stocks[_stock]).issueStock(_amount);
     IssuedStock(stocks[_stock], _stock);
   }

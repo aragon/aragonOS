@@ -1,18 +1,18 @@
 pragma solidity ^0.4.6;
 
-import "./Vote.sol";
+import "./Voting.sol";
 import "../AbstractCompany.sol";
 
-contract BinaryVote is Vote {
-  enum VoteOption {
+contract BinaryVoting is Voting {
+  enum VotingOption {
     Favor,
     Against
   }
 
-  function BinaryVote(string favor, string against) {
-    addOption(uint8(VoteOption.Favor), favor);
-    addOption(uint8(VoteOption.Against), against);
-    lockVote();
+  function BinaryVoting(string favor, string against) {
+    addOption(uint8(VotingOption.Favor), favor);
+    addOption(uint8(VotingOption.Against), against);
+    lockVoting();
   }
 
   function executeOnAction(uint8 option, AbstractCompany company) {
@@ -27,11 +27,11 @@ contract BinaryVote is Vote {
   function executeOnAppove(AbstractCompany company);
 }
 
-contract IssueStockVote is BinaryVote("Approve issueing", "Reject") {
+contract IssueStockVoting is BinaryVoting("Approve issuing", "Reject") {
   uint8 stock;
   uint256 amount;
 
-  function IssueStockVote(uint8 _stock, uint256 _amount) {
+  function IssueStockVoting(uint8 _stock, uint256 _amount) {
     stock = _stock;
     amount = _amount;
   }

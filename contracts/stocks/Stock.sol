@@ -10,7 +10,7 @@ contract Stock is BasicToken, Shareholders {
   uint8 public votesPerShare;
 
   mapping (uint256 => uint64) public pollingUntil;
-  mapping (uint256 => mapping (uint8 => uint256)) public votes;
+  mapping (uint256 => mapping (uint8 => uint256)) public votings;
   mapping (address => mapping (uint256 => bool)) public voters;
 
   event NewPoll(uint256 id, uint64 closes);
@@ -34,10 +34,10 @@ contract Stock is BasicToken, Shareholders {
     if (voters[msg.sender][pollId]) throw; // has already voted in this proposal
     if (msg.sender == company) throw; // non assigned stock cannot vote
 
-    uint256 addingVotes = safeMul(balances[msg.sender], votesPerShare);
-    votes[pollId][vote] = safeAdd(votes[pollId][vote], addingVotes);
+    uint256 addingVotings = safeMul(balances[msg.sender], votesPerShare);
+    votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotings);
     voters[msg.sender][pollId] = true;
 
-    VoteCasted(pollId, msg.sender, addingVotes);
+    VotingCasted(pollId, msg.sender, addingVotings);
   }
 }
