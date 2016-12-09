@@ -20,7 +20,7 @@ contract Company is AbstractCompany {
   event Log(uint256 v);
 
   function Company() {
-    votingIndex = 0;
+    votingIndex = 1; // Reverse index breaks when it is zero.
   }
 
   modifier vote(uint8 option, uint256 support, uint256 base) {
