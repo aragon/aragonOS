@@ -41,6 +41,7 @@ contract Stock is BasicToken, Shareholders {
     if (now > pollingUntil[pollId]) throw; // polling is closed
     if (voters[voter][pollId]) throw; // has already voted in this proposal
     if (voter == company) throw; // non assigned stock cannot vote
+    if (!isShareholder[voter]) throw; 
 
     uint256 addingVotings = safeMul(balances[voter], votesPerShare);
     votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotings);
