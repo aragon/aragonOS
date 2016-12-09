@@ -38,6 +38,6 @@ contract Stock is BasicToken, Shareholders {
     votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotings);
     voters[msg.sender][pollId] = true;
 
-    VotingCasted(pollId, msg.sender, addingVotings);
+    VoteCasted(pollId, msg.sender, addingVotings);
   }
 }

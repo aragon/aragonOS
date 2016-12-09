@@ -43,7 +43,7 @@ contract Company is AbstractCompany {
   function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
-      votes += stock.votes(votingId, optionId);
+      votes += stock.votings(votingId, optionId);
       totalPossibleVotes += (stock.totalSupply() - stock.balanceOf(this)) * stock.votesPerShare();
     }
   }
