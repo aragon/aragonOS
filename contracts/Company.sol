@@ -58,6 +58,15 @@ contract Company is AbstractCompany {
     votingIndex += 1;
   }
 
+  function castVote(uint256 voteId, uint8 option) {
+    for (uint8 i = 0; i < stockIndex; i++) {
+      Stock stock = Stock(stocks[i]);
+      if (stock.isShareholder(msg.sender)) {
+        stock.castVoteFromCompany(msg.sender, voteId, option);
+      }
+    }
+  }
+
   event IssuedStock(address stockAddress, uint8 stockIndex);
 
   function addStock(address newStock, uint256 issue) public {

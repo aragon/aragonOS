@@ -29,7 +29,7 @@ contract Stock is BasicToken, Shareholders {
     NewPoll(pollId, pollingCloses);
   }
 
-  function castVoteFromCompany(address voter, uint256 pollId, uint8 vote) internal onlyCompany {
+  function castVoteFromCompany(address voter, uint256 pollId, uint8 vote) public onlyCompany {
     castVote(voter, pollId, vote);
   }
 
