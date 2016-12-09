@@ -17,8 +17,6 @@ contract Company is AbstractCompany {
   mapping (uint256 => bool) public voteExecuted;
   uint256 public votingIndex;
 
-  event Log(uint256 v);
-
   function Company() {
     votingIndex = 1; // Reverse index breaks when it is zero.
   }
@@ -52,14 +50,9 @@ contract Company is AbstractCompany {
 
   function beginPoll(address voting, uint64 closes) {
     Voting v = Voting(voting);
-    Log(1);
-
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
     }
-
-    Log(2);
-
     votings[votingIndex] = voting;
     reverseVotings[voting] = votingIndex;
     votingIndex += 1;
