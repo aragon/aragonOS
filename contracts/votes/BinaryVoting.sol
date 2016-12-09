@@ -26,17 +26,3 @@ contract BinaryVoting is Voting {
 
   function executeOnAppove(AbstractCompany company);
 }
-
-contract IssueStockVoting is BinaryVoting("Approve issuing", "Reject") {
-  uint8 stock;
-  uint256 amount;
-
-  function IssueStockVoting(uint8 _stock, uint256 _amount) {
-    stock = _stock;
-    amount = _amount;
-  }
-
-  function executeOnAppove(AbstractCompany company) {
-    company.issueStock(stock, amount);
-  }
-}

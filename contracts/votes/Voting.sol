@@ -1,8 +1,9 @@
 pragma solidity ^0.4.6;
 
+import "./VotingMetadata.sol";
 import "../AbstractCompany.sol";
 
-contract Voting {
+contract Voting is VotingMetadata {
   mapping (uint8 => string) public options;
   uint256 public optionsIndex;
   bool private allowsModification;
