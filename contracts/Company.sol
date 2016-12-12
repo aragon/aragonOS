@@ -14,7 +14,7 @@ contract Company is AbstractCompany {
 
   mapping (uint256 => address) public votings;
   mapping (address => uint256) public reverseVotings;
-  mapping (uint256 => bool) public voteExecuted;
+  mapping (uint256 => uint8) public voteExecuted;
   uint256 public votingIndex;
 
   function Company() {
@@ -25,13 +25,13 @@ contract Company is AbstractCompany {
     uint256 votingId = reverseVotings[msg.sender];
 
     if (votingId == 0) throw;
-    if (voteExecuted[votingId]) throw;
+    if (voteExecuted[votingId] > 0) throw;
 
     var (v, possibleVotings) = countVotes(votingId, option);
     uint256 neededVotings = possibleVotings * support / base;
     if (v < neededVotings) throw;
 
-    voteExecuted[votingId] = true;
+    voteExecuted[votingId] = 10 + option; // avoid 0
     _;
   }
 

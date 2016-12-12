@@ -46,10 +46,15 @@ contract Stock is BasicToken, Shareholders {
     return true;
   }
 
+  function votingPowerForPoll(address voter, uint256 pollId) constant returns (uint256) {
+    uint256 remainingVotes = safeSub(balances[voter], voters[voter][pollId]);
+    return safeMul(remainingVotes, votesPerShare);
+  }
+
   function castVote(address voter, uint256 pollId, uint8 vote) private {
     if (!canVote(voter, pollId)) throw;
 
-    uint256 addingVotes = safeMul(balances[voter] - voters[voter][pollId], votesPerShare);
+    uint256 addingVotes = votingPowerForPoll(voter, pollId);
     votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotes);
     voters[voter][pollId] = balances[voter];
 
