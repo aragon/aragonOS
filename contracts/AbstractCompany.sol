@@ -1,8 +1,13 @@
 pragma solidity ^0.4.6;
 
 contract AbstractCompany {
-  function votings(uint256 id) public returns (address);
-  function reverseVotings(address ad) public returns (uint256);
+  mapping (uint8 => address) public stocks;
+  uint8 public stockIndex;
+
+  mapping (uint256 => address) public votings;
+  mapping (address => uint256) public reverseVotings;
+  mapping (uint256 => uint8) public voteExecuted;
+  uint256 public votingIndex;
 
   function setVotingExecuted(uint8 option);
   function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes);

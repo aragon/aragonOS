@@ -9,13 +9,6 @@ import "./stocks/GrantableStock.sol";
 import "./votes/BinaryVoting.sol";
 
 contract Company is AbstractCompany {
-  mapping (uint8 => address) public stocks;
-  uint8 public stockIndex;
-
-  mapping (uint256 => address) public votings;
-  mapping (address => uint256) public reverseVotings;
-  mapping (uint256 => uint8) public voteExecuted;
-  uint256 public votingIndex;
 
   function Company() {
     votingIndex = 1; // Reverse index breaks when it is zero.
