@@ -3,7 +3,7 @@ pragma solidity ^0.4.6;
 import "./Voting.sol";
 import "../AbstractCompany.sol";
 
-contract BinaryVoting is Voting {
+contract BinaryVoting is Voting, BinaryVotingMetadata {
   enum VotingOption {
     Favor,
     Against
