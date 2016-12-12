@@ -16,13 +16,19 @@ contract BinaryVoting is Voting, BinaryVotingMetadata {
   }
 
   function executeOnAction(uint8 option, AbstractCompany company) {
-    if (option == 0) return executeOnAppove(company);
-    if (option == 1) return executeOnReject(company);
+    if (option == uint8(VotingOption.Favor)) return executeOnAppove(company);
+    if (option == uint8(VotingOption.Against)) return executeOnReject(company);
   }
 
-  function executeOnReject(AbstractCompany company) {
-    suicide(address(company));
+  function executeOnReject(AbstractCompany company) internal {
+    var (_support, _base) = company.countVotes(company.reverseVotings(this), uint8(VotingOption.Against));
+    uint256 mult = 10000000000;
+    if (_support * mult / _base < neededSupport * mult / supportBase) throw;
+
+    company.setVotingExecuted(uint8(VotingOption.Against));
   }
 
-  function executeOnAppove(AbstractCompany company);
+  function executeOnAppove(AbstractCompany company) internal {
+    company.setVotingExecuted(uint8(VotingOption.Favor));
+  }
 }

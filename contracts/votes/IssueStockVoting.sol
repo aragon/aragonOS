@@ -17,7 +17,8 @@ contract IssueStockVoting is BinaryVoting("Approve issuing", "Reject") {
     supportBase = 100;
   }
 
-  function executeOnAppove(AbstractCompany company) {
+  function executeOnAppove(AbstractCompany company) internal {
     company.issueStock(stock, amount);
+    super.executeOnAppove(company);
   }
 }

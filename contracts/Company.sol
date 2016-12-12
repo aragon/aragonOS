@@ -30,9 +30,19 @@ contract Company is AbstractCompany {
     var (v, possibleVotings) = countVotes(votingId, option);
     uint256 neededVotings = possibleVotings * support / base;
     if (v < neededVotings) throw;
+    _;
+  }
+
+  event VoteExecuted(uint256 id, uint8 outcome);
+
+  function setVotingExecuted(uint8 option) {
+    uint256 votingId = reverseVotings[msg.sender];
+    if (votingId == 0) throw;
+    if (voteExecuted[votingId] > 0) throw;
 
     voteExecuted[votingId] = 10 + option; // avoid 0
-    _;
+
+    VoteExecuted(votingId, option);
   }
 
   /*
