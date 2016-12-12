@@ -37,11 +37,17 @@ contract Stock is BasicToken, Shareholders {
     castVote(msg.sender, pollId, vote);
   }
 
+  function canVote(address voter, uint256 pollId) constant returns (bool) {
+    if (now > pollingUntil[pollId]) return false; // polling is closed
+    if (voters[voter][pollId]) return false; // has already voted in this proposal
+    if (voter == company) return false; // non assigned stock cannot vote
+    if (!isShareholder[voter]) return false; // is not shareholder
+
+    return true;
+  }
+
   function castVote(address voter, uint256 pollId, uint8 vote) private {
-    if (now > pollingUntil[pollId]) throw; // polling is closed
-    if (voters[voter][pollId]) throw; // has already voted in this proposal
-    if (voter == company) throw; // non assigned stock cannot vote
-    if (!isShareholder[voter]) throw; 
+    if (!canVote(voter, pollId)) throw;
 
     uint256 addingVotings = safeMul(balances[voter], votesPerShare);
     votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotings);
