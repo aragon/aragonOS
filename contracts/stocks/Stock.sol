@@ -22,8 +22,8 @@ contract Stock is BasicToken, Shareholders {
   }
 
   function beginPoll(uint256 pollId, uint64 pollingCloses) onlyCompany {
-    // if (pollingUntil[pollId] > 0) throw; // pollId already exists
-    //if (pollingCloses <= now) throw; // poll cannot close in the past
+    if (pollingUntil[pollId] > 0) throw; // pollId already exists
+    if (pollingCloses <= now) throw; // poll cannot close in the past
     pollingUntil[pollId] = pollingCloses;
 
     NewPoll(pollId, pollingCloses);
