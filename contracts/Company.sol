@@ -26,7 +26,7 @@ contract Company is AbstractCompany {
     _;
   }
 
-  event VoteExecuted(uint256 id, uint8 outcome);
+  event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
 
   function setVotingExecuted(uint8 option) {
     uint256 votingId = reverseVotings[msg.sender];
@@ -35,7 +35,7 @@ contract Company is AbstractCompany {
 
     voteExecuted[votingId] = 10 + option; // avoid 0
 
-    VoteExecuted(votingId, option);
+    VoteExecuted(votingId, msg.sender, option);
   }
 
   /*
@@ -70,7 +70,7 @@ contract Company is AbstractCompany {
     }
   }
 
-  event IssuedStock(address stockAddress, uint8 stockIndex);
+  event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
 
   function addStock(address newStock, uint256 issue) public {
     if (Stock(newStock).company() != address(this)) throw;
@@ -79,12 +79,12 @@ contract Company is AbstractCompany {
     stockIndex += 1;
     IssueableStock(newStock).issueStock(issue);
 
-    IssuedStock(newStock, stockIndex - 1);
+    IssuedStock(newStock, stockIndex - 1, issue);
   }
 
   function issueStock(uint8 _stock, uint256 _amount) public vote(uint8(BinaryVoting.VotingOption.Favor), 2, 3) {
     IssueableStock(stocks[_stock]).issueStock(_amount);
-    IssuedStock(stocks[_stock], _stock);
+    IssuedStock(stocks[_stock], _stock, _amount);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) public {
