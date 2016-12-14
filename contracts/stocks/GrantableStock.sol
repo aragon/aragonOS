@@ -10,7 +10,7 @@ contract GrantableStock is Stock {
     uint64 date;
   }
 
-  mapping (address => mapping (uint256 => StockGrant)) grants;
+  mapping (address => mapping (uint256 => StockGrant)) public grants;
   mapping (address => uint256) private grantsIndex;
 
   function grantStock(address _to, uint256 _value) onlyCompany {
@@ -28,34 +28,34 @@ contract GrantableStock is Stock {
     grantStock(_to, _value);
   }
 
-  function vestedShares(StockGrant grant) private constant returns (uint256 vestedShares) {
-    if (now < grant.cliff) return 0;
-    if (now > grant.vesting) return grant.value;
+  function vestedShares(StockGrant grant, uint64 time) private constant returns (uint256 vestedShares) {
+    if (time < grant.cliff) return 0;
+    if (time > grant.vesting) return grant.value;
 
     uint256 cliffShares = grant.value * uint256(grant.cliff - grant.date) / uint256(grant.vesting - grant.date);
     vestedShares = cliffShares;
 
     uint256 vestingShares = safeSub(grant.value, cliffShares);
 
-    vestedShares = safeAdd(vestedShares, vestingShares * (now - uint256(grant.cliff)) / uint256(grant.vesting - grant.date));
+    vestedShares = safeAdd(vestedShares, vestingShares * (time - uint256(grant.cliff)) / uint256(grant.vesting - grant.date));
   }
 
-  function nonVestedShares(StockGrant grant) private constant returns (uint256) {
-    return safeSub(grant.value, vestedShares(grant));
+  function nonVestedShares(StockGrant grant, uint64 time) private constant returns (uint256) {
+    return safeSub(grant.value, vestedShares(grant, time));
   }
 
-  function transferrableShares(address holder) constant returns (uint256 nonVested) {
-    uint256 grantIndex = grantsIndex[msg.sender];
+  function transferrableShares(address holder, uint64 time) constant returns (uint256 nonVested) {
+    uint256 grantIndex = grantsIndex[holder];
 
     for (uint256 i = 0; i < grantIndex; i++) {
-      nonVested = safeAdd(nonVested, nonVestedShares(grants[msg.sender][i]));
+      nonVested = safeAdd(nonVested, nonVestedShares(grants[holder][i], time));
     }
 
     return safeSub(balances[holder], nonVested);
   }
 
   function transfer(address _to, uint _value) {
-    if (msg.sender != company && _value > transferrableShares(msg.sender)) throw;
+    if (msg.sender != company && _value > transferrableShares(msg.sender, uint64(now))) throw;
 
     super.transfer(_to, _value);
   }

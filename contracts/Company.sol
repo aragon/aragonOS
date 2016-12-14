@@ -82,9 +82,16 @@ contract Company is AbstractCompany {
     IssuedStock(newStock, stockIndex - 1, issue);
   }
 
-  function issueStock(uint8 _stock, uint256 _amount) public vote(uint8(BinaryVoting.VotingOption.Favor), 2, 3) {
+  function issueStock(uint8 _stock, uint256 _amount)
+    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
     IssueableStock(stocks[_stock]).issueStock(_amount);
     IssuedStock(stocks[_stock], _stock, _amount);
+  }
+
+  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting)
+    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+    issueStock(_stock, _amount);
+    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _cliff, _vesting);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) public {
