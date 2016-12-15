@@ -11,7 +11,7 @@ contract GrantableStock is Stock {
   }
 
   mapping (address => mapping (uint256 => StockGrant)) public grants;
-  mapping (address => uint256) private grantsIndex;
+  mapping (address => uint256) public grantsIndex;
 
   function grantStock(address _to, uint256 _value) onlyCompany {
     transfer(_to, _value);
@@ -44,7 +44,19 @@ contract GrantableStock is Stock {
     return safeSub(grant.value, vestedShares(grant, time));
   }
 
-  function transferrableShares(address holder, uint64 time) constant returns (uint256 nonVested) {
+  function max64(uint64 a, uint64 b) private constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function fullyVestedDate(address holder) constant public returns (uint64 date) {
+    date = uint64(now);
+    uint256 grantIndex = grantsIndex[holder];
+    for (uint256 i = 0; i < grantIndex; i++) {
+      date = max64(grants[holder][i].vesting, date);
+    }
+  }
+
+  function transferrableShares(address holder, uint64 time) constant public returns (uint256 nonVested) {
     uint256 grantIndex = grantsIndex[holder];
 
     for (uint256 i = 0; i < grantIndex; i++) {
