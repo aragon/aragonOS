@@ -3,15 +3,18 @@ pragma solidity ^0.4.6;
 import "./AbstractCompany.sol";
 
 import "./stocks/Stock.sol";
-
 import "./stocks/IssueableStock.sol";
 import "./stocks/GrantableStock.sol";
+
 import "./votes/BinaryVoting.sol";
+
+import "./sales/StockSale.sol";
 
 contract Company is AbstractCompany {
 
   function Company() {
     votingIndex = 1; // Reverse index breaks when it is zero.
+    saleIndex = 1;
   }
 
   modifier vote(uint8 option, uint256 support, uint256 base) {
@@ -96,5 +99,35 @@ contract Company is AbstractCompany {
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) public {
     GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
+  }
+
+  function beginSale(address saleAddress)
+    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+
+    StockSale sale = StockSale(saleAddress);
+    if (sale.companyAddress() != address(this)) { throw; }
+
+    sales[saleIndex] = saleAddress;
+    reverseSales[saleAddress] = saleIndex;
+    saleIndex += 1;
+
+    NewStockSale(saleAddress, sale.stockId());
+  }
+
+  event NewStockSale(address saleAddress, uint8 stockIndex);
+
+  modifier onlySale {
+    uint256 saleId = reverseSales[msg.sender];
+    if (saleId <= 0) throw;
+    _;
+  }
+
+  function assignStock(uint8 stockId, address holder, uint256 units) onlySale {
+    IssueableStock(stocks[stockId]).issueStock(units);
+    GrantableStock(stocks[stockId]).grantStock(holder, units);
+  }
+
+  function removeStock(uint8 stockId, address holder, uint256 units) onlySale {
+    IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 }
