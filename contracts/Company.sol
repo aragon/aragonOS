@@ -111,10 +111,10 @@ contract Company is AbstractCompany {
     reverseSales[saleAddress] = saleIndex;
     saleIndex += 1;
 
-    NewStockSale(saleAddress, sale.stockId());
+    NewStockSale(saleAddress, saleIndex - 1, sale.stockId());
   }
 
-  event NewStockSale(address saleAddress, uint8 stockIndex);
+  event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
 
   modifier onlySale {
     uint256 saleId = reverseSales[msg.sender];

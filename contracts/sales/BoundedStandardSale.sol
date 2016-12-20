@@ -2,7 +2,7 @@ pragma solidity ^0.4.6;
 
 import "./StockSale.sol";
 
-contract BoundedStandardSale is StockSale {
+contract BoundedStandardSale is StockSale("BoundedStandardSale") {
   uint256 public minUnits;
   uint256 public maxUnits;
   uint256 public price;
@@ -10,7 +10,7 @@ contract BoundedStandardSale is StockSale {
 
   mapping (address => uint256) buyers;
 
-  function BoundedStandardSale(address _companyAddress, uint8 _stockId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate) {
+  function BoundedStandardSale(address _companyAddress, uint8 _stockId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title) {
     companyAddress = _companyAddress;
     stockId = _stockId;
 
@@ -18,41 +18,45 @@ contract BoundedStandardSale is StockSale {
     maxUnits = _max;
     price = _price;
     closeDate = _closeDate;
+    saleTitle = _title;
   }
 
-  function isBuyingAllowed(uint256 amount) returns (bool) {
-    return soldTokens + amount <= maxUnits;
+  function availableTokens() constant returns (uint256) {
+    return maxUnits - soldTokens;
   }
 
-  function isSellingAllowed(uint256 amount) returns (bool) {
+  function isBuyingAllowed(uint256 amount) constant returns (bool) {
+    return availableTokens() > amount && now <= closeDate;
+  }
+
+  function isSellingAllowed(uint256 amount) constant returns (bool) {
     return now > closeDate && soldTokens < minUnits;
   }
 
-  function isFundsTransferAllowed() returns (bool) {
+  function isFundsTransferAllowed() constant returns (bool) {
     return soldTokens > minUnits;
   }
 
-  function getBuyingPrice(uint256 amount) returns (uint256) {
+  function getBuyingPrice(uint256 amount) constant returns (uint256) {
     return price;
   }
 
-  function getSellingPrice(uint256 amount) returns (uint256) {
+  function getSellingPrice(uint256 amount) constant returns (uint256) {
     return price;
   }
 
-  function buy() payable {
-    address holder = msg.sender;
-    uint256 units = msg.value / price;
-    uint256 returningMoney = msg.value - (units * price);
+  function buy(address holder) payable {
+    uint256 units = msg.value / getBuyingPrice(msg.value);
+    uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
     if (units <= 0 || !isBuyingAllowed(units)) { throw; }
-
-    if (returningMoney > 0) {
-      if (!holder.send(returningMoney)) { throw; }
-    }
 
     soldTokens += units;
     buyers[holder] += units;
     company().assignStock(stockId, holder, units);
+
+    if (returningMoney > 0) {
+      if (!holder.send(returningMoney)) { throw; }
+    }
   }
 
   function sell() {
@@ -63,6 +67,6 @@ contract BoundedStandardSale is StockSale {
 
     buyers[holder] = 0;
     company().removeStock(stockId, holder, buyerBalance);
-    if (!holder.send(price * buyerBalance)) { throw; }
+    if (!holder.send(getSellingPrice(buyerBalance) * buyerBalance)) { throw; }
   }
 }

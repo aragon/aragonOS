@@ -8,23 +8,34 @@ contract StockSale {
 
   address public companyAddress;
   uint8 public stockId;
+  string public saleTitle;
+  string public saleType;
 
-  function isBuyingAllowed(uint256 amount) returns (bool);
-  function isSellingAllowed(uint256 amount) returns (bool);
-  function isFundsTransferAllowed() returns (bool);
+  function StockSale(string _type) {
+    saleType = _type;
+  }
 
-  function getBuyingPrice(uint256 amount) returns (uint256);
-  function getSellingPrice(uint256 amount) returns (uint256);
+  function availableTokens() constant returns (uint256);
+  function isBuyingAllowed(uint256 amount) constant returns (bool);
+  function isSellingAllowed(uint256 amount) constant returns (bool);
+  function isFundsTransferAllowed() constant returns (bool);
 
-  function buy() payable;
+  function getBuyingPrice(uint256 amount) constant returns (uint256);
+  function getSellingPrice(uint256 amount) constant returns (uint256);
+
+  function buy(address holder) payable;
   function sell();
 
-  function company() returns (AbstractCompany) {
+  function company() constant returns (AbstractCompany) {
     return AbstractCompany(companyAddress);
   }
 
   function transferFunds() {
     if (!isFundsTransferAllowed()) { throw; }
     if (!companyAddress.send(this.balance)) { throw; }
+  }
+
+  function () payable {
+    buy(msg.sender);
   }
 }
