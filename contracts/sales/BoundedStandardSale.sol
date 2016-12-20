@@ -6,7 +6,6 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
   uint256 public minUnits;
   uint256 public maxUnits;
   uint256 public price;
-  uint64 public closeDate;
 
   mapping (address => uint256) buyers;
 
@@ -52,7 +51,10 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
 
     soldTokens += units;
     buyers[holder] += units;
+    raisedAmount += msg.value - returningMoney;
     company().assignStock(stockId, holder, units);
+
+    StockBought(units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
       if (!holder.send(returningMoney)) { throw; }
@@ -65,8 +67,14 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
     if (!isSellingAllowed(buyerBalance)) { throw; }
     if (buyerBalance <= 0) { throw; }
 
+    uint256 returningMoney = getSellingPrice(buyerBalance) * buyerBalance;
     buyers[holder] = 0;
+    raisedAmount -= returningMoney;
+
     company().removeStock(stockId, holder, buyerBalance);
-    if (!holder.send(getSellingPrice(buyerBalance) * buyerBalance)) { throw; }
+
+    StockSold(buyerBalance, getSellingPrice(buyerBalance));
+
+    if (!holder.send(returningMoney)) { throw; }
   }
 }

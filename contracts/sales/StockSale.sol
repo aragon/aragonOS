@@ -5,11 +5,13 @@ import "../AbstractCompany.sol";
 contract StockSale {
   uint256 public soldTokens;
   uint256 public boughtTokens;
+  uint256 public raisedAmount;
 
   address public companyAddress;
   uint8 public stockId;
   string public saleTitle;
   string public saleType;
+  uint64 public closeDate;
 
   function StockSale(string _type) {
     saleType = _type;
@@ -38,4 +40,7 @@ contract StockSale {
   function () payable {
     buy(msg.sender);
   }
+
+  event StockBought(uint256 units, uint256 price);
+  event StockSold(uint256 units, uint256 price);
 }

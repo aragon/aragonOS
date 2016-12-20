@@ -1,19 +1,19 @@
 pragma solidity ^0.4.6;
 
 import "./BinaryVoting.sol";
-import "../sales/BoundedStandardSale.sol";
+import "../sales/IndividualInvestorSale.sol";
 
-contract BoundedStandardSaleVoting is BinaryVoting("Approve stock sale", "Reject") {
+contract IndividualInvestorSaleVoting is BinaryVoting("Approve stock sale", "Reject") {
   uint8 stock;
-  uint256 min;
-  uint256 max;
+  uint256 units;
   uint256 price;
+  address investor;
   uint64 closeDate;
 
-  function BoundedStandardSaleVoting(uint8 _stock, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, uint8 _percentage, string _description, string _title) {
+  function IndividualInvestorSaleVoting(uint8 _stock, address _investor, uint256 _units, uint256 _price, uint64 _closeDate, uint8 _percentage, string _description, string _title) {
     stock = _stock;
-    min = _min;
-    max = _max;
+    units = _units;
+    investor = _investor;
     price = _price;
     closeDate = _closeDate;
 
@@ -25,7 +25,7 @@ contract BoundedStandardSaleVoting is BinaryVoting("Approve stock sale", "Reject
   }
 
   function executeOnAppove(AbstractCompany company) internal {
-    BoundedStandardSale sale = new BoundedStandardSale(company, stock, min, max, price, closeDate, title);
+    IndividualInvestorSale sale = new IndividualInvestorSale(company, stock, investor, units, price, closeDate, title);
     company.beginSale(address(sale));
     super.executeOnAppove(company);
   }

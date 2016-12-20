@@ -5,7 +5,6 @@ import "./StockSale.sol";
 contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
   uint256 public units;
   uint256 public price;
-  uint64 public closeDate;
 
   address public investor;
 
@@ -31,6 +30,9 @@ contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
 
     company().assignStock(stockId, investor, units);
     settled = true;
+    raisedAmount += msg.value - returningMoney;
+
+    StockBought(units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
       if (!holder.send(returningMoney)) { throw; }
