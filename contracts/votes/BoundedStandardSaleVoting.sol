@@ -4,13 +4,14 @@ import "./BinaryVoting.sol";
 import "../sales/BoundedStandardSale.sol";
 
 contract BoundedStandardSaleVoting is BinaryVoting("Approve stock sale", "Reject") {
-  uint8 stock;
-  uint256 min;
-  uint256 max;
-  uint256 price;
-  uint64 closeDate;
+  uint8 public stock;
+  uint256 public min;
+  uint256 public max;
+  uint256 public price;
+  uint64 public closeDate;
+  string public title;
 
-  function BoundedStandardSaleVoting(uint8 _stock, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, uint8 _percentage, string _description, string _title) {
+  function BoundedStandardSaleVoting(uint8 _stock, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title, uint8 _percentage) {
     stock = _stock;
     min = _min;
     max = _max;
@@ -19,7 +20,6 @@ contract BoundedStandardSaleVoting is BinaryVoting("Approve stock sale", "Reject
 
     // Metadata
     title = _title;
-    description = _description;
     neededSupport = uint256(_percentage);
     supportBase = 100;
   }

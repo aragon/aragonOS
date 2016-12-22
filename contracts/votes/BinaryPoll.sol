@@ -4,9 +4,9 @@ import "./BinaryVoting.sol";
 import "../AbstractCompany.sol";
 
 contract BinaryPoll is BinaryVoting("Yes", "No") {
+  string public description;
   function BinaryPoll(string _description, uint8 _percentage) {
     // Metadata
-    title = "Poll";
     description = _description;
     neededSupport = uint256(_percentage);
     supportBase = 100;

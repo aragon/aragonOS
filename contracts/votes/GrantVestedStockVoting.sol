@@ -3,13 +3,13 @@ pragma solidity ^0.4.6;
 import "./BinaryVoting.sol";
 
 contract GrantVestedStockVoting is BinaryVoting("Approve issuing", "Reject") {
-  uint8 stock;
-  uint256 amount;
-  address recipient;
-  uint64 cliff;
-  uint64 vesting;
+  uint8 public stock;
+  uint256 public amount;
+  address public recipient;
+  uint64 public cliff;
+  uint64 public vesting;
 
-  function GrantVestedStockVoting(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting, uint8 _percentage, string _description) {
+  function GrantVestedStockVoting(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting, uint8 _percentage) {
     stock = _stock;
     amount = _amount;
     recipient = _recipient;
@@ -17,8 +17,6 @@ contract GrantVestedStockVoting is BinaryVoting("Approve issuing", "Reject") {
     vesting = _vesting;
 
     // Metadata
-    title = "Stock grant";
-    description = _description;
     neededSupport = uint256(_percentage);
     supportBase = 100;
   }
