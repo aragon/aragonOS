@@ -14,8 +14,8 @@ contract StockSale is Txid {
   string public saleType;
   uint64 public closeDate;
 
-  mapping (address => uint256) buyers;
-  mapping (uint256 => address) investors;
+  mapping (address => uint256) public buyers;
+  mapping (uint256 => address) public investors;
   uint256 public investorIndex;
 
   function StockSale(string _type) {
