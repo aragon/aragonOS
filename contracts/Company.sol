@@ -130,4 +130,6 @@ contract Company is AbstractCompany {
   function removeStock(uint8 stockId, address holder, uint256 units) onlySale {
     IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
+
+  function () payable {}
 }
