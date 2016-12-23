@@ -1,6 +1,6 @@
 pragma solidity ^0.4.6;
 
-import "./Txid.sol";
+import "../Txid.sol";
 import "../AbstractCompany.sol";
 
 contract Voting is Txid {

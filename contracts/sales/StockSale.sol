@@ -1,8 +1,9 @@
 pragma solidity ^0.4.6;
 
+import "../Txid.sol";
 import "../AbstractCompany.sol";
 
-contract StockSale {
+contract StockSale is Txid {
   uint256 public soldTokens;
   uint256 public boughtTokens;
   uint256 public raisedAmount;
