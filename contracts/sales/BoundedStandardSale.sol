@@ -7,8 +7,6 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
   uint256 public maxUnits;
   uint256 public price;
 
-  mapping (address => uint256) buyers;
-
   function BoundedStandardSale(address _companyAddress, uint8 _stockId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title) {
     companyAddress = _companyAddress;
     stockId = _stockId;
@@ -18,6 +16,14 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
     price = _price;
     closeDate = _closeDate;
     saleTitle = _title;
+  }
+
+  function raiseMaximum() constant returns (uint256) {
+    return minUnits * price;
+  }
+
+  function raiseTarget() constant returns (uint256) {
+    return maxUnits * price;
   }
 
   function availableTokens() constant returns (uint256) {

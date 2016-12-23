@@ -21,6 +21,14 @@ contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
     saleTitle = _title;
   }
 
+  function raiseMaximum() constant returns (uint256) {
+    return units * price;
+  }
+
+  function raiseTarget() constant returns (uint256) {
+    return units * price;
+  }
+
   function buy(address holder) payable {
     if (holder != investor) throw;
     if (msg.value < units * getBuyingPrice(msg.value)) throw;
@@ -31,6 +39,7 @@ contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
     company().assignStock(stockId, investor, units);
     settled = true;
     raisedAmount += msg.value - returningMoney;
+    buyers[holder] += units;
 
     StockBought(units, getBuyingPrice(msg.value));
 

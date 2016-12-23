@@ -14,9 +14,14 @@ contract StockSale is Txid {
   string public saleType;
   uint64 public closeDate;
 
+  mapping (address => uint256) buyers;
+
   function StockSale(string _type) {
     saleType = _type;
   }
+
+  function raiseMaximum() constant returns (uint256);
+  function raiseTarget() constant returns (uint256);
 
   function availableTokens() constant returns (uint256);
   function isBuyingAllowed(uint256 amount) constant returns (bool);
