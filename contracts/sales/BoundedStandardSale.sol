@@ -55,12 +55,8 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
     uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
     if (units <= 0 || !isBuyingAllowed(units)) { throw; }
 
-    soldTokens += units;
-    buyers[holder] += units;
-    raisedAmount += msg.value - returningMoney;
     company().assignStock(stockId, holder, units);
-
-    StockBought(units, getBuyingPrice(msg.value));
+    afterBuy(holder, units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
       if (!holder.send(returningMoney)) { throw; }

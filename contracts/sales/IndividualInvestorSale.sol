@@ -36,12 +36,10 @@ contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
 
     uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
 
-    company().assignStock(stockId, investor, units);
     settled = true;
-    raisedAmount += msg.value - returningMoney;
-    buyers[holder] += units;
+    company().assignStock(stockId, investor, units);
 
-    StockBought(units, getBuyingPrice(msg.value));
+    afterBuy(holder, units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
       if (!holder.send(returningMoney)) { throw; }
