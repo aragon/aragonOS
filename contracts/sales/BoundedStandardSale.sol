@@ -19,11 +19,11 @@ contract BoundedStandardSale is StockSale("BoundedStandardSale") {
   }
 
   function raiseMaximum() constant returns (uint256) {
-    return minUnits * price;
+    return maxUnits * price;
   }
 
   function raiseTarget() constant returns (uint256) {
-    return maxUnits * price;
+    return minUnits * price;
   }
 
   function availableTokens() constant returns (uint256) {
