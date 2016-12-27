@@ -11,16 +11,11 @@ contract StockSale is Txid {
   address public companyAddress;
   uint8 public stockId;
   string public saleTitle;
-  string public saleType;
   uint64 public closeDate;
 
   mapping (address => uint256) public buyers;
   mapping (uint256 => address) public investors;
   uint256 public investorIndex;
-
-  function StockSale(string _type) {
-    saleType = _type;
-  }
 
   function raiseMaximum() constant returns (uint256);
   function raiseTarget() constant returns (uint256);

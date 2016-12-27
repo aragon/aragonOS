@@ -2,7 +2,7 @@ pragma solidity ^0.4.6;
 
 import "./StockSale.sol";
 
-contract IndividualInvestorSale is StockSale("IndividualInvestorSale") {
+contract IndividualInvestorSale is StockSale {
   uint256 public units;
   uint256 public price;
 

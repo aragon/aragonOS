@@ -2,7 +2,7 @@ pragma solidity ^0.4.6;
 
 import "./StockSale.sol";
 
-contract BoundedStandardSale is StockSale("BoundedStandardSale") {
+contract BoundedStandardSale is StockSale {
   uint256 public minUnits;
   uint256 public maxUnits;
   uint256 public price;
