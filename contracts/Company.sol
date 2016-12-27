@@ -15,6 +15,29 @@ contract Company is AbstractCompany {
   function Company() {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
+
+    // Make contract deployer executive
+    setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
+  }
+
+  function setEntityStatusByStatus(address entity, uint8 status) public {
+    if (entityStatus[msg.sender] <= status) throw; // Cannot set same or higher status
+    if (entity != msg.sender && entityStatus[entity] >= entityStatus[msg.sender]) throw; // Cannot change status of higher status
+
+    // Exec can set and remove employees.
+    // Someone with lesser or same status cannot change ones status
+    setStatus(entity, status);
+  }
+
+  function setEntityStatusByVoting(address entity, uint8 status)
+    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+
+    setStatus(entity, status);
+  }
+
+  function setStatus(address entity, uint8 status) private {
+    entityStatus[entity] = status;
+    EntityNewStatus(entity, status);
   }
 
   modifier vote(uint8 option, uint256 support, uint256 base) {
@@ -29,7 +52,15 @@ contract Company is AbstractCompany {
     _;
   }
 
-  event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
+  modifier onlyShareholder {
+    if (!isShareholder(msg.sender)) throw;
+    _;
+  }
+
+  modifier minimumStatus(AbstractCompany.EntityStatus status) {
+    if (entityStatus[msg.sender] < uint8(status)) throw;
+    _;
+  }
 
   function setVotingExecuted(uint8 option) {
     uint256 votingId = reverseVotings[msg.sender];
@@ -41,11 +72,6 @@ contract Company is AbstractCompany {
     VoteExecuted(votingId, msg.sender, option);
   }
 
-  /*
-  modifier onlyShareholder(uint256 withCapital, uint256 withVotings) {
-  }
-  */
-
   function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
@@ -54,7 +80,7 @@ contract Company is AbstractCompany {
     }
   }
 
-  function beginPoll(address voting, uint64 closes) {
+  function beginPoll(address voting, uint64 closes) onlyShareholder {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
@@ -64,7 +90,7 @@ contract Company is AbstractCompany {
     votingIndex += 1;
   }
 
-  function castVote(uint256 voteId, uint8 option) {
+  function castVote(uint256 voteId, uint8 option) onlyShareholder {
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
       if (stock.isShareholder(msg.sender)) {
@@ -73,14 +99,28 @@ contract Company is AbstractCompany {
     }
   }
 
-  event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
+  function isShareholder(address holder) constant public returns (bool) {
+    for (uint8 i = 0; i < stockIndex; i++) {
+      if (Stock(stocks[i]).isShareholder(msg.sender)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  function addStock(address newStock, uint256 issue) public {
+  function addStock(address newStock, uint256 issue) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
     if (Stock(newStock).company() != address(this)) throw;
+
+    if (stockIndex > 0) {
+      // Don't allow for new stock types. Issueance needs to be voted
+      if (issue > 0) throw;
+      if (Stock(newStock).totalSupply() > 0) throw;
+    } else {
+      IssueableStock(newStock).issueStock(issue);
+    }
 
     stocks[stockIndex] = newStock;
     stockIndex += 1;
-    IssueableStock(newStock).issueStock(issue);
 
     IssuedStock(newStock, stockIndex - 1, issue);
   }
@@ -97,7 +137,7 @@ contract Company is AbstractCompany {
     GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _cliff, _vesting);
   }
 
-  function grantStock(uint8 _stock, uint256 _amount, address _recipient) public {
+  function grantStock(uint8 _stock, uint256 _amount, address _recipient) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
     GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
   }
 
@@ -113,8 +153,6 @@ contract Company is AbstractCompany {
 
     NewStockSale(saleAddress, saleIndex - 1, sale.stockId());
   }
-
-  event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
 
   modifier onlySale {
     uint256 saleId = reverseSales[msg.sender];

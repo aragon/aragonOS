@@ -1,6 +1,13 @@
 pragma solidity ^0.4.6;
 
 contract AbstractCompany {
+  enum EntityStatus {
+    Base,
+    Employee,
+    Executive
+  }
+  mapping (address => uint8) public entityStatus;
+
   mapping (uint8 => address) public stocks;
   uint8 public stockIndex;
 
@@ -24,4 +31,13 @@ contract AbstractCompany {
   function beginSale(address saleAddress);
   function assignStock(uint8 stockId, address holder, uint256 units);
   function removeStock(uint8 stockId, address holder, uint256 units);
+
+  function isShareholder(address holder) constant public returns (bool);
+  function setEntityStatusByStatus(address entity, uint8 status) public;
+  function setEntityStatusByVoting(address entity, uint8 status) public;
+
+  event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
+  event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
+  event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
+  event EntityNewStatus(address entity, uint8 status);
 }
