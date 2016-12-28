@@ -7,10 +7,12 @@ contract Voting is Txid {
   mapping (uint8 => string) public options;
   uint256 public optionsIndex;
   bool private allowsModification;
+  address public creator;
 
   function Voting() {
     optionsIndex = 0;
     allowsModification = true;
+    creator = msg.sender;
   }
 
   function lockVoting() {
