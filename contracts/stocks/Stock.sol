@@ -8,6 +8,7 @@ contract Stock is BasicToken, Shareholders {
   string public name;
   string public symbol;
   uint8 public votesPerShare;
+  uint8 public dividendsPerShare;
 
   mapping (uint256 => uint64) public pollingUntil; // proposal -> close timestamp
   mapping (uint256 => mapping (uint8 => uint256)) public votings; // proposal -> option -> votes
@@ -33,9 +34,14 @@ contract Stock is BasicToken, Shareholders {
     castVote(voter, pollId, vote);
   }
 
+  /*
+
+  // Removing because there is no way to see if vote was executed in company before allowing voting
   function castVote(uint256 pollId, uint8 vote) public {
     castVote(msg.sender, pollId, vote);
   }
+
+  */
 
   function canVote(address voter, uint256 pollId) constant returns (bool) {
     if (now > pollingUntil[pollId]) return false; // polling is closed

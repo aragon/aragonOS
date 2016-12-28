@@ -43,11 +43,12 @@ contract StockSale is Txid {
     investorIndex += 1;
 
     StockBought(units, price);
-   }
+  }
 
   function transferFunds() {
-    if (!isFundsTransferAllowed()) { throw; }
-    if (!companyAddress.send(this.balance)) { throw; }
+    if (!isFundsTransferAllowed()) throw;
+    if (msg.sender != companyAddress) throw; // only allow company to request it
+    if (!AbstractCompany(companyAddress).addTreasure.value(this.balance)(saleTitle)) throw;
   }
 
   function () payable {

@@ -80,7 +80,7 @@ contract Company is AbstractCompany {
     }
   }
 
-  function beginPoll(address voting, uint64 closes) onlyShareholder {
+  function beginPoll(address voting, uint64 closes) public onlyShareholder {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
@@ -90,7 +90,9 @@ contract Company is AbstractCompany {
     votingIndex += 1;
   }
 
-  function castVote(uint256 voteId, uint8 option) onlyShareholder {
+  function castVote(uint256 voteId, uint8 option) public onlyShareholder {
+    if (voteExecuted[voteId] > 0) throw; // cannot vote on executed polls
+
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
       if (stock.isShareholder(msg.sender)) {
@@ -145,13 +147,17 @@ contract Company is AbstractCompany {
     vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
 
     StockSale sale = StockSale(saleAddress);
-    if (sale.companyAddress() != address(this)) { throw; }
+    if (sale.companyAddress() != address(this)) throw;
 
     sales[saleIndex] = saleAddress;
     reverseSales[saleAddress] = saleIndex;
     saleIndex += 1;
 
     NewStockSale(saleAddress, saleIndex - 1, sale.stockId());
+  }
+
+  function transferSaleFunds(uint256 _sale) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
+    StockSale(sales[_sale]).transferFunds();
   }
 
   modifier onlySale {
@@ -169,5 +175,15 @@ contract Company is AbstractCompany {
     IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 
-  function () payable {}
+  function addTreasure(string concept) payable public returns (bool) {
+    return true;
+  }
+
+  function registerIncome(string concept) payable public returns (bool) {
+
+  }
+
+  function () payable {
+    registerIncome("Fallback donation");
+  }
 }

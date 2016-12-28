@@ -5,12 +5,11 @@ import "./IssueableStock.sol";
 import "./GrantableStock.sol";
 
 contract NonVotingStock is IssueableStock, GrantableStock {
-  uint8 public votesPerShare = 0;
-
-  string public name = "Non-Voting Stock";
-  string public symbol = "CNS";
-
   function NonVotingStock(address _company) {
     company = _company;
+    votesPerShare = 0;
+    dividendsPerShare = 1;
+    name = "Non-Voting Stock";
+    symbol = "CNS";
   }
 }

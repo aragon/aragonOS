@@ -42,7 +42,7 @@ contract IndividualInvestorSale is StockSale {
     afterBuy(holder, units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
-      if (!holder.send(returningMoney)) { throw; }
+      if (!holder.send(returningMoney))  throw;
     }
   }
 
