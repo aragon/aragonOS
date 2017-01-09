@@ -26,6 +26,8 @@ contract Company is AbstractCompany {
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
   }
 
+  // acl
+
   function setEntityStatusByStatus(address entity, uint8 status) public {
     if (entityStatus[msg.sender] <= status) throw; // Cannot set same or higher status
     if (entity != msg.sender && entityStatus[entity] >= entityStatus[msg.sender]) throw; // Cannot change status of higher status
@@ -45,6 +47,8 @@ contract Company is AbstractCompany {
     entityStatus[entity] = status;
     EntityNewStatus(entity, status);
   }
+
+  // vote
 
   modifier vote(uint8 option, uint256 support, uint256 base) {
     uint256 votingId = reverseVotings[msg.sender];
@@ -107,6 +111,8 @@ contract Company is AbstractCompany {
     }
   }
 
+  // stock
+
   function isShareholder(address holder) constant public returns (bool) {
     for (uint8 i = 0; i < stockIndex; i++) {
       if (Stock(stocks[i]).isShareholder(msg.sender)) {
@@ -149,6 +155,8 @@ contract Company is AbstractCompany {
     GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
   }
 
+  // stock sales
+
   function beginSale(address saleAddress)
     vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
 
@@ -181,12 +189,21 @@ contract Company is AbstractCompany {
     IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 
+  // accounting
+
+  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold)
+    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+    accounting.setAccountingSettings(budget, periodDuration, dividendThreshold);
+  }
+
   function addTreasure(string concept) payable public returns (bool) {
+    accounting.addTreasure(concept);
     return true;
   }
 
   function registerIncome(string concept) payable public returns (bool) {
-
+    accounting.registerIncome(concept);
+    return true;
   }
 
   function () payable {

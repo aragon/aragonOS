@@ -9,24 +9,27 @@ library AccountingLib {
     address from;
     address to;
     string concept;
+    bool isAccountable;
 
     address approvedBy;
     uint256 timestamp;
   }
 
   struct AccountingPeriod {
-    uint256 budget;
     uint256 revenue;
     uint256 expenses;
     uint256 dividends;
-    uint256 dividendThreshold;
+
     Transaction[] transactions;
 
     uint64 startDate;
-    uint64 periodDuration;
     uint64 endDate;
-
     bool closed;
+
+    // These settings are saved per period too, to know under what settings a period worked.
+    uint256 dividendThreshold;
+    uint64 periodDuration;
+    uint256 budget;
   }
 
   struct AccountingLedger {
@@ -42,13 +45,43 @@ library AccountingLib {
   function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold) {
     if (self.initialized) throw;
 
-    self.currentBudget = initialBudget;
-    self.currentPeriodDuration = initialPeriodDuration;
-    self.currentDividendThreshold = initialDividendThreshold;
-
     initPeriod(self);
+    setAccountingSettings(self, initialBudget, initialPeriodDuration, initialDividendThreshold);
 
     self.initialized = true;
+  }
+
+  function setAccountingSettings(AccountingLedger storage self, uint256 budget, uint64 periodDuration, uint256 dividendThreshold) {
+    if (self.periods[self.currentPeriod].expenses > budget) throw; // Cannot set budget below what already has been spent
+
+    self.currentBudget = budget;
+    self.currentPeriodDuration = periodDuration;
+    self.currentDividendThreshold = dividendThreshold;
+
+    addSettingsToCurrentPeriod(self);
+  }
+
+  function addTreasure(AccountingLedger storage self, string concept) {
+    saveTransaction(self, TransactionDirection.Incoming, msg.value, msg.sender, this, concept, false);
+  }
+
+  function registerIncome(AccountingLedger storage self, string concept) {
+    saveTransaction(self, TransactionDirection.Incoming, msg.value, msg.sender, this, concept, true);
+  }
+
+  function sendFunds(AccountingLedger storage self, uint256 amount, string concept, address to) {
+    saveTransaction(self, TransactionDirection.Outgoing, amount, this, to, concept, true);
+
+    if (!to.send(amount)) { throw; }
+  }
+
+  function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
+    Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: uint64(now), direction: direction, amount: amount, from: from, to: to, concept: concept, isAccountable: periodAccountable });
+
+    if (isPeriodOver(self.periods[self.currentPeriod])) closeCurrentPeriod(self);
+
+    if (periodAccountable) accountTransaction(self.periods[self.currentPeriod], transaction);
+    self.periods[self.currentPeriod].transactions.push(transaction);
   }
 
   function initPeriod(AccountingLedger storage self) private {
@@ -56,12 +89,21 @@ library AccountingLib {
     self.periods.length += 1;
 
     AccountingPeriod period = self.periods[self.currentPeriod];
-    period.budget = self.currentBudget;
     period.startDate = uint64(now);
-    period.periodDuration = self.currentPeriodDuration;
+
+    // In the first period settings will be 0 at the time of creation and unexpected behaviour may happen.
+    if (self.currentPeriod > 0) addSettingsToCurrentPeriod(self);
   }
 
-  function isPeriodOver(AccountingPeriod storage period) constant returns (bool) {
+  function addSettingsToCurrentPeriod(AccountingLedger storage self) private {
+    AccountingPeriod period = self.periods[self.currentPeriod];
+
+    period.budget = self.currentBudget;
+    period.periodDuration = self.currentPeriodDuration;
+    period.dividendThreshold = self.currentDividendThreshold;
+  }
+
+  function isPeriodOver(AccountingPeriod storage period) constant private returns (bool) {
     return period.startDate + period.periodDuration < now;
   }
 
@@ -78,22 +120,12 @@ library AccountingLib {
     initPeriod(self);
   }
 
-  function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept) {
-    Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: uint64(now), direction: direction, amount: amount, from: from, to: to, concept: concept });
-
-    if (isPeriodOver(self.periods[self.currentPeriod])) closeCurrentPeriod(self);
-
-    addTransaction(self.periods[self.currentPeriod], transaction);
-  }
-
-  function addTransaction(AccountingPeriod storage period, Transaction transaction) private {
+  function accountTransaction(AccountingPeriod storage period, Transaction transaction) private {
     if (transaction.direction == TransactionDirection.Incoming) {
       period.revenue += transaction.amount;
     } else {
       if (period.expenses + transaction.amount > period.budget) throw; // Can't go over budget
       period.expenses += transaction.amount;
     }
-
-    period.transactions.push(transaction);
   }
 }

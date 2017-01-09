@@ -40,6 +40,7 @@ contract AbstractCompany {
   function setEntityStatusByStatus(address entity, uint8 status) public;
   function setEntityStatusByVoting(address entity, uint8 status) public;
 
+  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function addTreasure(string concept) payable public returns (bool);
   function registerIncome(string concept) payable public returns (bool);
 
