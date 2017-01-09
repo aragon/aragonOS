@@ -16,11 +16,12 @@ contract Company is AbstractCompany {
 
   AccountingLib.AccountingLedger accounting;
 
-  function Company() {
+  function Company() payable {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
 
     accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
+    accounting.addTreasure('Company bootstrap');
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
@@ -190,6 +191,15 @@ contract Company is AbstractCompany {
   }
 
   // accounting
+  function getAccountingPeriodRemainingBudget() constant returns (uint256) {
+    var (budget,) = accounting.getAccountingPeriodState();
+    return budget;
+  }
+
+  function getAccountingPeriodCloses() constant returns (uint64) {
+    var (,closes) = accounting.getAccountingPeriodState();
+    return closes;
+  }
 
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold)
     vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
@@ -204,6 +214,11 @@ contract Company is AbstractCompany {
   function registerIncome(string concept) payable public returns (bool) {
     accounting.registerIncome(concept);
     return true;
+  }
+
+  function issueReward(address to, uint256 amount, string concept)
+    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+    accounting.sendFunds(amount, concept, to);
   }
 
   function () payable {

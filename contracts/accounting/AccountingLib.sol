@@ -22,8 +22,8 @@ library AccountingLib {
 
     Transaction[] transactions;
 
-    uint64 startDate;
-    uint64 endDate;
+    uint64 startTimestamp;
+    uint64 endTimestamp;
     bool closed;
 
     // These settings are saved per period too, to know under what settings a period worked.
@@ -52,13 +52,28 @@ library AccountingLib {
   }
 
   function setAccountingSettings(AccountingLedger storage self, uint256 budget, uint64 periodDuration, uint256 dividendThreshold) {
-    if (self.periods[self.currentPeriod].expenses > budget) throw; // Cannot set budget below what already has been spent
+    if (getCurrentPeriod(self).expenses > budget) throw; // Cannot set budget below what already has been spent
 
     self.currentBudget = budget;
     self.currentPeriodDuration = periodDuration;
     self.currentDividendThreshold = dividendThreshold;
 
     addSettingsToCurrentPeriod(self);
+  }
+
+  function getCurrentPeriod(AccountingLedger storage self) internal returns (AccountingPeriod storage) {
+    return self.periods[self.currentPeriod];
+  }
+
+  // Do not call inside a transaction (only eth_call) as it closes period if needed
+  function getAccountingPeriodState(AccountingLedger storage self) constant returns (uint256 remainingBudget, uint64 periodCloses) {
+    if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
+
+    AccountingPeriod period = getCurrentPeriod(self);
+
+    remainingBudget = period.budget - period.expenses;
+    periodCloses = period.startTimestamp + period.periodDuration;
+    return;
   }
 
   function addTreasure(AccountingLedger storage self, string concept) {
@@ -78,25 +93,25 @@ library AccountingLib {
   function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
     Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: uint64(now), direction: direction, amount: amount, from: from, to: to, concept: concept, isAccountable: periodAccountable });
 
-    if (isPeriodOver(self.periods[self.currentPeriod])) closeCurrentPeriod(self);
+    if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
 
-    if (periodAccountable) accountTransaction(self.periods[self.currentPeriod], transaction);
-    self.periods[self.currentPeriod].transactions.push(transaction);
+    if (periodAccountable) accountTransaction(getCurrentPeriod(self), transaction);
+    getCurrentPeriod(self).transactions.push(transaction);
   }
 
   function initPeriod(AccountingLedger storage self) private {
     self.currentPeriod = self.periods.length;
     self.periods.length += 1;
 
-    AccountingPeriod period = self.periods[self.currentPeriod];
-    period.startDate = uint64(now);
+    AccountingPeriod period = getCurrentPeriod(self);
+    period.startTimestamp = uint64(now);
 
     // In the first period settings will be 0 at the time of creation and unexpected behaviour may happen.
     if (self.currentPeriod > 0) addSettingsToCurrentPeriod(self);
   }
 
   function addSettingsToCurrentPeriod(AccountingLedger storage self) private {
-    AccountingPeriod period = self.periods[self.currentPeriod];
+    AccountingPeriod period = getCurrentPeriod(self);
 
     period.budget = self.currentBudget;
     period.periodDuration = self.currentPeriodDuration;
@@ -104,18 +119,18 @@ library AccountingLib {
   }
 
   function isPeriodOver(AccountingPeriod storage period) constant private returns (bool) {
-    return period.startDate + period.periodDuration < now;
+    return period.startTimestamp + period.periodDuration < now;
   }
 
   function closeCurrentPeriod(AccountingLedger storage self) {
-    AccountingPeriod period = self.periods[self.currentPeriod];
+    AccountingPeriod period = getCurrentPeriod(self);
     int256 periodResult = int256(period.revenue) - int256(period.expenses);
 
     if (periodResult > 0 && periodResult > int256(period.dividendThreshold)) {
       period.dividends = uint256(periodResult) - period.dividendThreshold;
     }
 
-    period.endDate = uint64(now);
+    period.endTimestamp = uint64(now);
 
     initPeriod(self);
   }
