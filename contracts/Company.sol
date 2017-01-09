@@ -1,6 +1,7 @@
 pragma solidity ^0.4.6;
 
 import "./AbstractCompany.sol";
+import "./accounting/AccountingLib.sol";
 
 import "./stocks/Stock.sol";
 import "./stocks/IssueableStock.sol";
@@ -11,10 +12,15 @@ import "./votes/BinaryVoting.sol";
 import "./sales/StockSale.sol";
 
 contract Company is AbstractCompany {
+  using AccountingLib for AccountingLib.AccountingLedger;
+
+  AccountingLib.AccountingLedger accounting;
 
   function Company() {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
+
+    accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
