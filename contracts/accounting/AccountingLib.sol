@@ -15,6 +15,14 @@ library AccountingLib {
     uint256 timestamp;
   }
 
+  struct RecurringTransaction {
+    Transaction transaction;
+    uint64 period;
+
+    uint256 performed;
+    uint64 lastTransactionDate;
+  }
+
   struct AccountingPeriod {
     uint256 revenue;
     uint256 expenses;
@@ -35,6 +43,7 @@ library AccountingLib {
   struct AccountingLedger {
     bool initialized;
     AccountingPeriod[] periods;
+    RecurringTransaction[] recurringTransactions;
     uint256 currentPeriod;
 
     uint256 currentBudget;
@@ -67,7 +76,7 @@ library AccountingLib {
 
   // Do not call inside a transaction (only eth_call) as it closes period if needed
   function getAccountingPeriodState(AccountingLedger storage self) constant returns (uint256 remainingBudget, uint64 periodCloses) {
-    if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
+    performDueTransactions(self);
 
     AccountingPeriod period = getCurrentPeriod(self);
 
@@ -90,13 +99,54 @@ library AccountingLib {
     if (!to.send(amount)) { throw; }
   }
 
+  function sendFundsRecurrent(AccountingLedger storage self, uint256 amount, string concept, address to, uint64 period, bool startNow) {
+    Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: 0, direction: TransactionDirection.Outgoing, amount: amount, from: this, to: to, concept: concept, isAccountable: true });
+    RecurringTransaction memory recurring = RecurringTransaction( { transaction: transaction, period: period, lastTransactionDate: uint64(now), performed: 0 } );
+    if (startNow) recurring.lastTransactionDate -= period;
+
+    // Check if address can receive ether, so it won't throw when performing recurring transactions
+    // Problem: if address is a contract, a malicious actor could make it that it throws at any time by changing a parameter.
+    // function () payable { if (makeItBreakNow) throw; }
+    // This check mitigates the risk, but it is not perfect
+    // TODO: Add way to see what transaction is failing and remove it.
+
+    sendFunds(self, 1 wei, 'testing it can receive money', to);
+
+    self.recurringTransactions.push(recurring);
+  }
+
   function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
     Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: uint64(now), direction: direction, amount: amount, from: from, to: to, concept: concept, isAccountable: periodAccountable });
 
+    saveTransaction(self, transaction, periodAccountable);
+  }
+
+  function performDueTransactions(AccountingLedger storage self) {
     if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
+    performDueRecurringTransactions(self);
+  }
+
+  function saveTransaction(AccountingLedger storage self, Transaction transaction, bool periodAccountable) private {
+    performDueTransactions(self);
 
     if (periodAccountable) accountTransaction(getCurrentPeriod(self), transaction);
     getCurrentPeriod(self).transactions.push(transaction);
+  }
+
+  function performDueRecurringTransactions(AccountingLedger storage self) private {
+    for (uint256 i = 0; i < self.recurringTransactions.length; i++) {
+      RecurringTransaction recurring = self.recurringTransactions[i];
+      if (recurring.lastTransactionDate + recurring.period <= now) {
+        recurring.transaction.timestamp = uint64(now);
+        recurring.lastTransactionDate = recurring.lastTransactionDate + recurring.period;
+
+        // Problem: this will throw and block all accounting if one recurring transaction fails.
+        if (!recurring.transaction.to.send(recurring.transaction.amount)) { throw; }
+
+        saveTransaction(self, recurring.transaction, true); // question: does it copy it or inserts recurring transaction
+        recurring.performed += 1;
+      }
+    }
   }
 
   function initPeriod(AccountingLedger storage self) private {
