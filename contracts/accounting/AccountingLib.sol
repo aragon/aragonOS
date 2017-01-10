@@ -54,7 +54,7 @@ library AccountingLib {
   function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold) {
     if (self.initialized) throw;
 
-    initPeriod(self);
+    initPeriod(self, uint64(now));
     setAccountingSettings(self, initialBudget, initialPeriodDuration, initialDividendThreshold);
 
     self.initialized = true;
@@ -149,12 +149,12 @@ library AccountingLib {
     }
   }
 
-  function initPeriod(AccountingLedger storage self) private {
+  function initPeriod(AccountingLedger storage self, uint64 startTime) private {
     self.currentPeriod = self.periods.length;
     self.periods.length += 1;
 
     AccountingPeriod period = getCurrentPeriod(self);
-    period.startTimestamp = uint64(now);
+    period.startTimestamp = startTime;
 
     // In the first period settings will be 0 at the time of creation and unexpected behaviour may happen.
     if (self.currentPeriod > 0) addSettingsToCurrentPeriod(self);
@@ -180,9 +180,9 @@ library AccountingLib {
       period.dividends = uint256(periodResult) - period.dividendThreshold;
     }
 
-    period.endTimestamp = uint64(now);
+    period.endTimestamp = uint64(period.startTimestamp + period.periodDuration);
 
-    initPeriod(self);
+    initPeriod(self, period.endTimestamp);
   }
 
   function accountTransaction(AccountingPeriod storage period, Transaction transaction) private {
