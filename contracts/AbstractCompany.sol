@@ -45,6 +45,8 @@ contract AbstractCompany {
   function getAccountingPeriodCloses() constant returns (uint64);
   function addTreasure(string concept) payable public returns (bool);
   function registerIncome(string concept) payable public returns (bool);
+  function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
+  function issueReward(address to, uint256 amount, string concept);
 
   event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);

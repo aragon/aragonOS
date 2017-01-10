@@ -221,6 +221,11 @@ contract Company is AbstractCompany {
     accounting.sendFunds(amount, concept, to);
   }
 
+  function createRecurringReward(address to, uint256 amount, uint64 period, string concept)
+    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+    accounting.sendRecurrentFunds(amount, concept, to, period, true);
+  }
+
   function () payable {
     registerIncome("Fallback donation");
   }

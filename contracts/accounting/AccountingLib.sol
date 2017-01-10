@@ -99,7 +99,7 @@ library AccountingLib {
     if (!to.send(amount)) { throw; }
   }
 
-  function sendFundsRecurrent(AccountingLedger storage self, uint256 amount, string concept, address to, uint64 period, bool startNow) {
+  function sendRecurrentFunds(AccountingLedger storage self, uint256 amount, string concept, address to, uint64 period, bool startNow) {
     Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: 0, direction: TransactionDirection.Outgoing, amount: amount, from: this, to: to, concept: concept, isAccountable: true });
     RecurringTransaction memory recurring = RecurringTransaction( { transaction: transaction, period: period, lastTransactionDate: uint64(now), performed: 0 } );
     if (startNow) recurring.lastTransactionDate -= period;
@@ -118,7 +118,7 @@ library AccountingLib {
   function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
     Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: uint64(now), direction: direction, amount: amount, from: from, to: to, concept: concept, isAccountable: periodAccountable });
 
-    saveTransaction(self, transaction, periodAccountable);
+    saveTransaction(self, transaction, periodAccountable, true);
   }
 
   function performDueTransactions(AccountingLedger storage self) {
@@ -126,10 +126,10 @@ library AccountingLib {
     performDueRecurringTransactions(self);
   }
 
-  function saveTransaction(AccountingLedger storage self, Transaction transaction, bool periodAccountable) private {
-    performDueTransactions(self);
-
+  function saveTransaction(AccountingLedger storage self, Transaction transaction, bool periodAccountable, bool needsCheck) private {
+    if (needsCheck) performDueTransactions(self);
     if (periodAccountable) accountTransaction(getCurrentPeriod(self), transaction);
+
     getCurrentPeriod(self).transactions.push(transaction);
   }
 
@@ -143,7 +143,7 @@ library AccountingLib {
         // Problem: this will throw and block all accounting if one recurring transaction fails.
         if (!recurring.transaction.to.send(recurring.transaction.amount)) { throw; }
 
-        saveTransaction(self, recurring.transaction, true); // question: does it copy it or inserts recurring transaction
+        saveTransaction(self, recurring.transaction, true, false); // question: does it copy it or inserts recurring transaction
         recurring.performed += 1;
       }
     }
