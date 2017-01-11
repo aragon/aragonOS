@@ -109,8 +109,12 @@ library AccountingLib {
     // function () payable { if (makeItBreakNow) throw; }
     // This check mitigates the risk, but it is not perfect
     // TODO: Add way to see what transaction is failing and remove it.
+    sendFunds(self, 1 wei, 'testing it can receive money', to); // This will also cause period change if needed
 
-    sendFunds(self, 1 wei, 'testing it can receive money', to);
+    AccountingPeriod currentPeriod = getCurrentPeriod(self);
+    uint256 periodExpenses = projectPeriodExpenses(self, currentPeriod);
+    uint256 recurringExpense = projectRecurrentTransactionExpense(currentPeriod, recurring);
+    if (periodExpenses + recurringExpense > currentPeriod.budget) throw; // Adding recurring transaction will make go over budget in the future
 
     self.recurringTransactions.push(recurring);
   }
