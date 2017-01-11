@@ -80,7 +80,7 @@ library AccountingLib {
 
     AccountingPeriod period = getCurrentPeriod(self);
 
-    remainingBudget = period.budget - period.expenses;
+    remainingBudget = period.budget - projectPeriodExpenses(self, period);
     periodCloses = period.startTimestamp + period.periodDuration;
     return;
   }
@@ -128,7 +128,7 @@ library AccountingLib {
 
   function saveTransaction(AccountingLedger storage self, Transaction transaction, bool periodAccountable, bool needsCheck) private {
     if (needsCheck) performDueTransactions(self);
-    if (periodAccountable) accountTransaction(getCurrentPeriod(self), transaction);
+    if (periodAccountable) accountTransaction(self, getCurrentPeriod(self), transaction);
 
     getCurrentPeriod(self).transactions.push(transaction);
   }
@@ -185,11 +185,35 @@ library AccountingLib {
     initPeriod(self, period.endTimestamp);
   }
 
-  function accountTransaction(AccountingPeriod storage period, Transaction transaction) private {
+  function projectPeriodExpenses(AccountingLedger storage self, AccountingPeriod storage period) returns (uint256 expenses) {
+    expenses = period.expenses;
+
+    for (uint256 i = 0; i < self.recurringTransactions.length; i++) {
+      expenses += projectRecurrentTransactionExpense(period, self.recurringTransactions[i]);
+    }
+    return;
+  }
+
+  function projectRecurrentTransactionExpense(AccountingPeriod memory period, RecurringTransaction memory recurring) internal returns (uint256) {
+    uint64 periodEnds = period.startTimestamp + period.periodDuration;
+    uint256 n = uint256(periodEnds - recurring.lastTransactionDate) / recurring.period; // TODO: Make sure rounding works as intended (floor)
+    return n * recurring.transaction.amount;
+
+    /* Alternative if rounding fails
+    while (t < periodEnds) {
+      expense += recurring.transaction.amount;
+      t += recurring.period;
+    }
+
+    return;
+    */
+  }
+
+  function accountTransaction(AccountingLedger storage self, AccountingPeriod storage period, Transaction transaction) private {
     if (transaction.direction == TransactionDirection.Incoming) {
       period.revenue += transaction.amount;
     } else {
-      if (period.expenses + transaction.amount > period.budget) throw; // Can't go over budget
+      if (projectPeriodExpenses(self, period) + transaction.amount > period.budget) throw; // Can't go over budget
       period.expenses += transaction.amount;
     }
   }
