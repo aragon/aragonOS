@@ -99,7 +99,7 @@ library AccountingLib {
     if (!to.send(amount)) { throw; }
   }
 
-  function sendRecurrentFunds(AccountingLedger storage self, uint256 amount, string concept, address to, uint64 period, bool startNow) {
+  function sendRecurringFunds(AccountingLedger storage self, uint256 amount, string concept, address to, uint64 period, bool startNow) {
     Transaction memory transaction = Transaction({ approvedBy: msg.sender, timestamp: 0, direction: TransactionDirection.Outgoing, amount: amount, from: this, to: to, concept: concept, isAccountable: true });
     RecurringTransaction memory recurring = RecurringTransaction( { transaction: transaction, period: period, lastTransactionDate: uint64(now), performed: 0 } );
     if (startNow) recurring.lastTransactionDate -= period;
@@ -113,10 +113,18 @@ library AccountingLib {
 
     AccountingPeriod currentPeriod = getCurrentPeriod(self);
     uint256 periodExpenses = projectPeriodExpenses(self, currentPeriod);
-    uint256 recurringExpense = projectRecurrentTransactionExpense(currentPeriod, recurring);
+    uint256 recurringExpense = projectRecurringTransactionExpense(currentPeriod, recurring);
     if (periodExpenses + recurringExpense > currentPeriod.budget) throw; // Adding recurring transaction will make go over budget in the future
 
     self.recurringTransactions.push(recurring);
+  }
+
+  function removeRecurringTransaction(AccountingLedger storage self, uint index) {
+    if (index >= self.recurringTransactions.length) throw; // out of bounds
+
+    delete self.recurringTransactions[index];
+    self.recurringTransactions[index] = self.recurringTransactions[self.recurringTransactions.length - 1];
+    self.recurringTransactions.length -= 1;
   }
 
   function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
@@ -126,7 +134,7 @@ library AccountingLib {
   }
 
   function performDueTransactions(AccountingLedger storage self) {
-    if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
+    if (isPeriodOver(getCurrentPeriod(self))) closecurringPeriod(self);
     performDueRecurringTransactions(self);
   }
 
@@ -176,7 +184,7 @@ library AccountingLib {
     return period.startTimestamp + period.periodDuration < now;
   }
 
-  function closeCurrentPeriod(AccountingLedger storage self) {
+  function closecurringPeriod(AccountingLedger storage self) {
     AccountingPeriod period = getCurrentPeriod(self);
     int256 periodResult = int256(period.revenue) - int256(period.expenses);
 
@@ -193,24 +201,15 @@ library AccountingLib {
     expenses = period.expenses;
 
     for (uint256 i = 0; i < self.recurringTransactions.length; i++) {
-      expenses += projectRecurrentTransactionExpense(period, self.recurringTransactions[i]);
+      expenses += projectRecurringTransactionExpense(period, self.recurringTransactions[i]);
     }
     return;
   }
 
-  function projectRecurrentTransactionExpense(AccountingPeriod memory period, RecurringTransaction memory recurring) internal returns (uint256) {
+  function projectRecurringTransactionExpense(AccountingPeriod memory period, RecurringTransaction memory recurring) internal returns (uint256) {
     uint64 periodEnds = period.startTimestamp + period.periodDuration;
     uint256 n = uint256(periodEnds - recurring.lastTransactionDate) / recurring.period; // TODO: Make sure rounding works as intended (floor)
     return n * recurring.transaction.amount;
-
-    /* Alternative if rounding fails
-    while (t < periodEnds) {
-      expense += recurring.transaction.amount;
-      t += recurring.period;
-    }
-
-    return;
-    */
   }
 
   function accountTransaction(AccountingLedger storage self, AccountingPeriod storage period, Transaction transaction) private {

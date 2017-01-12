@@ -223,7 +223,12 @@ contract Company is AbstractCompany {
 
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept)
     minimumStatus(AbstractCompany.EntityStatus.Executive) {
-    accounting.sendRecurrentFunds(amount, concept, to, period, true);
+    accounting.sendRecurringFunds(amount, concept, to, period, true);
+  }
+
+  function removeRecurringReward(uint index)
+    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+    accounting.removeRecurringTransaction(index);
   }
 
   function () payable {
