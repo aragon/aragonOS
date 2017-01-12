@@ -1,9 +1,10 @@
 pragma solidity ^0.4.6;
 
 import "zeppelin-solidity/contracts/token/BasicToken.sol";
+import "zeppelin-solidity/contracts/PullPayment.sol";
 import "./Shareholders.sol";
 
-contract Stock is BasicToken, Shareholders {
+contract Stock is BasicToken, Shareholders, PullPayment {
   address public company;
   string public name;
   string public symbol;
@@ -65,5 +66,13 @@ contract Stock is BasicToken, Shareholders {
     voters[voter][pollId] = balances[voter];
 
     VoteCasted(pollId, voter, addingVotes);
+  }
+
+  function splitDividends() payable {
+    uint256 valuePerToken = msg.value / totalSupply;
+    for (uint i = 0; i < shareholderIndex; i++) {
+      address shareholder = shareholders[i];
+      asyncSend(shareholder, balances[shareholder] * valuePerToken);
+    }
   }
 }

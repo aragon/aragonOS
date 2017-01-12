@@ -1,5 +1,7 @@
 pragma solidity ^0.4.6;
 
+import "../AbstractCompany.sol";
+
 library AccountingLib {
   enum TransactionDirection { Incoming, Outgoing }
 
@@ -42,6 +44,8 @@ library AccountingLib {
 
   struct AccountingLedger {
     bool initialized;
+    address company;
+
     AccountingPeriod[] periods;
     RecurringTransaction[] recurringTransactions;
     uint256 currentPeriod;
@@ -51,9 +55,10 @@ library AccountingLib {
     uint256 currentDividendThreshold;
   }
 
-  function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold) {
+  function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold, address company) {
     if (self.initialized) throw;
 
+    self.company = company;
     initPeriod(self, uint64(now));
     setAccountingSettings(self, initialBudget, initialPeriodDuration, initialDividendThreshold);
 
@@ -148,7 +153,7 @@ library AccountingLib {
   }
 
   function performDueTransactions(AccountingLedger storage self) {
-    if (isPeriodOver(getCurrentPeriod(self))) closecurringPeriod(self);
+    if (isPeriodOver(getCurrentPeriod(self))) closeCurrentPeriod(self);
     performDueRecurringTransactions(self);
   }
 
@@ -198,12 +203,13 @@ library AccountingLib {
     return period.startTimestamp + period.periodDuration < now;
   }
 
-  function closecurringPeriod(AccountingLedger storage self) {
+  function closeCurrentPeriod(AccountingLedger storage self) {
     AccountingPeriod period = getCurrentPeriod(self);
     int256 periodResult = int256(period.revenue) - int256(period.expenses);
 
     if (periodResult > 0 && periodResult > int256(period.dividendThreshold)) {
       period.dividends = uint256(periodResult) - period.dividendThreshold;
+      AbstractCompany(self.company).splitIntoDividends.value(period.dividends)();
     }
 
     period.endTimestamp = uint64(period.startTimestamp + period.periodDuration);

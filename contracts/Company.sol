@@ -20,7 +20,7 @@ contract Company is AbstractCompany {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
 
-    accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
+    accounting.init(1 ether, 4 weeks, 1 wei, this); // Init with 1 ether budget and 1 moon period
     accounting.addTreasure('Company bootstrap');
 
     // Make contract deployer executive
@@ -204,6 +204,7 @@ contract Company is AbstractCompany {
   function getAccountingInfo() constant returns (uint lastRecurringTransaction, uint lastPeriod) {
     lastRecurringTransaction = accounting.recurringTransactions.length - 1;
     lastPeriod = accounting.currentPeriod;
+    return;
   }
 
   function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
@@ -214,6 +215,7 @@ contract Company is AbstractCompany {
     expenses = p.expenses;
     revenue = p.revenue;
     dividends = p.dividends;
+    return;
   }
 
   function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
@@ -225,6 +227,7 @@ contract Company is AbstractCompany {
     approvedBy = t.approvedBy;
     timestamp = t.timestamp;
     concept = t.concept;
+    return;
   }
 
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold)
@@ -240,6 +243,20 @@ contract Company is AbstractCompany {
   function registerIncome(string concept) payable public returns (bool) {
     accounting.registerIncome(concept);
     return true;
+  }
+
+  function splitIntoDividends() payable {
+    uint256 totalDividendBase;
+    for (uint8 i = 0; i < stockIndex; i++) {
+      Stock st = Stock(stocks[i]);
+      totalDividendBase += st.totalSupply() * st.dividendsPerShare();
+    }
+
+    for (uint8 j = 0; j < stockIndex; j++) {
+      Stock s = Stock(stocks[j]);
+      uint256 stockShare = msg.value * (s.totalSupply() * s.dividendsPerShare()) / totalDividendBase;
+      s.splitDividends.value(stockShare)();
+    }
   }
 
   function issueReward(address to, uint256 amount, string concept)
