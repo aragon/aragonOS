@@ -46,6 +46,7 @@ contract AbstractCompany {
   function addTreasure(string concept) payable public returns (bool);
   function registerIncome(string concept) payable public returns (bool);
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
+  function removeRecurringReward(uint index);
   function issueReward(address to, uint256 amount, string concept);
 
   event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);

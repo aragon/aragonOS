@@ -12,7 +12,7 @@ library AccountingLib {
     bool isAccountable;
 
     address approvedBy;
-    uint256 timestamp;
+    uint64 timestamp;
   }
 
   struct RecurringTransaction {
@@ -74,11 +74,25 @@ library AccountingLib {
     return self.periods[self.currentPeriod];
   }
 
-  // Do not call inside a transaction (only eth_call) as it closes period if needed
-  function getAccountingPeriodState(AccountingLedger storage self) constant returns (uint256 remainingBudget, uint64 periodCloses) {
-    performDueTransactions(self);
+  function getPeriodIndexForTimestamp(AccountingLedger storage self, uint64 timestamp) internal returns (uint) {
+    if (self.periods[0].startTimestamp > timestamp) throw;
 
-    AccountingPeriod period = getCurrentPeriod(self);
+    uint i = 0;
+    while (i <= self.currentPeriod) {
+      AccountingPeriod period = self.periods[i];
+      if (period.startTimestamp <= timestamp) {
+        if (period.endTimestamp > timestamp) return i;
+        if (self.currentPeriod == i && period.startTimestamp + period.periodDuration > timestamp) return i;
+      }
+      i++;
+    }
+
+    throw;
+  }
+
+  // Do not call inside a transaction (only eth_call) as it closes period if needed
+  function getAccountingPeriodState(AccountingLedger storage self, AccountingPeriod storage period) constant returns (uint256 remainingBudget, uint64 periodCloses) {
+    performDueTransactions(self);
 
     remainingBudget = period.budget - projectPeriodExpenses(self, period);
     periodCloses = period.startTimestamp + period.periodDuration;

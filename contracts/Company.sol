@@ -192,13 +192,39 @@ contract Company is AbstractCompany {
 
   // accounting
   function getAccountingPeriodRemainingBudget() constant returns (uint256) {
-    var (budget,) = accounting.getAccountingPeriodState();
+    var (budget,) = accounting.getAccountingPeriodState(accounting.getCurrentPeriod());
     return budget;
   }
 
   function getAccountingPeriodCloses() constant returns (uint64) {
-    var (,closes) = accounting.getAccountingPeriodState();
+    var (,closes) = accounting.getAccountingPeriodState(accounting.getCurrentPeriod());
     return closes;
+  }
+
+  function getAccountingInfo() constant returns (uint lastRecurringTransaction, uint lastPeriod) {
+    lastRecurringTransaction = accounting.recurringTransactions.length - 1;
+    lastPeriod = accounting.currentPeriod;
+  }
+
+  function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
+    AccountingLib.AccountingPeriod p = accounting.periods[periodIndex];
+    lastTransaction = p.transactions.length - 1;
+    started = p.startTimestamp;
+    ended = p.endTimestamp > 0 ? p.endTimestamp : p.startTimestamp + p.periodDuration;
+    expenses = p.expenses;
+    revenue = p.revenue;
+    dividends = p.dividends;
+  }
+
+  function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
+    AccountingLib.Transaction t = accounting.periods[periodIndex].transactions[transactionIndex];
+    expense = t.direction == AccountingLib.TransactionDirection.Outgoing;
+    from = t.from;
+    to = t.to;
+    amount = t.amount;
+    approvedBy = t.approvedBy;
+    timestamp = t.timestamp;
+    concept = t.concept;
   }
 
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold)
