@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.8;
 
 contract AbstractCompany {
   enum EntityStatus {
@@ -6,6 +6,12 @@ contract AbstractCompany {
     Employee,
     Executive
   }
+
+  enum SpecialEntityStatus {
+    Shareholder,
+    StockSale
+  }
+
   mapping (address => uint8) public entityStatus;
 
   mapping (uint8 => address) public stocks;
@@ -20,10 +26,16 @@ contract AbstractCompany {
   mapping (address => uint256) public reverseSales;
   uint256 public saleIndex;
 
+  function isStockSale(address entity) constant public returns (bool);
+  function isShareholder(address holder) constant public returns (bool);
+
+  function setEntityStatusByStatus(address entity, uint8 status) public;
+  function setEntityStatusByVoting(address entity, uint8 status) public;
+
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256);
   function beginPoll(address voting, uint64 closes) public;
   function castVote(uint256 voteId, uint8 option) public;
   function setVotingExecuted(uint8 option) public;
-  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes);
 
   function addStock(address newStock, uint256 issue) public;
   function issueStock(uint8 _stock, uint256 _amount) public;
@@ -36,15 +48,13 @@ contract AbstractCompany {
   function assignStock(uint8 stockId, address holder, uint256 units);
   function removeStock(uint8 stockId, address holder, uint256 units);
 
-  function isShareholder(address holder) constant public returns (bool);
-  function setEntityStatusByStatus(address entity, uint8 status) public;
-  function setEntityStatusByVoting(address entity, uint8 status) public;
-
-  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function getAccountingPeriodRemainingBudget() constant returns (uint256);
   function getAccountingPeriodCloses() constant returns (uint64);
+
   function addTreasure(string concept) payable public returns (bool);
   function registerIncome(string concept) payable public returns (bool);
+
+  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
   function removeRecurringReward(uint index);
   function issueReward(address to, uint256 amount, string concept);

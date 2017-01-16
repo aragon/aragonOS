@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.8;
 
 import "./AbstractCompany.sol";
 import "./accounting/AccountingLib.sol";
@@ -14,6 +14,7 @@ import "./sales/StockSale.sol";
 
 contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;
+  using BylawsLib for BylawsLib.Bylaws;
 
   AccountingLib.AccountingLedger accounting;
   BylawsLib.Bylaws bylaws;
@@ -27,6 +28,83 @@ contract Company is AbstractCompany {
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
+    // setInitialBylaws();
+
+  }
+
+  modifier checkBylaws {
+    if (!bylaws.canPerformAction(msg.sig)) throw;
+    _;
+  }
+
+  // testing
+
+  function getBylawUpdate(string functionSignature) returns (uint64, bool, bool, bool) {
+    BylawsLib.Bylaw b = bylaws.bylaws[bytes4(sha3(functionSignature))];
+    return (b.updated, b.status.enforced, b.specialStatus.enforced, b.voting.enforced);
+  }
+
+  function actionChecker(string action) constant returns (bool) {
+    return bylaws.canPerformAction(bytes4(sha3(action)));
+  }
+
+  // TODO: Only once bla bla
+  function setInitialBylaws() {
+    uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
+
+    addVotingBylaw("setEntityStatusByVoting(address,uint8)", uint256(1), uint256(2), true, favor);
+    addSpecialStatusBylaw("beginPoll(address,uint64)", AbstractCompany.SpecialEntityStatus.Shareholder);
+    addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
+
+    // Alert that adding stock shouldn't be executive, should be changed after FTUE!
+    addStatusBylaw("addStock(address,uint256)", AbstractCompany.EntityStatus.Executive);
+    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, favor);
+    addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
+    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, favor);
+
+    addVotingBylaw("beginSale(address)", 1, 2, true, favor);
+    addStatusBylaw("transferSaleFunds(uint256)", AbstractCompany.EntityStatus.Executive);
+
+    addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
+    addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
+
+    addVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, favor);
+    addStatusBylaw("createRecurringReward(address,uint256,uint64,string)", AbstractCompany.EntityStatus.Executive);
+    addStatusBylaw("removeRecurringReward(uint)", AbstractCompany.EntityStatus.Executive);
+    addStatusBylaw("issueReward(address,uint256,string)", AbstractCompany.EntityStatus.Executive);
+
+    // Protect bylaws under a 2/3 voting
+    addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, favor);
+    addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, favor);
+    addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, favor); // so meta
+  }
+
+  function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded) checkBylaws {
+    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
+    bylaw.status.neededStatus = uint8(statusNeeded);
+    bylaw.status.enforced = true;
+
+    bylaws.addBylaw(functionSignature, bylaw);
+  }
+
+  function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded) checkBylaws {
+    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
+    bylaw.specialStatus.neededStatus = uint8(statusNeeded);
+    bylaw.specialStatus.enforced = true;
+
+    bylaws.addBylaw(functionSignature, bylaw);
+  }
+
+  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool allowVotingBaseCount, uint8 option) checkBylaws {
+    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
+
+    bylaw.voting.supportNeeded = support;
+    bylaw.voting.supportBase = base;
+    bylaw.voting.allowVotingBaseCount = allowVotingBaseCount;
+    bylaw.voting.approveOption = option;
+    bylaw.voting.enforced = true;
+
+    bylaws.addBylaw(functionSignature, bylaw);
   }
 
   // acl
@@ -40,9 +118,7 @@ contract Company is AbstractCompany {
     setStatus(entity, status);
   }
 
-  function setEntityStatusByVoting(address entity, uint8 status)
-    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
-
+  function setEntityStatusByVoting(address entity, uint8 status) checkBylaws public {
     setStatus(entity, status);
   }
 
@@ -53,34 +129,9 @@ contract Company is AbstractCompany {
 
   // vote
 
-  modifier vote(uint8 option, uint256 support, uint256 base) {
-    uint256 votingId = reverseVotings[msg.sender];
-
-    if (votingId == 0) throw;
-    if (voteExecuted[votingId] > 0) throw;
-
-    var (v, possibleVotings) = countVotes(votingId, option);
-    uint256 neededVotings = possibleVotings * support / base;
-    if (v < neededVotings) throw;
-    _;
-  }
-
-  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
-    for (uint8 i = 0; i < stockIndex; i++) {
-      Stock stock = Stock(stocks[i]);
-      votes += stock.votings(votingId, optionId);
-      totalPossibleVotes += (stock.totalSupply() - stock.balanceOf(this)) * stock.votesPerShare();
-    }
-  }
-
-  modifier onlyShareholder {
-    if (!isShareholder(msg.sender)) throw;
-    _;
-  }
-
-  modifier minimumStatus(AbstractCompany.EntityStatus status) {
-    if (entityStatus[msg.sender] < uint8(status)) throw;
-    _;
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256) {
+    var (v, c, tv) = BylawsLib.countVotes(votingId, optionId);
+    return (v, tv);
   }
 
   function setVotingExecuted(uint8 option) {
@@ -93,7 +144,7 @@ contract Company is AbstractCompany {
     VoteExecuted(votingId, msg.sender, option);
   }
 
-  function beginPoll(address voting, uint64 closes) public onlyShareholder {
+  function beginPoll(address voting, uint64 closes) public checkBylaws {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
@@ -103,7 +154,7 @@ contract Company is AbstractCompany {
     votingIndex += 1;
   }
 
-  function castVote(uint256 voteId, uint8 option) public onlyShareholder {
+  function castVote(uint256 voteId, uint8 option) public checkBylaws {
     if (voteExecuted[voteId] > 0) throw; // cannot vote on executed polls
 
     for (uint8 i = 0; i < stockIndex; i++) {
@@ -118,14 +169,14 @@ contract Company is AbstractCompany {
 
   function isShareholder(address holder) constant public returns (bool) {
     for (uint8 i = 0; i < stockIndex; i++) {
-      if (Stock(stocks[i]).isShareholder(msg.sender)) {
+      if (Stock(stocks[i]).isShareholder(holder)) {
         return true;
       }
     }
     return false;
   }
 
-  function addStock(address newStock, uint256 issue) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
+  function addStock(address newStock, uint256 issue) checkBylaws public {
     if (Stock(newStock).company() != address(this)) throw;
 
     if (stockIndex > 0) {
@@ -142,26 +193,23 @@ contract Company is AbstractCompany {
     IssuedStock(newStock, stockIndex - 1, issue);
   }
 
-  function issueStock(uint8 _stock, uint256 _amount)
-    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+  function issueStock(uint8 _stock, uint256 _amount) checkBylaws public {
     IssueableStock(stocks[_stock]).issueStock(_amount);
     IssuedStock(stocks[_stock], _stock, _amount);
   }
 
-  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting)
-    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting) checkBylaws public {
     issueStock(_stock, _amount);
     GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _cliff, _vesting);
   }
 
-  function grantStock(uint8 _stock, uint256 _amount, address _recipient) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
+  function grantStock(uint8 _stock, uint256 _amount, address _recipient) checkBylaws public {
     GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
   }
 
   // stock sales
 
-  function beginSale(address saleAddress)
-    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+  function beginSale(address saleAddress) checkBylaws public {
 
     StockSale sale = StockSale(saleAddress);
     if (sale.companyAddress() != address(this)) throw;
@@ -173,22 +221,20 @@ contract Company is AbstractCompany {
     NewStockSale(saleAddress, saleIndex - 1, sale.stockId());
   }
 
-  function transferSaleFunds(uint256 _sale) minimumStatus(AbstractCompany.EntityStatus.Executive) public {
+  function transferSaleFunds(uint256 _sale) checkBylaws public {
     StockSale(sales[_sale]).transferFunds();
   }
 
-  modifier onlySale {
-    uint256 saleId = reverseSales[msg.sender];
-    if (saleId <= 0) throw;
-    _;
+  function isStockSale(address entity) constant public returns (bool) {
+    return reverseSales[entity] > 0;
   }
 
-  function assignStock(uint8 stockId, address holder, uint256 units) onlySale {
+  function assignStock(uint8 stockId, address holder, uint256 units) checkBylaws {
     IssueableStock(stocks[stockId]).issueStock(units);
     GrantableStock(stocks[stockId]).grantStock(holder, units);
   }
 
-  function removeStock(uint8 stockId, address holder, uint256 units) onlySale {
+  function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {
     IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 
@@ -232,8 +278,7 @@ contract Company is AbstractCompany {
     return;
   }
 
-  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold)
-    vote(uint8(BinaryVoting.VotingOption.Favor), 50, 100) public {
+  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold) checkBylaws public {
     accounting.setAccountingSettings(budget, periodDuration, dividendThreshold);
   }
 
@@ -261,18 +306,15 @@ contract Company is AbstractCompany {
     }
   }
 
-  function issueReward(address to, uint256 amount, string concept)
-    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+  function issueReward(address to, uint256 amount, string concept) checkBylaws {
     accounting.sendFunds(amount, concept, to);
   }
 
-  function createRecurringReward(address to, uint256 amount, uint64 period, string concept)
-    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+  function createRecurringReward(address to, uint256 amount, uint64 period, string concept) checkBylaws {
     accounting.sendRecurringFunds(amount, concept, to, period, true);
   }
 
-  function removeRecurringReward(uint index)
-    minimumStatus(AbstractCompany.EntityStatus.Executive) {
+  function removeRecurringReward(uint index) checkBylaws {
     accounting.removeRecurringTransaction(index);
   }
 

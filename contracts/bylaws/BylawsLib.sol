@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.8;
 
 import "../AbstractCompany.sol";
 import "../stocks/Stock.sol";
@@ -10,12 +10,18 @@ library BylawsLib {
 
   struct Bylaw {
     StatusBylaw status;
+    SpecialStatusBylaw specialStatus;
     VotingBylaw voting;
 
     uint64 updated;
   }
 
   struct StatusBylaw {
+    uint8 neededStatus;
+    bool enforced;
+  }
+
+  struct SpecialStatusBylaw {
     uint8 neededStatus;
     bool enforced;
   }
@@ -29,12 +35,32 @@ library BylawsLib {
     bool enforced;
   }
 
-  function canPerformAction(Bylaws storage self) internal returns (bool) {
-    Bylaw b = self.bylaws[msg.sig];
-    if (b.updated == 0) return false; // not existent law, not allow action
+  function init() internal returns (Bylaw memory) {
+    return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,false), 0); // zeroed bylaw
+  }
+
+  function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
+    bytes4 key = bytes4(sha3(functionSignature));
+    self.bylaws[key] = bylaw;
+    self.bylaws[key].updated = uint64(now);
+  }
+
+  function canPerformAction(Bylaws storage self, bytes4 sig) internal returns (bool) {
+    Bylaw b = self.bylaws[sig];
+    if (b.updated == 0) {
+      // not existent law, allow action only if is executive
+      b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
+      b.status.enforced = true;
+    }
+
+    // TODO: Support multi enforcement rules
 
     if (b.status.enforced) {
       return getStatus(msg.sender) >= b.status.neededStatus;
+    }
+
+    if (b.specialStatus.enforced) {
+      return isSpecialStatus(msg.sender, b.specialStatus.neededStatus);
     }
 
     if (b.voting.enforced) {
@@ -46,6 +72,18 @@ library BylawsLib {
 
   function getStatus(address entity) internal returns (uint8) {
     return AbstractCompany(this).entityStatus(msg.sender);
+  }
+
+  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
+    AbstractCompany.SpecialEntityStatus status = AbstractCompany.SpecialEntityStatus(neededStatus);
+
+    if (status == AbstractCompany.SpecialEntityStatus.Shareholder) {
+      return AbstractCompany(this).isShareholder(entity);
+    }
+
+    if (status == AbstractCompany.SpecialEntityStatus.StockSale) {
+      return AbstractCompany(this).isStockSale(entity);
+    }
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool) {

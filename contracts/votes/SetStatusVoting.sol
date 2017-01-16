@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.8;
 
 import "./BinaryVoting.sol";
 import "../AbstractCompany.sol";
