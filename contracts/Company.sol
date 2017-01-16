@@ -2,6 +2,7 @@ pragma solidity ^0.4.6;
 
 import "./AbstractCompany.sol";
 import "./accounting/AccountingLib.sol";
+import "./bylaws/BylawsLib.sol";
 
 import "./stocks/Stock.sol";
 import "./stocks/IssueableStock.sol";
@@ -15,12 +16,13 @@ contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;
 
   AccountingLib.AccountingLedger accounting;
+  BylawsLib.Bylaws bylaws;
 
   function Company() payable {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
 
-    accounting.init(1 ether, 4 weeks, 1 wei, this); // Init with 1 ether budget and 1 moon period
+    accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
     accounting.addTreasure('Company bootstrap');
 
     // Make contract deployer executive
@@ -63,6 +65,14 @@ contract Company is AbstractCompany {
     _;
   }
 
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
+    for (uint8 i = 0; i < stockIndex; i++) {
+      Stock stock = Stock(stocks[i]);
+      votes += stock.votings(votingId, optionId);
+      totalPossibleVotes += (stock.totalSupply() - stock.balanceOf(this)) * stock.votesPerShare();
+    }
+  }
+
   modifier onlyShareholder {
     if (!isShareholder(msg.sender)) throw;
     _;
@@ -81,14 +91,6 @@ contract Company is AbstractCompany {
     voteExecuted[votingId] = 10 + option; // avoid 0
 
     VoteExecuted(votingId, msg.sender, option);
-  }
-
-  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalPossibleVotes) {
-    for (uint8 i = 0; i < stockIndex; i++) {
-      Stock stock = Stock(stocks[i]);
-      votes += stock.votings(votingId, optionId);
-      totalPossibleVotes += (stock.totalSupply() - stock.balanceOf(this)) * stock.votesPerShare();
-    }
   }
 
   function beginPoll(address voting, uint64 closes) public onlyShareholder {

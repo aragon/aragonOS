@@ -13,6 +13,7 @@ contract Stock is BasicToken, Shareholders, PullPayment {
 
   mapping (uint256 => uint64) public pollingUntil; // proposal -> close timestamp
   mapping (uint256 => mapping (uint8 => uint256)) public votings; // proposal -> option -> votes
+  mapping (uint256 => uint256) public totalCastedVotes;
   mapping (address => mapping (uint256 => uint256)) public voters; // voter -> proposal -> tokens
 
   event NewPoll(uint256 id, uint64 closes);
@@ -35,14 +36,10 @@ contract Stock is BasicToken, Shareholders, PullPayment {
     castVote(voter, pollId, vote);
   }
 
-  /*
-
-  // Removing because there is no way to see if vote was executed in company before allowing voting
+  // Someone could vote even if vote was already executed in company. Could change voting stats, but who cares.
   function castVote(uint256 pollId, uint8 vote) public {
     castVote(msg.sender, pollId, vote);
   }
-
-  */
 
   function canVote(address voter, uint256 pollId) constant returns (bool) {
     if (now > pollingUntil[pollId]) return false; // polling is closed
@@ -63,9 +60,14 @@ contract Stock is BasicToken, Shareholders, PullPayment {
 
     uint256 addingVotes = votingPowerForPoll(voter, pollId);
     votings[pollId][vote] = safeAdd(votings[pollId][vote], addingVotes);
+    totalCastedVotes[pollId] = safeAdd(totalCastedVotes[pollId], addingVotes);
     voters[voter][pollId] = balances[voter];
 
     VoteCasted(pollId, voter, addingVotes);
+  }
+
+  function totalVotingPower() constant returns (uint256) {
+    return (totalSupply - balances[company]) * votesPerShare;
   }
 
   function splitDividends() payable {

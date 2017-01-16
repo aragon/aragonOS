@@ -44,7 +44,6 @@ library AccountingLib {
 
   struct AccountingLedger {
     bool initialized;
-    address company;
 
     AccountingPeriod[] periods;
     RecurringTransaction[] recurringTransactions;
@@ -55,10 +54,9 @@ library AccountingLib {
     uint256 currentDividendThreshold;
   }
 
-  function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold, address company) {
+  function init(AccountingLedger storage self, uint256 initialBudget, uint64 initialPeriodDuration, uint256 initialDividendThreshold) {
     if (self.initialized) throw;
 
-    self.company = company;
     initPeriod(self, uint64(now));
     setAccountingSettings(self, initialBudget, initialPeriodDuration, initialDividendThreshold);
 
@@ -209,7 +207,7 @@ library AccountingLib {
 
     if (periodResult > 0 && periodResult > int256(period.dividendThreshold)) {
       period.dividends = uint256(periodResult) - period.dividendThreshold;
-      AbstractCompany(self.company).splitIntoDividends.value(period.dividends)();
+      AbstractCompany(this).splitIntoDividends.value(period.dividends)();
     }
 
     period.endTimestamp = uint64(period.startTimestamp + period.periodDuration);
