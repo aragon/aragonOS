@@ -37,17 +37,6 @@ contract Company is AbstractCompany {
     _;
   }
 
-  // testing
-
-  function getBylawUpdate(string functionSignature) returns (uint64, bool, bool, bool) {
-    BylawsLib.Bylaw b = bylaws.bylaws[bytes4(sha3(functionSignature))];
-    return (b.updated, b.status.enforced, b.specialStatus.enforced, b.voting.enforced);
-  }
-
-  function actionChecker(string action) constant returns (bool) {
-    return bylaws.canPerformAction(bytes4(sha3(action)));
-  }
-
   // TODO: Only once bla bla
   function setInitialBylaws() {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
