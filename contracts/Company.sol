@@ -45,7 +45,7 @@ contract Company is AbstractCompany {
     addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
 
     addVotingBylaw("addStock(address,uint256)", 1, 2, true, favor);
-    addVotingBylaw("issueStock(uint8,uint256)", 2, 5, true, favor);
+    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, favor);
     addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
     addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, favor);
 
