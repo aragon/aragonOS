@@ -4,7 +4,8 @@ contract AbstractCompany {
   enum EntityStatus {
     Base,
     Employee,
-    Executive
+    Executive,
+    God
   }
 
   enum SpecialEntityStatus {

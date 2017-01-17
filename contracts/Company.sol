@@ -27,7 +27,7 @@ contract Company is AbstractCompany {
     accounting.addTreasure('Company bootstrap');
 
     // Make contract deployer executive
-    setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.Executive));
+    setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
     // setInitialBylaws();
 
   }
