@@ -40,12 +40,11 @@ contract Company is AbstractCompany {
   function setInitialBylaws() {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
 
-    addVotingBylaw("setEntityStatusByVoting(address,uint8)", uint256(1), uint256(2), true, favor);
+    addVotingBylaw("setEntityStatusByVoting(address,uint8)", 1, 2, true, favor);
     addSpecialStatusBylaw("beginPoll(address,uint64)", AbstractCompany.SpecialEntityStatus.Shareholder);
     addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
 
-    // Alert that adding stock shouldn't be executive, should be changed after FTUE!
-    addStatusBylaw("addStock(address,uint256)", AbstractCompany.EntityStatus.Executive);
+    addVotingBylaw("addStock(address,uint256)", 1, 2, true, favor);
     addVotingBylaw("issueStock(uint8,uint256)", 2, 5, true, favor);
     addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
     addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, favor);
@@ -175,13 +174,7 @@ contract Company is AbstractCompany {
   function addStock(address newStock, uint256 issue) checkBylaws public {
     if (Stock(newStock).company() != address(this)) throw;
 
-    if (stockIndex > 0) {
-      // Don't allow for new stock types. Issueance needs to be voted
-      if (issue > 0) throw;
-      if (Stock(newStock).totalSupply() > 0) throw;
-    } else {
-      IssueableStock(newStock).issueStock(issue);
-    }
+    IssueableStock(newStock).issueStock(issue);
 
     stocks[stockIndex] = newStock;
     stockIndex += 1;
