@@ -79,7 +79,7 @@ contract Company is AbstractCompany {
     bylaw.status.neededStatus = uint8(statusNeeded);
     bylaw.status.enforced = true;
 
-    bylaws.addBylaw(functionSignature, bylaw);
+    addBylaw(functionSignature, bylaw);
   }
 
   function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded) checkBylaws {
@@ -87,7 +87,7 @@ contract Company is AbstractCompany {
     bylaw.specialStatus.neededStatus = uint8(statusNeeded);
     bylaw.specialStatus.enforced = true;
 
-    bylaws.addBylaw(functionSignature, bylaw);
+    addBylaw(functionSignature, bylaw);
   }
 
   function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint8 option) checkBylaws {
@@ -99,7 +99,13 @@ contract Company is AbstractCompany {
     bylaw.voting.approveOption = option;
     bylaw.voting.enforced = true;
 
+    addBylaw(functionSignature, bylaw);
+  }
+
+  function addBylaw(string functionSignature, BylawsLib.Bylaw bylaw) private {
     bylaws.addBylaw(functionSignature, bylaw);
+
+    BylawChanged(functionSignature);
   }
 
   // acl

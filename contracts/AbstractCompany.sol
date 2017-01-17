@@ -70,4 +70,5 @@ contract AbstractCompany {
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
   event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
   event EntityNewStatus(address entity, uint8 status);
+  event BylawChanged(string functionSignature);
 }
