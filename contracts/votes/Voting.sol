@@ -9,6 +9,8 @@ contract Voting is Txid {
   bool private allowsModification;
   address public creator;
 
+  string public mainSignature;
+
   function Voting() {
     optionsIndex = 0;
     allowsModification = true;
@@ -23,6 +25,10 @@ contract Voting is Txid {
     if (!allowsModification) throw;
     options[id] = option;
     optionsIndex += 1;
+  }
+
+  function votingSupport(address company) constant returns (uint256 support, uint256 base, bool closingRelativeMajority) {
+    return AbstractCompany(company).getVotingBylaw(mainSignature);
   }
 
   function executeOnAction(uint8 option, AbstractCompany company);

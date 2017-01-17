@@ -6,13 +6,12 @@ contract StockSaleVoting is BinaryVoting("Approve stock sale", "Reject") {
   string public title;
   address public sale;
 
-  function StockSaleVoting(address _sale, string _title, uint8 _percentage) {
+  function StockSaleVoting(address _sale, string _title) {
     sale = _sale;
 
     // Metadata
     title = _title;
-    neededSupport = uint256(_percentage);
-    supportBase = 100;
+    mainSignature = "beginSale(address)";
   }
 
   function executeOnAppove(AbstractCompany company) internal {

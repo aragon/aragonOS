@@ -9,16 +9,14 @@ contract GrantVestedStockVoting is BinaryVoting("Approve issuing", "Reject") {
   uint64 public cliff;
   uint64 public vesting;
 
-  function GrantVestedStockVoting(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting, uint8 _percentage) {
+  function GrantVestedStockVoting(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting) {
     stock = _stock;
     amount = _amount;
     recipient = _recipient;
     cliff = _cliff;
     vesting = _vesting;
 
-    // Metadata
-    neededSupport = uint256(_percentage);
-    supportBase = 100;
+    mainSignature = "grantVestedStock(uint8,uint256,address,uint64,uint64)";
   }
 
   function executeOnAppove(AbstractCompany company) internal {

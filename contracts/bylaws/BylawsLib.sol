@@ -31,7 +31,7 @@ library BylawsLib {
     uint256 supportBase;
     uint8 approveOption;
 
-    bool allowVotingBaseCount; // When voting date is finished
+    bool closingRelativeMajority; // When voting date is finished
     bool enforced;
   }
 
@@ -39,10 +39,18 @@ library BylawsLib {
     return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,false), 0); // zeroed bylaw
   }
 
+  function keyForFunctionSignature(string functionSignature) returns (bytes4) {
+    return bytes4(sha3(functionSignature));
+  }
+
   function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
-    bytes4 key = bytes4(sha3(functionSignature));
+    bytes4 key = keyForFunctionSignature(functionSignature);
     self.bylaws[key] = bylaw;
     self.bylaws[key].updated = uint64(now);
+  }
+
+  function getBylaw(Bylaws storage self, string functionSignature) internal returns (Bylaw) {
+    return self.bylaws[keyForFunctionSignature(functionSignature)];
   }
 
   function canPerformAction(Bylaws storage self, bytes4 sig) internal returns (bool) {
@@ -97,7 +105,7 @@ library BylawsLib {
 
     // Test this logic
     if (v < neededVotings) {
-      if (!votingBylaw.allowVotingBaseCount) return false;
+      if (!votingBylaw.closingRelativeMajority) return false;
 
       uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingId);
 

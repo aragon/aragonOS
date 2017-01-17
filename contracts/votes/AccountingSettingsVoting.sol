@@ -7,14 +7,11 @@ contract AccountingSettingsVoting is BinaryVoting("Approve issuing", "Reject") {
   uint64 public periodDuration;
   uint256 public dividendThreshold;
 
-  function AccountingSettingsVoting(uint256 _budget, uint64 _periodDuration, uint256 _dividendThreshold, uint8 _percentage) {
+  function AccountingSettingsVoting(uint256 _budget, uint64 _periodDuration, uint256 _dividendThreshold) {
     budget = _budget;
     periodDuration = _periodDuration;
     dividendThreshold = _dividendThreshold;
-
-    // Metadata
-    neededSupport = uint256(_percentage);
-    supportBase = 100;
+    mainSignature = "setAccountingSettings(uint256,uint64,uint256)";
   }
 
   function executeOnAppove(AbstractCompany company) internal {

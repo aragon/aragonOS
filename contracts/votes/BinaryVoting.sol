@@ -3,7 +3,7 @@ pragma solidity ^0.4.8;
 import "./Voting.sol";
 import "../AbstractCompany.sol";
 
-contract BinaryVoting is Voting, BinaryVotingMetadata {
+contract BinaryVoting is Voting {
   enum VotingOption {
     Favor,
     Against
@@ -21,6 +21,9 @@ contract BinaryVoting is Voting, BinaryVotingMetadata {
   }
 
   function executeOnReject(AbstractCompany company) internal {
+    // TODO: Does anything need to happen here related to relative majority?
+    var (neededSupport, supportBase,) = votingSupport(address(company));
+
     var (_support, _base) = company.countVotes(company.reverseVotings(this), uint8(VotingOption.Against));
     uint256 mult = 10000000000;
     if (_support * mult / _base < neededSupport * mult / supportBase) throw;

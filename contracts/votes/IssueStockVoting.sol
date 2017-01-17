@@ -6,13 +6,11 @@ contract IssueStockVoting is BinaryVoting("Approve issuing", "Reject") {
   uint8 public stock;
   uint256 public amount;
 
-  function IssueStockVoting(uint8 _stock, uint256 _amount, uint8 _percentage) {
+  function IssueStockVoting(uint8 _stock, uint256 _amount) {
     stock = _stock;
     amount = _amount;
 
-    // Metadata
-    neededSupport = uint256(_percentage);
-    supportBase = 100;
+    mainSignature = "issueStock(uint8,uint256)";
   }
 
   function executeOnAppove(AbstractCompany company) internal {

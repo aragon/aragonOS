@@ -37,7 +37,6 @@ contract Company is AbstractCompany {
     _;
   }
 
-  // TODO: Only once bla bla
   function setInitialBylaws() {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
 
@@ -47,7 +46,7 @@ contract Company is AbstractCompany {
 
     // Alert that adding stock shouldn't be executive, should be changed after FTUE!
     addStatusBylaw("addStock(address,uint256)", AbstractCompany.EntityStatus.Executive);
-    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, favor);
+    addVotingBylaw("issueStock(uint8,uint256)", 2, 5, true, favor);
     addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
     addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, favor);
 
@@ -68,6 +67,14 @@ contract Company is AbstractCompany {
     addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, favor); // so meta
   }
 
+  function getVotingBylaw(string functionSignature) returns (uint256 support, uint256 base, bool closingRelativeMajority) {
+    BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
+
+    support = b.supportNeeded;
+    base = b.supportBase;
+    closingRelativeMajority = b.closingRelativeMajority;
+  }
+
   function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
     bylaw.status.neededStatus = uint8(statusNeeded);
@@ -84,12 +91,12 @@ contract Company is AbstractCompany {
     bylaws.addBylaw(functionSignature, bylaw);
   }
 
-  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool allowVotingBaseCount, uint8 option) checkBylaws {
+  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint8 option) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
 
     bylaw.voting.supportNeeded = support;
     bylaw.voting.supportBase = base;
-    bylaw.voting.allowVotingBaseCount = allowVotingBaseCount;
+    bylaw.voting.closingRelativeMajority = closingRelativeMajority;
     bylaw.voting.approveOption = option;
     bylaw.voting.enforced = true;
 

@@ -8,8 +8,3 @@ contract Txid {
     txid = _txid;
   }
 }
-
-contract BinaryVotingMetadata {
-  uint256 public neededSupport;
-  uint256 public supportBase;
-}
