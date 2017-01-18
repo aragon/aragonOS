@@ -68,11 +68,14 @@ contract Company is AbstractCompany {
     */
   }
 
-  function getBylawType(string functionSignature) constant returns (uint8) {
+  function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
     BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
-    if (b.voting.enforced) return 0;
-    if (b.status.enforced) return 1;
-    if (b.specialStatus.enforced) return 2;
+    updated = b.updated;
+    updatedBy = b.updatedBy;
+
+    if (b.voting.enforced) bylawType = 0;
+    if (b.status.enforced) bylawType = 1;
+    if (b.specialStatus.enforced) bylawType = 2;
   }
 
   function getStatusBylaw(string functionSignature) constant returns (uint8) {

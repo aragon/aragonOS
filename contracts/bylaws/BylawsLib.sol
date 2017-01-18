@@ -14,6 +14,7 @@ library BylawsLib {
     VotingBylaw voting;
 
     uint64 updated;
+    address updatedBy;
   }
 
   struct StatusBylaw {
@@ -32,11 +33,13 @@ library BylawsLib {
     uint8 approveOption;
 
     bool closingRelativeMajority; // When voting date is finished
+    uint64 minimumVotingTime;
+
     bool enforced;
   }
 
   function init() internal returns (Bylaw memory) {
-    return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,false), 0); // zeroed bylaw
+    return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,0,false), 0, 0x0); // zeroed bylaw
   }
 
   function keyForFunctionSignature(string functionSignature) returns (bytes4) {
@@ -47,6 +50,7 @@ library BylawsLib {
     bytes4 key = keyForFunctionSignature(functionSignature);
     self.bylaws[key] = bylaw;
     self.bylaws[key].updated = uint64(now);
+    self.bylaws[key].updatedBy = msg.sender;
   }
 
   function getBylaw(Bylaws storage self, string functionSignature) internal returns (Bylaw) {
@@ -106,7 +110,7 @@ library BylawsLib {
     // Test this logic
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return false;
-
+      // TODO: Check minimum closing date!!!
       uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingId);
 
       if (now < voteCloseDate) return false;
