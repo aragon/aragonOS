@@ -76,7 +76,10 @@ library BylawsLib {
     }
 
     if (b.voting.enforced) {
-      return checkVoting(msg.sender, b.voting);
+      if (checkVoting(msg.sender, b.voting)) {
+        // TODO: Set voting executed here to block reentry
+        return true;
+      }
     }
 
     return false;
