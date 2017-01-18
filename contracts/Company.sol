@@ -39,32 +39,33 @@ contract Company is AbstractCompany {
 
   function setInitialBylaws() {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
+    uint64 minimumVotingTime = uint64(7 days);
 
-    addVotingBylaw("setEntityStatusByVoting(address,uint8)", 1, 2, true, favor);
+    addVotingBylaw("setEntityStatusByVoting(address,uint8)", 1, 2, true, minimumVotingTime, favor);
     addSpecialStatusBylaw("beginPoll(address,uint64)", AbstractCompany.SpecialEntityStatus.Shareholder);
     addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
 
-    addVotingBylaw("addStock(address,uint256)", 1, 2, true, favor);
-    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, favor);
+    addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
+    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
     addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
-    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, favor);
+    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, minimumVotingTime, favor);
 
-    addVotingBylaw("beginSale(address)", 1, 2, true, favor);
+    addVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
     addStatusBylaw("transferSaleFunds(uint256)", AbstractCompany.EntityStatus.Executive);
 
     addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
     addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
 
-    addVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, favor);
+    addVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, minimumVotingTime, favor);
     addStatusBylaw("createRecurringReward(address,uint256,uint64,string)", AbstractCompany.EntityStatus.Executive);
     addStatusBylaw("removeRecurringReward(uint)", AbstractCompany.EntityStatus.Executive);
     addStatusBylaw("issueReward(address,uint256,string)", AbstractCompany.EntityStatus.Executive);
 
     // Protect bylaws under a 2/3 voting
     /*
-    addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, favor);
-    addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, favor);
-    addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, favor); // so meta
+    addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
+    addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
+    addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
     */
   }
 
@@ -85,12 +86,13 @@ contract Company is AbstractCompany {
     if (b.specialStatus.enforced) return b.specialStatus.neededStatus;
   }
 
-  function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority) {
+  function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
     BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
 
     support = b.supportNeeded;
     base = b.supportBase;
     closingRelativeMajority = b.closingRelativeMajority;
+    minimumVotingTime = b.minimumVotingTime;
   }
 
   function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded) checkBylaws {
@@ -109,12 +111,13 @@ contract Company is AbstractCompany {
     addBylaw(functionSignature, bylaw);
   }
 
-  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint8 option) checkBylaws {
+  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
 
     bylaw.voting.supportNeeded = support;
     bylaw.voting.supportBase = base;
     bylaw.voting.closingRelativeMajority = closingRelativeMajority;
+    bylaw.voting.minimumVotingTime = minimumVotingTime;
     bylaw.voting.approveOption = option;
     bylaw.voting.enforced = true;
 

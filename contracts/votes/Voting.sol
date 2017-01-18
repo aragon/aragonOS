@@ -28,7 +28,7 @@ contract Voting is Txid {
   }
 
   function votingSupport(address company) constant returns (uint256 support, uint256 base, bool closingRelativeMajority) {
-    return AbstractCompany(company).getVotingBylaw(mainSignature);
+    (support, base, closingRelativeMajority,) = AbstractCompany(company).getVotingBylaw(mainSignature);
   }
 
   function executeOnAction(uint8 option, AbstractCompany company);
