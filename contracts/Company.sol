@@ -28,8 +28,6 @@ contract Company is AbstractCompany {
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
-    // setInitialBylaws();
-
   }
 
   modifier checkBylaws {
