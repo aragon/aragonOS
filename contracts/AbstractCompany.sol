@@ -30,7 +30,8 @@ contract AbstractCompany {
   function isStockSale(address entity) constant public returns (bool);
   function isShareholder(address holder) constant public returns (bool);
 
-  function getVotingBylaw(string functionSignature) returns (uint256 support, uint256 base, bool closingRelativeMajority);
+  function getBylawType(string functionSignature) constant returns (uint8);
+  function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority);
   function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded);
   function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded);
   function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint8 option);

@@ -66,7 +66,21 @@ contract Company is AbstractCompany {
     addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, favor); // so meta
   }
 
-  function getVotingBylaw(string functionSignature) returns (uint256 support, uint256 base, bool closingRelativeMajority) {
+  function getBylawType(string functionSignature) constant returns (uint8) {
+    BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
+    if (b.voting.enforced) return 0;
+    if (b.status.enforced) return 1;
+    if (b.specialStatus.enforced) return 2;
+  }
+
+  function getStatusBylaw(string functionSignature) constant returns (uint8) {
+    BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
+
+    if (b.status.enforced) return b.status.neededStatus;
+    if (b.specialStatus.enforced) return b.specialStatus.neededStatus;
+  }
+
+  function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority) {
     BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
 
     support = b.supportNeeded;
