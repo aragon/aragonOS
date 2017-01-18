@@ -60,11 +60,9 @@ contract Company is AbstractCompany {
     addStatusBylaw("issueReward(address,uint256,string)", AbstractCompany.EntityStatus.Executive);
 
     // Protect bylaws under a 2/3 voting
-    /*
     addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
     addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
     addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
-    */
   }
 
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
