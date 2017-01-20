@@ -37,7 +37,7 @@ contract AbstractCompany {
   function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
 
   function setEntityStatusByStatus(address entity, uint8 status) public;
-  function setEntityStatusByVoting(address entity, uint8 status) public;
+  function setEntityStatus(address entity, uint8 status) public;
 
   function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256);
   function beginPoll(address voting, uint64 closes) public;

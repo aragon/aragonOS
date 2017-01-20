@@ -39,7 +39,7 @@ contract Company is AbstractCompany {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
     uint64 minimumVotingTime = uint64(7 days);
 
-    addVotingBylaw("setEntityStatusByVoting(address,uint8)", 1, 2, true, minimumVotingTime, favor);
+    addVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
     addSpecialStatusBylaw("beginPoll(address,uint64)", AbstractCompany.SpecialEntityStatus.Shareholder);
     addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
 
