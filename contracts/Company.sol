@@ -137,7 +137,7 @@ contract Company is AbstractCompany {
     setStatus(entity, status);
   }
 
-  function setEntityStatusByVoting(address entity, uint8 status) checkBylaws public {
+  function setEntityStatus(address entity, uint8 status) checkBylaws public {
     setStatus(entity, status);
   }
 
