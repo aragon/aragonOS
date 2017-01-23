@@ -262,12 +262,6 @@ contract Company is AbstractCompany {
     return closes;
   }
 
-  function getAccountingInfo() constant returns (uint lastRecurringTransaction, uint lastPeriod) {
-    lastRecurringTransaction = accounting.recurringTransactions.length - 1;
-    lastPeriod = accounting.currentPeriod;
-    return;
-  }
-
   function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
     AccountingLib.AccountingPeriod p = accounting.periods[periodIndex];
     lastTransaction = p.transactions.length - 1;
@@ -276,7 +270,16 @@ contract Company is AbstractCompany {
     expenses = p.expenses;
     revenue = p.revenue;
     dividends = p.dividends;
-    return;
+  }
+
+  function getRecurringTransactionInfo(uint transactionIndex) constant returns (uint64 period, uint64 lastTransactionDate, address to, address approvedBy, uint256 amount, string concept) {
+    AccountingLib.RecurringTransaction recurring = accounting.recurringTransactions[transactionIndex];
+    AccountingLib.Transaction t = recurring.transaction;
+    period = recurring.period;
+    to = t.to;
+    amount = t.amount;
+    approvedBy = t.approvedBy;
+    concept = t.concept;
   }
 
   function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
@@ -288,7 +291,6 @@ contract Company is AbstractCompany {
     approvedBy = t.approvedBy;
     timestamp = t.timestamp;
     concept = t.concept;
-    return;
   }
 
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold) checkBylaws public {
@@ -329,9 +331,5 @@ contract Company is AbstractCompany {
 
   function removeRecurringReward(uint index) checkBylaws {
     accounting.removeRecurringTransaction(index);
-  }
-
-  function () payable {
-    registerIncome("Fallback donation");
   }
 }

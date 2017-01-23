@@ -3,6 +3,12 @@ pragma solidity ^0.4.8;
 import "../AbstractCompany.sol";
 
 library AccountingLib {
+  event NewPeriod(uint newPeriod);
+  event PeriodClosed(uint closedPeriod);
+  event NewRecurringTransaction(uint recurringIndex);
+  event RemovedRecurringTransaction(uint recurringIndex);
+  event TransactionSaved(uint period, uint transactionIndex);
+
   enum TransactionDirection { Incoming, Outgoing }
 
   struct Transaction {
@@ -134,6 +140,8 @@ library AccountingLib {
     if (periodExpenses + recurringExpense > currentPeriod.budget) throw; // Adding recurring transaction will make go over budget in the future
 
     self.recurringTransactions.push(recurring);
+
+    NewRecurringTransaction(self.recurringTransactions.length - 1);
   }
 
   function removeRecurringTransaction(AccountingLedger storage self, uint index) {
@@ -142,6 +150,12 @@ library AccountingLib {
     delete self.recurringTransactions[index];
     self.recurringTransactions[index] = self.recurringTransactions[self.recurringTransactions.length - 1];
     self.recurringTransactions.length -= 1;
+
+    RemovedRecurringTransaction(index);
+    if (index < self.recurringTransactions.length) {
+      RemovedRecurringTransaction(self.recurringTransactions.length);  // Notifies about index change
+      NewRecurringTransaction(index);
+    }
   }
 
   function saveTransaction(AccountingLedger storage self, TransactionDirection direction, uint256 amount, address from, address to, string concept, bool periodAccountable) private {
@@ -160,6 +174,7 @@ library AccountingLib {
     if (periodAccountable) accountTransaction(self, getCurrentPeriod(self), transaction);
 
     getCurrentPeriod(self).transactions.push(transaction);
+    TransactionSaved(self.currentPeriod, getCurrentPeriod(self).transactions.length - 1);
   }
 
   function performDueRecurringTransactions(AccountingLedger storage self) private {
@@ -181,6 +196,8 @@ library AccountingLib {
   function initPeriod(AccountingLedger storage self, uint64 startTime) private {
     self.currentPeriod = self.periods.length;
     self.periods.length += 1;
+
+    NewPeriod(self.currentPeriod);
 
     AccountingPeriod period = getCurrentPeriod(self);
     period.startTimestamp = startTime;
@@ -211,6 +228,8 @@ library AccountingLib {
     }
 
     period.endTimestamp = uint64(period.startTimestamp + period.periodDuration);
+
+    PeriodClosed(self.currentPeriod);
 
     initPeriod(self, period.endTimestamp);
   }
