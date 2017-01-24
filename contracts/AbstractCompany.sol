@@ -72,4 +72,10 @@ contract AbstractCompany {
   event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
   event EntityNewStatus(address entity, uint8 status);
   event BylawChanged(string functionSignature);
+
+  event NewPeriod(uint newPeriod);
+  event PeriodClosed(uint closedPeriod);
+  event NewRecurringTransaction(uint recurringIndex);
+  event RemovedRecurringTransaction(uint recurringIndex);
+  event TransactionSaved(uint period, uint transactionIndex);
 }
