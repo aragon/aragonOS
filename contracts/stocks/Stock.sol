@@ -99,6 +99,16 @@ contract Stock is BasicToken, Shareholders, PullPayment {
     return hasShareholderVotedInOpenedPoll(holder, time) ? 0 : balances[holder];
   }
 
+  function lastStockIsTransferrableEvent(address holder) constant public returns (uint64 lastEvent) {
+    lastEvent = uint64(now);
+    for (uint256 i = 0; i < openedPolls.length; i++) {
+      uint256 pollId = openedPolls[i];
+      if (voters[holder][pollId] > 0 && pollingUntil[pollId] > lastEvent) {
+        lastEvent = pollingUntil[pollId];
+      }
+    }
+  }
+
   function transferrable(address holder) constant public returns (uint256) {
     return transferrableShares(holder, uint64(now));
   }

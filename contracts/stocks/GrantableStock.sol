@@ -43,14 +43,14 @@ contract GrantableStock is Stock {
     return safeSub(grant.value, vestedShares(grant, time));
   }
 
-  function fullyVestedDate(address holder) constant public returns (uint64 date) {
-    date = uint64(now);
+  function lastStockIsTransferrableEvent(address holder) constant public returns (uint64 date) {
+    date = max64(super.lastStockIsTransferrableEvent(holder), uint64(now));
     uint256 grantIndex = grants[holder].length;
     for (uint256 i = 0; i < grantIndex; i++) {
       date = max64(grants[holder][i].vesting, date);
     }
   }
-  
+
   function transferrableShares(address holder, uint64 time) constant public returns (uint256 nonVested) {
     uint256 grantIndex = grants[holder].length;
 
