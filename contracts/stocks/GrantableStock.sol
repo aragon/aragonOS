@@ -10,8 +10,7 @@ contract GrantableStock is Stock {
     uint64 date;
   }
 
-  mapping (address => mapping (uint256 => StockGrant)) public grants;
-  mapping (address => uint256) public grantsIndex;
+  mapping (address => StockGrant[]) public grants;
 
   function grantStock(address _to, uint256 _value) onlyCompany {
     transfer(_to, _value);
@@ -22,8 +21,8 @@ contract GrantableStock is Stock {
     if (_vesting < now) throw;
     if (_cliff > _vesting) throw;
 
-    grants[_to][grantsIndex[_to]] = StockGrant({date: uint64(now), value: _value, cliff: _cliff, vesting: _vesting});
-    grantsIndex[_to] = safeAdd(grantsIndex[_to], 1);
+    grants[_to].length += 1;
+    grants[_to][grants[_to].length - 1] = StockGrant({date: uint64(now), value: _value, cliff: _cliff, vesting: _vesting});
 
     grantStock(_to, _value);
   }
@@ -50,14 +49,14 @@ contract GrantableStock is Stock {
 
   function fullyVestedDate(address holder) constant public returns (uint64 date) {
     date = uint64(now);
-    uint256 grantIndex = grantsIndex[holder];
+    uint256 grantIndex = grants[holder].length;
     for (uint256 i = 0; i < grantIndex; i++) {
       date = max64(grants[holder][i].vesting, date);
     }
   }
 
   function transferrableShares(address holder, uint64 time) constant public returns (uint256 nonVested) {
-    uint256 grantIndex = grantsIndex[holder];
+    uint256 grantIndex = grants[holder].length;
 
     for (uint256 i = 0; i < grantIndex; i++) {
       nonVested = safeAdd(nonVested, nonVestedShares(grants[holder][i], time));
