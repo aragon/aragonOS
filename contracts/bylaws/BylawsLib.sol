@@ -102,19 +102,19 @@ library BylawsLib {
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool) {
-    uint256 votingId = AbstractCompany(this).reverseVotings(voteAddress);
+    uint256 votingIndex = AbstractCompany(this).reverseVotings(voteAddress);
 
-    if (votingId == 0) return false;
-    if (AbstractCompany(this).voteExecuted(votingId) > 0) return false;
+    if (votingIndex == 0) return false;
+    if (AbstractCompany(this).voteExecuted(votingIndex) > 0) return false;
 
-    var (v, totalCastedVotes, votingPower) = countVotes(votingId, votingBylaw.approveOption);
+    var (v, totalCastedVotes, votingPower) = countVotes(votingIndex, votingBylaw.approveOption);
     uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
 
     // Test this logic
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return false;
       // TODO: Check minimum closing date!!!
-      uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingId);
+      uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
 
       if (now < voteCloseDate) return false;
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
@@ -124,12 +124,12 @@ library BylawsLib {
     return true;
   }
 
-  function countVotes(uint256 votingId, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
+  function countVotes(uint256 votingIndex, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
     for (uint8 i = 0; i < AbstractCompany(this).stockIndex(); i++) {
       Stock stock = Stock(AbstractCompany(this).stocks(i));
 
-      votes += stock.votings(votingId, optionId);
-      totalCastedVotes += stock.totalCastedVotes(votingId);
+      votes += stock.votings(votingIndex, optionId);
+      totalCastedVotes += stock.totalCastedVotes(votingIndex);
       votingPower += stock.totalVotingPower();
     }
   }

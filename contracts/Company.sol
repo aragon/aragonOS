@@ -148,19 +148,22 @@ contract Company is AbstractCompany {
 
   // vote
 
-  function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256) {
-    var (v, c, tv) = BylawsLib.countVotes(votingId, optionId);
+  function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256) {
+    var (v, c, tv) = BylawsLib.countVotes(votingIndex, optionId);
     return (v, tv);
   }
 
   function setVotingExecuted(uint8 option) {
-    uint256 votingId = reverseVotings[msg.sender];
-    if (votingId == 0) throw;
-    if (voteExecuted[votingId] > 0) throw;
+    uint256 votingIndex = reverseVotings[msg.sender];
+    if (votingIndex == 0) throw;
+    if (voteExecuted[votingIndex] > 0) throw;
 
-    voteExecuted[votingId] = 10 + option; // avoid 0
+    voteExecuted[votingIndex] = 10 + option; // avoid 0
+    for (uint8 i = 0; i < stockIndex; i++) {
+      Stock(stocks[i]).closePoll(votingIndex);
+    }
 
-    VoteExecuted(votingId, msg.sender, option);
+    VoteExecuted(votingIndex, msg.sender, option);
   }
 
   function beginPoll(address voting, uint64 closes) public checkBylaws {
@@ -185,7 +188,6 @@ contract Company is AbstractCompany {
   }
 
   // stock
-
   function isShareholder(address holder) constant public returns (bool) {
     for (uint8 i = 0; i < stockIndex; i++) {
       if (Stock(stocks[i]).isShareholder(holder)) {

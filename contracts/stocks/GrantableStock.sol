@@ -21,8 +21,8 @@ contract GrantableStock is Stock {
     if (_vesting < now) throw;
     if (_cliff > _vesting) throw;
 
-    grants[_to].length += 1;
-    grants[_to][grants[_to].length - 1] = StockGrant({date: uint64(now), value: _value, cliff: _cliff, vesting: _vesting});
+    StockGrant memory grant = StockGrant({date: uint64(now), value: _value, cliff: _cliff, vesting: _vesting});
+    grants[_to].push(grant);
 
     grantStock(_to, _value);
   }
@@ -43,10 +43,6 @@ contract GrantableStock is Stock {
     return safeSub(grant.value, vestedShares(grant, time));
   }
 
-  function max64(uint64 a, uint64 b) private constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
   function fullyVestedDate(address holder) constant public returns (uint64 date) {
     date = uint64(now);
     uint256 grantIndex = grants[holder].length;
@@ -54,7 +50,7 @@ contract GrantableStock is Stock {
       date = max64(grants[holder][i].vesting, date);
     }
   }
-
+  
   function transferrableShares(address holder, uint64 time) constant public returns (uint256 nonVested) {
     uint256 grantIndex = grants[holder].length;
 
@@ -62,12 +58,21 @@ contract GrantableStock is Stock {
       nonVested = safeAdd(nonVested, nonVestedShares(grants[holder][i], time));
     }
 
-    return safeSub(balances[holder], nonVested);
+    uint256 transferrable = safeSub(balances[holder], nonVested);
+    return min256(transferrable, super.transferrableShares(holder, time));
   }
 
   function transfer(address _to, uint _value) {
     if (msg.sender != company && _value > transferrableShares(msg.sender, uint64(now))) throw;
 
     super.transfer(_to, _value);
+  }
+
+  function max64(uint64 a, uint64 b) private constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) private constant returns (uint256) {
+    return a < b ? a : b;
   }
 }
