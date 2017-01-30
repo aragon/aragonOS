@@ -5,8 +5,8 @@ const devAccounts = [
 
 module.exports = (deployer) => (
   deployer
-    .then(() => Company.deployed().grantStock(0, 500, web3.eth.accounts[1]))
-    .then(() => Promise.all(devAccounts.map(a => Company.deployed().grantStock(0, 100, a))))
+    .then(() => Company.deployed().grantStock(0, 500, web3.eth.accounts[0]))
+    .then(() => Promise.all(devAccounts.map(a => Company.deployed().grantStock(0, 10, a))))
     // .then(() => Promise.all(devAccounts.map(a => web3.eth.sendTransaction({ from: web3.eth.accounts[0], to: a, value: web3.toWei(2, 'ether') }))))
     .then(() => Promise.all(devAccounts.map(a => Company.deployed().setEntityStatusByStatus(a, 2))))
 )
