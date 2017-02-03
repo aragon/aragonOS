@@ -7,7 +7,7 @@ module.exports = {
     },
     landing: {
       network_id: 1234,
-      host: 'eth-rpc.provident.ai',
+      host: 'eth-rpc.aragon.one',
       port: 80,
     },
   },
