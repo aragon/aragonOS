@@ -1559,12 +1559,12 @@ var SolidityEvent = require("web3/lib/web3/event.js");
         "type": "event"
       }
     },
-    "updated_at": 1486032053027,
+    "updated_at": 1486123801962,
     "links": {
-      "AccountingLib": "0xbde75337b0351d0d76f121b8d54a77eb08ba8c62",
-      "BylawsLib": "0x776bf4478a1dca0c46cb006f64ed4f84ab2f919f"
+      "AccountingLib": "0x7ec2ec99fa117aa2fac791563958952449073d41",
+      "BylawsLib": "0xbe73227fb7c1df30cb8848ff67aaab503fc6acde"
     },
-    "address": "0x4b47eae94c5ee3630650f059a4d6c74b9177fec9"
+    "address": "0x44dce125d4cb438080fe081f699fa2d003fa76b0"
   },
   "default": {
     "abi": [
