@@ -1256,13 +1256,13 @@
         }
       },
       "links": {
-        "AccountingLib": "0xab620fe0b1d549b737a8f14c856c56e032b8adfe",
-        "BylawsLib": "0x7907c4c7b6c5fde7ffef931e2e976e758bd61d3b"
+        "AccountingLib": "0xb817e8e8305ce75f1e2bd8aa461b19c497f2e0f0",
+        "BylawsLib": "0xebb7d146d52ec1008dd89784df2f3bed136c0783"
       },
-      "address": "0x06ae67cc796fa3326c879a30146a65452397584a",
-      "updated_at": 1486401527857
+      "address": "0x4d8b718708f31771246c0fd39298a595ffae904c",
+      "updated_at": 1486401998795
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1486401527857
+  "updated_at": 1486401998795
 }
