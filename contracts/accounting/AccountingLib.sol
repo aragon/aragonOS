@@ -83,7 +83,7 @@ library AccountingLib {
     return self.periods[self.currentPeriod];
   }
 
-  function getPeriodIndexForTimestamp(AccountingLedger storage self, uint64 timestamp) internal returns (uint) {
+  function getPeriodIndexForTimestamp(AccountingLedger storage self, uint64 timestamp) returns (uint) {
     if (self.periods[0].startTimestamp > timestamp) throw;
 
     uint i = 0;
@@ -243,7 +243,7 @@ library AccountingLib {
     return;
   }
 
-  function projectRecurringTransactionExpense(AccountingPeriod memory period, RecurringTransaction memory recurring) internal returns (uint256) {
+  function projectRecurringTransactionExpense(AccountingPeriod memory period, RecurringTransaction memory recurring) private returns (uint256) {
     uint64 periodEnds = period.startTimestamp + period.periodDuration;
     uint256 n = uint256(periodEnds - recurring.lastTransactionDate) / recurring.period; // TODO: Make sure rounding works as intended (floor)
     return n * recurring.transaction.amount;

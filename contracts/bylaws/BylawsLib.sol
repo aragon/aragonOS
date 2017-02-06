@@ -57,7 +57,7 @@ library BylawsLib {
     return self.bylaws[keyForFunctionSignature(functionSignature)];
   }
 
-  function canPerformAction(Bylaws storage self, bytes4 sig) internal returns (bool) {
+  function canPerformAction(Bylaws storage self, bytes4 sig) returns (bool) {
     Bylaw b = self.bylaws[sig];
     if (b.updated == 0) {
       // not existent law, allow action only if is executive
