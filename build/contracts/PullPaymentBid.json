@@ -1,0 +1,69 @@
+{
+  "contract_name": "PullPaymentBid",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "bid",
+      "outputs": [],
+      "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "withdrawPayments",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "highestBidder",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "highestBid",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "payments",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x606060405234610000575b61023a806100196000396000f300606060405263ffffffff60e060020a6000350416631998aeef81146100505780636103d70b1461005a57806391f9015714610069578063d57bde7914610092578063e2982c21146100b1575b610000565b6100586100dc565b005b3461000057610058610144565b005b34610000576100766101c4565b60408051600160a060020a039092168252519081900360200190f35b346100005761009f6101d3565b60408051918252519081900360200190f35b346100005761009f600160a060020a03600435166101d9565b60408051918252519081900360200190f35b60025434116100ea57610000565b600154600160a060020a0316156101145760015460025461011491600160a060020a0316906101eb565b5b6001805473ffffffffffffffffffffffffffffffffffffffff191633600160a060020a0316179055346002555b565b33600160a060020a03811660009081526020819052604090205480151561016a57610000565b8030600160a060020a031631101561018157610000565b600160a060020a0382166000818152602081905260408082208290555183156108fc0291849190818181858888f1935050505015156101bf57610000565b5b5050565b600154600160a060020a031681565b60025481565b60006020819052908152604090205481565b600160a060020a03821660009081526020819052604090208054820190555b50505600a165627a7a7230582083ce53103ab18db4713806854b8cfeefd6267dfb7fab276dded2f01bb52e72e60029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1486410058064
+}

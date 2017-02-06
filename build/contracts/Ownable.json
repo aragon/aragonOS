@@ -1,0 +1,40 @@
+{
+  "contract_name": "Ownable",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "type": "constructor"
+    }
+  ],
+  "unlinked_binary": "0x606060405234610000575b60008054600160a060020a03191633600160a060020a03161790555b5b60f8806100356000396000f300606060405263ffffffff60e060020a6000350416638da5cb5b8114602c578063f2fde38b146052575b6000565b346000576036606a565b60408051600160a060020a039092168252519081900360200190f35b346000576068600160a060020a03600435166079565b005b600054600160a060020a031681565b60005433600160a060020a039081169116141560c657600160a060020a0381161560c6576000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790555b5b5b5b505600a165627a7a723058200e13d7b6a8071e4132441d9db24e10e3af3b710877135e16a8e5375d212a4f1e0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1486410058064
+}

@@ -749,8 +749,8 @@
         }
       },
       "links": {},
-      "address": "0x7cdd24dcb8fbae9733a25716b95432b013723080",
-      "updated_at": 1486406902287
+      "address": "0x08fa28d5b316d173d0b9158f99c2aed7af240000",
+      "updated_at": 1486410070992
     },
     "1486399947701": {
       "events": {
@@ -890,5 +890,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1486406902287
+  "updated_at": 1486410070992
 }

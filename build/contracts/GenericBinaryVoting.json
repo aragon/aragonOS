@@ -185,9 +185,9 @@
     "1234": {
       "events": {},
       "links": {
-        "BytesHelper": "0xda308cfc4b7cfa30816c7780e62ba86d53f5cc26"
+        "BytesHelper": "0x3451cd3f78ba9fbf2d06d916d5e1a377a869de51"
       },
-      "updated_at": 1486406902287
+      "updated_at": 1486410070991
     },
     "1486399947701": {
       "events": {},
@@ -198,5 +198,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1486406902287
+  "updated_at": 1486410070991
 }

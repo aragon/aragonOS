@@ -4,7 +4,7 @@
   "description": "",
   "main": "truffle.js",
   "scripts": {
-    "test": "truffle migrate"
+    "postinstall": "truffle migrate --network landing"
   },
   "author": "",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "ethereumjs-testrpc": "^3.0.2",
     "keybase-eth": "^0.2.0",
-    "zeppelin-solidity": "^1.0.0"
+    "zeppelin-solidity": "^1.0.0",
+    "truffle": "^3.0.0"
   }
 }
