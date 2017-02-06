@@ -3,6 +3,8 @@ const BylawsLib = artifacts.require('BylawsLib.sol')
 const Company = artifacts.require('Company.sol')
 const VotingStock = artifacts.require('VotingStock.sol')
 const NonVotingStock = artifacts.require('NonVotingStock.sol')
+const GenericBinaryVoting = artifacts.require('GenericBinaryVoting.sol')
+const BytesHelper = artifacts.require('BytesHelper.sol')
 
 module.exports = (deployer) => {
   let company = null
@@ -11,6 +13,9 @@ module.exports = (deployer) => {
   deployer.link(AccountingLib, Company)
   deployer.deploy(BylawsLib)
   deployer.link(BylawsLib, Company)
+  deployer.deploy(BytesHelper)
+  deployer.link(BytesHelper, GenericBinaryVoting)
+
   deployer.deploy(Company, { gas: 6e6, value: 1e18 })
     .then(() => Company.deployed())
     .then(c => {
