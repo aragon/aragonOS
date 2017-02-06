@@ -31,7 +31,7 @@ contract Company is AbstractCompany {
   }
 
   modifier checkBylaws {
-    if (!bylaws.canPerformAction(msg.sig)) throw;
+    if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
     _;
   }
 
@@ -40,8 +40,8 @@ contract Company is AbstractCompany {
     uint64 minimumVotingTime = uint64(7 days);
 
     addVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
-    addSpecialStatusBylaw("beginPoll(address,uint64)", AbstractCompany.SpecialEntityStatus.Shareholder);
-    addSpecialStatusBylaw("castVote(uint256,uint8)", AbstractCompany.SpecialEntityStatus.Shareholder);
+    addSpecialStatusBylaw("beginPoll(address,uint64,bool,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
+    addSpecialStatusBylaw("castVote(uint256,uint8,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
 
     addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
     addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
@@ -83,6 +83,15 @@ contract Company is AbstractCompany {
   }
 
   function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
+    BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
+
+    support = b.supportNeeded;
+    base = b.supportBase;
+    closingRelativeMajority = b.closingRelativeMajority;
+    minimumVotingTime = b.minimumVotingTime;
+  }
+
+  function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
     BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
 
     support = b.supportNeeded;
@@ -166,23 +175,34 @@ contract Company is AbstractCompany {
     VoteExecuted(votingIndex, msg.sender, option);
   }
 
-  function beginPoll(address voting, uint64 closes) public checkBylaws {
+  function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public checkBylaws {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
     }
     votings[votingIndex] = voting;
     reverseVotings[voting] = votingIndex;
+
+    if (voteOnCreate) castVote(votingIndex, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
+
     votingIndex += 1;
   }
 
-  function castVote(uint256 voteId, uint8 option) public checkBylaws {
+  function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public checkBylaws {
     if (voteExecuted[voteId] > 0) throw; // cannot vote on executed polls
 
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
       if (stock.isShareholder(msg.sender)) {
         stock.castVoteFromCompany(msg.sender, voteId, option);
+      }
+    }
+
+    if (executesIfDecided) {
+      address votingAddress = votings[votingIndex];
+      BinaryVoting voting = BinaryVoting(votingAddress);
+      if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
+        voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
       }
     }
   }

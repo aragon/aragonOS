@@ -11,7 +11,7 @@ module.exports = (deployer) => {
     .then(() => Company.deployed())
     .then(c => {
       company = c
-      return company.grantStock(0, 500, web3.eth.accounts[0])
+      return company.grantStock(0, 499, web3.eth.accounts[1])
     })
     .then(() => Promise.all(devAccounts.map(a => company.grantStock(0, 100, a))))
     // .then(() => Promise.all(devAccounts.map(a => web3.eth.sendTransaction({ from: web3.eth.accounts[0], to: a, value: web3.toWei(2, 'ether') }))))

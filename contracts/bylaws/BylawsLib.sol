@@ -54,10 +54,14 @@ library BylawsLib {
   }
 
   function getBylaw(Bylaws storage self, string functionSignature) internal returns (Bylaw) {
-    return self.bylaws[keyForFunctionSignature(functionSignature)];
+    return getBylaw(self, keyForFunctionSignature(functionSignature));
   }
 
-  function canPerformAction(Bylaws storage self, bytes4 sig) returns (bool) {
+  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw) {
+    return self.bylaws[sig];
+  }
+
+  function canPerformAction(Bylaws storage self, bytes4 sig, address sender) returns (bool) {
     Bylaw b = self.bylaws[sig];
     if (b.updated == 0) {
       // not existent law, allow action only if is executive
@@ -68,15 +72,15 @@ library BylawsLib {
     // TODO: Support multi enforcement rules
 
     if (b.status.enforced) {
-      return getStatus(msg.sender) >= b.status.neededStatus;
+      return getStatus(sender) >= b.status.neededStatus;
     }
 
     if (b.specialStatus.enforced) {
-      return isSpecialStatus(msg.sender, b.specialStatus.neededStatus);
+      return isSpecialStatus(sender, b.specialStatus.neededStatus);
     }
 
     if (b.voting.enforced) {
-      if (checkVoting(msg.sender, b.voting)) {
+      if (checkVoting(sender, b.voting)) {
         // TODO: Set voting executed here to block reentry
         return true;
       }
@@ -86,7 +90,7 @@ library BylawsLib {
   }
 
   function getStatus(address entity) internal returns (uint8) {
-    return AbstractCompany(this).entityStatus(msg.sender);
+    return AbstractCompany(this).entityStatus(entity);
   }
 
   function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {

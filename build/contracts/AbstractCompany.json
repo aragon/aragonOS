@@ -156,15 +156,23 @@
       "constant": false,
       "inputs": [
         {
-          "name": "voteId",
-          "type": "uint256"
+          "name": "voting",
+          "type": "address"
         },
         {
-          "name": "option",
-          "type": "uint8"
+          "name": "closes",
+          "type": "uint64"
+        },
+        {
+          "name": "voteOnCreate",
+          "type": "bool"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
         }
       ],
-      "name": "castVote",
+      "name": "beginPoll",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -277,32 +285,23 @@
       "type": "function"
     },
     {
-      "constant": true,
+      "constant": false,
       "inputs": [
         {
-          "name": "functionSignature",
-          "type": "string"
-        }
-      ],
-      "name": "getVotingBylaw",
-      "outputs": [
-        {
-          "name": "support",
+          "name": "voteId",
           "type": "uint256"
         },
         {
-          "name": "base",
-          "type": "uint256"
+          "name": "option",
+          "type": "uint8"
         },
         {
-          "name": "closingRelativeMajority",
+          "name": "executesIfDecided",
           "type": "bool"
-        },
-        {
-          "name": "minimumVotingTime",
-          "type": "uint64"
         }
       ],
+      "name": "castVote",
+      "outputs": [],
       "payable": false,
       "type": "function"
     },
@@ -383,6 +382,36 @@
         {
           "name": "",
           "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "bytes4"
+        }
+      ],
+      "name": "getVotingBylaw",
+      "outputs": [
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
         }
       ],
       "payable": false,
@@ -541,23 +570,6 @@
           "type": "address"
         }
       ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "voting",
-          "type": "address"
-        },
-        {
-          "name": "closes",
-          "type": "uint64"
-        }
-      ],
-      "name": "beginPoll",
-      "outputs": [],
       "payable": false,
       "type": "function"
     },
@@ -897,5 +909,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1486385942126
+  "updated_at": 1486400037323
 }

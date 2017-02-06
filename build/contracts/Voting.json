@@ -56,7 +56,7 @@
       "outputs": [
         {
           "name": "",
-          "type": "string"
+          "type": "bytes4"
         }
       ],
       "payable": false,
@@ -164,5 +164,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1486385942128
+  "updated_at": 1486400037325
 }

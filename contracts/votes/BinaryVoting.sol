@@ -34,4 +34,8 @@ contract BinaryVoting is Voting {
   function executeOnAppove(AbstractCompany company) internal {
     company.setVotingExecuted(uint8(VotingOption.Favor));
   }
+
+  function mainSignature() public constant returns (bytes4) {
+    return 0x0;
+  }
 }

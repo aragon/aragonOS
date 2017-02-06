@@ -11,7 +11,7 @@ module.exports = (deployer) => {
   deployer.link(AccountingLib, Company)
   deployer.deploy(BylawsLib)
   deployer.link(BylawsLib, Company)
-  deployer.deploy(Company, { gas: 5e6, value: 1e18 })
+  deployer.deploy(Company, { gas: 6e6, value: 1e18 })
     .then(() => Company.deployed())
     .then(c => {
       company = c
