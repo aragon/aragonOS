@@ -1,0 +1,105 @@
+{
+  "contract_name": "DayLimitMock",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "resetSpentToday",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "dailyLimit",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "totalSpending",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "lastDay",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_newLimit",
+          "type": "uint256"
+        }
+      ],
+      "name": "setDailyLimit",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "attemptSpend",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "spentToday",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
+    }
+  ],
+  "unlinked_binary": "0x6060604052346100005760405160208061026b83398101604052515b805b60008190556100376401000000006101d461004882021704565b6002555b5060006003555b50610052565b6201518042045b90565b61020a806100616000396000f300606060405236156100675763ffffffff60e060020a6000350416635c52c2f5811461006c57806367eeba0c1461007b5780636997bcab1461009a5780636b0c932d146100b9578063b20d30a9146100d8578063b349f6c7146100ea578063f059cf2b146100fc575b610000565b346100005761007961011b565b005b3461000057610088610126565b60408051918252519081900360200190f35b346100005761008861012c565b60408051918252519081900360200190f35b3461000057610088610132565b60408051918252519081900360200190f35b3461000057610079600435610138565b005b3461000057610079600435610145565b005b3461000057610088610163565b60408051918252519081900360200190f35b610123610169565b5b565b60005481565b60035481565b60025481565b61014181610171565b5b50565b8061014f8161017a565b1561015d5760038054830190555b5b5b5050565b60015481565b60006001555b565b60008190555b50565b60006002546101876101d4565b111561019e57600060015561019a6101d4565b6002555b600154828101108015906101b85750600054826001540111155b156101cb575060018054820181556101cf565b5060005b919050565b6201518042045b905600a165627a7a723058200f7d417e6cf7dba0d72e24b52bfc58c98c684253fe7efb5feb0b27fb045229840029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1486413749186
+}

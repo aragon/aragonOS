@@ -1,0 +1,73 @@
+{
+  "contract_name": "SafeMathMock",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "uint256"
+        },
+        {
+          "name": "b",
+          "type": "uint256"
+        }
+      ],
+      "name": "multiply",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "uint256"
+        },
+        {
+          "name": "b",
+          "type": "uint256"
+        }
+      ],
+      "name": "subtract",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "result",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "uint256"
+        },
+        {
+          "name": "b",
+          "type": "uint256"
+        }
+      ],
+      "name": "add",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x606060405234610000575b610188806100196000396000f300606060405263ffffffff60e060020a600035041663165c4a1681146100455780633ef5e4451461005a578063653721471461006f578063771602f71461008e575b610000565b34610000576100586004356024356100a3565b005b34610000576100586004356024356100b5565b005b346100005761007c6100c7565b60408051918252519081900360200190f35b34610000576100586004356024356100cd565b005b6100ad82826100df565b6000555b5050565b6100ad828261010b565b6000555b5050565b60005481565b6100ad8282610124565b6000555b5050565b60008282026101008415806100fb575083858381156100005704145b61014c565b8091505b5092915050565b60006101198383111561014c565b508082035b92915050565b60008282016101008482108015906100fb5750838210155b61014c565b8091505b5092915050565b80151561015857610000565b5b505600a165627a7a72305820edcd2dddfe33b5f768743f059cee206346c5822acb14e1f88fb6347602fb21ce0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1486413749188
+}
