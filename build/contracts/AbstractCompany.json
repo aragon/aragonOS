@@ -475,35 +475,6 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_stock",
-          "type": "uint8"
-        },
-        {
-          "name": "_amount",
-          "type": "uint256"
-        },
-        {
-          "name": "_recipient",
-          "type": "address"
-        },
-        {
-          "name": "_cliff",
-          "type": "uint64"
-        },
-        {
-          "name": "_vesting",
-          "type": "uint64"
-        }
-      ],
-      "name": "grantVestedStock",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": true,
       "inputs": [
         {
@@ -692,6 +663,39 @@
         }
       ],
       "name": "issueStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_stock",
+          "type": "uint8"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "name": "_start",
+          "type": "uint64"
+        },
+        {
+          "name": "_cliff",
+          "type": "uint64"
+        },
+        {
+          "name": "_vesting",
+          "type": "uint64"
+        }
+      ],
+      "name": "grantVestedStock",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -909,5 +913,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1486413749184
+  "updated_at": 1486568400307
 }

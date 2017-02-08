@@ -48,7 +48,7 @@ contract AbstractCompany {
   function addStock(address newStock, uint256 issue) public;
   function issueStock(uint8 _stock, uint256 _amount) public;
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) public;
-  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting) public;
+  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _start, uint64 _cliff, uint64 _vesting) public;
 
   function beginSale(address saleAddress) public;
   function transferSaleFunds(uint256 _sale) public;

@@ -46,7 +46,7 @@ contract Company is AbstractCompany {
     addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
     addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
     addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
-    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64)", 1, 2, true, minimumVotingTime, favor);
+    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", 1, 2, true, minimumVotingTime, favor);
 
     addVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
     addStatusBylaw("transferSaleFunds(uint256)", AbstractCompany.EntityStatus.Executive);
@@ -199,7 +199,7 @@ contract Company is AbstractCompany {
     }
 
     if (executesIfDecided) {
-      address votingAddress = votings[votingIndex];
+      address votingAddress = votings[voteId];
       BinaryVoting voting = BinaryVoting(votingAddress);
       if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
         voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
@@ -233,9 +233,9 @@ contract Company is AbstractCompany {
     IssuedStock(stocks[_stock], _stock, _amount);
   }
 
-  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _cliff, uint64 _vesting) checkBylaws public {
+  function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _start, uint64 _cliff, uint64 _vesting) checkBylaws public {
     issueStock(_stock, _amount);
-    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _cliff, _vesting);
+    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) checkBylaws public {
