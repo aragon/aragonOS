@@ -89,10 +89,10 @@
     "1234": {
       "events": {},
       "links": {},
-      "address": "0xbbdbf6c470f79eabd67b0a1f9b6f44896cdb46c7",
-      "updated_at": 1486685983678
+      "address": "0x9db4aa34e2ecd669a83f77fca5aeaa533ef80398",
+      "updated_at": 1486690182091
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1486685983678
+  "updated_at": 1486690182091
 }
