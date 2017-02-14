@@ -1260,11 +1260,11 @@
         }
       },
       "links": {
-        "AccountingLib": "0xac1fadae0ed853c228a6bda9e1a70d1ff48560e0",
-        "BylawsLib": "0xc72b887c414f8b3d8f8d7625da62e81a0b9b52a0"
+        "AccountingLib": "0xb699f477507247b8fbdab3cfe9fd8c537e286a06",
+        "BylawsLib": "0x7590f7d76e683b984c009475d77e5e4980d0bf3a"
       },
-      "address": "0xe8a1e9b0399609bd7268aa283fda0040e9400ef8",
-      "updated_at": 1486661546004
+      "address": "0xded4d6d385d6dbcb4ff72931e24e1b67c1b23a16",
+      "updated_at": 1487096841158
     },
     "1234": {
       "events": {
@@ -1438,5 +1438,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1486994606953
+  "updated_at": 1487096841158
 }
