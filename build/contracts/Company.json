@@ -1430,13 +1430,13 @@
         }
       },
       "links": {
-        "AccountingLib": "0x2d009cb636b66606fde9f6f746f53e954405eb4a",
-        "BylawsLib": "0xa1921be658e95974269b88f1d685bf99a6782970"
+        "AccountingLib": "0xaf4b0d3c509197dc2992cbed2384852244376a04",
+        "BylawsLib": "0x7af24f8d95a1cb2d56a6a6e4173749d313d4b856"
       },
-      "address": "0xf8b5e74edc38bcc7781e8096e11b564309b3af49",
-      "updated_at": 1486994606953
+      "address": "0xcf120782be515542b6a455f0428a21ddbee45953",
+      "updated_at": 1487152519221
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1487096841158
+  "updated_at": 1487152519221
 }

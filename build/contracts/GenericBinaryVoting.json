@@ -192,11 +192,11 @@
     "1234": {
       "events": {},
       "links": {
-        "BytesHelper": "0xc8761d358a730cbcb5d680fd28c03cf51330cb18"
+        "BytesHelper": "0x9940a9aef48ca7c88f6e4dcdd4497e2eca72a8e1"
       },
-      "updated_at": 1486994580366
+      "updated_at": 1487152504842
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1487096836749
+  "updated_at": 1487152504842
 }

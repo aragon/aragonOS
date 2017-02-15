@@ -57,10 +57,10 @@
     "1234": {
       "events": {},
       "links": {},
-      "address": "0xa1921be658e95974269b88f1d685bf99a6782970",
-      "updated_at": 1486994580366
+      "address": "0x7af24f8d95a1cb2d56a6a6e4173749d313d4b856",
+      "updated_at": 1487152504839
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1487096836745
+  "updated_at": 1487152504839
 }
