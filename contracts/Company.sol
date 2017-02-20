@@ -10,7 +10,7 @@ import "./stocks/GrantableStock.sol";
 
 import "./votes/BinaryVoting.sol";
 
-import "./sales/StockSale.sol";
+import "./sales/AbstractStockSale.sol";
 
 contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;
@@ -23,8 +23,7 @@ contract Company is AbstractCompany {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
 
-    accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
-    accounting.addTreasure('Company bootstrap');
+    accounting.init(msg.value, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
@@ -33,36 +32,6 @@ contract Company is AbstractCompany {
   modifier checkBylaws {
     if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
     _;
-  }
-
-  function setInitialBylaws() {
-    uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
-    uint64 minimumVotingTime = uint64(7 days);
-
-    addVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
-    addSpecialStatusBylaw("beginPoll(address,uint64,bool,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
-    addSpecialStatusBylaw("castVote(uint256,uint8,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
-
-    addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
-    addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
-    addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
-    addVotingBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", 1, 2, true, minimumVotingTime, favor);
-
-    addVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
-    addStatusBylaw("transferSaleFunds(uint256)", AbstractCompany.EntityStatus.Executive);
-
-    addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-    addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-
-    addVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, minimumVotingTime, favor);
-    addStatusBylaw("createRecurringReward(address,uint256,uint64,string)", AbstractCompany.EntityStatus.Executive);
-    addStatusBylaw("removeRecurringReward(uint)", AbstractCompany.EntityStatus.Executive);
-    addStatusBylaw("issueReward(address,uint256,string)", AbstractCompany.EntityStatus.Executive);
-
-    // Protect bylaws under a 2/3 voting
-    addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
-    addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
-    addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint64,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
   }
 
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
@@ -138,7 +107,7 @@ contract Company is AbstractCompany {
   // acl
 
   function setEntityStatusByStatus(address entity, uint8 status) public {
-    if (entityStatus[msg.sender] <= status) throw; // Cannot set same or higher status
+    if (entityStatus[msg.sender] < status) throw; // Cannot set higher status
     if (entity != msg.sender && entityStatus[entity] >= entityStatus[msg.sender]) throw; // Cannot change status of higher status
 
     // Exec can set and remove employees.
@@ -246,7 +215,7 @@ contract Company is AbstractCompany {
 
   function beginSale(address saleAddress) checkBylaws public {
 
-    StockSale sale = StockSale(saleAddress);
+    AbstractStockSale sale = AbstractStockSale(saleAddress);
     if (sale.companyAddress() != address(this)) throw;
 
     sales[saleIndex] = saleAddress;
@@ -257,7 +226,7 @@ contract Company is AbstractCompany {
   }
 
   function transferSaleFunds(uint256 _sale) checkBylaws public {
-    StockSale(sales[_sale]).transferFunds();
+    AbstractStockSale(sales[_sale]).transferFunds();
   }
 
   function isStockSale(address entity) constant public returns (bool) {

@@ -1,6 +1,8 @@
 const AccountingLib = artifacts.require('AccountingLib.sol')
 const BylawsLib = artifacts.require('BylawsLib.sol')
 const Company = artifacts.require('Company.sol')
+const CompanyFactory = artifacts.require('CompanyFactory.sol')
+const CompanyConfiguratorFactory = artifacts.require('CompanyConfiguratorFactory.sol')
 const VotingStock = artifacts.require('VotingStock.sol')
 const NonVotingStock = artifacts.require('NonVotingStock.sol')
 const GenericBinaryVoting = artifacts.require('GenericBinaryVoting.sol')
@@ -10,13 +12,25 @@ module.exports = (deployer) => {
   let company = null
 
   deployer.deploy(AccountingLib)
-  deployer.link(AccountingLib, Company)
+  deployer.link(AccountingLib, [Company, CompanyFactory])
   deployer.deploy(BylawsLib)
-  deployer.link(BylawsLib, Company)
+  deployer.link(BylawsLib, [Company, CompanyFactory])
   deployer.deploy(BytesHelper)
   deployer.link(BytesHelper, GenericBinaryVoting)
 
-  deployer.deploy(Company, { gas: 6e6, value: 1e18 })
+  deployer.deploy(CompanyConfiguratorFactory)
+    .then(() => CompanyConfiguratorFactory.deployed())
+    .then(c => conf = c)
+    .then(() => deployer.deploy(CompanyFactory, conf.address, { gas: 10e6 }))
+    .then(() => CompanyFactory.deployed())
+    .then(f => f.deployCompany({ value: 1e17, gas: 1e7 }))
+    .then(r => {
+      const companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
+      console.log('Company address: ', companyAddress)
+      conf.configureCompany(companyAddress, 1000, ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750"], ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0x2"], [600, 250], {gas: 1e7})
+    })
+  /*
+  deployer.deploy(Company, { gas: 10e6, value: 1e18 })
     .then(() => Company.deployed())
     .then(c => {
       company = c
@@ -25,4 +39,5 @@ module.exports = (deployer) => {
     .then(() => deployer.deploy(NonVotingStock, company.address))
     .then(() => VotingStock.deployed().then(vs => company.addStock(vs.address, 1e3)))
     .then(() => NonVotingStock.deployed().then(nvs => company.addStock(nvs.address, 1e4)))
+   */
 }
