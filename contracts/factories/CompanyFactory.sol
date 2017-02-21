@@ -21,7 +21,7 @@ contract CompanyFactory {
     Company company = new Company();
     company.addTreasure.value(msg.value)('Company bootstrap');
     company.setEntityStatusByStatus(address(configurator), 3);
-    configurator.setStockSaleBylaws(company);
+    company.setSpecialBylaws();
     return address(company);
   }
 

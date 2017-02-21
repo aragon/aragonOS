@@ -8,6 +8,8 @@ const NonVotingStock = artifacts.require('NonVotingStock.sol')
 const GenericBinaryVoting = artifacts.require('GenericBinaryVoting.sol')
 const BytesHelper = artifacts.require('BytesHelper.sol')
 
+const from = web3.eth.accounts[8] || 'fcea9c5d4967956d4b209f6b1e9d2162ce96149b'
+
 module.exports = (deployer) => {
   let company = null
 
@@ -21,13 +23,13 @@ module.exports = (deployer) => {
   deployer.deploy(CompanyConfiguratorFactory)
     .then(() => CompanyConfiguratorFactory.deployed())
     .then(c => conf = c)
-    .then(() => deployer.deploy(CompanyFactory, conf.address, { gas: 10e6 }))
+    .then(() => deployer.deploy(CompanyFactory, conf.address))
     .then(() => CompanyFactory.deployed())
-    .then(f => f.deployCompany({ value: 1e17, gas: 1e7 }))
+    .then(f => f.deployCompany({ value: 1e17, from }))
     .then(r => {
       const companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
-      conf.configureCompany(companyAddress, 1000, ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750"], ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0x2"], [600, 250], {gas: 1e7})
+      return conf.configureCompany(companyAddress, 1000, [from, "0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0xb125b0c784f538e9a67c849624d9344072580f0e"], ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0x2"], [600, 250], { from })
     })
   /*
   deployer.deploy(Company, { gas: 10e6, value: 1e18 })

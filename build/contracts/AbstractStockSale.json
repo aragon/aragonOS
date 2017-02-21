@@ -1,5 +1,5 @@
 {
-  "contract_name": "StockSale",
+  "contract_name": "AbstractStockSale",
   "abi": [
     {
       "constant": true,
@@ -80,19 +80,6 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_txid",
-          "type": "string"
-        }
-      ],
-      "name": "setTxid",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": true,
       "inputs": [],
       "name": "closeDate",
@@ -100,19 +87,6 @@
         {
           "name": "",
           "type": "uint64"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "txid",
-      "outputs": [
-        {
-          "name": "",
-          "type": "string"
         }
       ],
       "payable": false,
@@ -355,10 +329,6 @@
       "type": "function"
     },
     {
-      "payable": true,
-      "type": "fallback"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
@@ -395,5 +365,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1487675044100
+  "updated_at": 1487675458454
 }

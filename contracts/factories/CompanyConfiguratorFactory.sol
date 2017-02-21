@@ -35,8 +35,6 @@ contract CompanyConfiguratorFactory {
 
     company.addVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
     company.addSpecialStatusBylaw("beginPoll(address,uint64,bool,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
-    company.addSpecialStatusBylaw("castVote(uint256,uint8,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
-
     company.addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
     company.addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
     company.addStatusBylaw("grantStock(uint8,uint256,address)", AbstractCompany.EntityStatus.Executive);
@@ -55,10 +53,5 @@ contract CompanyConfiguratorFactory {
     company.addVotingBylaw("addStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
     company.addVotingBylaw("addSpecialStatusBylaw(string,uint8)", 2, 3, false, minimumVotingTime, favor);
     company.addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint64,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
-  }
-
-  function setStockSaleBylaws(AbstractCompany company) {
-    // company.addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-    // company.addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
   }
 }
