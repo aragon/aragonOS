@@ -8,7 +8,7 @@ const NonVotingStock = artifacts.require('NonVotingStock.sol')
 const GenericBinaryVoting = artifacts.require('GenericBinaryVoting.sol')
 const BytesHelper = artifacts.require('BytesHelper.sol')
 
-const from = web3.eth.accounts[8] || 'fcea9c5d4967956d4b209f6b1e9d2162ce96149b'
+const from = web3.eth.accounts[8] || '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b'
 
 module.exports = (deployer) => {
   let company = null
@@ -25,7 +25,7 @@ module.exports = (deployer) => {
     .then(c => conf = c)
     .then(() => deployer.deploy(CompanyFactory, conf.address))
     .then(() => CompanyFactory.deployed())
-    .then(f => f.deployCompany({ value: 1e17, from }))
+    .then(f => f.deployCompany({ value: 1e18, from }))
     .then(r => {
       const companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
