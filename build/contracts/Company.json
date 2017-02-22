@@ -1264,8 +1264,177 @@
         "BylawsLib": "0xd0f0f046fbf39c679f3ff1c2839cb4d5aae47465"
       },
       "updated_at": 1487675476016
+    },
+    "1234": {
+      "events": {
+        "0x61a611267e7ed28f8a566b021b9ac3ccc3985343a31971a180d01a57f63f3380": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "newPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewPeriod",
+          "type": "event"
+        },
+        "0x5263beccfd97c2947207bf7254d7c0c216431d4b9cea8c9b3371e8187020851b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "closedPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "PeriodClosed",
+          "type": "event"
+        },
+        "0x959c5b77f561a2d4015cca5a9e954873b86ae486f7d28c079c9f4eb85269b2ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewRecurringTransaction",
+          "type": "event"
+        },
+        "0x24ef25c67e85ad3acf87f62ecbe1b5fa3641cf54972aec7bf8cd1a507563e018": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "RemovedRecurringTransaction",
+          "type": "event"
+        },
+        "0x62ad1f2c6191c79e31d5ee69f7a962dce559b92f2adf6fa27ecf13bee926a1a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "period",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "transactionIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "TransactionSaved",
+          "type": "event"
+        },
+        "0x8dcbb0568a434c369b3e9d0678a4ee476157a658fb6bbcbdb004e0f7b87c453c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "votingAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "outcome",
+              "type": "uint8"
+            }
+          ],
+          "name": "VoteExecuted",
+          "type": "event"
+        },
+        "0xa57e55b329840b29f230f9984829ca4a7881db8c26a41a8140955db70b6cc15d": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "stockAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "stockIndex",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "IssuedStock",
+          "type": "event"
+        },
+        "0x9fc2cc7cc4d0a8baadda4627cf6fdfdb2e21fb3167701058da900eee4ea3011f": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "saleAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "saleIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stockIndex",
+              "type": "uint8"
+            }
+          ],
+          "name": "NewStockSale",
+          "type": "event"
+        },
+        "0x21035d17ebab4a65c22f9da200bc402d7168367cfd00f68d3a8ce8b6a6433d89": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "entity",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "EntityNewStatus",
+          "type": "event"
+        },
+        "0x707e8cc63d34f6a1906248ce9fb061134c766bcf45438c21f6a88258f6673929": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "functionSignature",
+              "type": "string"
+            }
+          ],
+          "name": "BylawChanged",
+          "type": "event"
+        }
+      },
+      "links": {
+        "AccountingLib": "0x6647923ebb246e1c90c4db37f738e5e0a7e5f47e",
+        "BylawsLib": "0x1de890132dad96870820fb528ea4a54c9526e87c"
+      },
+      "updated_at": 1487755577138
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1487675773106
+  "updated_at": 1487755577138
 }

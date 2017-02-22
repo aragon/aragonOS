@@ -174,8 +174,100 @@
       },
       "address": "0x70ff596a5efb6222f721d3deac6ccaaab081b361",
       "updated_at": 1487675476017
+    },
+    "1234": {
+      "events": {
+        "0x61a611267e7ed28f8a566b021b9ac3ccc3985343a31971a180d01a57f63f3380": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "newPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewPeriod",
+          "type": "event"
+        },
+        "0x5263beccfd97c2947207bf7254d7c0c216431d4b9cea8c9b3371e8187020851b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "closedPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "PeriodClosed",
+          "type": "event"
+        },
+        "0x959c5b77f561a2d4015cca5a9e954873b86ae486f7d28c079c9f4eb85269b2ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewRecurringTransaction",
+          "type": "event"
+        },
+        "0x24ef25c67e85ad3acf87f62ecbe1b5fa3641cf54972aec7bf8cd1a507563e018": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "RemovedRecurringTransaction",
+          "type": "event"
+        },
+        "0x62ad1f2c6191c79e31d5ee69f7a962dce559b92f2adf6fa27ecf13bee926a1a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "period",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "transactionIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "TransactionSaved",
+          "type": "event"
+        },
+        "0x8bf5e1e8c81a92d6c518b560ee24ff085fd11f0c8d2499f06b44b462cef2cef4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "companyAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "companyIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewCompany",
+          "type": "event"
+        }
+      },
+      "links": {
+        "AccountingLib": "0x6647923ebb246e1c90c4db37f738e5e0a7e5f47e",
+        "BylawsLib": "0x1de890132dad96870820fb528ea4a54c9526e87c"
+      },
+      "address": "0x1453f2db47a4ae826d64d21154a7cf56c53a9a39",
+      "updated_at": 1487755577140
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1487675773107
+  "updated_at": 1487755577140
 }
