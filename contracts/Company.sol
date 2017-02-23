@@ -53,10 +53,9 @@ contract Company is AbstractCompany {
     _;
   }
 
-  event Debug(bool isShareholder, uint8 status, uint8 t);
-  function beginUntrustedPoll(address voting, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
+  function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
     if (!bylaws.canPerformAction(BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)"), sender)) throw;
-    doBeginPoll(voting, uint64(now) + 10000, false, false);
+    doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
 
   function setSpecialBylaws() {

@@ -127,6 +127,43 @@
       "type": "function"
     },
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "voting",
+          "type": "address"
+        },
+        {
+          "name": "closingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32"
+        },
+        {
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "name": "nonce",
+          "type": "uint256"
+        }
+      ],
+      "name": "beginUntrustedPoll",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": true,
       "inputs": [
         {
@@ -173,39 +210,6 @@
         }
       ],
       "name": "beginPoll",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "voting",
-          "type": "address"
-        },
-        {
-          "name": "sender",
-          "type": "address"
-        },
-        {
-          "name": "r",
-          "type": "bytes32"
-        },
-        {
-          "name": "s",
-          "type": "bytes32"
-        },
-        {
-          "name": "v",
-          "type": "uint8"
-        },
-        {
-          "name": "nonce",
-          "type": "uint256"
-        }
-      ],
-      "name": "beginUntrustedPoll",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -946,5 +950,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1487842646290
+  "updated_at": 1487847609716
 }
