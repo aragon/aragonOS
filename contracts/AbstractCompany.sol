@@ -27,6 +27,8 @@ contract AbstractCompany {
   mapping (address => uint256) public reverseSales;
   uint256 public saleIndex;
 
+  mapping (bytes32 => bool) usedSignatures;
+
   function isStockSale(address entity) constant public returns (bool);
   function isShareholder(address holder) constant public returns (bool);
 
@@ -41,6 +43,7 @@ contract AbstractCompany {
   function setEntityStatus(address entity, uint8 status) public;
 
   function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256);
+  function beginUntrustedPoll(address voting, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
   function setVotingExecuted(uint8 option) public;

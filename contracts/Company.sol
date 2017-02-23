@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./AbstractCompany.sol";
+
 import "./accounting/AccountingLib.sol";
 import "./bylaws/BylawsLib.sol";
 
@@ -9,6 +10,7 @@ import "./stocks/IssueableStock.sol";
 import "./stocks/GrantableStock.sol";
 
 import "./votes/BinaryVoting.sol";
+import "./votes/GenericBinaryVoting.sol";
 
 import "./sales/AbstractStockSale.sol";
 
@@ -23,15 +25,38 @@ contract Company is AbstractCompany {
     votingIndex = 1; // Reverse index breaks when it is zero.
     saleIndex = 1;
 
-    accounting.init(msg.value, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
+    accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
 
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
   }
 
+  function () payable {
+    if (msg.value < 1) throw;
+    registerIncome("donation");
+  }
+
   modifier checkBylaws {
     if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
     _;
+  }
+
+  function sigPayload(uint nonce) constant public returns (bytes32) {
+    return sha3(address(this), nonce);
+  }
+
+  modifier checkSignature(address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) {
+    bytes32 signingPayload = sigPayload(nonce);
+    if (usedSignatures[signingPayload]) throw;
+    if (sender != ecrecover(signingPayload, v, r, s)) throw;
+    usedSignatures[signingPayload] = true;
+    _;
+  }
+
+  event Debug(bool isShareholder, uint8 status, uint8 t);
+  function beginUntrustedPoll(address voting, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
+    if (!bylaws.canPerformAction(BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)"), sender)) throw;
+    doBeginPoll(voting, uint64(now) + 10000, false, false);
   }
 
   function setSpecialBylaws() {
@@ -55,6 +80,8 @@ contract Company is AbstractCompany {
 
     if (b.status.enforced) return b.status.neededStatus;
     if (b.specialStatus.enforced) return b.specialStatus.neededStatus;
+
+    return uint8(250);
   }
 
   function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
@@ -151,6 +178,10 @@ contract Company is AbstractCompany {
   }
 
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public checkBylaws {
+    return doBeginPoll(voting, closes, voteOnCreate, executesIfDecided);
+  }
+
+  function doBeginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) private {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock(stocks[i]).beginPoll(votingIndex, closes);
