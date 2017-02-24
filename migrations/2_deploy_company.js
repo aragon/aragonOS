@@ -11,7 +11,7 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 
 // const utils = require('ethereumjs-util')
 
-const from = web3.eth.accounts[8] || '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b'
+const from = web3.eth.accounts[0] || '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b'
 const nonce = parseInt(Math.random() * 1e15)
 
 module.exports = (deployer) => {
@@ -30,8 +30,9 @@ module.exports = (deployer) => {
     .then(c => conf = c)
     .then(() => deployer.deploy(CompanyFactory, conf.address, {gas: 5e6}))
     .then(() => CompanyFactory.deployed())
-    .then(f => f.deployCompany({ value: 1e18, gas: 5e6, from }))
+    .then(f => f.deployCompany({ gas: 5e6, from }))
     .then(r => {
+      console.log(r)
       companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
       return conf.configureCompany(companyAddress, from, { from })
