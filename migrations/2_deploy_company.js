@@ -34,6 +34,6 @@ module.exports = (deployer) => {
     .then(r => {
       companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
-      return conf.configureCompany(companyAddress, 1000, [from, "0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0xb125b0c784f538e9a67c849624d9344072580f0e"], ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750", from], [600, 250], { from })
+      return conf.configureCompany(companyAddress, from, { from })
     })
 }
