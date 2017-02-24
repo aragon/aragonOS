@@ -5,28 +5,23 @@ import "../stocks/VotingStock.sol";
 import "../votes/BinaryVoting.sol";
 
 contract CompanyConfiguratorFactory {
-  function configureCompany(address companyAddress, uint256 totalShares, address[] executives, address[] shareholders, uint256[] balances) {
+  function configureCompany(address companyAddress, address god) {
     AbstractCompany company = AbstractCompany(companyAddress);
-    createVotingStock(company, totalShares, shareholders, balances);
-    setExecutives(company, executives);
+    if (god == 0x0) god = msg.sender;
+    createVotingStock(company, god);
+    setExecutives(company, god);
     setInitialBylaws(company);
+    // TODO: clean up fatcory and conf entity states
   }
 
-  function createVotingStock(AbstractCompany company, uint256 totalShares, address[] shareholders, uint256[] balances) private {
+  function createVotingStock(AbstractCompany company, address god) private {
     VotingStock stock = new VotingStock(address(company));
-    company.addStock(address(stock), totalShares);
-
-    if (shareholders.length != balances.length) throw;
-
-    for (uint i = 0; i < shareholders.length; i++) {
-      company.grantStock(0, balances[i], shareholders[i]);
-    }
+    company.addStock(address(stock), 1);
+    company.grantStock(0, 1, god);
   }
 
-  function setExecutives(AbstractCompany company, address[] executives) {
-    for (uint j = 0; j < executives.length; j++) {
-      company.setEntityStatusByStatus(executives[j], 2);
-    }
+  function setExecutives(AbstractCompany company, address executive) {
+    company.setEntityStatusByStatus(executive, 2);
   }
 
   function setInitialBylaws(AbstractCompany company) {

@@ -31,10 +31,12 @@ contract Company is AbstractCompany {
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
   }
 
+  /*
   function () payable {
     if (msg.value < 1) throw;
     registerIncome("donation");
   }
+  */
 
   modifier checkBylaws {
     if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
@@ -329,10 +331,12 @@ contract Company is AbstractCompany {
     return true;
   }
 
+  /*
   function registerIncome(string concept) payable public returns (bool) {
     accounting.registerIncome(concept);
     return true;
   }
+  */
 
   function splitIntoDividends() payable {
     uint256 totalDividendBase;

@@ -458,24 +458,6 @@
       "constant": false,
       "inputs": [
         {
-          "name": "concept",
-          "type": "string"
-        }
-      ],
-      "name": "registerIncome",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "payable": true,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
           "name": "_stock",
           "type": "uint8"
         },
@@ -950,5 +932,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1487877871875
+  "updated_at": 1487955117888
 }
