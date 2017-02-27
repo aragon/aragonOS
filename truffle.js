@@ -16,6 +16,11 @@ module.exports = {
       host: 'eth-rpc.aragon.one',
       port: 80,
     },
+    development46: {
+      network_id: 15,
+      host: 'localhost',
+      port: 8546,
+    },
   },
   build: {},
 }

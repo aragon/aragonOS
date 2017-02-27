@@ -5,7 +5,28 @@ import "../stocks/VotingStock.sol";
 import "../votes/BinaryVoting.sol";
 
 contract CompanyConfiguratorFactory {
-  function configureCompany(address companyAddress, address god) {
+  mapping (address => address) companyDeployer;
+  address deployer;
+  address factory;
+
+  modifier only(address x) {
+    if (msg.sender != x) throw;
+    _;
+  }
+
+  function CompanyConfiguratorFactory() {
+    deployer = msg.sender;
+  }
+
+  function setFactory(address _factory) only(deployer) {
+    factory = _factory;
+  }
+
+  function setCompanyDeployer(address company, address deployer) only(factory) {
+    companyDeployer[company] = deployer;
+  }
+
+  function configureCompany(address companyAddress, address god) only(companyDeployer[companyAddress]) {
     AbstractCompany company = AbstractCompany(companyAddress);
     if (god == 0x0) god = msg.sender;
     createVotingStock(company, god);

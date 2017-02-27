@@ -60,6 +60,7 @@ contract Company is AbstractCompany {
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
 
+
   function setSpecialBylaws() {
     addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
     addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
@@ -339,6 +340,8 @@ contract Company is AbstractCompany {
   */
 
   function splitIntoDividends() payable {
+    /*
+    TODO: Removed for gas limitations
     uint256 totalDividendBase;
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock st = Stock(stocks[i]);
@@ -350,6 +353,7 @@ contract Company is AbstractCompany {
       uint256 stockShare = msg.value * (s.totalSupply() * s.dividendsPerShare()) / totalDividendBase;
       s.splitDividends.value(stockShare)();
     }
+    */
   }
 
   function issueReward(address to, uint256 amount, string concept) checkBylaws {
