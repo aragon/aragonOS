@@ -15,7 +15,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "ethereumjs-testrpc": "^3.0.2",
     "ethereumjs-util": "^5.1.1",
-    "keybase-eth": "^0.2.0",
+    "keybase-eth": "^0.3.0",
     "truffle": "^3.0.0",
     "zeppelin-solidity": "1.0.1"
   }
