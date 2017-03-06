@@ -41,10 +41,12 @@ module.exports = (deployer) => {
       factory = f
       return conf.setFactory(factory.address, { from, gas })
     })
+    /*
     .then(() => factory.deployCompany({ from, gas }))
     .then(r => {
       companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
       return conf.configureCompany(companyAddress, from, { from, gas })
     })
+    */
 }

@@ -9,10 +9,11 @@ contract Shareholders is ERC20Basic {
 
   function transfer(address _to, uint _value) {
     super.transfer(_to, _value);
-    if (!isShareholder[_to]) addShareholder(_to);
+    addShareholder(_to);
   }
 
-  function addShareholder(address holder) private {
+  function addShareholder(address holder) internal {
+    if (isShareholder[holder]) return;
     isShareholder[holder] = true;
     shareholders[shareholderIndex] = holder;
     shareholderIndex += 1;
