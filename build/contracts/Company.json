@@ -1635,12 +1635,12 @@
         }
       },
       "links": {
-        "AccountingLib": "0xa34997453d06c40b531aa7805736be25e774c2ab",
-        "BylawsLib": "0x454f549bd6dacbc38efee52dcb0cf364d08f3fdc"
+        "AccountingLib": "0x642a05b2d7164ac8a33ad8b82611c4991621a1bd",
+        "BylawsLib": "0xdee26c513e6fdf78f5e15b10a98ac5e49cc0c143"
       },
-      "updated_at": 1488801192828
+      "updated_at": 1488808604760
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1488801192828
+  "updated_at": 1488808604760
 }

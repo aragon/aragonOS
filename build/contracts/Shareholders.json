@@ -81,10 +81,10 @@
       "type": "function"
     },
     {
-      "constant": true,
+      "constant": false,
       "inputs": [
         {
-          "name": "",
+          "name": "holder",
           "type": "address"
         }
       ],
@@ -123,5 +123,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1488800466974
+  "updated_at": 1488808577093
 }

@@ -5,8 +5,8 @@ import "./Stock.sol";
 contract IssueableStock is Stock {
   function issueStock(uint256 _value) onlyCompany {
     totalSupply = safeAdd(totalSupply, _value);
-    balances[company] = safeAdd(balances[company], _value);
     addShareholder(company);
+    balances[company] = safeAdd(balances[company], _value);
   }
 
   function destroyStock(address holder, uint256 _value) onlyCompany {
