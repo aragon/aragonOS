@@ -1,8 +1,115 @@
 {
   "contract_name": "VotingLib",
-  "abi": [],
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "castVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        }
+      ],
+      "name": "init",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "countVotes",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        },
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "governanceTokens",
+          "type": "address[]"
+        },
+        {
+          "name": "tokenWeights",
+          "type": "uint8[]"
+        },
+        {
+          "name": "closeTimestamp",
+          "type": "uint64"
+        },
+        {
+          "name": "startTimestamp",
+          "type": "uint64"
+        }
+      ],
+      "name": "createVoting",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "starts",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "name": "closes",
+          "type": "uint64"
+        }
+      ],
+      "name": "NewVoting",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "voter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "votes",
+          "type": "uint256"
+        }
+      ],
+      "name": "VoteCasted",
+      "type": "event"
+    }
+  ],
   "unlinked_binary": "0x6060604052346000575b60358060166000396000f30060606040525b60005600a165627a7a72305820bb4d0a78e64b09e8dbcc767a2791e233e3d2cfe80134536a486200bd8b70df170029",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1487868963761
+  "updated_at": 1489002696409
 }
