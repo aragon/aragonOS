@@ -7,10 +7,15 @@ library VotingLib {
     uint256 totalCastedVotes;
     address votingAddress;
     uint64 pollingUntil;
+    uint8 executed;
   }
 
   struct Votings {
     Voting[] votings;
     uint256[] openedVotings;
   }
+
+  function countVotes();
+  function castVote();
+  function createVote();
 }

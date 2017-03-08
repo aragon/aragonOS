@@ -1,7 +1,5 @@
 pragma solidity ^0.4.2;
 
-import "keybase-eth/contracts/KeybaseRegistry.sol";
-
 contract Migrations {
   address public owner;
   uint public last_completed_migration;
