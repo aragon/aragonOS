@@ -43,8 +43,12 @@ contract Company is AbstractCompany {
     _;
   }
 
-  function sigPayload(uint nonce) constant public returns (bytes32) {
-    return sha3(address(this), nonce);
+  function sigPayload(uint n) constant public returns (bytes32) {
+    return keccak256(0x19, "Ethereum Signed Message:\n32", hashedPayload(address(this), n)); // length = 32 + 16
+  }
+
+  function hashedPayload(address c, uint n) constant public returns (bytes32) {
+    return keccak256(c, n);
   }
 
   modifier checkSignature(address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) {
