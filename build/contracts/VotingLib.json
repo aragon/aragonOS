@@ -3,14 +3,6 @@
   "abi": [
     {
       "constant": false,
-      "inputs": [],
-      "name": "castVote",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
           "name": "self",
@@ -19,6 +11,54 @@
       ],
       "name": "init",
       "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        },
+        {
+          "name": "voter",
+          "type": "address"
+        },
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "canVote",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "array",
+          "type": "uint256[]"
+        },
+        {
+          "name": "element",
+          "type": "uint256"
+        }
+      ],
+      "name": "indexOf",
+      "outputs": [
+        {
+          "name": "",
+          "type": "int256"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
@@ -59,6 +99,44 @@
         }
       ],
       "name": "createVoting",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        },
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "vote",
+          "type": "uint8"
+        }
+      ],
+      "name": "castVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        },
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "closeVoting",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -111,5 +189,5 @@
   "unlinked_binary": "0x6060604052346000575b60358060166000396000f30060606040525b60005600a165627a7a72305820bb4d0a78e64b09e8dbcc767a2791e233e3d2cfe80134536a486200bd8b70df170029",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489002696409
+  "updated_at": 1489143242064
 }

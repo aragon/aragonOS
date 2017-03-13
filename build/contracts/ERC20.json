@@ -1,14 +1,23 @@
 {
-  "contract_name": "Shareholders",
+  "contract_name": "ERC20",
   "abi": [
     {
-      "constant": true,
-      "inputs": [],
-      "name": "shareholderIndex",
+      "constant": false,
+      "inputs": [
+        {
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
       "outputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "name": "ok",
+          "type": "bool"
         }
       ],
       "payable": false,
@@ -22,6 +31,32 @@
         {
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "name": "ok",
+          "type": "bool"
         }
       ],
       "payable": false,
@@ -49,50 +84,41 @@
       "constant": false,
       "inputs": [
         {
-          "name": "_to",
+          "name": "to",
           "type": "address"
         },
         {
-          "name": "_value",
+          "name": "value",
           "type": "uint256"
         }
       ],
       "name": "transfer",
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "ok",
+          "type": "bool"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
     {
       "constant": true,
       "inputs": [
+        {
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
         {
           "name": "",
           "type": "uint256"
-        }
-      ],
-      "name": "shareholders",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "isShareholder",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
         }
       ],
       "payable": false,
@@ -119,9 +145,31 @@
       ],
       "name": "Transfer",
       "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
     }
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489143242063
+  "updated_at": 1489143242058
 }
