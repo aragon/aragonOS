@@ -44,7 +44,7 @@ contract Company is AbstractCompany {
   }
 
   function sigPayload(uint n) constant public returns (bytes32) {
-    return keccak256(0x19, "Ethereum Signed Message:\n32", hashedPayload(address(this), n)); // length = 32 + 16
+    return keccak256(0x19, "Ethereum Signed Message:\n48Voting pre-auth ", hashedPayload(address(this), n)); // length = 32 + 16
   }
 
   function hashedPayload(address c, uint n) constant public returns (bytes32) {
