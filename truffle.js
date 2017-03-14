@@ -5,6 +5,11 @@ module.exports = {
       host: 'localhost',
       port: 8545,
     },
+    development46: {
+      network_id: 15,
+      host: 'localhost',
+      port: 8546,
+    },
     ropsten: {
       network_id: 3,
       host: 'localhost',

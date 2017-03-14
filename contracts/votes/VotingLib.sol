@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
+import "zeppelin/token/ERC20.sol";
 
 library VotingLib {
   struct Voting {

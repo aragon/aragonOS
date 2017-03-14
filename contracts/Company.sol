@@ -7,7 +7,6 @@ import "./bylaws/BylawsLib.sol";
 
 import "./stocks/Stock.sol";
 import "./stocks/IssueableStock.sol";
-import "./stocks/GrantableStock.sol";
 
 import "./votes/BinaryVoting.sol";
 import "./votes/GenericBinaryVoting.sol";
@@ -170,7 +169,7 @@ contract Company is AbstractCompany {
 
     voteExecuted[votingIndex] = 10 + option; // avoid 0
     for (uint8 i = 0; i < stockIndex; i++) {
-      Stock(stocks[i]).closePoll(votingIndex);
+      // TODO Stock(stocks[i]).closePoll(votingIndex);
     }
 
     VoteExecuted(votingIndex, msg.sender, option);
@@ -183,7 +182,7 @@ contract Company is AbstractCompany {
   function doBeginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) private {
     Voting v = Voting(voting);
     for (uint8 i = 0; i < stockIndex; i++) {
-      Stock(stocks[i]).beginPoll(votingIndex, closes);
+      // TODO Stock(stocks[i]).beginPoll(votingIndex, closes);
     }
     votings[votingIndex] = voting;
     reverseVotings[voting] = votingIndex;
@@ -199,7 +198,7 @@ contract Company is AbstractCompany {
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock stock = Stock(stocks[i]);
       if (stock.isShareholder(msg.sender)) {
-        stock.castVoteFromCompany(msg.sender, voteId, option);
+        // TODO: stock.castVoteFromCompany(msg.sender, voteId, option);
       }
     }
 
@@ -223,7 +222,7 @@ contract Company is AbstractCompany {
   }
 
   function addStock(address newStock, uint256 issue) checkBylaws public {
-    if (Stock(newStock).company() != address(this)) throw;
+    if (Stock(newStock).governingEntity() != address(this)) throw;
 
     IssueableStock(newStock).issueStock(issue);
 
@@ -240,11 +239,11 @@ contract Company is AbstractCompany {
 
   function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _start, uint64 _cliff, uint64 _vesting) checkBylaws public {
     issueStock(_stock, _amount);
-    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
+    // TODO: GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) checkBylaws public {
-    GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
+    // TODO: GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
   }
 
   // stock sales
@@ -271,7 +270,7 @@ contract Company is AbstractCompany {
 
   function assignStock(uint8 stockId, address holder, uint256 units) checkBylaws {
     IssueableStock(stocks[stockId]).issueStock(units);
-    GrantableStock(stocks[stockId]).grantStock(holder, units);
+    // TODO: GrantableStock(stocks[stockId]).grantStock(holder, units);
   }
 
   function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {
@@ -338,12 +337,12 @@ contract Company is AbstractCompany {
     uint256 totalDividendBase;
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock st = Stock(stocks[i]);
-      totalDividendBase += st.totalSupply() * st.dividendsPerShare();
+      totalDividendBase += st.totalSupply() * st.economicRights();
     }
 
     for (uint8 j = 0; j < stockIndex; j++) {
       Stock s = Stock(stocks[j]);
-      uint256 stockShare = msg.value * (s.totalSupply() * s.dividendsPerShare()) / totalDividendBase;
+      uint256 stockShare = msg.value * (s.totalSupply() * s.economicRights()) / totalDividendBase;
       s.splitDividends.value(stockShare)();
     }
   }

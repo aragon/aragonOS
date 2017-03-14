@@ -118,7 +118,7 @@ library BylawsLib {
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return false;
       // TODO: Check minimum closing date!!!
-      uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
+      uint256 voteCloseDate = 0; // TODO Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
 
       if (now < voteCloseDate) return false;
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
@@ -132,9 +132,11 @@ library BylawsLib {
     for (uint8 i = 0; i < AbstractCompany(this).stockIndex(); i++) {
       Stock stock = Stock(AbstractCompany(this).stocks(i));
 
-      votes += stock.votings(votingIndex, optionId);
+      /*
+      votes += 0; // TODO stock.votings(votingIndex, optionId);
       totalCastedVotes += stock.totalCastedVotes(votingIndex);
       votingPower += stock.totalVotingPower();
+      */
     }
   }
 }

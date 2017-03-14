@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "zeppelin-solidity/contracts/token/ERC20Basic.sol";
+import "zeppelin/token/ERC20Basic.sol";
 
 contract Shareholders is ERC20Basic {
   mapping (uint256 => address) public shareholders;

@@ -1,15 +1,18 @@
 pragma solidity ^0.4.8;
 
-import "zeppelin-solidity/contracts/token/BasicToken.sol";
-import "zeppelin-solidity/contracts/PullPayment.sol";
-import "./Shareholders.sol";
+import "zeppelin/token/VestedToken.sol";
+import "./GovernanceToken.sol";
 
-contract Stock is BasicToken, Shareholders, PullPayment {
+// transferrableTokens is called from governance to vested
+contract Stock is VestedToken, GovernanceToken {}
+
+/*
+contract OldStock is BasicToken, Shareholders, PullPayment {
   address public company;
   string public name;
   string public symbol;
-  uint8 public votesPerShare;
-  uint8 public dividendsPerShare;
+  uint8 public votingPower;
+  uint8 public economicRights;
 
   mapping (uint256 => uint64) public pollingUntil; // proposal -> close timestamp
   mapping (uint256 => mapping (uint8 => uint256)) public votings; // proposal -> option -> votes
@@ -68,7 +71,7 @@ contract Stock is BasicToken, Shareholders, PullPayment {
 
   function votingPowerForPoll(address voter, uint256 pollId) constant returns (uint256) {
     uint256 remainingVotes = safeSub(balances[voter], voters[voter][pollId]);
-    return safeMul(remainingVotes, votesPerShare);
+    return safeMul(remainingVotes, votingPower);
   }
 
   function castVote(address voter, uint256 pollId, uint8 vote) private {
@@ -83,7 +86,7 @@ contract Stock is BasicToken, Shareholders, PullPayment {
   }
 
   function totalVotingPower() constant returns (uint256) {
-    return (totalSupply - balances[company]) * votesPerShare;
+    return (totalSupply - balances[company]) * votingPower;
   }
 
   function splitDividends() payable {
@@ -128,3 +131,4 @@ contract Stock is BasicToken, Shareholders, PullPayment {
     return -1;
   }
 }
+*/

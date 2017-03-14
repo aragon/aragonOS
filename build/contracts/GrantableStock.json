@@ -586,7 +586,7 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "votesPerShare",
+      "name": "votingPower",
       "outputs": [
         {
           "name": "",
@@ -634,7 +634,7 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "dividendsPerShare",
+      "name": "economicRights",
       "outputs": [
         {
           "name": "",
