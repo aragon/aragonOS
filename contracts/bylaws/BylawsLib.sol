@@ -80,8 +80,10 @@ library BylawsLib {
     }
 
     if (b.voting.enforced) {
-      if (checkVoting(sender, b.voting)) {
+      var (isValidVoting, votingId) = checkVoting(sender, b.voting);
+      if (isValidVoting) {
         // TODO: Set voting executed here to block reentry
+        AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
         return true;
       }
     }
@@ -105,27 +107,29 @@ library BylawsLib {
     }
   }
 
-  function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool) {
-    uint256 votingIndex = AbstractCompany(this).reverseVotings(voteAddress);
+  function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
+    uint256 votingId = 1; //AbstractCompany(this).reverseVotings(voteAddress);
 
-    if (votingIndex == 0) return false;
-    if (AbstractCompany(this).voteExecuted(votingIndex) > 0) return false;
+    /*
+    if (votingIndex == 0) return (false, 0);
+    if (AbstractCompany(this).voteExecuted(votingIndex) > 0) return (false, 0);
 
     var (v, totalCastedVotes, votingPower) = countVotes(votingIndex, votingBylaw.approveOption);
     uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
 
     // Test this logic
     if (v < neededVotings) {
-      if (!votingBylaw.closingRelativeMajority) return false;
+      if (!votingBylaw.closingRelativeMajority) return (false, 0);
       // TODO: Check minimum closing date!!!
       uint256 voteCloseDate = 0; // TODO Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
 
-      if (now < voteCloseDate) return false;
+      if (now < voteCloseDate) return (false, 0);
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
-      if (v < neededVotings) return false;
+      if (v < neededVotings) return (false, 0);
     }
 
-    return true;
+    */
+    return (true, votingId);
   }
 
   function countVotes(uint256 votingIndex, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {

@@ -10,12 +10,12 @@ library VotingLib {
     mapping (address => mapping (address => uint256)) voters; // voter -> governance token -> tokens voted
     mapping (address => mapping (address => uint256)) overruledVotes; // delegate -> governance token -> overruledVotes (absolute votes)
     address[] governanceTokens;
-    uint8[] tokenWeights;
     uint256 totalCastedVotes;
     address votingAddress;
     uint64 startTimestamp;
     uint64 closeTimestamp;
     uint8 executed;
+    bool closed;
   }
 
   struct Votings {
@@ -28,18 +28,21 @@ library VotingLib {
     self.votings.length += 1;
   }
 
-  function createVoting(Votings storage self, address votingAddress, address[] governanceTokens, uint8[] tokenWeights, uint64 closeTimestamp, uint64 startTimestamp) {
+  function votingAddress(Votings storage self, uint256 votingId) returns (address) {
+    return self.votings[votingId].votingAddress;
+  }
+
+  function createVoting(Votings storage self, address votingAddress, address[] governanceTokens, uint64 closeTimestamp, uint64 startTimestamp) returns (uint256 votingId) {
     if (self.reverseVotings[votingAddress] > 0) throw;
     if (now > startTimestamp) throw;
     if (startTimestamp > closeTimestamp) throw;
 
     self.votings.length += 1;
-    uint256 votingId = self.votings.length - 1;
+    votingId = self.votings.length - 1;
     Voting storage voting = self.votings[votingId];
 
     voting.votingAddress = votingAddress;
     voting.governanceTokens = governanceTokens;
-    voting.tokenWeights = tokenWeights;
     voting.startTimestamp = startTimestamp;
     voting.closeTimestamp = closeTimestamp;
 
@@ -49,25 +52,10 @@ library VotingLib {
     NewVoting(votingId, startTimestamp, closeTimestamp);
   }
 
-  function closeVoting(Votings storage self, uint256 votingId) {
-    Voting voting = self.votings[votingId];
-    if (voting.executed == 0 && now < voting.closeTimestamp) throw; // Not executed nor closed by time
-    int256 i = indexOf(self.openedVotings, votingId);
-    if (i < 0) throw;
-
-    // Remove from array without keeping its order
-    if (self.openedVotings.length > 1) {
-      // Move last element to the place of the removing item
-      self.openedVotings[uint256(i)] = self.openedVotings[self.openedVotings.length - 1];
-    }
-    // Remove last item
-    self.openedVotings.length -= 1;
-  }
-
   function canModifyVote(Votings storage self, address voter, uint256 votingId) constant returns (bool) {
     Voting voting = self.votings[votingId];
     if (now > voting.closeTimestamp) return false; // poll is closed by date
-    if (voting.executed > 0) return false; // poll has been executed
+    if (voting.closed) return false; // poll has been executed
     if (voter == address(this)) return false; // non assigned stock cannot vote
   }
 
@@ -182,7 +170,23 @@ library VotingLib {
   function closeExecutedVoting(Votings storage self, uint256 votingId, uint8 option) {
     Voting voting = self.votings[votingId];
     voting.executed = option;
-    closeVoting(self, votingId);
+    if (!voting.closed) closeVoting(self, votingId);
+  }
+
+  function closeVoting(Votings storage self, uint256 votingId) {
+    Voting voting = self.votings[votingId];
+    if (voting.closed && now < voting.closeTimestamp) throw; // Not executed nor closed by time
+    voting.closed = true;
+    int256 i = indexOf(self.openedVotings, votingId);
+    if (i < 0) throw;
+
+    // Remove from array without keeping its order
+    if (self.openedVotings.length > 1) {
+      // Move last element to the place of the removing item
+      self.openedVotings[uint256(i)] = self.openedVotings[self.openedVotings.length - 1];
+    }
+    // Remove last item
+    self.openedVotings.length -= 1;
   }
 
   event NewVoting(uint256 indexed id, uint64 starts, uint64 closes);

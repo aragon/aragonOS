@@ -18,11 +18,6 @@ contract AbstractCompany {
   mapping (uint8 => address) public stocks;
   uint8 public stockIndex;
 
-  mapping (uint256 => address) public votings;
-  mapping (address => uint256) public reverseVotings;
-  mapping (uint256 => uint8) public voteExecuted;
-  uint256 public votingIndex;
-
   mapping (uint256 => address) public sales;
   mapping (address => uint256) public reverseSales;
   uint256 public saleIndex;
@@ -46,7 +41,7 @@ contract AbstractCompany {
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
-  function setVotingExecuted(uint8 option) public;
+  function setVotingExecuted(uint256 votingId, uint8 option) public;
 
   function addStock(address newStock, uint256 issue) public;
   function issueStock(uint8 _stock, uint256 _amount) public;

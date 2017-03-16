@@ -1,5 +1,6 @@
 const AccountingLib = artifacts.require('AccountingLib.sol')
 const BylawsLib = artifacts.require('BylawsLib.sol')
+const VotingLib = artifacts.require('VotingLib.sol')
 const Company = artifacts.require('Company.sol')
 const CompanyFactory = artifacts.require('CompanyFactory.sol')
 const CompanyConfiguratorFactory = artifacts.require('CompanyConfiguratorFactory.sol')
@@ -21,6 +22,8 @@ module.exports = (deployer) => {
   deployer.link(AccountingLib, [Company, CompanyFactory])
   deployer.deploy(BylawsLib)
   deployer.link(BylawsLib, [Company, CompanyFactory])
+  deployer.deploy(VotingLib)
+  deployer.link(VotingLib, [Company, CompanyFactory])
 
   deployer.deploy(BytesHelper)
   deployer.link(BytesHelper, GenericBinaryVoting)

@@ -4,6 +4,7 @@ import "./AbstractCompany.sol";
 
 import "./accounting/AccountingLib.sol";
 import "./bylaws/BylawsLib.sol";
+import "./votes/VotingLib.sol";
 
 import "./stocks/Stock.sol";
 import "./stocks/IssueableStock.sol";
@@ -16,13 +17,14 @@ import "./sales/AbstractStockSale.sol";
 contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;
   using BylawsLib for BylawsLib.Bylaws;
+  using VotingLib for VotingLib.Votings;
 
   AccountingLib.AccountingLedger accounting;
   BylawsLib.Bylaws bylaws;
+  VotingLib.Votings votings;
 
   function Company() payable {
-    votingIndex = 1; // Reverse index breaks when it is zero.
-    saleIndex = 1;
+    saleIndex = 1; // Reverse index breaks when it is zero.
 
     accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
 
@@ -157,22 +159,15 @@ contract Company is AbstractCompany {
 
   // vote
 
-  function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256) {
-    var (v, c, tv) = BylawsLib.countVotes(votingIndex, optionId);
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256) {
+    var (v, c, tv) = BylawsLib.countVotes(votingId, optionId);
     return (v, tv);
   }
 
-  function setVotingExecuted(uint8 option) {
-    uint256 votingIndex = reverseVotings[msg.sender];
-    if (votingIndex == 0) throw;
-    if (voteExecuted[votingIndex] > 0) throw;
-
-    voteExecuted[votingIndex] = 10 + option; // avoid 0
-    for (uint8 i = 0; i < stockIndex; i++) {
-      // TODO Stock(stocks[i]).closePoll(votingIndex);
-    }
-
-    VoteExecuted(votingIndex, msg.sender, option);
+  function setVotingExecuted(uint256 votingId, uint8 option) {
+    if (msg.sender != address(this)) throw;
+    votings.closeExecutedVoting(votingId, option);
+    VoteExecuted(votingId, msg.sender, option);
   }
 
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public checkBylaws {
@@ -180,30 +175,20 @@ contract Company is AbstractCompany {
   }
 
   function doBeginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) private {
-    Voting v = Voting(voting);
+    address[] memory governanceTokens = new address[](stockIndex);
     for (uint8 i = 0; i < stockIndex; i++) {
-      // TODO Stock(stocks[i]).beginPoll(votingIndex, closes);
+      governanceTokens[i] = stocks[i];
     }
-    votings[votingIndex] = voting;
-    reverseVotings[voting] = votingIndex;
+    uint256 votingId = votings.createVoting(voting, governanceTokens, closes, uint64(now));
 
-    if (voteOnCreate) castVote(votingIndex, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
-
-    votingIndex += 1;
+    if (voteOnCreate) castVote(votingId, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
   }
 
-  function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public checkBylaws {
-    if (voteExecuted[voteId] > 0) throw; // cannot vote on executed polls
-
-    for (uint8 i = 0; i < stockIndex; i++) {
-      Stock stock = Stock(stocks[i]);
-      if (stock.isShareholder(msg.sender)) {
-        // TODO: stock.castVoteFromCompany(msg.sender, voteId, option);
-      }
-    }
+  function castVote(uint256 votingId, uint8 option, bool executesIfDecided) public checkBylaws {
+    votings.castVote(votingId, option);
 
     if (executesIfDecided) {
-      address votingAddress = votings[voteId];
+      address votingAddress = votings.votingAddress(votingId);
       BinaryVoting voting = BinaryVoting(votingAddress);
       if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
         voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
@@ -239,7 +224,7 @@ contract Company is AbstractCompany {
 
   function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _start, uint64 _cliff, uint64 _vesting) checkBylaws public {
     issueStock(_stock, _amount);
-    // TODO: GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
+    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) checkBylaws public {
