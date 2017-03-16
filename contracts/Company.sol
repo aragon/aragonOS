@@ -223,12 +223,11 @@ contract Company is AbstractCompany {
   }
 
   function grantVestedStock(uint8 _stock, uint256 _amount, address _recipient, uint64 _start, uint64 _cliff, uint64 _vesting) checkBylaws public {
-    issueStock(_stock, _amount);
-    GrantableStock(stocks[_stock]).grantVestedStock(_recipient, _amount, _start, _cliff, _vesting);
+    Stock(stocks[_stock]).grantVestedTokens(_recipient, _amount, _start, _cliff, _vesting);
   }
 
   function grantStock(uint8 _stock, uint256 _amount, address _recipient) checkBylaws public {
-    // TODO: GrantableStock(stocks[_stock]).grantStock(_recipient, _amount);
+    Stock(stocks[_stock]).transfer(_recipient, _amount);
   }
 
   // stock sales
