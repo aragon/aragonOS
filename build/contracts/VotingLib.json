@@ -7,27 +7,6 @@
         {
           "name": "self",
           "type": "VotingLib.Votings storage"
-        },
-        {
-          "name": "votingId",
-          "type": "uint256"
-        },
-        {
-          "name": "vote",
-          "type": "uint8"
-        }
-      ],
-      "name": "modifyVote",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "self",
-          "type": "VotingLib.Votings storage"
         }
       ],
       "name": "init",
@@ -80,6 +59,14 @@
           "type": "int256"
         }
       ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "hasVoted",
+      "outputs": [],
       "payable": false,
       "type": "function"
     },
@@ -163,6 +150,31 @@
       "type": "function"
     },
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "self",
+          "type": "VotingLib.Votings storage"
+        },
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "vote",
+          "type": "uint8"
+        },
+        {
+          "name": "removes",
+          "type": "bool"
+        }
+      ],
+      "name": "modifyVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "anonymous": false,
       "inputs": [
         {
@@ -210,5 +222,5 @@
   "unlinked_binary": "0x6060604052346000575b60358060166000396000f30060606040525b60005600a165627a7a72305820bb4d0a78e64b09e8dbcc767a2791e233e3d2cfe80134536a486200bd8b70df170029",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489583475168
+  "updated_at": 1489657882428
 }
