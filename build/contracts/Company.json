@@ -105,6 +105,36 @@
       "constant": false,
       "inputs": [
         {
+          "name": "votingIndex",
+          "type": "uint256"
+        },
+        {
+          "name": "optionId",
+          "type": "uint8"
+        },
+        {
+          "name": "totalVotingPower",
+          "type": "uint256"
+        }
+      ],
+      "name": "countVotes",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
           "name": "_sale",
           "type": "uint256"
         }
@@ -461,11 +491,15 @@
       "name": "countVotes",
       "outputs": [
         {
-          "name": "",
+          "name": "votes",
           "type": "uint256"
         },
         {
-          "name": "",
+          "name": "totalCastedVotes",
+          "type": "uint256"
+        },
+        {
+          "name": "totalVotingPower",
           "type": "uint256"
         }
       ],
@@ -1263,5 +1297,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1489691927263
+  "updated_at": 1489692309224
 }

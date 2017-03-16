@@ -159,11 +159,6 @@ contract Company is AbstractCompany {
 
   // vote
 
-  function countVotes(uint256 votingId, uint8 optionId) returns (uint256, uint256) {
-    var (v, c, tv) = BylawsLib.countVotes(votingId, optionId);
-    return (v, tv);
-  }
-
   function setVotingExecuted(uint256 votingId, uint8 option) {
     if (msg.sender != address(this)) throw;
     votings.closeExecutedVoting(votingId, option);
@@ -194,6 +189,10 @@ contract Company is AbstractCompany {
         voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
       }
     }
+  }
+
+  function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalCastedVotes, uint256 totalVotingPower) {
+    return votings.countVotes(votingId, optionId);
   }
 
   // stock
@@ -254,7 +253,7 @@ contract Company is AbstractCompany {
 
   function assignStock(uint8 stockId, address holder, uint256 units) checkBylaws {
     IssueableStock(stocks[stockId]).issueStock(units);
-    Stock(stocks[_stock]).transfer(holder, units);
+    Stock(stocks[stockId]).transfer(holder, units);
   }
 
   function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {

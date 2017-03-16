@@ -132,15 +132,7 @@ library BylawsLib {
     return (true, votingId);
   }
 
-  function countVotes(uint256 votingIndex, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
-    for (uint8 i = 0; i < AbstractCompany(this).stockIndex(); i++) {
-      Stock stock = Stock(AbstractCompany(this).stocks(i));
-
-      /*
-      votes += 0; // TODO stock.votings(votingIndex, optionId);
-      totalCastedVotes += stock.totalCastedVotes(votingIndex);
-      votingPower += stock.totalVotingPower();
-      */
-    }
+  function countVotes(uint256 votingId, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
+    return AbstractCompany(this).countVotes(votingId, optionId);
   }
 }

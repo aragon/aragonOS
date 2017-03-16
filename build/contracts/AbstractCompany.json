@@ -363,6 +363,10 @@
         {
           "name": "",
           "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
         }
       ],
       "payable": false,
@@ -887,5 +891,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489691927261
+  "updated_at": 1489692395815
 }

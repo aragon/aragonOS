@@ -37,7 +37,7 @@ contract AbstractCompany {
   function setEntityStatusByStatus(address entity, uint8 status) public;
   function setEntityStatus(address entity, uint8 status) public;
 
-  function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256);
+  function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256, uint256);
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
