@@ -254,7 +254,7 @@ contract Company is AbstractCompany {
 
   function assignStock(uint8 stockId, address holder, uint256 units) checkBylaws {
     IssueableStock(stocks[stockId]).issueStock(units);
-    // TODO: GrantableStock(stocks[stockId]).grantStock(holder, units);
+    Stock(stocks[_stock]).transfer(holder, units);
   }
 
   function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {
