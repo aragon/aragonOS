@@ -56,6 +56,8 @@ library VotingLib {
     voting.startTimestamp = startTimestamp;
     voting.closeTimestamp = closeTimestamp;
 
+    if (voting.governanceTokens.length < 1) throw;
+
     self.openedVotings.push(votingId);
     self.reverseVotings[votingAddress] = votingId;
 
@@ -65,8 +67,10 @@ library VotingLib {
   function canModifyVote(Votings storage self, address voter, uint256 votingId) constant returns (bool) {
     Voting voting = self.votings[votingId];
     if (now > voting.closeTimestamp) return false; // poll is closed by date
+    if (now < voting.startTimestamp) return false; // poll has not opened
     if (voting.isClosed || voting.isExecuted) return false; // poll has been executed
     if (voter == address(this)) return false; // non assigned stock cannot vote
+    return true;
   }
 
   function canVote(Votings storage self, address voter, uint256 votingId) constant returns (bool) {
@@ -77,7 +81,6 @@ library VotingLib {
       address token = voting.governanceTokens[j];
       if (GovernanceToken(token).votingPowerForDelegate(voter) > voting.voters[voter][token]) return true; // can vote using token
     }
-
     return false;
   }
 
@@ -147,7 +150,6 @@ library VotingLib {
           voting.totalCastedVotes -= modifyingVotes;
         } else {
           voting.optionVotes[vote] += modifyingVotes;
-          voting.totalCastedVotes += modifyingVotes;
           voting.votedOption[voter] = 10 + vote;
         }
       }
