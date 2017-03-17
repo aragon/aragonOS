@@ -1,0 +1,7 @@
+image: node
+
+all_tests:
+  script:
+   - npm i --only dev
+   - npm i
+   - npm run ci-test
