@@ -118,32 +118,34 @@ library VotingLib {
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      uint senderBalance = token.balanceOf(voter);
-      uint remainingVotes = senderBalance - voting.voters[voter][token];
+      uint remainingVotes = token.balanceOf(voter) - voting.voters[voter][token];
+      uint votingPowerPerToken = token.votingPower();
 
-      if (voting.votedOption[voter] == 0) throw; // can't modify before voting
-      uint8 oldOption = voting.votedOption[voter] - 10;
+      bool isDelegated = token.votingPowerForDelegate(voter) == 0 && remainingVotes > 0;
+      address oldVoter = isDelegated ? token.votingDelegate(voter) : voter;
 
-      if (token.votingPowerForDelegate(voter) == 0 && remainingVotes > 0) {
+      if (voting.votedOption[oldVoter] == 0) throw;
+
+      if (isDelegated) {
         // over-write delegate vote
-
-        if (voting.votedOption[voter] == 1) throw; // already overruled
-        voting.optionVotes[oldOption] -= remainingVotes * token.votingPower();
-        voting.overruledVotes[token.votingDelegate(voter)][token] += remainingVotes;
+        if (voting.votedOption[voter] == 0) {
+          voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
+          voting.overruledVotes[oldVoter][token] += remainingVotes;
+        }
 
         if (removes) {
           voting.votedOption[voter] = 1; // overruled by removing
           voting.voters[voter][token] = 0;
-          voting.totalCastedVotes -= remainingVotes * token.votingPower();
+          voting.totalCastedVotes -= remainingVotes * votingPowerPerToken;
         } else {
           voting.votedOption[voter] = 10 + vote;
           voting.voters[voter][token] = remainingVotes;
-          voting.optionVotes[vote] += remainingVotes * token.votingPower();
+          voting.optionVotes[vote] += remainingVotes * votingPowerPerToken;
         }
       } else {
         uint totalVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
-        voting.optionVotes[oldOption] -= totalVotes * token.votingPower();
-        uint modifyingVotes = totalVotes * token.votingPower();
+        voting.optionVotes[voting.votedOption[oldVoter] - 10] -= totalVotes * votingPowerPerToken;
+        uint modifyingVotes = totalVotes * votingPowerPerToken;
         if (removes) {
           voting.votedOption[voter] = 0;
           voting.voters[voter][token] -= modifyingVotes;

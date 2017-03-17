@@ -43,11 +43,15 @@ contract GovernanceToken is StandardToken, TransferableToken, PullPayment {
   }
 
   function setDelegate(address newDelegate) {
-    if (votingPowerForDelegate(msg.sender) > balanceOf(msg.sender)) throw;
-    if (publicDelegate[newDelegate] == false && newDelegate != msg.sender) throw;
+    setDelegate(msg.sender, newDelegate);
+  }
 
-    balanceDelegateVotes(msg.sender, newDelegate, balanceOf(msg.sender));
-    delegates[msg.sender] = newDelegate;
+  function setDelegate(address delegator, address newDelegate) internal {
+    if (votingPowerForDelegate(delegator) > balanceOf(delegator)) throw;
+    if (publicDelegate[newDelegate] == false && newDelegate != delegator) throw;
+
+    balanceDelegateVotes(delegator, newDelegate, balanceOf(delegator));
+    delegates[delegator] = newDelegate;
     if (votingDelegate(newDelegate) != newDelegate) throw; // check new delegate is not delegated
   }
 
