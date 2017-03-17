@@ -555,6 +555,90 @@
       "type": "function"
     },
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getVotingInfoForId",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_votingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getVotingInfoForAddress",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": true,
       "inputs": [
         {
@@ -891,5 +975,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489692395815
+  "updated_at": 1489746933556
 }

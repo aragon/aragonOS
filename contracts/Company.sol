@@ -191,6 +191,15 @@ contract Company is AbstractCompany {
     }
   }
 
+  function getVotingInfoForAddress(address _votingAddress) returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
+    return getVotingInfoForId(votings.votingIndex(_votingAddress));
+  }
+
+  function getVotingInfoForId(uint256 _votingId) returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
+    votingId = _votingId;
+    (votingAddress, startDate, closeDate, isExecuted, executed, isClosed) = votings.getVotingInfo(votingId);
+  }
+
   function countVotes(uint256 votingId, uint8 optionId) returns (uint256 votes, uint256 totalCastedVotes, uint256 totalVotingPower) {
     return votings.countVotes(votingId, optionId);
   }

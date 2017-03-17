@@ -12,7 +12,7 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 
 // const utils = require('ethereumjs-util')
 
-const from = web3.eth.accounts[8] || '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b'
+const from = web3.eth.accounts[8] || '0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2'
 const nonce = parseInt(Math.random() * 1e15)
 
 module.exports = (deployer) => {

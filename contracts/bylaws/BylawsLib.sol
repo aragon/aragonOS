@@ -108,27 +108,24 @@ library BylawsLib {
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
-    uint256 votingId = 1; //AbstractCompany(this).reverseVotings(voteAddress);
+    var (votingId, _voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfoForAddress(voteAddress);
 
-    /*
-    if (votingIndex == 0) return (false, 0);
-    if (AbstractCompany(this).voteExecuted(votingIndex) > 0) return (false, 0);
+    if (votingId == 0) return (false, 0);
+    if (isExecuted) return (false, 0);
+    if (closeDate - startDate < votingBylaw.minimumVotingTime) return (false, 0);
 
-    var (v, totalCastedVotes, votingPower) = countVotes(votingIndex, votingBylaw.approveOption);
+    var (v, totalCastedVotes, votingPower) = AbstractCompany(this).countVotes(votingId, votingBylaw.approveOption);
     uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
 
     // Test this logic
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return (false, 0);
-      // TODO: Check minimum closing date!!!
-      uint256 voteCloseDate = 0; // TODO Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
 
-      if (now < voteCloseDate) return (false, 0);
+      if (now < closeDate) return (false, 0);
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
       if (v < neededVotings) return (false, 0);
     }
 
-    */
     return (true, votingId);
   }
 

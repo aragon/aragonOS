@@ -15,7 +15,8 @@ library VotingLib {
     uint64 startTimestamp;
     uint64 closeTimestamp;
     uint8 executed;
-    bool closed;
+    bool isClosed;
+    bool isExecuted;
   }
 
   struct Votings {
@@ -30,6 +31,15 @@ library VotingLib {
 
   function votingAddress(Votings storage self, uint256 votingId) returns (address) {
     return self.votings[votingId].votingAddress;
+  }
+
+  function votingIndex(Votings storage self, address votingAddress) returns (uint256) {
+    return self.reverseVotings[votingAddress];
+  }
+
+  function getVotingInfo(Votings storage self, uint256 votingId) returns (address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
+    Voting voting = self.votings[votingId];
+    return (voting.votingAddress, voting.startTimestamp, voting.closeTimestamp, voting.isExecuted, voting.executed, voting.isClosed);
   }
 
   function createVoting(Votings storage self, address votingAddress, address[] governanceTokens, uint64 closeTimestamp, uint64 startTimestamp) returns (uint256 votingId) {
@@ -55,7 +65,7 @@ library VotingLib {
   function canModifyVote(Votings storage self, address voter, uint256 votingId) constant returns (bool) {
     Voting voting = self.votings[votingId];
     if (now > voting.closeTimestamp) return false; // poll is closed by date
-    if (voting.closed) return false; // poll has been executed
+    if (voting.isClosed || voting.isExecuted) return false; // poll has been executed
     if (voter == address(this)) return false; // non assigned stock cannot vote
   }
 
@@ -169,14 +179,16 @@ library VotingLib {
   // Company knows when it can be closed, nothing to be checked here
   function closeExecutedVoting(Votings storage self, uint256 votingId, uint8 option) {
     Voting voting = self.votings[votingId];
+    if (voting.isExecuted) throw;
     voting.executed = option;
-    if (!voting.closed) closeVoting(self, votingId);
+    voting.isExecuted = true;
+    if (!voting.isClosed) closeVoting(self, votingId);
   }
 
   function closeVoting(Votings storage self, uint256 votingId) {
     Voting voting = self.votings[votingId];
-    if (voting.closed && now < voting.closeTimestamp) throw; // Not executed nor closed by time
-    voting.closed = true;
+    if (voting.isClosed && now < voting.closeTimestamp) throw; // Not executed nor closed by time
+    voting.isClosed = true;
     int256 i = indexOf(self.openedVotings, votingId);
     if (i < 0) throw;
 
