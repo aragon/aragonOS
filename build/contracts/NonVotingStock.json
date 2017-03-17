@@ -622,9 +622,31 @@
           ],
           "name": "Transfer",
           "type": "event"
+        },
+        "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "Approval",
+          "type": "event"
         }
       },
-      "updated_at": 1487867670319
+      "updated_at": 1489751139328
     },
     "42": {
       "links": {},
@@ -678,5 +700,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1489746988902
+  "updated_at": 1489751139328
 }

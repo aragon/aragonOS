@@ -31,9 +31,9 @@ module.exports = (deployer) => {
   deployer.deploy(CompanyConfiguratorFactory)
     .then(() => CompanyConfiguratorFactory.deployed())
     .then(c => conf = c)
-    .then(() => deployer.deploy(CompanyFactory, conf.address, {gas: 5e6}))
+    .then(() => deployer.deploy(CompanyFactory, conf.address))
     .then(() => CompanyFactory.deployed())
-    .then(f => f.deployCompany({ value: 1e18, gas: 5e6, from }))
+    .then(f => f.deployCompany({ value: 1e18, from }))
     .then(r => {
       companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)

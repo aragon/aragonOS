@@ -75,7 +75,7 @@ library VotingLib {
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       address token = voting.governanceTokens[j];
-      if (GovernanceToken(token).votingPowerForDelegate(voter) > voting.voters[msg.sender][token]) return true; // can vote using token
+      if (GovernanceToken(token).votingPowerForDelegate(voter) > voting.voters[voter][token]) return true; // can vote using token
     }
 
     return false;
@@ -88,67 +88,67 @@ library VotingLib {
     return -1;
   }
 
-  function castVote(Votings storage self, uint256 votingId, uint8 vote) returns (bool voted) {
-    if (!canVote(self, msg.sender, votingId)) throw;
+  function castVote(Votings storage self, uint256 votingId, address voter, uint8 vote) returns (bool voted) {
+    if (!canVote(self, voter, votingId)) throw;
 
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      uint remainingVotes = token.votingPowerForDelegate(msg.sender) - voting.voters[msg.sender][token] - voting.overruledVotes[msg.sender][token];
+      uint remainingVotes = token.votingPowerForDelegate(voter) - voting.voters[voter][token] - voting.overruledVotes[voter][token];
       uint addingVotes = token.votingPower() * remainingVotes;
 
-      voting.voters[msg.sender][token] += remainingVotes;
+      voting.voters[voter][token] += remainingVotes;
       voting.optionVotes[vote] += addingVotes;
       voting.totalCastedVotes += addingVotes;
-      if (voting.votedOption[msg.sender] != 0 && voting.votedOption[msg.sender] != 10 + vote) throw; // cant vote different things
-      voting.votedOption[msg.sender] = 10 + vote; // avoid 0
+      if (voting.votedOption[voter] != 0 && voting.votedOption[voter] != 10 + vote) throw; // cant vote different things
+      voting.votedOption[voter] = 10 + vote; // avoid 0
 
       if (addingVotes > 0) voted = true;
     }
 
-    if (voted) VoteCasted(votingId, msg.sender);
+    if (voted) VoteCasted(votingId, voter);
   }
 
-  function modifyVote(Votings storage self, uint256 votingId, uint8 vote, bool removes) {
-    if (!canModifyVote(self, msg.sender, votingId)) throw;
+  function modifyVote(Votings storage self, uint256 votingId, address voter, uint8 vote, bool removes) {
+    if (!canModifyVote(self, voter, votingId)) throw;
 
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      uint senderBalance = token.balanceOf(msg.sender);
-      uint remainingVotes = senderBalance - voting.voters[msg.sender][token];
+      uint senderBalance = token.balanceOf(voter);
+      uint remainingVotes = senderBalance - voting.voters[voter][token];
 
-      if (voting.votedOption[msg.sender] == 0) throw; // can't modify before voting
-      uint8 oldOption = voting.votedOption[msg.sender] - 10;
+      if (voting.votedOption[voter] == 0) throw; // can't modify before voting
+      uint8 oldOption = voting.votedOption[voter] - 10;
 
-      if (token.votingPowerForDelegate(msg.sender) == 0 && remainingVotes > 0) {
+      if (token.votingPowerForDelegate(voter) == 0 && remainingVotes > 0) {
         // over-write delegate vote
 
-        if (voting.votedOption[msg.sender] == 1) throw; // already overruled
+        if (voting.votedOption[voter] == 1) throw; // already overruled
         voting.optionVotes[oldOption] -= remainingVotes * token.votingPower();
-        voting.overruledVotes[token.votingDelegate(msg.sender)][token] += remainingVotes;
+        voting.overruledVotes[token.votingDelegate(voter)][token] += remainingVotes;
 
         if (removes) {
-          voting.votedOption[msg.sender] = 1; // overruled by removing
-          voting.voters[msg.sender][token] = 0;
+          voting.votedOption[voter] = 1; // overruled by removing
+          voting.voters[voter][token] = 0;
           voting.totalCastedVotes -= remainingVotes * token.votingPower();
         } else {
-          voting.votedOption[msg.sender] = 10 + vote;
-          voting.voters[msg.sender][token] = remainingVotes;
+          voting.votedOption[voter] = 10 + vote;
+          voting.voters[voter][token] = remainingVotes;
           voting.optionVotes[vote] += remainingVotes * token.votingPower();
         }
       } else {
-        uint totalVotes = voting.voters[msg.sender][token] - voting.overruledVotes[msg.sender][token];
+        uint totalVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
         voting.optionVotes[oldOption] -= totalVotes * token.votingPower();
         uint modifyingVotes = totalVotes * token.votingPower();
         if (removes) {
-          voting.votedOption[msg.sender] = 0;
-          voting.voters[msg.sender][token] -= modifyingVotes;
+          voting.votedOption[voter] = 0;
+          voting.voters[voter][token] -= modifyingVotes;
           voting.totalCastedVotes -= modifyingVotes;
         } else {
           voting.optionVotes[vote] += modifyingVotes;
           voting.totalCastedVotes += modifyingVotes;
-          voting.votedOption[msg.sender] = 10 + vote;
+          voting.votedOption[voter] = 10 + vote;
         }
       }
     }
@@ -159,7 +159,7 @@ library VotingLib {
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
       if (voting.votedOption[token.votingDelegate(voter)] > 0) {
-        if (voting.votedOption[msg.sender] != 1) return true; // not overruled
+        if (voting.votedOption[voter] != 1) return true; // not overruled
       }
     }
     return false;

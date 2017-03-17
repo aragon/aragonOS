@@ -180,7 +180,7 @@ contract Company is AbstractCompany {
   }
 
   function castVote(uint256 votingId, uint8 option, bool executesIfDecided) public checkBylaws {
-    votings.castVote(votingId, option);
+    votings.castVote(votingId, msg.sender, option);
 
     if (executesIfDecided) {
       address votingAddress = votings.votingAddress(votingId);
@@ -189,6 +189,12 @@ contract Company is AbstractCompany {
         voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
       }
     }
+  }
+
+  // TODO: Add bylaw
+  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public checkBylaws {
+    votings.modifyVote(votingId, msg.sender, option, removes);
+    // bla bla bla execute on decided
   }
 
   function getVotingInfoForAddress(address _votingAddress) returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
