@@ -73,19 +73,22 @@ contract VotingLibTest {
   function testExecuteVoting() {
     uint256 votingId = votings.createVoting(0x4, governanceTokens(), uint64(now) + 1000, uint64(now));
     Assert.isTrue(votings.canVote(0x1, votingId), "Should allow voting");
+    uint256 openedVotings = votings.openedVotings.length;
     votings.closeExecutedVoting(votingId, 1);
+
     bool isClosed;
     bool isExecuted;
     uint8 executed;
-
     address va;
     uint64 sd;
     uint64 ed;
     (va,sd,ed, isExecuted, executed, isClosed) = votings.getVotingInfo(votingId);
+
     Assert.isTrue(isClosed, "Should be closed");
     Assert.isTrue(isExecuted, "Should be executed");
     Assert.equal(uint256(executed), 1, "Should have executed option");
     Assert.isFalse(votings.canVote(0x1, votingId), "Shouldnt allow voting");
+    Assert.equal(votings.openedVotings.length, openedVotings - 1, "Should have removed voting from opened");
   }
 
   function assertVotingCount(uint256 votingId, uint8 option, uint256 _votes, uint256 _totalCastedVotes, uint256 _totalVotingPower) {
