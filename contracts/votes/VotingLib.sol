@@ -128,9 +128,14 @@ library VotingLib {
 
       if (isDelegated) {
         // over-write delegate vote
-        if (voting.votedOption[voter] == 0) {
-          voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
+        if (voting.votedOption[voter] != 1) {
           voting.overruledVotes[oldVoter][token] += remainingVotes;
+          if (voting.votedOption[voter] > 1) {
+            remainingVotes = token.balanceOf(voter);
+          }
+          voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
+        } else {
+          return; // nothing to do if already removed
         }
 
         if (removes) {
