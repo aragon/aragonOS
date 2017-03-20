@@ -1,8 +1,0 @@
-{
-  "contract_name": "usingOraclize",
-  "abi": [],
-  "unlinked_binary": "0x6060604052346000575b60358060166000396000f30060606040525b60005600a165627a7a72305820dda55bceef702f431bc1992160a6d7feb3994eb0cb24d37ba826b03394086bc50029",
-  "networks": {},
-  "schema_version": "0.0.5",
-  "updated_at": 1487846538651
-}
