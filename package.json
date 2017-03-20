@@ -6,7 +6,7 @@
   "scripts": {
    "test": "truffle test",
    "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
-   "ci-test": "truffle test --network testrpc"
+   "ci-test": "truffle test"
   },
   "author": "",
   "license": "ISC",
