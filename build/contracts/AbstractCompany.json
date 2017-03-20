@@ -190,6 +190,28 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "votingPowerForVoting",
+      "outputs": [
+        {
+          "name": "votable",
+          "type": "uint256"
+        },
+        {
+          "name": "modificable",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -368,7 +390,7 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
           "name": "votingIndex",
@@ -562,7 +584,7 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
           "name": "_votingId",
@@ -604,7 +626,7 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
           "name": "_votingAddress",
@@ -1049,5 +1071,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490012519163
+  "updated_at": 1490015613386
 }

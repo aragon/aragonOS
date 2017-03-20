@@ -33,6 +33,7 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8546,
+      gas: 10000000,
     },
   },
   build: {},

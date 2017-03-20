@@ -9,7 +9,5 @@ contract BinaryPoll is BinaryVoting("Yes", "No") {
     description = _description;
   }
 
-  function executeOnAppove(AbstractCompany company) internal {
-    super.executeOnAppove(company);
-  }
+  function executeOnAppove(AbstractCompany company) internal {}
 }

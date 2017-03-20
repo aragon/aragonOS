@@ -24,5 +24,5 @@ contract BinaryVoting is Voting {
     return 0x0;
   }
 
-  function executeOnAppove(AbstractCompany company);
+  function executeOnAppove(AbstractCompany company) internal;
 }

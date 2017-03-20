@@ -55,8 +55,11 @@ contract VotingLibTest {
 
   function testSimpleCastVote() {
     uint256 votingId = votings.createVoting(0xdeaf, governanceTokens(), uint64(now) + 1000, uint64(now));
+    assertVotingPower(votingId, 0x1, 70, 0);
+
     votings.castVote(votingId, 0x1, 1);
 
+    assertVotingPower(votingId, 0x1, 0, 70);
     assertVotingCount(votingId, 1, 70, 70, 100);
     Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have voted");
   }
@@ -221,6 +224,14 @@ contract VotingLibTest {
     Assert.equal(votes, _votes, "Should have correct votes");
     Assert.equal(totalCastedVotes, _totalCastedVotes, "Should have correct casted votes");
     Assert.equal(totalVotingPower, _totalVotingPower, "Should have correct voting power");
+  }
+
+  function assertVotingPower(uint256 votingId, address voter, uint256 _votable, uint256 _modificable) {
+    uint256 votable;
+    uint256 modificable;
+    (votable, modificable) = votings.votingPowerForVoting(votingId, 0x1);
+    Assert.equal(votable, _votable, "Should have correct voting power");
+    Assert.equal(modificable, _modificable, "Should have correct modificable");
   }
 
   // Company method mock

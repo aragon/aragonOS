@@ -89,19 +89,6 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "company",
-          "type": "address"
-        }
-      ],
-      "name": "executeOnAppove",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": true,
       "inputs": [],
       "name": "optionsIndex",
@@ -182,5 +169,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490012519164
+  "updated_at": 1490015613387
 }

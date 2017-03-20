@@ -85,6 +85,18 @@ library VotingLib {
     return false;
   }
 
+  function votingPowerForVoting(Votings storage self, uint256 votingId, address voter) constant public returns (uint256 votable, uint256 modificable) {
+    Voting voting = self.votings[votingId];
+
+    for (uint j = 0; j < voting.governanceTokens.length; j++) {
+      GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
+      uint modificableVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
+      uint remainingVotes = token.votingPowerForDelegate(voter) - modificableVotes;
+      votable += remainingVotes;
+      modificable += modificableVotes;
+    }
+  }
+
   function indexOf(uint256[] array, uint256 element) returns (int256) {
     for (uint256 i = 0; i < array.length; i++) {
       if (array[i] == element) return int256(i);
