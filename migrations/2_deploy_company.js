@@ -31,7 +31,7 @@ module.exports = (deployer) => {
   deployer.deploy(CompanyConfiguratorFactory)
     .then(() => CompanyConfiguratorFactory.deployed())
     .then(c => conf = c)
-    .then(() => deployer.deploy(CompanyFactory, conf.address))
+    .then(() => deployer.deploy(CompanyFactory, conf.address, { gas: 5e6 }))
     .then(() => CompanyFactory.deployed())
     .then(f => f.deployCompany({ value: 1e18, from }))
     .then(r => {

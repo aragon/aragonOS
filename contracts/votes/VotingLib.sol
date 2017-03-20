@@ -61,7 +61,7 @@ library VotingLib {
     self.openedVotings.push(votingId);
     self.reverseVotings[votingAddress] = votingId;
 
-    NewVoting(votingId, startTimestamp, closeTimestamp);
+    NewVoting(votingId, votingAddress, startTimestamp, closeTimestamp);
   }
 
   function canModifyVote(Votings storage self, address voter, uint256 votingId) constant returns (bool) {
@@ -110,7 +110,7 @@ library VotingLib {
       if (addingVotes > 0) voted = true;
     }
 
-    if (voted) VoteCasted(votingId, voter);
+    if (voted) VoteCasted(votingId, voting.votingAddress, voter);
   }
 
   function modifyVote(Votings storage self, uint256 votingId, address voter, uint8 vote, bool removes) {
@@ -168,6 +168,8 @@ library VotingLib {
         }
       }
     }
+
+    VoteCasted(votingId, voting.votingAddress, voter);
   }
 
   function hasVotedInOpenedVoting(Votings storage self, address voter) returns (bool) {
@@ -227,7 +229,7 @@ library VotingLib {
     self.openedVotings.length -= 1;
   }
 
-  event NewVoting(uint256 indexed id, uint64 starts, uint64 closes);
-  event VoteCasted(uint256 indexed id, address indexed voter);
+  event NewVoting(uint256 indexed id, address votingAddress, uint64 starts, uint64 closes);
+  event VoteCasted(uint256 indexed id, address votingAddress, address indexed voter);
   event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
 }

@@ -865,6 +865,11 @@
         },
         {
           "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
           "name": "starts",
           "type": "uint64"
         },
@@ -884,6 +889,11 @@
           "indexed": true,
           "name": "id",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
         },
         {
           "indexed": true,
@@ -1057,5 +1067,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490007891826
+  "updated_at": 1490010753668
 }

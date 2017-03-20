@@ -70,8 +70,8 @@ contract AbstractCompany {
   function issueReward(address to, uint256 amount, string concept);
   function splitIntoDividends() payable;
 
-  event NewVoting(uint256 indexed id, uint64 starts, uint64 closes);
-  event VoteCasted(uint256 indexed id, address indexed voter);
+  event NewVoting(uint256 indexed id, address votingAddress, uint64 starts, uint64 closes);
+  event VoteCasted(uint256 indexed id, address votingAddress, address indexed voter);
   event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
 
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
