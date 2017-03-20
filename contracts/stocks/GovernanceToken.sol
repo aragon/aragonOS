@@ -3,6 +3,7 @@ pragma solidity ^0.4.8;
 import "zeppelin/payment/PullPayment.sol";
 import "zeppelin/token/StandardToken.sol";
 import "./TransferableToken.sol";
+import "../AbstractCompany.sol";
 
 contract GovernanceToken is StandardToken, TransferableToken, PullPayment {
   function GovernanceToken(address _governingEntity) {
@@ -27,7 +28,7 @@ contract GovernanceToken is StandardToken, TransferableToken, PullPayment {
   }
 
   function hasVotedInOpenedVoting(address holder) constant public returns (bool) {
-    return votingDelegate(holder) == 0x0; // TODO no
+    return AbstractCompany(governingEntity).hasVotedInOpenedVoting(holder);
   }
 
   function transferableTokens(address holder, uint64 time) constant public returns (uint256) {

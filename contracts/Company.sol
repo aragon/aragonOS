@@ -210,6 +210,10 @@ contract Company is AbstractCompany {
     return votings.countVotes(votingId, optionId);
   }
 
+  function hasVotedInOpenedVoting(address holder) constant public returns (bool) {
+    return votings.hasVotedInOpenedVoting(holder);
+  }
+
   // stock
   function isShareholder(address holder) constant public returns (bool) {
     for (uint8 i = 0; i < stockIndex; i++) {

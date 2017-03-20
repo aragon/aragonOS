@@ -163,6 +163,14 @@ library VotingLib {
     }
   }
 
+  function hasVotedInOpenedVoting(Votings storage self, address voter) returns (bool) {
+    for (uint j = 0; j < self.openedVotings.length; j++) {
+      if (hasVoted(self, self.openedVotings[j], voter)) return true;
+    }
+
+    return false;
+  }
+
   function hasVoted(Votings storage self, uint256 votingId, address voter) returns (bool) {
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {

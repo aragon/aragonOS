@@ -44,6 +44,7 @@ contract AbstractCompany {
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
   function setVotingExecuted(uint256 votingId, uint8 option) public;
+  function hasVotedInOpenedVoting(address holder) constant public returns (bool);
 
   function addStock(address newStock, uint256 issue) public;
   function issueStock(uint8 _stock, uint256 _amount) public;
