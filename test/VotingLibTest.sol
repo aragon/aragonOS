@@ -2,7 +2,9 @@ pragma solidity ^0.4.8;
 
 import "truffle/Assert.sol";
 import "../contracts/votes/VotingLib.sol";
+
 import "./mocks/VotingStockMock.sol";
+import "./helpers/ThrowProxy.sol";
 
 contract VotingLibTest {
   using VotingLib for VotingLib.Votings;
@@ -10,7 +12,10 @@ contract VotingLibTest {
 
   VotingStockMock token;
 
+  ThrowProxy throwProxy;
+
   function beforeAll() {
+    throwProxy = new ThrowProxy(address(this));
     token = new VotingStockMock(address(this));
     IssueableStock(token).issueStock(100);
     token.transfer(0x1, 70);
@@ -27,6 +32,10 @@ contract VotingLibTest {
 
   function testInit() {
     Assert.equal(votings.votings.length, 1, "Should avoid index 0");
+  }
+
+  function beforeEach() {
+    throwProxy = new ThrowProxy(address(this));
   }
 
   function testCreateVoting() {
@@ -50,6 +59,16 @@ contract VotingLibTest {
 
     assertVotingCount(votingId, 1, 70, 70, 100);
     Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have voted");
+  }
+
+  function testCantVoteIfNotHolder() {
+    VotingLibTest(throwProxy).throwsWhenVotingWithoutTokens();
+    throwProxy.assertThrows("should have thrown when voting without tokens");
+  }
+
+  function throwsWhenVotingWithoutTokens() {
+    uint256 votingId = votings.createVoting(0xdead1234, governanceTokens(), uint64(now) + 1000, uint64(now));
+    votings.castVote(votingId, 0xbaaf, 1);
   }
 
   function testModifyVote() {
@@ -138,8 +157,35 @@ contract VotingLibTest {
 
     assertVotingCount(votingId, 1, 10, 10, 100);
     Assert.isFalse(votings.hasVoted(votingId, 0x2), "Delegator shouldnt appear as voter after removing");
-    Assert.isFalse(votings.canVote(0x2, votingId), "Shouldnt allow voting after modification by delegator");
+    Assert.isFalse(votings.canVote(0x3, votingId), "Shouldnt allow voting after modification by delegator");
   }
+
+  function testModifyRemovedDelegatedVote() {
+    uint256 votingId = votings.createVoting(0x9, governanceTokens(), uint64(now) + 1000, uint64(now));
+    // 0x2 already delegated on 0x3 on testDelegateVoting
+    votings.castVote(votingId, 0x3, 1);
+    assertVotingCount(votingId, 1, 30, 30, 100);
+    votings.modifyVote(votingId, 0x2, 0, true);
+    assertVotingCount(votingId, 1, 10, 10, 100);
+    votings.modifyVote(votingId, 0x2, 0, false);
+    assertVotingCount(votingId, 1, 10, 30, 100);
+    assertVotingCount(votingId, 0, 20, 30, 100);
+    Assert.isFalse(votings.canVote(0x3, votingId), "Shouldnt allow voting after modification by delegator");
+  }
+
+  function testRemoveModifiedDelegatedVote() {
+    uint256 votingId = votings.createVoting(0x10, governanceTokens(), uint64(now) + 1000, uint64(now));
+    // 0x2 already delegated on 0x3 on testDelegateVoting
+    votings.castVote(votingId, 0x3, 1);
+    assertVotingCount(votingId, 1, 30, 30, 100);
+    votings.modifyVote(votingId, 0x2, 0, false);
+    assertVotingCount(votingId, 1, 10, 30, 100);
+    assertVotingCount(votingId, 0, 20, 30, 100);
+    votings.modifyVote(votingId, 0x2, 0, true);
+    assertVotingCount(votingId, 1, 10, 10, 100);
+    Assert.isFalse(votings.canVote(0x3, votingId), "Shouldnt allow voting after modification by delegator");
+  }
+
 
   function assertVotingCount(uint256 votingId, uint8 option, uint256 _votes, uint256 _totalCastedVotes, uint256 _totalVotingPower) {
     uint256 votes;

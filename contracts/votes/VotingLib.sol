@@ -136,7 +136,9 @@ library VotingLib {
           }
           voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
         } else {
-          return; // nothing to do if already removed
+          // Modifying removed votes
+          remainingVotes = token.balanceOf(voter);
+          voting.totalCastedVotes += remainingVotes * votingPowerPerToken;
         }
 
         if (removes) {
