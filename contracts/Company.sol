@@ -186,7 +186,8 @@ contract Company is AbstractCompany {
 
   function executeAfterVote(uint256 votingId) private {
     address votingAddress = votings.votingAddress(votingId);
-    if (bylaws.canPerformAction(BinaryVoting(votingAddress).mainSignature(), votingAddress)) {
+    bool canPerform = bylaws.canPerformAction(BinaryVoting(votingAddress).mainSignature(), votingAddress);
+    if (canPerform) {
       BinaryVoting(votingAddress).executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
     }
   }
@@ -222,6 +223,7 @@ contract Company is AbstractCompany {
 
   function addStock(address newStock, uint256 issue) checkBylaws public {
     if (Stock(newStock).governingEntity() != address(this)) throw;
+    // TODO: check stock not present yet
 
     IssueableStock(newStock).issueStock(issue);
 

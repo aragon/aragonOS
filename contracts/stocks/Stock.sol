@@ -3,8 +3,8 @@ pragma solidity ^0.4.8;
 import "zeppelin/token/VestedToken.sol";
 import "./GovernanceToken.sol";
 
-// transferrableTokens is called from governance to vested
-contract Stock is VestedToken, GovernanceToken {}
+// transferrableTokens is called from vested to governance
+contract Stock is GovernanceToken, VestedToken {}
 
 /*
 contract OldStock is BasicToken, Shareholders, PullPayment {
@@ -64,7 +64,7 @@ contract OldStock is BasicToken, Shareholders, PullPayment {
     if (indexOf(openedPolls, pollId) < 0) return false; // poll has been executed
     if (voters[voter][pollId] >= balances[voter]) return false; // has already voted in this proposal
     if (voter == company) return false; // non assigned stock cannot vote
-    if (!isShareholder(voter)) return false; // is not shareholder
+    if (!isShareholder[voter]) return false; // is not shareholder
 
     return true;
   }
