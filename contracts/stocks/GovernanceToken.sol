@@ -66,12 +66,12 @@ contract GovernanceToken is StandardToken, TransferableToken, PullPayment {
     delegatedVotes[votingDelegate(_to)] = safeAdd(delegatedVotes[votingDelegate(_to)], _value);
   }
 
-  function transfer(address _to, uint _value) canTransfer(msg.sender, _value) returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
     balanceDelegateVotes(msg.sender, _to, _value);
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from, _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     balanceDelegateVotes(_from, _to, _value);
     return super.transferFrom(_from, _to, _value);
   }

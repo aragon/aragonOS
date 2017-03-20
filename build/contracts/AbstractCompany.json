@@ -678,6 +678,24 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "holder",
+          "type": "address"
+        }
+      ],
+      "name": "hasVotedInOpenedVoting",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -816,7 +834,46 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
           "indexed": false,
+          "name": "starts",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "name": "closes",
+          "type": "uint64"
+        }
+      ],
+      "name": "NewVoting",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "VoteCasted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "name": "id",
           "type": "uint256"
         },
@@ -975,5 +1032,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489751104241
+  "updated_at": 1490003438962
 }

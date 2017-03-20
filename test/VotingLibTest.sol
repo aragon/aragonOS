@@ -151,4 +151,9 @@ contract VotingLibTest {
     Assert.equal(totalCastedVotes, _totalCastedVotes, "Should have correct casted votes");
     Assert.equal(totalVotingPower, _totalVotingPower, "Should have correct voting power");
   }
+
+  // Company method mock
+  function hasVotedInOpenedVoting(address holder) constant public returns (bool) {
+    return votings.hasVotedInOpenedVoting(holder);
+  }
 }

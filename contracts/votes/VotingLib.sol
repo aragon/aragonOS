@@ -79,7 +79,8 @@ library VotingLib {
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       address token = voting.governanceTokens[j];
-      if (GovernanceToken(token).votingPowerForDelegate(voter) > voting.voters[voter][token]) return true; // can vote using token
+      uint256 votes = GovernanceToken(token).votingPowerForDelegate(voter) - voting.overruledVotes[voter][token];
+      if (votes > voting.voters[voter][token]) return true; // can vote using token
     }
     return false;
   }
@@ -200,6 +201,8 @@ library VotingLib {
     voting.executed = option;
     voting.isExecuted = true;
     if (!voting.isClosed) closeVoting(self, votingId);
+
+    VoteExecuted(votingId, voting.votingAddress, option);
   }
 
   function closeVoting(Votings storage self, uint256 votingId) {
@@ -220,4 +223,5 @@ library VotingLib {
 
   event NewVoting(uint256 indexed id, uint64 starts, uint64 closes);
   event VoteCasted(uint256 indexed id, address indexed voter);
+  event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
 }

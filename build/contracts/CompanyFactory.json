@@ -205,15 +205,37 @@
           ],
           "name": "VoteCasted",
           "type": "event"
+        },
+        "0x8dcbb0568a434c369b3e9d0678a4ee476157a658fb6bbcbdb004e0f7b87c453c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "votingAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "outcome",
+              "type": "uint8"
+            }
+          ],
+          "name": "VoteExecuted",
+          "type": "event"
         }
       },
       "links": {
-        "AccountingLib": "0x3fd00b34e8fd363748b133926bcd5371e5c61400",
-        "BylawsLib": "0x7db66dccf8661698d68b7e337b301efc1de253e9",
-        "VotingLib": "0x51f641ca4eeb5052a3c74197196c3b219401b6e5"
+        "AccountingLib": "0x1e88c4e659688ae4c4603d06c7685bbd1d6b4f8a",
+        "BylawsLib": "0x5e621b4a819dcd9e01506e0694d50f7c376928c6",
+        "VotingLib": "0x3bfee506f14382e93aaa85d437d5eb531ccc12f8"
       },
-      "address": "0xec2228dc7043e5c863f3d8adc9aa5f1ba8c61a6c",
-      "updated_at": 1489751139325
+      "address": "0xf18b0f7d9055649467edad2d6a0226f2143401a8",
+      "updated_at": 1490003491216
     },
     "42": {
       "events": {
@@ -349,5 +371,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1489751139325
+  "updated_at": 1490003491216
 }
