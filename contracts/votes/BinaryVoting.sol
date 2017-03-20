@@ -17,13 +17,12 @@ contract BinaryVoting is Voting {
 
   function executeOnAction(uint8 option, AbstractCompany company) {
     if (option == uint8(VotingOption.Favor)) return executeOnAppove(company);
-    if (option == uint8(VotingOption.Against)) return executeOnReject(company);
+    // if (option == uint8(VotingOption.Against)) return executeOnReject(company);
   }
-
-  function executeOnReject(AbstractCompany company) internal;
-  function executeOnAppove(AbstractCompany company) internal;
 
   function mainSignature() public constant returns (bytes4) {
     return 0x0;
   }
+
+  function executeOnAppove(AbstractCompany company);
 }

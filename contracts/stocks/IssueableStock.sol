@@ -5,13 +5,10 @@ import "./Stock.sol";
 contract IssueableStock is Stock {
   function issueStock(uint256 _value) onlyGoverningEntity {
     totalSupply = safeAdd(totalSupply, _value);
-<<<<<<< HEAD
+
+    if (shareholderIndex < 1) addShareholder(governingEntity);
     balances[governingEntity] = safeAdd(balances[governingEntity], _value);
     delegatedVotes[governingEntity] = safeAdd(delegatedVotes[governingEntity], _value);
-=======
-    if (shareholderIndex < 1) addShareholder(company);
-    balances[company] = safeAdd(balances[company], _value);
->>>>>>> master
   }
 
   function destroyStock(address holder, uint256 _value) onlyGoverningEntity {

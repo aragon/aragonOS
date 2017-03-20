@@ -1,0 +1,1497 @@
+{
+  "contract_name": "Company",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "n",
+          "type": "uint256"
+        }
+      ],
+      "name": "sigPayload",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "name": "concept",
+          "type": "string"
+        }
+      ],
+      "name": "issueReward",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getAccountingPeriodRemainingBudget",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "reverseSales",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newStock",
+          "type": "address"
+        },
+        {
+          "name": "issue",
+          "type": "uint256"
+        }
+      ],
+      "name": "addStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "stockIndex",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_sale",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferSaleFunds",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "entity",
+          "type": "address"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "setEntityStatusByStatus",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "saleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "beginSale",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "periodIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPeriodInfo",
+      "outputs": [
+        {
+          "name": "lastTransaction",
+          "type": "uint256"
+        },
+        {
+          "name": "started",
+          "type": "uint64"
+        },
+        {
+          "name": "ended",
+          "type": "uint64"
+        },
+        {
+          "name": "revenue",
+          "type": "uint256"
+        },
+        {
+          "name": "expenses",
+          "type": "uint256"
+        },
+        {
+          "name": "dividends",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "voting",
+          "type": "address"
+        },
+        {
+          "name": "closingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32"
+        },
+        {
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "name": "nonce",
+          "type": "uint256"
+        }
+      ],
+      "name": "beginUntrustedPoll",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getBylawType",
+      "outputs": [
+        {
+          "name": "bylawType",
+          "type": "uint8"
+        },
+        {
+          "name": "updated",
+          "type": "uint64"
+        },
+        {
+          "name": "updatedBy",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getStatusBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "voting",
+          "type": "address"
+        },
+        {
+          "name": "closes",
+          "type": "uint64"
+        },
+        {
+          "name": "voteOnCreate",
+          "type": "bool"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
+        }
+      ],
+      "name": "beginPoll",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        },
+        {
+          "name": "removes",
+          "type": "bool"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
+        }
+      ],
+      "name": "modifyVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "c",
+          "type": "address"
+        },
+        {
+          "name": "n",
+          "type": "uint256"
+        }
+      ],
+      "name": "hashedPayload",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
+          "type": "uint8"
+        }
+      ],
+      "name": "addStatusBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "entity",
+          "type": "address"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "setEntityStatus",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "splitIntoDividends",
+      "outputs": [],
+      "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "stockId",
+          "type": "uint8"
+        },
+        {
+          "name": "holder",
+          "type": "address"
+        },
+        {
+          "name": "units",
+          "type": "uint256"
+        }
+      ],
+      "name": "assignStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "entityStatus",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "saleIndex",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getVotingBylaw",
+      "outputs": [
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
+        }
+      ],
+      "name": "castVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "removeRecurringReward",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "optionId",
+          "type": "uint8"
+        }
+      ],
+      "name": "countVotes",
+      "outputs": [
+        {
+          "name": "votes",
+          "type": "uint256"
+        },
+        {
+          "name": "totalCastedVotes",
+          "type": "uint256"
+        },
+        {
+          "name": "totalVotingPower",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "name": "period",
+          "type": "uint64"
+        },
+        {
+          "name": "concept",
+          "type": "string"
+        }
+      ],
+      "name": "createRecurringReward",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "name": "stocks",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "bytes4"
+        }
+      ],
+      "name": "getVotingBylaw",
+      "outputs": [
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_stock",
+          "type": "uint8"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "name": "_recipient",
+          "type": "address"
+        }
+      ],
+      "name": "grantStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "periodIndex",
+          "type": "uint256"
+        },
+        {
+          "name": "transactionIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTransactionInfo",
+      "outputs": [
+        {
+          "name": "expense",
+          "type": "bool"
+        },
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "approvedBy",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "name": "concept",
+          "type": "string"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "transactionIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "getRecurringTransactionInfo",
+      "outputs": [
+        {
+          "name": "period",
+          "type": "uint64"
+        },
+        {
+          "name": "lastTransactionDate",
+          "type": "uint64"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "approvedBy",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "name": "concept",
+          "type": "string"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getAccountingPeriodCloses",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "stockId",
+          "type": "uint8"
+        },
+        {
+          "name": "holder",
+          "type": "address"
+        },
+        {
+          "name": "units",
+          "type": "uint256"
+        }
+      ],
+      "name": "removeStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "sales",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "holder",
+          "type": "address"
+        }
+      ],
+      "name": "isShareholder",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getVotingInfoForId",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_votingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getVotingInfoForAddress",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "entity",
+          "type": "address"
+        }
+      ],
+      "name": "isStockSale",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "budget",
+          "type": "uint256"
+        },
+        {
+          "name": "periodDuration",
+          "type": "uint64"
+        },
+        {
+          "name": "dividendThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "setAccountingSettings",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "holder",
+          "type": "address"
+        }
+      ],
+      "name": "hasVotedInOpenedVoting",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "setSpecialBylaws",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "concept",
+          "type": "string"
+        }
+      ],
+      "name": "addTreasure",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "setVotingExecuted",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_stock",
+          "type": "uint8"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "issueStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_stock",
+          "type": "uint8"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "name": "_start",
+          "type": "uint64"
+        },
+        {
+          "name": "_cliff",
+          "type": "uint64"
+        },
+        {
+          "name": "_vesting",
+          "type": "uint64"
+        }
+      ],
+      "name": "grantVestedStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "addVotingBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
+          "type": "uint8"
+        }
+      ],
+      "name": "addSpecialStatusBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": true,
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "starts",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "name": "closes",
+          "type": "uint64"
+        }
+      ],
+      "name": "NewVoting",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "VoteCasted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "outcome",
+          "type": "uint8"
+        }
+      ],
+      "name": "VoteExecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "stockAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "stockIndex",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "IssuedStock",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "saleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "saleIndex",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "stockIndex",
+          "type": "uint8"
+        }
+      ],
+      "name": "NewStockSale",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "entity",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "EntityNewStatus",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "BylawChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "newPeriod",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewPeriod",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "closedPeriod",
+          "type": "uint256"
+        }
+      ],
+      "name": "PeriodClosed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "recurringIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewRecurringTransaction",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "recurringIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "RemovedRecurringTransaction",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "period",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "transactionIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "TransactionSaved",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x60606040525b60016005819055604080517fc1145d0d00000000000000000000000000000000000000000000000000000000815260076004820152670de0b6b3a764000060248201526224ea00604482015260648101929092525173__AccountingLib_________________________9163c1145d0d916084808301926000929190829003018186803b15620000005760325a03f415620000005750620000ba91503390506003640100000000620036ad620000c182021704565b5b62000125565b600160a060020a03821660008181526020818152604091829020805460ff191660ff861690811790915582519384529083015280517f21035d17ebab4a65c22f9da200bc402d7168367cfd00f68d3a8ce8b6a6433d899281900390910190a15b5050565b61406380620001356000396000f3006060604052361561022a5763ffffffff60e060020a60003504166303c7d7bb811461022f57806303e7d3931461025157806306eb907d146102b35780630782aaf1146102d257806308b02741146102fd57806311d9df491461031b5780631757f3f91461033e578063225553a41461035057806329552c4d146103715780632af2311d1461038c5780632fd2f04b146103db5780633aa45185146104185780634e4c2de01461049e578063554c1fbb146105075780635bf83538146105385780635dad7c6c1461055a5780635fde229c146105885780636035fa06146105e2578063635a43ca1461060357806363677ff71461060d5780636b87cdc4146106315780636ec012e714610660578063706d64c71461067f578063772198491461070157806379cc26401461071e5780638b06fdcf146107305780638bd138ed146107645780639052c845146107d157806390c689d714610800578063a14e3ee314610849578063a3c595c91461086d578063abb88cf01461097b578063b2733f2014610a7b578063b2f4812014610aa4578063b5f522f714610ac8578063b89a73cb14610af4578063bc8c9c8c14610b21578063c323c30214610b83578063c5d4063114610bee578063c99ee22814610c1b578063cbcf2e5a14610c3c578063d390178014610c69578063df4ceef614610c78578063e51b1fd014610cda578063eb04f70314610cf2578063eb12399814610d0a578063eb78bf6714610d46578063ff3a7d9114610dc1575b610000565b346100005761023f600435610e1b565b60408051918252519081900360200190f35b3461000057604080516020600460443581810135601f81018490048402850184019095528484526102b1948235600160a060020a0316946024803595606494929391909201918190840183828082843750949650610ea395505050505050565b005b346100005761023f61103d565b60408051918252519081900360200190f35b346100005761023f600160a060020a03600435166110c0565b60408051918252519081900360200190f35b34610000576102b1600160a060020a03600435166024356110d2565b005b34610000576103286112d7565b6040805160ff9092168252519081900360200190f35b34610000576102b16004356112e0565b005b34610000576102b1600160a060020a036004351660ff602435166113e4565b005b34610000576102b1600160a060020a0360043516611472565b005b346100005761039c60043561168d565b604080519687526001604060020a03958616602088015293909416858401526060850191909152608084015260a0830191909152519081900360c00190f35b34610000576102b1600160a060020a036004358116906001604060020a0360243516906044351660643560843560ff60a4351660c43561174d565b005b346100005761046b600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284375094965061199395505050505050565b6040805160ff90941684526001604060020a039092166020840152600160a060020a031682820152519081900360600190f35b3461000057610328600480803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843750949650611a6f95505050505050565b6040805160ff9092168252519081900360200190f35b34610000576102b1600160a060020a03600435166001604060020a036024351660443515156064351515611b36565b005b34610000576102b160043560ff6024351660443515156064351515611bde565b005b346100005761023f600160a060020a0360043516602435611c8d565b60408051918252519081900360200190f35b34610000576102b1600480803590602001908201803590602001908080601f016020809104026020016040519081016040528093929190818152602001838380828437509496505050923560ff169250611cc5915050565b005b34610000576102b1600160a060020a036004351660ff60243516611e02565b005b6102b1611ea6565b005b34610000576102b160ff60043516600160a060020a0360243516604435611ea9565b005b3461000057610328600160a060020a036004351661201b565b6040805160ff9092168252519081900360200190f35b346100005761023f612030565b60408051918252519081900360200190f35b34610000576106d2600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284375094965061203695505050505050565b604080519485526020850193909352901515838301526001604060020a03166060830152519081900360800190f35b34610000576102b160043560ff6024351660443515156120a9565b005b34610000576102b1600435612157565b005b346100005761074660043560ff60243516612268565b60408051938452602084019290925282820152519081900360600190f35b3461000057604080516020600460643581810135601f81018490048402850184019095528484526102b1948235600160a060020a03169460248035956044356001604060020a0316959460849492019190819084018382808284375094965061231795505050505050565b005b34610000576107e460ff600435166124d1565b60408051600160a060020a039092168252519081900360200190f35b34610000576106d2600160e060020a0319600435166124ec565b604080519485526020850193909352901515838301526001604060020a03166060830152519081900360800190f35b34610000576102b160ff60043516602435600160a060020a036044351661255f565b005b3461000057610880600435602435612671565b604051808815151515815260200187600160a060020a0316600160a060020a0316815260200186600160a060020a0316600160a060020a0316815260200185600160a060020a0316600160a060020a0316815260200184815260200180602001836001604060020a03166001604060020a0316815260200182810382528481815181526020019150805190602001908083836000831461093b575b80518252602083111561093b57601f19909201916020918201910161091b565b505050905090810190601f1680156109675780820380516001836020036101000a031916815260200191505b509850505050505050505060405180910390f35b346100005761098b600435612800565b60405180876001604060020a03166001604060020a03168152602001866001604060020a03166001604060020a0316815260200185600160a060020a0316600160a060020a0316815260200184600160a060020a0316600160a060020a0316815260200183815260200180602001828103825283818151815260200191508051906020019080838360008314610a3c575b805182526020831115610a3c57601f199092019160209182019101610a1c565b505050905090810190601f168015610a685780820380516001836020036101000a031916815260200191505b5097505050505050505060405180910390f35b3461000057610a88612948565b604080516001604060020a039092168252519081900360200190f35b34610000576102b160ff60043516600160a060020a03602435166044356129ce565b005b34610000576107e4600435612ae7565b60408051600160a060020a039092168252519081900360200190f35b3461000057610b0d600160a060020a0360043516612b02565b604080519115158252519081900360200190f35b3461000057610b31600435612bc4565b60408051978852600160a060020a0390961660208801526001604060020a03948516878701529290931660608601521515608085015260ff90911660a0840152151560c0830152519081900360e00190f35b3461000057610b31600160a060020a0360043516612c7b565b60408051978852600160a060020a0390961660208801526001604060020a03948516878701529290931660608601521515608085015260ff90911660a0840152151560c0830152519081900360e00190f35b3461000057610b0d600160a060020a0360043516612d2e565b604080519115158252519081900360200190f35b34610000576102b16004356001604060020a0360243516604435612d4e565b005b3461000057610b0d600160a060020a0360043516612e77565b604080519115158252519081900360200190f35b34610000576102b1612f0c565b005b610b0d600480803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843750949650612fad95505050505050565b604080519115158252519081900360200190f35b34610000576102b160043560ff6024351661309f565b005b34610000576102b160ff60043516602435613145565b005b34610000576102b160ff60043516602435600160a060020a03604435166001604060020a0360643581169060843581169060a4351661329d565b005b34610000576102b1600480803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843750949650508435946020810135945060408101351515935060608101356001604060020a031692506080013560ff1690506133d6565b005b34610000576102b1600480803590602001908201803590602001908080601f016020809104026020016040519081016040528093929190818152602001838380828437509496505050923560ff16925061353f915050565b005b60006019610e293084611c8d565b6040805160f860020a60ff9094169390930283527f457468657265756d205369676e6564204d6573736167653a0a3438566f74696e60018401527f67207072652d61757468200000000000000000000000000000000000000000006021840152602c8301919091525190819003604c01902090505b919050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f4156100005750506040515115159050610f3757610000565b6040517fd5da0e7100000000000000000000000000000000000000000000000000000000815260076004820181815260248301859052600160a060020a038616606484015260806044840190815284516084850152845173__AccountingLib_________________________9463d5da0e719493889388938b9360a4019060208601908083838215610fe4575b805182526020831115610fe457601f199092019160209182019101610fc4565b505050905090810190601f1680156110105780820380516001836020036101000a031916815260200191505b509550505050505060006040518083038186803b156100005760325a03f415610000575050505b5b505050565b60008073__AccountingLib_________________________6306285e5660076110658161367f565b6000604051604001526040518363ffffffff1660e060020a028152600401808381526020018281526020019250505060406040518083038186803b156100005760325a03f415610000575050604051519250829150505b5090565b60046020526000908152604090205481565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f415610000575050604051511515905061116657610000565b30600160a060020a031682600160a060020a031663435ebc2c6000604051602001526040518163ffffffff1660e060020a028152600401809050602060405180830381600087803b156100005760325a03f11561000057505060405151600160a060020a03169190911490506111db57610000565b81600160a060020a031663d96831e1826040518263ffffffff1660e060020a02815260040180828152602001915050600060405180830381600087803b156100005760325a03f1156100005750506002805460ff908116600090815260016020818152604092839020805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a038a16908117909155855460ff198116908616909301851692909217948590558251918252938316600019019092169282019290925280820184905290517fa57e55b329840b29f230f9984829ca4a7881db8c26a41a8140955db70b6cc15d92506060918190039190910190a15b5b5050565b60025460ff1681565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f415610000575050604051511515905061137457610000565b6000818152600360205260408082205481517f3c68eb810000000000000000000000000000000000000000000000000000000081529151600160a060020a0390911692633c68eb81926004808201939182900301818387803b156100005760325a03f115610000575050505b5b50565b600160a060020a03331660009081526020819052604090205460ff8083169116101561140f57610000565b33600160a060020a031682600160a060020a0316141580156114595750600160a060020a0333811660009081526020819052604080822054928516825290205460ff918216911610155b1561146357610000565b6112d282826136ad565b5b5050565b6040805160006020918201819052825160e160020a634c035005028152600e6004820152600160e060020a03198235166024820152600160a060020a03331660448201529251909273__BylawsLib_____________________________92639806a00a92606480840193829003018186803b156100005760325a03f415610000575050604051511515905061150657610000565b81905030600160a060020a031681600160a060020a03166353e1ead96000604051602001526040518163ffffffff1660e060020a028152600401809050602060405180830381600087803b156100005760325a03f11561000057505060405151600160a060020a031691909114905061157e57610000565b600580546000908152600360209081526040808320805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0388811691821790925585549085526004808552838620829055600182019096558251840185905282517fbaac400900000000000000000000000000000000000000000000000000000000815292517f9fc2cc7cc4d0a8baadda4627cf6fdfdb2e21fb3167701058da900eee4ea3011f96899692959389169463baac400994818301949093929183900390910190829087803b156100005760325a03f115610000575050604080518051600160a060020a039095168152602081019390935260ff909316828401525090519081900360600190a15b5b5050565b6000600060006000600060006000600760010188815481101561000057906000526020600020906008020160005b506003810154600482015460001990910198506001604060020a0380821698509192506000680100000000000000009091049091161161171257600681015460048201546001604060020a0390811691160161172d565b60048101546801000000000000000090046001604060020a03165b6001820154825460028401549297509550935091505b5091939550919395565b8484848484600061175d82610e1b565b60008181526006602052604090205490915060ff161561177c57610000565b60408051600081815260208083018452918301819052825184815260ff87168184015280840189905260608101889052925160019360808082019493601f19840193928390039091019190866161da5a03f115610000575050604051601f190151600160a060020a038781169116146117f457610000565b6000818152600660209081526040808320805460ff19166001179055805182019290925281517f325b746b00000000000000000000000000000000000000000000000000000000815260048101829052602360248201527f626567696e506f6c6c28616464726573732c75696e7436342c626f6f6c2c626f60448201527f6f6c2900000000000000000000000000000000000000000000000000000000006064820152915173__BylawsLib_____________________________92639806a00a92600e92859263325b746b926084808301939192829003018186803b156100005760325a03f41561000057505050604051805190508e6000604051602001526040518463ffffffff1660e060020a0281526004018084815260200183600160e060020a031916600160e060020a031916815260200182600160a060020a0316600160a060020a03168152602001935050505060206040518083038186803b156100005760325a03f415610000575050604051511515905061197457610000565b6119828d8d60006000613711565b5b5b50505050505050505050505050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602081810183905280840191909152835160c0810185528281529081018290528084018290526060808201839052608080830184905260a0830184905294840191909152820181905291810182905281908190611a20600e8663ffffffff6138d816565b90508060600151925080608001519150806040015160a0015115611a4357600093505b80516020015115611a5357600193505b80602001516020015115611a6657600293505b5b509193909250565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602081810183905280840191909152835160c0810185528281529081018290528084018290526060808201839052608080830184905260a08301849052948401919091528201819052918101829052611af8600e8463ffffffff6138d816565b80516020015190915015611b10578051519150611b30565b80602001516020015115611b2b576020810151519150611b30565b60fa91505b50919050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f4156100005750506040515115159050611bca57610000565b611bd684848484613711565b5b5b50505050565b604080517fcce34e4e000000000000000000000000000000000000000000000000000000008152600f600482015260248101869052600160a060020a033316604482015260ff851660648201528315156084820152905173__VotingLib_____________________________9163cce34e4e9160a4808301926000929190829003018186803b156100005760325a03f415610000575050508015611bd657611bd68461396c565b5b5b50505050565b604080516c01000000000000000000000000600160a060020a0385160281526014810183905290519081900360340190205b92915050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602080820183905280840191909152835160c0810185528281528082018390528085018390526060808201849052608080830185905260a08301859052858701929092528401839052830182905283518101829052835160e160020a634c035005028152600e60048201529135600160e060020a0319166024830152600160a060020a03331660448301529251919273__BylawsLib_____________________________92639806a00a926064808201939291829003018186803b156100005760325a03f4156100005750506040515115159050611dcb57610000565b611dd3613b41565b9050816003811161000057815160ff9091169052805160016020909101526110378382613c23565b5b5b505050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f415610000575050604051511515905061146357610000565b6112d282826136ad565b5b5b5050565b5b565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f4156100005750506040515115159050611f3d57610000565b60ff831660009081526001602052604080822054815160e060020a63d96831e1028152600481018590529151600160a060020a039091169263d96831e1926024808201939182900301818387803b156100005760325a03f1156100005750505060ff831660009081526001602090815260408083205481518301849052815160e060020a63a9059cbb028152600160a060020a038781166004830152602482018790529251929091169363a9059cbb9360448084019491939192918390030190829087803b156100005760325a03f115610000575050505b5b505050565b60006020819052908152604090205460ff1681565b60055481565b6040805160c081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905281908190819061207e600e8763ffffffff6138d816565b604001519050806000015194508060200151935080606001519250806080015191505b509193509193565b60408051600060209182015281517fdd401546000000000000000000000000000000000000000000000000000000008152600f600482015260248101869052600160a060020a033316604482015260ff85166064820152915173__VotingLib_____________________________9263dd401546926084808301939192829003018186803b156100005760325a03f41561000057505081159050611037576110378361396c565b5b5b505050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f41561000057505060405151151590506121eb57610000565b604080517f69efe0f10000000000000000000000000000000000000000000000000000000081526007600482015260248101839052905173__AccountingLib_________________________916369efe0f1916044808301926000929190829003018186803b156100005760325a03f415610000575050505b5b50565b604080516000606091820181905282517f70336396000000000000000000000000000000000000000000000000000000008152600f60048201526024810186905260ff85166044820152925190928392839273__VotingLib_____________________________926370336396926064808301939192829003018186803b156100005760325a03f4156100005750506040805180516020820151919092015191955093509150505b9250925092565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f41561000057505060405151151590506123ab57610000565b6040517f6186d66400000000000000000000000000000000000000000000000000000000815260076004820181815260248301869052600160a060020a03871660648401526001604060020a0385166084840152600160a4840181905260c060448501908152855160c4860152855173__AccountingLib_________________________95636186d66495948a9489948d948c9492939260e4019060208801908083838215612475575b80518252602083111561247557601f199092019160209182019101612455565b505050905090810190601f1680156124a15780820380516001836020036101000a031916815260200191505b5097505050505050505060006040518083038186803b156100005760325a03f415610000575050505b5b50505050565b600160205260009081526040902054600160a060020a031681565b6040805160c081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905281908190819061207e600e8763ffffffff613ce016565b604001519050806000015194508060200151935080606001519250806080015191505b509193509193565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f41561000057505060405151151590506125f357610000565b60ff831660009081526001602090815260408083205481518301849052815160e060020a63a9059cbb028152600160a060020a038681166004830152602482018890529251929091169363a9059cbb9360448084019491939192918390030190829087803b156100005760325a03f115610000575050505b5b505050565b6000600060006000600060206040519081016040528060008152506000600060076001018a815481101561000057906000526020600020906008020160005b5060030189815481101561000057906000526020600020906006020160005b5090506001815460ff1660018111610000571497508060020160009054906101000a9004600160a060020a031696508060030160009054906101000a9004600160a060020a03169550806001015493508060050160019054906101000a9004600160a060020a031694508060050160159054906101000a90046001604060020a03169150806004018054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156127eb5780601f106127c0576101008083540402835291602001916127eb565b820191906000526020600020905b8154815290600101906020018083116127ce57829003601f168201915b505050505092505b5092959891949750929550565b60006000600060006000602060405190810160405280600081525060006000600760020189815481101561000057906000526020600020906009020160005b5091508160000190508160060160009054906101000a90046001604060020a031697508060030160009054906101000a9004600160a060020a03169550806001015493508060050160019054906101000a9004600160a060020a03169450806004018054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156129355780601f1061290a57610100808354040283529160200191612935565b820191906000526020600020905b81548152906001019060200180831161291857829003601f168201915b505050505092505b505091939550919395565b60008073__AccountingLib_________________________6306285e5660076129708161367f565b6000604051604001526040518363ffffffff1660e060020a028152600401808381526020018281526020019250505060406040518083038186803b156100005760325a03f415610000575050604051602001519250829150505b5090565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f4156100005750506040515115159050612a6257610000565b60ff83166000908152600160205260408082205481517f5eeb6e45000000000000000000000000000000000000000000000000000000008152600160a060020a0386811660048301526024820186905292519290911692635eeb6e459260448084019382900301818387803b156100005760325a03f115610000575050505b5b505050565b600360205260009081526040902054600160a060020a031681565b6000805b60025460ff9081169082161015612bb95760ff81166000908152600160209081526040808320548151830184905281517fb89a73cb000000000000000000000000000000000000000000000000000000008152600160a060020a0388811660048301529251929091169363b89a73cb9360248084019491939192918390030190829087803b156100005760325a03f11561000057505060405151159050612bb05760019150611b30565b5b600101612b06565b600091505b50919050565b6000600060006000600060006000879650600f73__VotingLib_____________________________63275abdd5909189600060405160c001526040518363ffffffff1660e060020a028152600401808381526020018281526020019250505060c06040518083038186803b156100005760325a03f4156100005750506040805180516020820151928201516060830151608084015160a090940151929b50939950975091955093509150505b919395979092949650565b6000600060006000600060006000612d14600f73__VotingLib_____________________________635af1f85d90918b6000604051602001526040518363ffffffff1660e060020a0281526004018083815260200182600160a060020a0316600160a060020a031681526020019250505060206040518083038186803b156100005760325a03f415610000575050604051519050612bc4565b96509650965096509650965096505b919395979092949650565b600160a060020a038116600090815260046020526040812054115b919050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f4156100005750506040515115159050612de257610000565b604080517fc608c59d00000000000000000000000000000000000000000000000000000000815260076004820152602481018590526001604060020a038416604482015260648101839052905173__AccountingLib_________________________9163c608c59d916084808301926000929190829003018186803b156100005760325a03f415610000575050505b5b505050565b604080516000602091820181905282517f014c3bdf000000000000000000000000000000000000000000000000000000008152600f6004820152600160a060020a03851660248201529251909273__VotingLib_____________________________9263014c3bdf92604480840193829003018186803b156100005760325a03f415610000575050604051519150505b919050565b612f5b606060405190810160405280602281526020017f61737369676e53746f636b2875696e74382c616464726573732c75696e743235815260200160f060020a61362902815250600161353f565b611ea6606060405190810160405280602281526020017f72656d6f766553746f636b2875696e74382c616464726573732c75696e743235815260200160f060020a61362902815250600161353f565b5b565b604080517f3405829e0000000000000000000000000000000000000000000000000000000081526007600482018181526024830193845284516044840152845160009473__AccountingLib_________________________94633405829e949388939092916064019060208501908083838215613045575b80518252602083111561304557601f199092019160209182019101613025565b505050905090810190601f1680156130715780820380516001836020036101000a031916815260200191505b50935050505060006040518083038186803b156100005760325a03f41561000057505050600190505b919050565b30600160a060020a031633600160a060020a03161415156130bf57610000565b604080517f59c852ca000000000000000000000000000000000000000000000000000000008152600f60048201526024810184905260ff83166044820152905173__VotingLib_____________________________916359c852ca916064808301926000929190829003018186803b156100005760325a03f415610000575050505b5050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f41561000057505060405151151590506131d957610000565b60ff821660009081526001602052604080822054815160e060020a63d96831e1028152600481018590529151600160a060020a039091169263d96831e1926024808201939182900301818387803b156100005760325a03f1156100005750505060ff8216600081815260016020908152604091829020548251600160a060020a03909116815290810192909252818101839052517fa57e55b329840b29f230f9984829ca4a7881db8c26a41a8140955db70b6cc15d9181900360600190a15b5b5050565b6040805160006020918201819052825160e160020a634c035005028152600e60048201529035600160e060020a031916602482015233600160a060020a03166044820152915173__BylawsLib_____________________________92639806a00a926064808301939192829003018186803b156100005760325a03f415610000575050604051511515905061333157610000565b60ff86166000908152600160205260408082205481517ee1986d000000000000000000000000000000000000000000000000000000008152600160a060020a038881166004830152602482018a90526001604060020a0380891660448401528088166064840152861660848301529251929091169262e1986d9260a48084019382900301818387803b156100005760325a03f115610000575050505b5b505050505050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602080820183905280840191909152835160c0810185528281528082018390528085018390526060808201849052608080830185905260a08301859052858701929092528401839052830182905283518101829052835160e160020a634c035005028152600e60048201529135600160e060020a0319166024830152600160a060020a03331660448301529251919273__BylawsLib_____________________________92639806a00a926064808201939291829003018186803b156100005760325a03f41561000057505060405151151590506134dc57610000565b6134e4613b41565b604080820180518990528051602001889052805187151560609091015280516001604060020a038716608090910152805160ff861692019190915251600160a09091015290506135348782613c23565b5b5b50505050505050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602080820183905280840191909152835160c0810185528281528082018390528085018390526060808201849052608080830185905260a08301859052858701929092528401839052830182905283518101829052835160e160020a634c035005028152600e60048201529135600160e060020a0319166024830152600160a060020a03331660448301529251919273__BylawsLib_____________________________92639806a00a926064808201939291829003018186803b156100005760325a03f415610000575050604051511515905061364557610000565b61364d613b41565b90508160018111610000576020808301805160ff909316909252905160019101526110378382613c23565b5b5b505050565b6000816001018260030154815481101561000057906000526020600020906008020160005b5090505b919050565b600160a060020a03821660008181526020818152604091829020805460ff191660ff861690811790915582519384529083015280517f21035d17ebab4a65c22f9da200bc402d7168367cfd00f68d3a8ce8b6a6433d899281900390910190a15b5050565b604080516020810182526000808252600254925191929091829160ff16908059106137395750595b908082528060200260200182016040525b509250600091505b60025460ff90811690831610156137b05760ff82166000818152600160205260409020548451600160a060020a0390911691859181101561000057600160a060020a039092166020928302909101909101525b600190910190613752565b600f73__VotingLib_____________________________630e6cb6fe909189868a426000604051602001526040518663ffffffff1660e060020a0281526004018086815260200185600160a060020a0316600160a060020a0316815260200180602001846001604060020a03166001604060020a03168152602001836001604060020a03166001604060020a03168152602001828103825285818151815260200191508051906020019060200280838360008314613889575b80518252602083111561388957601f199092019160209182019101613869565b505050905001965050505050505060206040518083038186803b156100005760325a03f41561000057505060405151915050841561353457613534816000866120a9565b5b5b50505050505050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602081810183905280840191909152835160c0810185528281529081018290528084018290526060808201839052608080830184905260a08301849052948401919091528201819052918101919091526139638361395e84613e4a565b613ce0565b90505b92915050565b60006000600f73__VotingLib_____________________________63dbc5f8a39091856000604051602001526040518363ffffffff1660e060020a028152600401808381526020018281526020019250505060206040518083038186803b156100005760325a03f41561000057505050604051805190509150819050600e73__BylawsLib_____________________________639806a00a909183600160a060020a03166332cbf4776000604051602001526040518163ffffffff1660e060020a028152600401809050602060405180830381600087803b156100005760325a03f1156100005750506040805180516000602092830152825160e060020a63ffffffff88160281526004810195909552600160e060020a0319166024850152600160a060020a038816604485015290516064808501949293509091829003018186803b156100005760325a03f4156100005750506040515115905061103757604080517fc5e50bb5000000000000000000000000000000000000000000000000000000008152600060048201819052600160a060020a03308116602484015292519284169263c5e50bb592604480820193929182900301818387803b156100005760325a03f115610000575050505b5b505050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602081810183905280840191909152835160c081810186528382528183018490528186018490526060808301859052608080840186905260a080850187905287890194909452818701869052958601859052865160e081018852808401868152818401879052815287518089018952868152808601879052818601528751928301885285835293820185905281870185905281810185905281860185905291810184905294820194909452928301819052908201525b90565b613c35600e838363ffffffff613eb116565b7f707e8cc63d34f6a1906248ce9fb061134c766bcf45438c21f6a88258f6673929826040518080602001828103825283818151815260200191508051906020019080838360008314613ca2575b805182526020831115613ca257601f199092019160209182019101613c82565b505050905090810190601f168015613cce5780820380516001836020036101000a031916815260200191505b509250505060405180910390a15b5050565b604080516101c081018252600061018082018181526101a08301829052825282518084018452818152602081810183905280840191909152835160c081810186528382528183018490528186018490526060808301859052608080840186905260a080850187905287890194909452818701869052958601859052600160e060020a03198816855288845293869020865160e081018852815460ff81811683870190815261010092839004821615158487015283528951808b018b526001850154808316825283900482161515818901528388015289519485018a52600284015485526003840154968501969096526004830154808716858b015290810486161515848801526201000081046001604060020a03908116858a01526a01000000000000000000009091049095161515938301939093529582015260059094015490811691840191909152680100000000000000009004600160a060020a0316908201525b92915050565b6000816040518082805190602001908083835b60208310613e7c5780518252601f199092019160209182019101613e5d565b6001836020036101000a038019825116818451168082178552505050505050905001915050604051809103902090505b919050565b6000613ebc83613e4a565b600160e060020a031981166000908152602086815260409182902085518051825491840151151561010090810261ff001960ff93841660ff19958616178116919091178555858a015180516001870180549289015115158502918616928716929092178316179055868a015180516002870155958601516003860155958501516004850180546060808901516080808b015160a0909b015115156a0100000000000000000000026aff00000000000000000000196001604060020a039c8d16620100000269ffffffffffffffff000019941515909902979099169490991693909317909a169390931798909816929092179290921692909217909155860151600590910180549387015133600160a060020a039081166801000000000000000090810242871692909316027fffffffff0000000000000000000000000000000000000000ffffffffffffffff9490951667ffffffffffffffff1996871617841694909417909416929092171691909117905590505b505050505600a165627a7a7230582031f9ebb9668657d69ed19a13dc03ded722f3f8fe0ffb04ec9eb22c97908d64d80029",
+  "networks": {
+    "42": {
+      "events": {
+        "0x61a611267e7ed28f8a566b021b9ac3ccc3985343a31971a180d01a57f63f3380": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "newPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewPeriod",
+          "type": "event"
+        },
+        "0x5263beccfd97c2947207bf7254d7c0c216431d4b9cea8c9b3371e8187020851b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "closedPeriod",
+              "type": "uint256"
+            }
+          ],
+          "name": "PeriodClosed",
+          "type": "event"
+        },
+        "0x959c5b77f561a2d4015cca5a9e954873b86ae486f7d28c079c9f4eb85269b2ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewRecurringTransaction",
+          "type": "event"
+        },
+        "0x24ef25c67e85ad3acf87f62ecbe1b5fa3641cf54972aec7bf8cd1a507563e018": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "recurringIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "RemovedRecurringTransaction",
+          "type": "event"
+        },
+        "0x62ad1f2c6191c79e31d5ee69f7a962dce559b92f2adf6fa27ecf13bee926a1a4": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "period",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "transactionIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "TransactionSaved",
+          "type": "event"
+        },
+        "0xa4bda8ed0d1072a345c5051c37c866ee82d45070e96afc314640553fa466f221": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "votingAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "starts",
+              "type": "uint64"
+            },
+            {
+              "indexed": false,
+              "name": "closes",
+              "type": "uint64"
+            }
+          ],
+          "name": "NewVoting",
+          "type": "event"
+        },
+        "0x6bb852dd4b5b42efdae2712671afd5e0543546344271c4eaae3cff0432909064": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "votingAddress",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "voter",
+              "type": "address"
+            }
+          ],
+          "name": "VoteCasted",
+          "type": "event"
+        },
+        "0x8dcbb0568a434c369b3e9d0678a4ee476157a658fb6bbcbdb004e0f7b87c453c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "votingAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "outcome",
+              "type": "uint8"
+            }
+          ],
+          "name": "VoteExecuted",
+          "type": "event"
+        },
+        "0xa57e55b329840b29f230f9984829ca4a7881db8c26a41a8140955db70b6cc15d": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "stockAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "stockIndex",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "IssuedStock",
+          "type": "event"
+        },
+        "0x9fc2cc7cc4d0a8baadda4627cf6fdfdb2e21fb3167701058da900eee4ea3011f": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "saleAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "saleIndex",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stockIndex",
+              "type": "uint8"
+            }
+          ],
+          "name": "NewStockSale",
+          "type": "event"
+        },
+        "0x21035d17ebab4a65c22f9da200bc402d7168367cfd00f68d3a8ce8b6a6433d89": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "entity",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "name": "EntityNewStatus",
+          "type": "event"
+        },
+        "0x707e8cc63d34f6a1906248ce9fb061134c766bcf45438c21f6a88258f6673929": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "functionSignature",
+              "type": "string"
+            }
+          ],
+          "name": "BylawChanged",
+          "type": "event"
+        }
+      },
+      "links": {
+        "AccountingLib": "0xc38c3bf1c23855332bb2a294f8bbb7456231a0de",
+        "BylawsLib": "0x0600057170f31a5086e3cc1353e78182874c04e5",
+        "VotingLib": "0x08de8eec41539fe8920fffb69d2ddac62dd90841"
+      },
+      "updated_at": 1490012572726
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1490012572726
+}
