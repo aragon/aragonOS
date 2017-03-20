@@ -12,31 +12,45 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 
 // const utils = require('ethereumjs-util')
 
-const from = web3.eth.accounts[8] || '0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2'
+const networks = {
+  15: web3.eth.accounts[0],
+  3: '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b',
+  42: '0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2',
+}
+
+const from = networks[web3.version.network]
+
 const nonce = parseInt(Math.random() * 1e15)
+const gas = web3.version.network == 15 ? 10e6 : 4.9e6
 
 module.exports = (deployer) => {
   let company = null
 
-  deployer.deploy(AccountingLib)
+  deployer.deploy(AccountingLib, { gas })
   deployer.link(AccountingLib, [Company, CompanyFactory])
-  deployer.deploy(BylawsLib)
+  deployer.deploy(BylawsLib, { gas })
   deployer.link(BylawsLib, [Company, CompanyFactory])
   deployer.deploy(VotingLib)
   deployer.link(VotingLib, [Company, CompanyFactory])
 
-  deployer.deploy(BytesHelper)
+  deployer.deploy(BytesHelper, { gas })
   deployer.link(BytesHelper, GenericBinaryVoting)
 
-  deployer.deploy(CompanyConfiguratorFactory)
+  deployer.deploy(CompanyConfiguratorFactory, { from, gas })
     .then(() => CompanyConfiguratorFactory.deployed())
     .then(c => conf = c)
-    .then(() => deployer.deploy(CompanyFactory, conf.address, { gas: 5e6 }))
+    .then(() => deployer.deploy(CompanyFactory, conf.address, { from, gas }))
     .then(() => CompanyFactory.deployed())
-    .then(f => f.deployCompany({ value: 1e18, from }))
+    .then(f => {
+      factory = f
+      return conf.setFactory(factory.address, { from, gas })
+    })
+    /*
+    .then(() => factory.deployCompany({ from, gas }))
     .then(r => {
       companyAddress = r.logs.filter(e => e.event === 'NewCompany')[0].args.companyAddress
       console.log('Company address: ', companyAddress)
-      return conf.configureCompany(companyAddress, 1000, [from, "0xb50bfD52E313751029D7E2C09D3441A4bBCec750", "0xb125b0c784f538e9a67c849624d9344072580f0e"], ["0xb50bfD52E313751029D7E2C09D3441A4bBCec750", from], [600, 250], { from })
+      return conf.configureCompany(companyAddress, from, { from, gas })
     })
+    */
 }

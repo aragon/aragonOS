@@ -13,7 +13,7 @@ contract CompanyFactory {
     address companyAddress = createCompany();
     companies[companyIndex] = companyAddress;
 
-    NewCompany(companyAddress, companyIndex);
+    NewCompany(companyAddress, msg.sender, companyIndex);
     companyIndex += 1;
   }
 
@@ -21,6 +21,7 @@ contract CompanyFactory {
     Company company = new Company();
     company.addTreasure.value(msg.value)('Company bootstrap');
     company.setEntityStatusByStatus(address(configurator), 3);
+    configurator.setCompanyDeployer(address(company), msg.sender);
     company.setSpecialBylaws();
     return address(company);
   }
@@ -29,5 +30,5 @@ contract CompanyFactory {
   mapping (uint => address) public companies;
   uint public companyIndex;
 
-  event NewCompany(address companyAddress, uint companyIndex);
+  event NewCompany(address companyAddress, address deployer, uint companyIndex);
 }

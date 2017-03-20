@@ -32,18 +32,24 @@ contract Company is AbstractCompany {
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
   }
 
+  /*
   function () payable {
     if (msg.value < 1) throw;
     registerIncome("donation");
   }
+  */
 
   modifier checkBylaws {
     if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
     _;
   }
 
-  function sigPayload(uint nonce) constant public returns (bytes32) {
-    return sha3(address(this), nonce);
+  function sigPayload(uint n) constant public returns (bytes32) {
+    return keccak256(0x19, "Ethereum Signed Message:\n48Voting pre-auth ", hashedPayload(address(this), n)); // length = 32 + 16
+  }
+
+  function hashedPayload(address c, uint n) constant public returns (bytes32) {
+    return keccak256(c, n);
   }
 
   modifier checkSignature(address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) {
@@ -58,6 +64,7 @@ contract Company is AbstractCompany {
     if (!bylaws.canPerformAction(BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)"), sender)) throw;
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
+
 
   function setSpecialBylaws() {
     addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
@@ -331,12 +338,16 @@ contract Company is AbstractCompany {
     return true;
   }
 
+  /*
   function registerIncome(string concept) payable public returns (bool) {
     accounting.registerIncome(concept);
     return true;
   }
+  */
 
   function splitIntoDividends() payable {
+    /*
+    TODO: Removed for gas limitations
     uint256 totalDividendBase;
     for (uint8 i = 0; i < stockIndex; i++) {
       Stock st = Stock(stocks[i]);
@@ -348,6 +359,7 @@ contract Company is AbstractCompany {
       uint256 stockShare = msg.value * (s.totalSupply() * s.economicRights()) / totalDividendBase;
       s.splitDividends.value(stockShare)();
     }
+    */
   }
 
   function issueReward(address to, uint256 amount, string concept) checkBylaws {
