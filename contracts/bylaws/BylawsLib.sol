@@ -82,7 +82,6 @@ library BylawsLib {
     if (b.voting.enforced) {
       var (isValidVoting, votingId) = checkVoting(sender, b.voting);
       if (isValidVoting) {
-        // TODO: Set voting executed here to block reentry
         AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
         return true;
       }
