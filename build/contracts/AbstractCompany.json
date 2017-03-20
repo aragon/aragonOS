@@ -218,6 +218,31 @@
       "constant": false,
       "inputs": [
         {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        },
+        {
+          "name": "removes",
+          "type": "bool"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
+        }
+      ],
+      "name": "modifyVote",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
           "name": "functionSignature",
           "type": "string"
         },
@@ -1032,5 +1057,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490003438962
+  "updated_at": 1490007891826
 }

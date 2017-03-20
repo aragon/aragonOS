@@ -62,7 +62,7 @@ contract Company is AbstractCompany {
   function setSpecialBylaws() {
     addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
     addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-    addSpecialStatusBylaw("castVote(uint256,uint8,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
+    // addSpecialStatusBylaw("castVote(uint256,uint8,bool)", AbstractCompany.SpecialEntityStatus.Shareholder);
   }
 
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
@@ -159,12 +159,6 @@ contract Company is AbstractCompany {
 
   // vote
 
-  function setVotingExecuted(uint256 votingId, uint8 option) {
-    if (msg.sender != address(this)) throw;
-    votings.closeExecutedVoting(votingId, option);
-    VoteExecuted(votingId, msg.sender, option);
-  }
-
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public checkBylaws {
     return doBeginPoll(voting, closes, voteOnCreate, executesIfDecided);
   }
@@ -179,22 +173,29 @@ contract Company is AbstractCompany {
     if (voteOnCreate) castVote(votingId, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
   }
 
-  function castVote(uint256 votingId, uint8 option, bool executesIfDecided) public checkBylaws {
+  // Bylaw for cast vote and modify is not really needed, as voting lib has sender into account at all times.
+  function castVote(uint256 votingId, uint8 option, bool executesIfDecided) public /*checkBylaws*/ {
     votings.castVote(votingId, msg.sender, option);
-
-    if (executesIfDecided) {
-      address votingAddress = votings.votingAddress(votingId);
-      BinaryVoting voting = BinaryVoting(votingAddress);
-      if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
-        voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
-      }
-    }
+    if (executesIfDecided) executeAfterVote(votingId);
   }
 
   // TODO: Add bylaw
-  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public checkBylaws {
+  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public /*checkBylaws*/ {
     votings.modifyVote(votingId, msg.sender, option, removes);
-    // bla bla bla execute on decided
+    if (executesIfDecided) executeAfterVote(votingId);
+  }
+
+  function setVotingExecuted(uint256 votingId, uint8 option) {
+    if (msg.sender != address(this)) throw; // address specific bylaw to company
+    votings.closeExecutedVoting(votingId, option);
+  }
+
+  function executeAfterVote(uint256 votingId) private {
+    address votingAddress = votings.votingAddress(votingId);
+    BinaryVoting voting = BinaryVoting(votingAddress);
+    if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
+      voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
+    }
   }
 
   function getVotingInfoForAddress(address _votingAddress) returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {

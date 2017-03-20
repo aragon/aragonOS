@@ -117,6 +117,9 @@ library VotingLib {
     if (!canModifyVote(self, voter, votingId)) throw;
 
     Voting voting = self.votings[votingId];
+
+    if (!hasVoted(self, votingId, voter) && voting.votedOption[voter] != 1) throw;
+
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
       uint remainingVotes = token.balanceOf(voter) - voting.voters[voter][token];

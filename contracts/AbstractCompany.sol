@@ -43,6 +43,7 @@ contract AbstractCompany {
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
+  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public;
   function setVotingExecuted(uint256 votingId, uint8 option) public;
   function hasVotedInOpenedVoting(address holder) constant public returns (bool);
 
@@ -72,7 +73,7 @@ contract AbstractCompany {
   event NewVoting(uint256 indexed id, uint64 starts, uint64 closes);
   event VoteCasted(uint256 indexed id, address indexed voter);
   event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
-  
+
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
   event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
   event EntityNewStatus(address entity, uint8 status);
