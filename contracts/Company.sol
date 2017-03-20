@@ -27,21 +27,15 @@ contract Company is AbstractCompany {
     saleIndex = 1; // Reverse index breaks when it is zero.
 
     accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
-
+    votings.init();
     // Make contract deployer executive
     setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
   }
 
-  /*
-  function () payable {
-    if (msg.value < 1) throw;
-    registerIncome("donation");
-  }
-  */
-
   modifier checkBylaws {
     if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
     _;
+    bylaws.performedAction(msg.sig, msg.sender);
   }
 
   function sigPayload(uint n) constant public returns (bytes32) {
@@ -61,10 +55,10 @@ contract Company is AbstractCompany {
   }
 
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
-    if (!bylaws.canPerformAction(BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)"), sender)) throw;
+    // 0x30ade7af = BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)")
+    if (!bylaws.canPerformAction(0x30ade7af, sender)) throw;
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
-
 
   function setSpecialBylaws() {
     addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
@@ -87,16 +81,11 @@ contract Company is AbstractCompany {
     if (b.status.enforced) return b.status.neededStatus;
     if (b.specialStatus.enforced) return b.specialStatus.neededStatus;
 
-    return uint8(250);
+    return uint8(255);
   }
 
   function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
-    BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
-
-    support = b.supportNeeded;
-    base = b.supportBase;
-    closingRelativeMajority = b.closingRelativeMajority;
-    minimumVotingTime = b.minimumVotingTime;
+    return getVotingBylaw(bytes4(sha3(functionSignature)));
   }
 
   function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
@@ -175,8 +164,7 @@ contract Company is AbstractCompany {
       governanceTokens[i] = stocks[i];
     }
     uint256 votingId = votings.createVoting(voting, governanceTokens, closes, uint64(now));
-
-    if (voteOnCreate) castVote(votingId, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
+    // if (voteOnCreate) castVote(votingId, uint8(BinaryVoting.VotingOption.Favor), executesIfDecided);
   }
 
   // Bylaw for cast vote and modify is not really needed, as voting lib has sender into account at all times.
@@ -186,7 +174,7 @@ contract Company is AbstractCompany {
   }
 
   // TODO: Add bylaw
-  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public /*checkBylaws*/ {
+  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public {
     votings.modifyVote(votingId, msg.sender, option, removes);
     if (executesIfDecided) executeAfterVote(votingId);
   }
@@ -198,19 +186,17 @@ contract Company is AbstractCompany {
 
   function executeAfterVote(uint256 votingId) private {
     address votingAddress = votings.votingAddress(votingId);
-    BinaryVoting voting = BinaryVoting(votingAddress);
-    if (bylaws.canPerformAction(voting.mainSignature(), votingAddress)) {
-      voting.executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
+    if (bylaws.canPerformAction(BinaryVoting(votingAddress).mainSignature(), votingAddress)) {
+      BinaryVoting(votingAddress).executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
     }
   }
 
-  function getVotingInfoForAddress(address _votingAddress) constant public returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
-    return getVotingInfoForId(votings.votingIndex(_votingAddress));
+  function reverseVoting(address votingAddress) constant public returns (uint256 votingId) {
+    return votings.reverseVotings[votingAddress];
   }
 
-  function getVotingInfoForId(uint256 _votingId) constant public returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
-    votingId = _votingId;
-    (votingAddress, startDate, closeDate, isExecuted, executed, isClosed) = votings.getVotingInfo(votingId);
+  function getVotingInfo(uint256 votingId) constant public returns (address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed) {
+    return votings.getVotingInfo(votingId);
   }
 
   function countVotes(uint256 votingId, uint8 optionId) constant public returns (uint256 votes, uint256 totalCastedVotes, uint256 totalVotingPower) {
@@ -232,7 +218,6 @@ contract Company is AbstractCompany {
         return true;
       }
     }
-    return false;
   }
 
   function addStock(address newStock, uint256 issue) checkBylaws public {
@@ -262,7 +247,6 @@ contract Company is AbstractCompany {
   // stock sales
 
   function beginSale(address saleAddress) checkBylaws public {
-
     AbstractStockSale sale = AbstractStockSale(saleAddress);
     if (sale.companyAddress() != address(this)) throw;
 
@@ -287,7 +271,8 @@ contract Company is AbstractCompany {
   }
 
   function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {
-    IssueableStock(stocks[stockId]).destroyStock(holder, units);
+    // TODO: Gas cuts
+    // IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 
   // accounting
@@ -302,6 +287,8 @@ contract Company is AbstractCompany {
   }
 
   function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
+    /*
+    // TODO: Gas cuts
     AccountingLib.AccountingPeriod p = accounting.periods[periodIndex];
     lastTransaction = p.transactions.length - 1;
     started = p.startTimestamp;
@@ -309,9 +296,12 @@ contract Company is AbstractCompany {
     expenses = p.expenses;
     revenue = p.revenue;
     dividends = p.dividends;
+    */
   }
 
   function getRecurringTransactionInfo(uint transactionIndex) constant returns (uint64 period, uint64 lastTransactionDate, address to, address approvedBy, uint256 amount, string concept) {
+    /*
+    // TODO: Gas cuts
     AccountingLib.RecurringTransaction recurring = accounting.recurringTransactions[transactionIndex];
     AccountingLib.Transaction t = recurring.transaction;
     period = recurring.period;
@@ -319,6 +309,7 @@ contract Company is AbstractCompany {
     amount = t.amount;
     approvedBy = t.approvedBy;
     concept = t.concept;
+    */
   }
 
   function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
@@ -332,9 +323,12 @@ contract Company is AbstractCompany {
     concept = t.concept;
   }
 
+  /*
+  // TODO: Gas cuts
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold) checkBylaws public {
     accounting.setAccountingSettings(budget, periodDuration, dividendThreshold);
   }
+  */
 
   function addTreasure(string concept) payable public returns (bool) {
     accounting.addTreasure(concept);
@@ -374,6 +368,7 @@ contract Company is AbstractCompany {
   }
 
   function removeRecurringReward(uint index) checkBylaws {
-    accounting.removeRecurringTransaction(index);
+    // TODO: Gas cuts
+    // accounting.removeRecurringTransaction(index);
   }
 }

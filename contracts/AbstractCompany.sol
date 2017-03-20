@@ -37,8 +37,8 @@ contract AbstractCompany {
   function setEntityStatusByStatus(address entity, uint8 status) public;
   function setEntityStatus(address entity, uint8 status) public;
 
-  function getVotingInfoForAddress(address _votingAddress) constant public returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed);
-  function getVotingInfoForId(uint256 _votingId) constant public returns (uint256 votingId, address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed);
+  function reverseVoting(address _votingAddress) constant public returns (uint256 votingId);
+  function getVotingInfo(uint256 _votingId) constant public returns (address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed);
   function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable);
   function countVotes(uint256 votingIndex, uint8 optionId) constant public returns (uint256, uint256, uint256);
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
@@ -65,15 +65,15 @@ contract AbstractCompany {
   function addTreasure(string concept) payable public returns (bool);
   // function registerIncome(string concept) payable public returns (bool);
 
-  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
+  // function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
   function removeRecurringReward(uint index);
   function issueReward(address to, uint256 amount, string concept);
   function splitIntoDividends() payable;
 
-  event NewVoting(uint256 indexed id, address votingAddress, uint64 starts, uint64 closes);
-  event VoteCasted(uint256 indexed id, address votingAddress, address indexed voter);
-  event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
+  event NewVoting(uint256 id, address votingAddress, uint64 starts, uint64 closes);
+  event VoteCasted(uint256 id, address votingAddress, address voter);
+  event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
 
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
   event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);

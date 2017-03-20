@@ -21,7 +21,7 @@ const networks = {
 const from = networks[web3.version.network]
 
 const nonce = parseInt(Math.random() * 1e15)
-const gas = web3.version.network == 15 ? 10e6 : 4.9e6
+const gas = web3.version.network == 15 ? 10e7 : 5e6
 
 module.exports = (deployer) => {
   let company = null

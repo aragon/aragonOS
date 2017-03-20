@@ -64,7 +64,7 @@ library BylawsLib {
   function canPerformAction(Bylaws storage self, bytes4 sig, address sender) returns (bool) {
     Bylaw b = self.bylaws[sig];
     if (b.updated == 0) {
-      // not existent law, allow action only if is executive
+      // not existent law, allow action only if is executive.
       b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
       b.status.enforced = true;
     }
@@ -81,13 +81,20 @@ library BylawsLib {
 
     if (b.voting.enforced) {
       var (isValidVoting, votingId) = checkVoting(sender, b.voting);
-      if (isValidVoting) {
-        AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
-        return true;
-      }
+      if (isValidVoting) return true;
     }
 
     return false;
+  }
+
+  function performedAction(Bylaws storage self, bytes4 sig, address sender) {
+    Bylaw b = self.bylaws[sig];
+    if (b.voting.enforced) {
+      var (isValidVoting, votingId) = checkVoting(sender, b.voting);
+      if (isValidVoting) {
+        AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
+      }
+    }
   }
 
   function getStatus(address entity) internal returns (uint8) {
@@ -107,7 +114,8 @@ library BylawsLib {
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
-    var (votingId, _voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfoForAddress(voteAddress);
+    uint256 votingId = AbstractCompany(this).reverseVoting(msg.sender);
+    var (_voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfo(votingId);
 
     if (votingId == 0) return (false, 0);
     if (isExecuted) return (false, 0);

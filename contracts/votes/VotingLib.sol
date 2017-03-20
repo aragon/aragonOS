@@ -241,7 +241,7 @@ library VotingLib {
     self.openedVotings.length -= 1;
   }
 
-  event NewVoting(uint256 indexed id, address votingAddress, uint64 starts, uint64 closes);
-  event VoteCasted(uint256 indexed id, address votingAddress, address indexed voter);
-  event VoteExecuted(uint256 indexed id, address votingAddress, uint8 outcome);
+  event NewVoting(uint256 id, address votingAddress, uint64 starts, uint64 closes);
+  event VoteCasted(uint256 id, address votingAddress, address voter);
+  event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
 }

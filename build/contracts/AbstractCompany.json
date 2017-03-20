@@ -114,6 +114,44 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getVotingInfo",
+      "outputs": [
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -321,6 +359,24 @@
       ],
       "name": "assignStock",
       "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_votingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "reverseVoting",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
@@ -587,90 +643,6 @@
       "constant": true,
       "inputs": [
         {
-          "name": "_votingId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getVotingInfoForId",
-      "outputs": [
-        {
-          "name": "votingId",
-          "type": "uint256"
-        },
-        {
-          "name": "votingAddress",
-          "type": "address"
-        },
-        {
-          "name": "startDate",
-          "type": "uint64"
-        },
-        {
-          "name": "closeDate",
-          "type": "uint64"
-        },
-        {
-          "name": "isExecuted",
-          "type": "bool"
-        },
-        {
-          "name": "executed",
-          "type": "uint8"
-        },
-        {
-          "name": "isClosed",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "_votingAddress",
-          "type": "address"
-        }
-      ],
-      "name": "getVotingInfoForAddress",
-      "outputs": [
-        {
-          "name": "votingId",
-          "type": "uint256"
-        },
-        {
-          "name": "votingAddress",
-          "type": "address"
-        },
-        {
-          "name": "startDate",
-          "type": "uint64"
-        },
-        {
-          "name": "closeDate",
-          "type": "uint64"
-        },
-        {
-          "name": "isExecuted",
-          "type": "bool"
-        },
-        {
-          "name": "executed",
-          "type": "uint8"
-        },
-        {
-          "name": "isClosed",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
           "name": "entity",
           "type": "address"
         }
@@ -682,27 +654,6 @@
           "type": "bool"
         }
       ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "budget",
-          "type": "uint256"
-        },
-        {
-          "name": "periodDuration",
-          "type": "uint64"
-        },
-        {
-          "name": "dividendThreshold",
-          "type": "uint256"
-        }
-      ],
-      "name": "setAccountingSettings",
-      "outputs": [],
       "payable": false,
       "type": "function"
     },
@@ -863,7 +814,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": false,
           "name": "id",
           "type": "uint256"
         },
@@ -890,7 +841,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": false,
           "name": "id",
           "type": "uint256"
         },
@@ -900,7 +851,7 @@
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": false,
           "name": "voter",
           "type": "address"
         }
@@ -912,7 +863,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": false,
           "name": "id",
           "type": "uint256"
         },
@@ -1071,5 +1022,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490017476742
+  "updated_at": 1490029707022
 }

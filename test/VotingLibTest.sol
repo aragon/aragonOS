@@ -43,7 +43,8 @@ contract VotingLibTest {
     Assert.equal(votings.votingIndex(0xbeef), votingId, "Should return index for address");
     Assert.equal(votings.votingAddress(1), 0xbeef, "Should return address for index");
     Assert.equal(votings.openedVotings[0], 1, "Should have opened voting");
-    votings.votings[1].optionVotes[1] = 2;
+    votings.closeExecutedVoting(votingId, 0);
+    Assert.equal(votings.openedVotings.length, 0, "Should have closed voting");
   }
 
   function testCreateSecondVoting() {
@@ -51,6 +52,7 @@ contract VotingLibTest {
     Assert.equal(votings.votings[2].optionVotes[1], 0, "Storage is empty for new voting");
     Assert.equal(votings.votingIndex(0xdead), 2, "Should return index for address");
     Assert.equal(votings.votingAddress(2), 0xdead, "Should return address for index");
+    votings.closeExecutedVoting(votingId, 0);
   }
 
   function testSimpleCastVote() {
