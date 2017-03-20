@@ -90,6 +90,17 @@ contract VotingLibTest {
     Assert.isFalse(votings.hasVoted(votingId, 0x1), "Should have not count as voted");
   }
 
+  function testModifyRemovedVote() {
+    uint256 votingId = votings.createVoting(0x31, governanceTokens(), uint64(now) + 1000, uint64(now));
+    votings.castVote(votingId, 0x1, 1);
+    votings.modifyVote(votingId, 0x1, 0, true);
+    assertVotingCount(votingId, 1, 0, 0, 100);
+    votings.castVote(votingId, 0x1, 0);
+    assertVotingCount(votingId, 0, 70, 70, 100);
+    assertVotingCount(votingId, 1, 0, 70, 100);
+    Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have not count as voted");
+  }
+
   function testExecuteVoting() {
     uint256 votingId = votings.createVoting(0x4, governanceTokens(), uint64(now) + 1000, uint64(now));
     Assert.isTrue(votings.canVote(0x1, votingId), "Should allow voting");
@@ -186,6 +197,20 @@ contract VotingLibTest {
     Assert.isFalse(votings.canVote(0x3, votingId), "Shouldnt allow voting after modification by delegator");
   }
 
+  function testMoreDelegatedVotesAfterModification() {
+    uint256 votingId = votings.createVoting(0x11, governanceTokens(), uint64(now) + 1000, uint64(now));
+
+    votings.castVote(votingId, 0x3, 1);
+    votings.modifyVote(votingId, 0x2, 0, false);
+
+    token.setDelegateMocked(0x1, 0x3);
+
+    votings.castVote(votingId, 0x3, 1);
+
+    assertVotingCount(votingId, 0, 20, 100, 100);
+    assertVotingCount(votingId, 1, 80, 100, 100);
+  }
+  // From here on, 0x3 has all votes delegated to it
 
   function assertVotingCount(uint256 votingId, uint8 option, uint256 _votes, uint256 _totalCastedVotes, uint256 _totalVotingPower) {
     uint256 votes;

@@ -134,6 +134,7 @@ library VotingLib {
         // over-write delegate vote
         if (voting.votedOption[voter] != 1) {
           voting.overruledVotes[oldVoter][token] += remainingVotes;
+          voting.voters[oldVoter][token] -= remainingVotes;
           if (voting.votedOption[voter] > 1) {
             remainingVotes = token.balanceOf(voter);
           }
