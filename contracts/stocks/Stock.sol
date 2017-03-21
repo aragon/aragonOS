@@ -3,8 +3,12 @@ pragma solidity ^0.4.8;
 import "zeppelin/token/VestedToken.sol";
 import "./GovernanceToken.sol";
 
-// transferrableTokens is called from vested to governance
-contract Stock is GovernanceToken, VestedToken {}
+// transferrableTokens is called from governance to vested
+contract Stock is VestedToken, GovernanceToken {
+  function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
+    return min256(VestedToken.transferableTokens(holder, time), GovernanceToken.transferableTokens(holder, time));
+  }
+}
 
 /*
 contract OldStock is BasicToken, Shareholders, PullPayment {

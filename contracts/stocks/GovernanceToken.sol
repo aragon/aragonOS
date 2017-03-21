@@ -29,7 +29,8 @@ contract GovernanceToken is StandardToken, Shareholders, TransferableToken, Pull
   }
 
   function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-    return min256(hasVotedInOpenedVoting(holder) ? 0 : balanceOf(holder), super.transferableTokens(holder, time));
+    bool limitTransfer = hasVotedInOpenedVoting(holder) && votingPower > 0;
+    return min256(limitTransfer ? 0 : balanceOf(holder), super.transferableTokens(holder, time));
   }
 
   function votingDelegate(address holder) constant returns (address) {

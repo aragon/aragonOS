@@ -520,7 +520,7 @@
       "name": "transferableTokens",
       "outputs": [
         {
-          "name": "nonVested",
+          "name": "",
           "type": "uint256"
         }
       ],
@@ -678,5 +678,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490103253305
+  "updated_at": 1490113506076
 }
