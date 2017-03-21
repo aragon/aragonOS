@@ -224,8 +224,7 @@ contract Company is AbstractCompany {
   function addStock(address newStock, uint256 issue) checkBylaws public {
     if (Stock(newStock).governingEntity() != address(this)) throw;
     // TODO: check stock not present yet
-
-    IssueableStock(newStock).issueStock(issue);
+    if (issue > 0) IssueableStock(newStock).issueStock(issue);
 
     stocks[stockIndex] = newStock;
     stockIndex += 1;
