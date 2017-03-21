@@ -92,8 +92,8 @@ library VotingLib {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
       uint modificableVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
       uint remainingVotes = token.votingPowerForDelegate(voter) - modificableVotes;
-      votable += remainingVotes;
-      modificable += modificableVotes;
+      votable += remainingVotes * token.votingPower();
+      modificable += modificableVotes * token.votingPower();
     }
   }
 
@@ -207,8 +207,8 @@ library VotingLib {
     Voting voting = self.votings[votingId];
 
     totalCastedVotes = voting.totalCastedVotes;
+    votes = voting.optionVotes[option];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
-      votes += voting.optionVotes[option];
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
       votingPower += (token.totalSupply() - token.balanceOf(this)) * token.votingPower();
     }
