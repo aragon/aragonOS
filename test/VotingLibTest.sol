@@ -231,7 +231,8 @@ contract VotingLibTest {
   function assertVotingPower(uint256 votingId, address voter, uint256 _votable, uint256 _modificable) {
     uint256 votable;
     uint256 modificable;
-    (votable, modificable) = votings.votingPowerForVoting(votingId, 0x1);
+    uint8 voted;
+    (votable, modificable, voted) = votings.votingPowerForVoting(votingId, 0x1);
     Assert.equal(votable, _votable, "Should have correct voting power");
     Assert.equal(modificable, _modificable, "Should have correct modificable");
   }

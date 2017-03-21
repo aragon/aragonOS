@@ -6,7 +6,7 @@ import "../stocks/GovernanceToken.sol";
 library VotingLib {
   struct Voting {
     mapping (uint8 => uint256) optionVotes; // option -> totalVotes (absolute votes)
-    mapping (address => uint8) votedOption; // voter -> voted option (absolute votes)
+    mapping (address => uint8) votedOption; // voter -> voted option
     mapping (address => mapping (address => uint256)) voters; // voter -> governance token -> tokens voted
     mapping (address => mapping (address => uint256)) overruledVotes; // delegate -> governance token -> overruledVotes (absolute votes)
     address[] governanceTokens;
@@ -85,7 +85,7 @@ library VotingLib {
     return false;
   }
 
-  function votingPowerForVoting(Votings storage self, uint256 votingId, address voter) constant public returns (uint256 votable, uint256 modificable) {
+  function votingPowerForVoting(Votings storage self, uint256 votingId, address voter) constant public returns (uint256 votable, uint256 modificable, uint8 voted) {
     Voting voting = self.votings[votingId];
 
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
@@ -95,6 +95,8 @@ library VotingLib {
       votable += remainingVotes * token.votingPower();
       modificable += modificableVotes * token.votingPower();
     }
+
+    voted = voting.votedOption[voter];
   }
 
   function indexOf(uint256[] array, uint256 element) returns (int256) {

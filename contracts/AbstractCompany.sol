@@ -39,7 +39,7 @@ contract AbstractCompany {
 
   function reverseVoting(address _votingAddress) constant public returns (uint256 votingId);
   function getVotingInfo(uint256 _votingId) constant public returns (address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed);
-  function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable);
+  function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable, uint8 voted);
   function countVotes(uint256 votingIndex, uint8 optionId) constant public returns (uint256, uint256, uint256);
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;

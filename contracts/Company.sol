@@ -204,7 +204,7 @@ contract Company is AbstractCompany {
     return votings.countVotes(votingId, optionId);
   }
 
-  function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable) {
+  function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable, uint8 voted) {
     return votings.votingPowerForVoting(votingId, msg.sender);
   }
 
