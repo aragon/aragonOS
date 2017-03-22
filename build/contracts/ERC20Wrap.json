@@ -122,6 +122,19 @@
     {
       "constant": true,
       "inputs": [],
+      "name": "parentToken",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
       "name": "symbol",
       "outputs": [
         {
@@ -223,5 +236,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490208601633
+  "updated_at": 1490209540041
 }
