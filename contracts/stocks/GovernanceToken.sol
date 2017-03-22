@@ -1,12 +1,13 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/payment/PullPayment.sol";
-import "zeppelin/token/StandardToken.sol";
+import "zeppelin/token/ERC20.sol";
+import "zeppelin/SafeMath.sol";
 import "./TransferableToken.sol";
 import "./Shareholders.sol";
 import "../AbstractCompany.sol";
 
-contract GovernanceToken is StandardToken, Shareholders, TransferableToken, PullPayment {
+contract GovernanceToken is ERC20, SafeMath, Shareholders, TransferableToken, PullPayment {
   function GovernanceToken(address _governingEntity) {
     governingEntity = _governingEntity;
   }
@@ -59,9 +60,10 @@ contract GovernanceToken is StandardToken, Shareholders, TransferableToken, Pull
     publicDelegate[msg.sender] = enable;
   }
 
-  function balanceDelegateVotes(address _from, address _to, uint _value) private {
-    delegatedVotes[votingDelegate(_from)] = safeSub(delegatedVotes[votingDelegate(_from)], _value);
-    delegatedVotes[votingDelegate(_to)] = safeAdd(delegatedVotes[votingDelegate(_to)], _value);
+  function balanceDelegateVotes(address _from, address _to, uint _value) internal {
+    // Allow for balancing when creating tokens out of thin air :O
+    if (_from != 0x0) delegatedVotes[votingDelegate(_from)] = safeSub(delegatedVotes[votingDelegate(_from)], _value);
+    if (_to != 0x0) delegatedVotes[votingDelegate(_to)] = safeAdd(delegatedVotes[votingDelegate(_to)], _value);
   }
 
   function transfer(address _to, uint _value) returns (bool success) {

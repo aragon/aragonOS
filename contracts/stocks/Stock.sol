@@ -1,5 +1,6 @@
 pragma solidity ^0.4.8;
 
+import "zeppelin/token/StandardToken.sol";
 import "zeppelin/token/VestedToken.sol";
 import "./GovernanceToken.sol";
 
