@@ -1,6 +1,19 @@
 {
-  "contract_name": "TransferableToken",
+  "contract_name": "ERC20Wrap",
   "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
     {
       "constant": false,
       "inputs": [
@@ -37,26 +50,52 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [],
+      "name": "parentTotalSupply",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
-          "name": "_from",
+          "name": "from",
           "type": "address"
         },
         {
-          "name": "_to",
+          "name": "to",
           "type": "address"
         },
         {
-          "name": "_value",
+          "name": "value",
           "type": "uint256"
         }
       ],
       "name": "transferFrom",
       "outputs": [
         {
-          "name": "success",
+          "name": "ok",
           "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
         }
       ],
       "payable": false,
@@ -81,44 +120,35 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_to",
-          "type": "address"
-        },
-        {
-          "name": "_value",
-          "type": "uint256"
-        }
-      ],
-      "name": "transfer",
+      "constant": true,
+      "inputs": [],
+      "name": "symbol",
       "outputs": [
         {
-          "name": "success",
-          "type": "bool"
+          "name": "",
+          "type": "string"
         }
       ],
       "payable": false,
       "type": "function"
     },
     {
-      "constant": true,
+      "constant": false,
       "inputs": [
         {
-          "name": "holder",
+          "name": "to",
           "type": "address"
         },
         {
-          "name": "time",
-          "type": "uint64"
+          "name": "value",
+          "type": "uint256"
         }
       ],
-      "name": "transferableTokens",
+      "name": "transfer",
       "outputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "name": "ok",
+          "type": "bool"
         }
       ],
       "payable": false,

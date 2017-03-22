@@ -212,7 +212,10 @@ library VotingLib {
     votes = voting.optionVotes[option];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      votingPower += (token.totalSupply() - token.balanceOf(this)) * token.votingPower();
+      uint256 normalTotalSupply = token.totalSupply();
+      uint256 parentTotalSupply = token.parentTotalSupply();
+      uint256 totalSupply = normalTotalSupply > parentTotalSupply ? normalTotalSupply : parentTotalSupply;
+      votingPower += (totalSupply - token.balanceOf(this)) * token.votingPower();
     }
   }
 

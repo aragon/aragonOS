@@ -7,7 +7,9 @@ import "./TransferableToken.sol";
 import "./Shareholders.sol";
 import "../AbstractCompany.sol";
 
-contract GovernanceToken is ERC20, SafeMath, Shareholders, TransferableToken, PullPayment {
+import "./ERC20Wrap.sol";
+
+contract GovernanceToken is ERC20Wrap, SafeMath, Shareholders, TransferableToken, PullPayment {
   function GovernanceToken(address _governingEntity) {
     governingEntity = _governingEntity;
   }
@@ -74,6 +76,10 @@ contract GovernanceToken is ERC20, SafeMath, Shareholders, TransferableToken, Pu
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     balanceDelegateVotes(_from, _to, _value);
     return super.transferFrom(_from, _to, _value);
+  }
+
+  function parentTotalSupply() constant public returns (uint256) {
+    return 0;
   }
 
   function splitDividends() payable {

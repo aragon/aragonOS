@@ -1,10 +1,11 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/token/StandardToken.sol";
+import "./ERC20Wrap.sol";
 
-contract WrappedToken is StandardToken {
+contract WrappedToken is ERC20Wrap, StandardToken {
   function WrappedToken(address _token) {
-    parentToken = ERC20(_token);
+    parentToken = ERC20Wrap(_token);
   }
 
   // previous to wrap msg.sender must create an allowance for wrapper
@@ -29,5 +30,9 @@ contract WrappedToken is StandardToken {
     Transfer(msg.sender, 0x0, amount);
   }
 
-  ERC20 public parentToken;
+  function parentTotalSupply() constant public returns (uint256) {
+    return max256(parentToken.totalSupply(), parentToken.parentTotalSupply());
+  }
+
+  ERC20Wrap public parentToken;
 }
