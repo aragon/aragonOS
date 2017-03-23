@@ -17,7 +17,7 @@ contract WrappedCustomStock is WrappedToken, GovernanceToken {
     balanceDelegateVotes(0x0, msg.sender, wrappingAmount);
   }
 
-  function unwrapAndTransfer(address receiver, uint amount) {
+  function unwrapAndTransfer(address receiver, uint amount) canTransfer(msg.sender, amount) {
     super.unwrapAndTransfer(receiver, amount);
     balanceDelegateVotes(msg.sender, 0x0, amount); // remove from owner in wrapper
   }
