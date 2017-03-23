@@ -9,7 +9,7 @@ import "../AbstractCompany.sol";
 
 import "./ERC20Wrap.sol";
 
-contract GovernanceToken is ERC20Wrap, SafeMath, Shareholders, TransferableToken, PullPayment {
+contract GovernanceToken is ERC20/*Wrap*/, SafeMath, Shareholders, TransferableToken, PullPayment {
   function GovernanceToken(address _governingEntity) {
     governingEntity = _governingEntity;
   }

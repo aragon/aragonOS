@@ -123,6 +123,19 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [],
+      "name": "parentTotalSupply",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -648,5 +661,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490198856859
+  "updated_at": 1490286376483
 }
