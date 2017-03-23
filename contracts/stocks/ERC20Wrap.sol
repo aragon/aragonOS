@@ -8,7 +8,7 @@ contract ERC20Properties is ERC20 {
   function decimals() constant public returns (uint);
 }
 
-contract ERC20Wrap is ERC20Properties {
+contract ERC20Wrap is ERC20 {
   function parentToken() constant public returns (address);
   function parentTotalSupply() constant public returns (uint256);
 }

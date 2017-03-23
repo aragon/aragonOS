@@ -21,4 +21,8 @@ contract WrappedCustomStock is WrappedToken, GovernanceToken {
     super.unwrapAndTransfer(receiver, amount);
     balanceDelegateVotes(msg.sender, 0x0, amount); // remove from owner in wrapper
   }
+
+  function parentTotalSupply() constant public returns (uint256) {
+    return WrappedToken.parentTotalSupply();
+  }
 }

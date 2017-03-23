@@ -172,13 +172,15 @@ library VotingLib {
         uint totalVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
         voting.optionVotes[voting.votedOption[oldVoter] - 10] -= totalVotes * votingPowerPerToken;
         uint modifyingVotes = totalVotes * votingPowerPerToken;
+
+        // set only at the end
+        if (j == voting.governanceTokens.length - 1) voting.votedOption[voter] = removes ? 0 : 10 + vote;
+
         if (removes) {
-          voting.votedOption[voter] = 0;
           voting.voters[voter][token] -= modifyingVotes;
           voting.totalCastedVotes -= modifyingVotes;
         } else {
           voting.optionVotes[vote] += modifyingVotes;
-          voting.votedOption[voter] = 10 + vote;
         }
       }
     }

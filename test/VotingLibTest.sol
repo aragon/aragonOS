@@ -12,6 +12,9 @@ contract VotingLibTest {
 
   VotingStockMock token;
 
+  VotingStockMock multitoken1;
+  VotingStockMock multitoken2;
+
   ThrowProxy throwProxy;
 
   function beforeAll() {
@@ -21,12 +24,30 @@ contract VotingLibTest {
     token.transfer(0x1, 70);
     token.transfer(0x2, 20);
     token.transfer(0x3, 10);
+
+    multitoken1 = new VotingStockMock(address(this));
+    IssueableStock(multitoken1).issueStock(100);
+    multitoken1.transfer(0x1, 50);
+    multitoken1.transfer(0x2, 50);
+
+    multitoken2 = new VotingStockMock(address(this));
+    IssueableStock(multitoken2).issueStock(50);
+    multitoken2.transfer(0x1, 30);
+    multitoken2.transfer(0x2, 20);
+
     votings.init();
   }
 
   function governanceTokens() internal returns (address[]) {
     address[] memory governanceTokens = new address[](1);
     governanceTokens[0] = token;
+    return governanceTokens;
+  }
+
+  function multiGovernanceTokens() internal returns (address[]) {
+    address[] memory governanceTokens = new address[](2);
+    governanceTokens[0] = multitoken1;
+    governanceTokens[1] = multitoken2;
     return governanceTokens;
   }
 
@@ -215,6 +236,48 @@ contract VotingLibTest {
     assertVotingCount(votingId, 0, 20, 100, 100);
     assertVotingCount(votingId, 1, 80, 100, 100);
   }
+
+  function testMultiTokenVoteCast() {
+    uint256 votingId = votings.createVoting(0x20, multiGovernanceTokens(), uint64(now) + 1000, uint64(now));
+
+    votings.castVote(votingId, 0x1, 1);
+    assertVotingCount(votingId, 1, 80, 80, 150);
+    Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have voted");
+  }
+
+  function testMultiTokenModifyVote() {
+    uint256 votingId = votings.createVoting(0x21, multiGovernanceTokens(), uint64(now) + 1000, uint64(now));
+    votings.castVote(votingId, 0x1, 1);
+    assertVotingCount(votingId, 1, 80, 80, 150);
+    votings.modifyVote(votingId, 0x1, 0, false);
+
+    assertVotingCount(votingId, 1, 0, 80, 150);
+    assertVotingCount(votingId, 0, 80, 80, 150);
+    Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have voted");
+  }
+
+  function testMultiTokenRemoveVote() {
+    uint256 votingId = votings.createVoting(0x22, multiGovernanceTokens(), uint64(now) + 1000, uint64(now));
+    votings.castVote(votingId, 0x1, 1);
+    votings.modifyVote(votingId, 0x1, 0, true);
+    assertVotingCount(votingId, 1, 0, 0, 150);
+    assertVotingCount(votingId, 0, 0, 0, 150);
+    Assert.isFalse(votings.hasVoted(votingId, 0x1), "Should have not count as voted");
+  }
+
+  /*
+  function testMultiTokenModifyRemovedVote() {
+    uint256 votingId = votings.createVoting(0x23, multiGovernanceTokens(), uint64(now) + 1000, uint64(now));
+    votings.castVote(votingId, 0x1, 1);
+    votings.modifyVote(votingId, 0x1, 0, true);
+    assertVotingCount(votingId, 1, 0, 0, 100);
+    votings.castVote(votingId, 0x1, 0);
+    assertVotingCount(votingId, 0, 70, 70, 100);
+    assertVotingCount(votingId, 1, 0, 70, 100);
+    Assert.isTrue(votings.hasVoted(votingId, 0x1), "Should have not count as voted");
+  }
+  */
+
   // From here on, 0x3 has all votes delegated to it
 
   function assertVotingCount(uint256 votingId, uint8 option, uint256 _votes, uint256 _totalCastedVotes, uint256 _totalVotingPower) {
@@ -236,6 +299,12 @@ contract VotingLibTest {
     Assert.equal(votable, _votable, "Should have correct voting power");
     Assert.equal(modificable, _modificable, "Should have correct modificable");
   }
+
+  /*
+  function randomAddress() returns (address) {
+    return address(bytes(block.blockhash(block.number)));
+  }
+  */
 
   // Company method mock
   function hasVotedInOpenedVoting(address holder) constant public returns (bool) {
