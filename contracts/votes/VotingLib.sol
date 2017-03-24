@@ -5,8 +5,8 @@ import "../stocks/GovernanceToken.sol";
 
 library VotingLib {
   struct Voting {
-    mapping (uint8 => uint256) optionVotes; // option -> totalVotes (absolute votes)
-    mapping (address => uint8) votedOption; // voter -> voted option
+    mapping (uint8 => uint256) optionVotes; // option n -> totalVotes (absolute votes)
+    mapping (address => uint8) votedOption; // voter -> voted option (0 = hasn't voted, 1 = removed delegated vote, 10 + n = voted option n)
     mapping (address => mapping (address => uint256)) voters; // voter -> governance token -> tokens voted
     mapping (address => mapping (address => uint256)) overruledVotes; // delegate -> governance token -> overruledVotes (absolute votes)
     address[] governanceTokens;
@@ -78,9 +78,9 @@ library VotingLib {
 
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
-      address token = voting.governanceTokens[j];
-      uint256 votes = GovernanceToken(token).votingPowerForDelegate(voter) - voting.overruledVotes[voter][token];
-      if (votes > voting.voters[voter][token]) return true; // can vote using token
+      GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
+      uint256 votes = token.votingPowerForDelegate(voter) - voting.overruledVotes[voter][token];
+      if (token.votingPower() > 0 && (votes > voting.voters[voter][token] || voting.votedOption[voter] == 1)) return true; // can vote using token.
     }
     return false;
   }
@@ -88,15 +88,40 @@ library VotingLib {
   function votingPowerForVoting(Votings storage self, uint256 votingId, address voter) constant public returns (uint256 votable, uint256 modificable, uint8 voted) {
     Voting voting = self.votings[votingId];
 
+    address oldVoter;
+    if (!canModifyVote(self, voter, votingId)) return (0, 0, voting.votedOption[voter]);
+
+    votable = 0;
+    modificable = 0;
+
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      uint modificableVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
-      uint remainingVotes = token.votingPowerForDelegate(voter) - modificableVotes;
+
+      if (token.balanceOf(voter) < 1) continue;
+
+      bool isDelegated = token.votingPowerForDelegate(voter) == 0 && token.balanceOf(voter) - voting.voters[voter][token] > 0;
+      oldVoter = isDelegated ? token.votingDelegate(voter) : voter;
+
+      uint modificableVotes;
+      uint remainingVotes;
+
+      if (isDelegated) {
+        uint castedDelegatedVotes = voting.voters[oldVoter][token] > 0 ? (token.balanceOf(voter) - voting.voters[voter][token] - voting.overruledVotes[voter][token]) : (voter == oldVoter ? voting.voters[voter][token] : 0 );
+        modificableVotes = voting.votedOption[voter] != 1 ? castedDelegatedVotes : 0;
+        remainingVotes = voting.votedOption[voter] == 1 ? castedDelegatedVotes : 0;
+      } else {
+        modificableVotes = voting.voters[voter][token] - voting.overruledVotes[voter][token];
+        remainingVotes = token.votingPowerForDelegate(voter) == 0 ? 0 : token.votingPowerForDelegate(voter) - voting.voters[voter][token] - voting.overruledVotes[voter][token];
+      }
+
       votable += remainingVotes * token.votingPower();
       modificable += modificableVotes * token.votingPower();
     }
 
-    voted = voting.votedOption[voter];
+    voted = voting.votedOption[oldVoter] > 1 ? voting.votedOption[oldVoter] : 0;
+
+    if (!canVote(self, voter, votingId)) return (0, modificable, voted);
+    return (votable, modificable, voted);
   }
 
   function indexOf(uint256[] array, uint256 element) returns (int256) {
@@ -112,16 +137,21 @@ library VotingLib {
     Voting voting = self.votings[votingId];
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
-      uint remainingVotes = token.votingPowerForDelegate(voter) - voting.voters[voter][token] - voting.overruledVotes[voter][token];
-      uint addingVotes = token.votingPower() * remainingVotes;
+
+      uint remainingVotes = token.votingPowerForDelegate(voter) - voting.voters[voter][token];
+      if (voting.votedOption[voter] == 1) {
+        remainingVotes = token.balanceOf(voter);
+      }
+      uint addingVotes = token.votingPower() * (remainingVotes - voting.overruledVotes[voter][token]);
 
       voting.voters[voter][token] += remainingVotes;
       voting.optionVotes[vote] += addingVotes;
       voting.totalCastedVotes += addingVotes;
-      if (voting.votedOption[voter] != 0 && voting.votedOption[voter] != 10 + vote) throw; // cant vote different things
-      voting.votedOption[voter] = 10 + vote; // avoid 0
 
       if (addingVotes > 0) voted = true;
+
+      if (voting.votedOption[voter] > 1 && voting.votedOption[voter] != 10 + vote) throw; // cant vote different things
+      voting.votedOption[voter] = 10 + vote; // avoid 0
     }
 
     if (voted) VoteCasted(votingId, voting.votingAddress, voter);
@@ -132,7 +162,7 @@ library VotingLib {
 
     Voting voting = self.votings[votingId];
 
-    if (!hasVoted(self, votingId, voter) && voting.votedOption[voter] != 1) throw;
+    if (!hasVoted(self, votingId, voter)) throw;
 
     for (uint j = 0; j < voting.governanceTokens.length; j++) {
       GovernanceToken token = GovernanceToken(voting.governanceTokens[j]);
@@ -146,18 +176,14 @@ library VotingLib {
 
       if (isDelegated) {
         // over-write delegate vote
-        if (voting.votedOption[voter] != 1) {
-          voting.overruledVotes[oldVoter][token] += remainingVotes;
-          voting.voters[oldVoter][token] -= remainingVotes;
-          if (voting.votedOption[voter] > 1) {
-            remainingVotes = token.balanceOf(voter);
-          }
-          voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
-        } else {
-          // Modifying removed votes
+        if (voting.votedOption[voter] == 1) throw; // delegate logic not works if has already voted
+
+        voting.overruledVotes[oldVoter][token] += remainingVotes;
+        // voting.voters[oldVoter][token] -= remainingVotes;
+        if (voting.votedOption[voter] > 1) {
           remainingVotes = token.balanceOf(voter);
-          voting.totalCastedVotes += remainingVotes * votingPowerPerToken;
         }
+        voting.optionVotes[voting.votedOption[oldVoter] - 10] -= remainingVotes * votingPowerPerToken;
 
         if (removes) {
           voting.votedOption[voter] = 1; // overruled by removing

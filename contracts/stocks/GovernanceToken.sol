@@ -49,8 +49,9 @@ contract GovernanceToken is ERC20/*Wrap*/, SafeMath, Shareholders, TransferableT
   }
 
   function setDelegate(address delegator, address newDelegate) internal {
-    if (votingPowerForDelegate(delegator) > balanceOf(delegator)) throw;
+    if (votingPowerForDelegate(delegator) > balanceOf(delegator)) throw; // someone has delegated in delegator
     if (publicDelegate[newDelegate] == false && newDelegate != delegator) throw;
+    if (hasVotedInOpenedVoting(delegator)) throw; // can't delegate with opened votings
 
     balanceDelegateVotes(delegator, newDelegate, balanceOf(delegator));
     delegates[delegator] = newDelegate;
