@@ -33,9 +33,13 @@ contract Company is AbstractCompany {
   }
 
   modifier checkBylaws {
-    if (!bylaws.canPerformAction(msg.sig, msg.sender)) throw;
+    if (!canPerformAction(msg.sig, msg.sender)) throw;
     _;
     bylaws.performedAction(msg.sig, msg.sender);
+  }
+
+  function canPerformAction(bytes4 sig, address sender) constant public returns (bool) {
+    return bylaws.canPerformAction(sig, sender);
   }
 
   function sigPayload(uint n) constant public returns (bytes32) {

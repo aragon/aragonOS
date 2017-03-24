@@ -114,7 +114,7 @@ library BylawsLib {
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
-    uint256 votingId = AbstractCompany(this).reverseVoting(msg.sender);
+    uint256 votingId = AbstractCompany(this).reverseVoting(voteAddress);
     var (_voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfo(votingId);
 
     if (votingId == 0) return (false, 0);
