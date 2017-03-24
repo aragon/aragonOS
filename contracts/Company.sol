@@ -229,6 +229,7 @@ contract Company is AbstractCompany {
     if (Stock(newStock).governingEntity() != address(this)) throw;
     // TODO: check stock not present yet
     if (issue > 0) IssueableStock(newStock).issueStock(issue);
+    votings.addGovernanceToken(newStock);
 
     stocks[stockIndex] = newStock;
     stockIndex += 1;

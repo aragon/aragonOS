@@ -214,6 +214,13 @@ library VotingLib {
     VoteCasted(votingId, voting.votingAddress, voter);
   }
 
+  function addGovernanceToken(Votings storage self, address governanceToken) {
+    for (uint j = 0; j < self.openedVotings.length; j++) {
+      Voting voting = self.votings[self.openedVotings[j]];
+      voting.governanceTokens.push(governanceToken);
+    }
+  }
+
   function hasVotedInOpenedVoting(Votings storage self, address voter) returns (bool) {
     for (uint j = 0; j < self.openedVotings.length; j++) {
       if (hasVoted(self, self.openedVotings[j], voter)) return true;

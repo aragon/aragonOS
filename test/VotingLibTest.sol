@@ -68,11 +68,20 @@ contract VotingLibTest {
     Assert.equal(votings.openedVotings.length, 0, "Should have closed voting");
   }
 
-  function testCreateSecondVoting() {
+  function testLiveAddGovernanceToken() {
     uint256 votingId = votings.createVoting(0xdead, governanceTokens(), uint64(now) + 1000, uint64(now));
     Assert.equal(votings.votings[2].optionVotes[1], 0, "Storage is empty for new voting");
     Assert.equal(votings.votingIndex(0xdead), 2, "Should return index for address");
     Assert.equal(votings.votingAddress(2), 0xdead, "Should return address for index");
+
+    assertVotingCount(votingId, 0, 0, 0, 100);
+    assertVotingPower(votingId, 0x1, 70, 0);
+
+    votings.addGovernanceToken(multitoken1);
+
+    assertVotingCount(votingId, 0, 0, 0, 200);
+    assertVotingPower(votingId, 0x1, 120, 0);
+
     votings.closeExecutedVoting(votingId, 0);
   }
 
@@ -292,7 +301,9 @@ contract VotingLibTest {
     votings.modifyVote(votingId, 0x2, 0, false);
 
     /*
-    TODO: Fix this test that fails because 0x1 has already voted in previous tests
+    // TODO: Fix this test that fails because 0x1 has already voted in previous tests
+    // Have an after all hook that closes the votings
+
     token.setDelegateMocked(0x1, 0x3);
 
     votings.castVote(votingId, 0x3, 1);
