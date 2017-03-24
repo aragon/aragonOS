@@ -209,14 +209,14 @@
         }
       },
       "links": {
-        "AccountingLib": "0x8948af78077b106a5d02527e796eb644a75164c1",
-        "BylawsLib": "0x8b717ed13f75787f2fa3ef9f7647795643453bda",
-        "VotingLib": "0xe8a8d32bdf8f2d7270d3e40e3179da20c50ddf54"
+        "AccountingLib": "0x3f8472ec6ec4c5702c9368719df5c094d2ca5fe3",
+        "BylawsLib": "0xff3240647fc555f203b1275cc3ad53d78084ebe9",
+        "VotingLib": "0xdce267c8e55913ba5345f24f8a01a6fccbb3f33a"
       },
-      "address": "0x63301cbb19690c038753af5cb62db604840d1638",
-      "updated_at": 1490359392557
+      "address": "0x7885f20ef61913694f78be83fb356bcfaa64b2a9",
+      "updated_at": 1490360256681
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1490360143576
+  "updated_at": 1490360256681
 }
