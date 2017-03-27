@@ -2,6 +2,7 @@ pragma solidity ^0.4.8;
 
 import "../AbstractCompany.sol";
 import "../stocks/Stock.sol";
+import "./BylawOracle.sol";
 
 library BylawsLib {
   struct Bylaws {
@@ -11,6 +12,7 @@ library BylawsLib {
   struct Bylaw {
     StatusBylaw status;
     VotingBylaw voting;
+    AddressBylaw addr;
 
     uint64 updated;
     address updatedBy;
@@ -18,13 +20,14 @@ library BylawsLib {
 
   struct AddressBylaw {
     address addr;
-    bool isOrigin;
+    bool isOracle;
+    bool enforced;
   }
 
   struct StatusBylaw {
     uint8 neededStatus;
-    bool enforced;
     bool isSpecialStatus;
+    bool enforced;
   }
 
   struct VotingBylaw {
@@ -39,7 +42,7 @@ library BylawsLib {
   }
 
   function init() internal returns (Bylaw memory) {
-    return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), 0, 0x0); // zeroed bylaw
+    return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), AddressBylaw(0x0,false,false), 0, 0x0); // zeroed bylaw
   }
 
   function keyForFunctionSignature(string functionSignature) returns (bytes4) {
@@ -61,11 +64,11 @@ library BylawsLib {
     return self.bylaws[sig];
   }
 
-  function canPerformAction(Bylaws storage self, bytes4 sig, address sender) returns (bool) {
-    return canPerformAction(getBylaw(self, sig), sig, sender);
+  function canPerformAction(Bylaws storage self, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
+    return canPerformAction(getBylaw(self, sig), sig, sender, data, value);
   }
 
-  function canPerformAction(Bylaw storage b, bytes4 sig, address sender) returns (bool) {
+  function canPerformAction(Bylaw storage b, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
     if (b.updated == 0) {
       // not existent law, allow action only if is executive.
       b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
@@ -83,7 +86,13 @@ library BylawsLib {
 
     if (b.voting.enforced) {
       var (isValidVoting, votingId) = checkVoting(sender, b.voting);
-      if (isValidVoting) return true;
+      return isValidVoting;
+    }
+
+    if (b.addr.enforced) {
+      if (!b.addr.isOracle) return sender == b.addr.addr;
+      var (canPerform,) = BylawOracle(b.addr.addr).canPerformAction(sender, sig, data, value);
+      return canPerform;
     }
 
     return false;

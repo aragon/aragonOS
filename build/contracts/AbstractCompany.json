@@ -5,6 +5,27 @@
       "constant": false,
       "inputs": [
         {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "name": "isOracle",
+          "type": "bool"
+        }
+      ],
+      "name": "setAddressBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
           "name": "to",
           "type": "address"
         },
@@ -368,6 +389,39 @@
       "type": "function"
     },
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "setVotingBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": true,
       "inputs": [
         {
@@ -645,6 +699,27 @@
       "type": "function"
     },
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
+          "type": "uint256"
+        },
+        {
+          "name": "isSpecialStatus",
+          "type": "bool"
+        }
+      ],
+      "name": "setStatusBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": true,
       "inputs": [
         {
@@ -678,27 +753,6 @@
         }
       ],
       "payable": true,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "functionSignature",
-          "type": "string"
-        },
-        {
-          "name": "statusNeeded",
-          "type": "uint256"
-        },
-        {
-          "name": "isSpecialStatus",
-          "type": "bool"
-        }
-      ],
-      "name": "addStatusBylaw",
-      "outputs": [],
-      "payable": false,
       "type": "function"
     },
     {
@@ -769,35 +823,28 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
-          "name": "functionSignature",
-          "type": "string"
+          "name": "sig",
+          "type": "bytes4"
         },
         {
-          "name": "support",
-          "type": "uint256"
+          "name": "sender",
+          "type": "address"
         },
         {
-          "name": "base",
-          "type": "uint256"
-        },
-        {
-          "name": "closingRelativeMajority",
-          "type": "bool"
-        },
-        {
-          "name": "minimumVotingTime",
-          "type": "uint64"
-        },
-        {
-          "name": "option",
-          "type": "uint8"
+          "name": "data",
+          "type": "bytes"
         }
       ],
-      "name": "addVotingBylaw",
-      "outputs": [],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
@@ -1013,5 +1060,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490616268110
+  "updated_at": 1490625342509
 }

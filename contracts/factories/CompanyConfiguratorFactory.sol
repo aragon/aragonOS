@@ -49,27 +49,28 @@ contract CompanyConfiguratorFactory {
     uint8 favor = uint8(BinaryVoting.VotingOption.Favor);
     uint64 minimumVotingTime = uint64(7 days);
 
-    company.addVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
-    company.addStatusBylaw("beginPoll(address,uint64,bool,bool)", uint(AbstractCompany.SpecialEntityStatus.Shareholder), true);
-    company.addVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
-    company.addVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
-    company.addStatusBylaw("grantStock(uint8,uint256,address)", uint(AbstractCompany.EntityStatus.Executive), false);
-    company.addStatusBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setVotingBylaw("setEntityStatus(address,uint8)", 1, 2, true, minimumVotingTime, favor);
+    company.setStatusBylaw("beginPoll(address,uint64,bool,bool)", uint(AbstractCompany.SpecialEntityStatus.Shareholder), true);
+    company.setVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
+    company.setVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
+    company.setStatusBylaw("grantStock(uint8,uint256,address)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setStatusBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", uint(AbstractCompany.EntityStatus.Executive), false);
 
-    company.addVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
-    company.addStatusBylaw("transferSaleFunds(uint256)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
+    company.setStatusBylaw("transferSaleFunds(uint256)", uint(AbstractCompany.EntityStatus.Executive), false);
 
-    company.addVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, minimumVotingTime, favor);
-    company.addStatusBylaw("createRecurringReward(address,uint256,uint64,string)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setVotingBylaw("setAccountingSettings(uint256,uint64,uint256)", 1, 2, true, minimumVotingTime, favor);
+    company.setStatusBylaw("createRecurringReward(address,uint256,uint64,string)", uint(AbstractCompany.EntityStatus.Executive), false);
 
-    company.addStatusBylaw("removeRecurringReward(uint)", uint(AbstractCompany.EntityStatus.Executive), false);
-    company.addStatusBylaw("issueReward(address,uint256,string)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setStatusBylaw("removeRecurringReward(uint)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setStatusBylaw("issueReward(address,uint256,string)", uint(AbstractCompany.EntityStatus.Executive), false);
 
-    company.addStatusBylaw("assignStock(uint8,address,uint256)", uint(AbstractCompany.SpecialEntityStatus.StockSale), true);
-    company.addStatusBylaw("removeStock(uint8,address,uint256)", uint(AbstractCompany.SpecialEntityStatus.StockSale), true);
+    company.setStatusBylaw("assignStock(uint8,address,uint256)", uint(AbstractCompany.SpecialEntityStatus.StockSale), true);
+    company.setStatusBylaw("removeStock(uint8,address,uint256)", uint(AbstractCompany.SpecialEntityStatus.StockSale), true);
 
     // Protect bylaws under a 2/3 voting
-    company.addVotingBylaw("addStatusBylaw(string,uint8,bool)", 2, 3, false, minimumVotingTime, favor);
-    company.addVotingBylaw("addVotingBylaw(string,uint256,uint256,bool,uint64,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
+    company.setVotingBylaw("setAddressBylaw(string,address,bool)", 2, 3, false, minimumVotingTime, favor);
+    company.setVotingBylaw("setStatusBylaw(string,uint8,bool)", 2, 3, false, minimumVotingTime, favor);
+    company.setVotingBylaw("setVotingBylaw(string,uint256,uint256,bool,uint64,uint8)", 2, 3, false, minimumVotingTime, favor); // so meta
   }
 }

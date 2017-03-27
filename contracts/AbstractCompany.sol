@@ -27,11 +27,13 @@ contract AbstractCompany {
   function isStockSale(address entity) constant public returns (bool);
   function isShareholder(address holder) constant public returns (bool);
 
+  function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool);
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy);
   function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime);
 
-  function addStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
-  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
+  function setAddressBylaw(string functionSignature, address addr, bool isOracle);
+  function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
+  function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
 
   function setEntityStatusByStatus(address entity, uint8 status) public;
   function setEntityStatus(address entity, uint8 status) public;

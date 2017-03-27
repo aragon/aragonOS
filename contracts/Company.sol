@@ -36,17 +36,17 @@ contract Company is AbstractCompany {
   modifier checkBylaws {
     // Save current bylaw for passing to performed action in case of bylaw change
     BylawsLib.Bylaw bylaw = bylaws.bylaws[msg.sig];
-    if (!canPerformAction(bylaw, msg.sig, msg.sender)) throw;
+    if (!canPerformAction(bylaw, msg.sig, msg.sender, msg.data)) throw;
     _;
     bylaw.performedAction(msg.sig, msg.sender);
   }
 
-  function canPerformAction(bytes4 sig, address sender) constant public returns (bool) {
-    return canPerformAction(bylaws.bylaws[sig], sig, sender);
+  function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool) {
+    return canPerformAction(bylaws.bylaws[sig], sig, sender, data);
   }
 
-  function canPerformAction(BylawsLib.Bylaw storage bylaw, bytes4 sig, address sender) internal returns (bool) {
-    return bylaw.canPerformAction(sig, sender);
+  function canPerformAction(BylawsLib.Bylaw storage bylaw, bytes4 sig, address sender, bytes data) internal returns (bool) {
+    return bylaw.canPerformAction(sig, sender, data, msg.value);
   }
 
   function sigPayload(uint n) constant public returns (bytes32) {
@@ -67,7 +67,7 @@ contract Company is AbstractCompany {
 
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
     // 0x30ade7af = BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)")
-    if (!bylaws.canPerformAction(0x30ade7af, sender)) throw;
+    if (canPerformAction(0x30ade7af, sender, new bytes(0))) throw;
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
 
@@ -107,7 +107,7 @@ contract Company is AbstractCompany {
     minimumVotingTime = b.minimumVotingTime;
   }
 
-  function addStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus) checkBylaws {
+  function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
     bylaw.status.neededStatus = uint8(statusNeeded);
     bylaw.status.isSpecialStatus = isSpecialStatus;
@@ -116,17 +116,16 @@ contract Company is AbstractCompany {
     addBylaw(functionSignature, bylaw);
   }
 
-  /*
-  function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded) checkBylaws {
+  function setAddressBylaw(string functionSignature, address addr, bool isOracle) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
-    bylaw.specialStatus.neededStatus = uint8(statusNeeded);
-    bylaw.specialStatus.enforced = true;
+    bylaw.addr.addr = addr;
+    bylaw.addr.isOracle = isOracle;
+    bylaw.addr.enforced = true;
 
     addBylaw(functionSignature, bylaw);
   }
-  */
 
-  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) checkBylaws {
+  function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
 
     bylaw.voting.supportNeeded = support;
@@ -199,7 +198,7 @@ contract Company is AbstractCompany {
 
   function executeAfterVote(uint256 votingId) private {
     address votingAddress = votings.votingAddress(votingId);
-    bool canPerform = bylaws.canPerformAction(BinaryVoting(votingAddress).mainSignature(), votingAddress);
+    bool canPerform = canPerformAction(BinaryVoting(votingAddress).mainSignature(), votingAddress, new bytes(0));
     if (canPerform) {
       BinaryVoting(votingAddress).executeOnAction(uint8(BinaryVoting.VotingOption.Favor), this);
     }
