@@ -124,6 +124,9 @@ library BylawsLib {
     var (v, totalCastedVotes, votingPower) = AbstractCompany(this).countVotes(votingId, votingBylaw.approveOption);
     uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
 
+    // For edge case with only 1 token, and all votings being automatically approve because of floor rounding.
+    if (v == 0 && neededVotings == 0 && votingPower > 0 && votingBylaw.supportNeeded > 0) neededVotings = 1;
+
     // Test this logic
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return (false, 0);
