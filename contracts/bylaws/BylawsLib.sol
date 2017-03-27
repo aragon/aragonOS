@@ -57,12 +57,15 @@ library BylawsLib {
     return getBylaw(self, keyForFunctionSignature(functionSignature));
   }
 
-  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw) {
+  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw storage) {
     return self.bylaws[sig];
   }
 
   function canPerformAction(Bylaws storage self, bytes4 sig, address sender) returns (bool) {
-    Bylaw b = self.bylaws[sig];
+    return canPerformAction(getBylaw(self, sig), sig, sender);
+  }
+
+  function canPerformAction(Bylaw storage b, bytes4 sig, address sender) returns (bool) {
     if (b.updated == 0) {
       // not existent law, allow action only if is executive.
       b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
@@ -87,13 +90,11 @@ library BylawsLib {
     return false;
   }
 
-  function performedAction(Bylaws storage self, bytes4 sig, address sender) {
-    Bylaw b = self.bylaws[sig];
+  function performedAction(Bylaw storage b, bytes4 sig, address sender) {
     if (b.voting.enforced) {
-      var (isValidVoting, votingId) = checkVoting(sender, b.voting);
-      if (isValidVoting) {
-        AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
-      }
+      uint256 votingId = AbstractCompany(this).reverseVoting(sender);
+      if (votingId == 0) return;
+      AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
     }
   }
 

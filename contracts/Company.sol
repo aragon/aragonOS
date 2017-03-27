@@ -17,6 +17,7 @@ import "./sales/AbstractStockSale.sol";
 contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;
   using BylawsLib for BylawsLib.Bylaws;
+  using BylawsLib for BylawsLib.Bylaw;
   using VotingLib for VotingLib.Votings;
 
   AccountingLib.AccountingLedger accounting;
@@ -33,13 +34,19 @@ contract Company is AbstractCompany {
   }
 
   modifier checkBylaws {
-    if (!canPerformAction(msg.sig, msg.sender)) throw;
+    // Save current bylaw for passing to performed action in case of bylaw change
+    BylawsLib.Bylaw bylaw = bylaws.bylaws[msg.sig];
+    if (!canPerformAction(bylaw, msg.sig, msg.sender)) throw;
     _;
-    bylaws.performedAction(msg.sig, msg.sender);
+    bylaw.performedAction(msg.sig, msg.sender);
   }
 
   function canPerformAction(bytes4 sig, address sender) constant public returns (bool) {
-    return bylaws.canPerformAction(sig, sender);
+    return canPerformAction(bylaws.bylaws[sig], sig, sender);
+  }
+
+  function canPerformAction(BylawsLib.Bylaw storage bylaw, bytes4 sig, address sender) internal returns (bool) {
+    return bylaw.canPerformAction(sig, sender);
   }
 
   function sigPayload(uint n) constant public returns (bytes32) {
