@@ -54,7 +54,7 @@ contract CompanyConfiguratorFactory {
     company.setVotingBylaw("addStock(address,uint256)", 1, 2, true, minimumVotingTime, favor);
     company.setVotingBylaw("issueStock(uint8,uint256)", 1, 2, true, minimumVotingTime, favor);
     company.setStatusBylaw("grantStock(uint8,uint256,address)", uint(AbstractCompany.EntityStatus.Executive), false);
-    company.setStatusBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", uint(AbstractCompany.EntityStatus.Executive), false);
+    company.setAddressBylaw("grantVestedStock(uint8,uint256,address,uint64,uint64,uint64)", msg.sender, false);
 
     company.setVotingBylaw("beginSale(address)", 1, 2, true, minimumVotingTime, favor);
     company.setStatusBylaw("transferSaleFunds(uint256)", uint(AbstractCompany.EntityStatus.Executive), false);

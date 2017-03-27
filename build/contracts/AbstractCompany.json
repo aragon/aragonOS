@@ -105,6 +105,24 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getAddressBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -268,6 +286,24 @@
         },
         {
           "name": "voted",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getStatusBylaw",
+      "outputs": [
+        {
+          "name": "",
           "type": "uint8"
         }
       ],
@@ -1060,5 +1096,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490625342509
+  "updated_at": 1490633259753
 }

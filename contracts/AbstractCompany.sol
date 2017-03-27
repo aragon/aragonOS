@@ -30,6 +30,8 @@ contract AbstractCompany {
   function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool);
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy);
   function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime);
+  function getAddressBylaw(string functionSignature) constant returns (address);
+  function getStatusBylaw(string functionSignature) constant returns (uint8);
 
   function setAddressBylaw(string functionSignature, address addr, bool isOracle);
   function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
