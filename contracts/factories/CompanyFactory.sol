@@ -18,7 +18,6 @@ contract CompanyFactory {
     company.addTreasure.value(msg.value)('');
     company.setEntityStatusByStatus(address(configurator), 3);
     configurator.setCompanyDeployer(address(company), msg.sender);
-    company.setSpecialBylaws();
     return address(company);
   }
 

@@ -10,21 +10,21 @@ library BylawsLib {
 
   struct Bylaw {
     StatusBylaw status;
-    SpecialStatusBylaw specialStatus;
     VotingBylaw voting;
 
     uint64 updated;
     address updatedBy;
   }
 
+  struct AddressBylaw {
+    address addr;
+    bool isOrigin;
+  }
+
   struct StatusBylaw {
     uint8 neededStatus;
     bool enforced;
-  }
-
-  struct SpecialStatusBylaw {
-    uint8 neededStatus;
-    bool enforced;
+    bool isSpecialStatus;
   }
 
   struct VotingBylaw {
@@ -39,7 +39,7 @@ library BylawsLib {
   }
 
   function init() internal returns (Bylaw memory) {
-    return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,0,false), 0, 0x0); // zeroed bylaw
+    return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), 0, 0x0); // zeroed bylaw
   }
 
   function keyForFunctionSignature(string functionSignature) returns (bytes4) {
@@ -73,13 +73,12 @@ library BylawsLib {
     }
 
     // TODO: Support multi enforcement rules
-
     if (b.status.enforced) {
-      return getStatus(sender) >= b.status.neededStatus;
-    }
-
-    if (b.specialStatus.enforced) {
-      return isSpecialStatus(sender, b.specialStatus.neededStatus);
+      if (b.status.isSpecialStatus) {
+        return isSpecialStatus(sender, b.status.neededStatus);
+      } else {
+        return getStatus(sender) >= b.status.neededStatus;
+      }
     }
 
     if (b.voting.enforced) {

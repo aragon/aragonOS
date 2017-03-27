@@ -71,26 +71,25 @@ contract Company is AbstractCompany {
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
 
-  function setSpecialBylaws() {
-    addSpecialStatusBylaw("assignStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-    addSpecialStatusBylaw("removeStock(uint8,address,uint256)", AbstractCompany.SpecialEntityStatus.StockSale);
-  }
-
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
     BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
     updated = b.updated;
     updatedBy = b.updatedBy;
 
     if (b.voting.enforced) bylawType = 0;
-    if (b.status.enforced) bylawType = 1;
-    if (b.specialStatus.enforced) bylawType = 2;
+    if (b.status.enforced) {
+      if (b.status.isSpecialStatus) { bylawType = 2; }
+      else {
+        bylawType = 1;
+      }
+    }
+
   }
 
   function getStatusBylaw(string functionSignature) constant returns (uint8) {
     BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
 
     if (b.status.enforced) return b.status.neededStatus;
-    if (b.specialStatus.enforced) return b.specialStatus.neededStatus;
 
     return uint8(255);
   }
@@ -108,14 +107,16 @@ contract Company is AbstractCompany {
     minimumVotingTime = b.minimumVotingTime;
   }
 
-  function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded) checkBylaws {
+  function addStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
     bylaw.status.neededStatus = uint8(statusNeeded);
+    bylaw.status.isSpecialStatus = isSpecialStatus;
     bylaw.status.enforced = true;
 
     addBylaw(functionSignature, bylaw);
   }
 
+  /*
   function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();
     bylaw.specialStatus.neededStatus = uint8(statusNeeded);
@@ -123,6 +124,7 @@ contract Company is AbstractCompany {
 
     addBylaw(functionSignature, bylaw);
   }
+  */
 
   function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) checkBylaws {
     BylawsLib.Bylaw memory bylaw = BylawsLib.init();

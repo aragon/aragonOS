@@ -30,8 +30,7 @@ contract AbstractCompany {
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy);
   function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime);
 
-  function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded);
-  function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded);
+  function addStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
   function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
 
   function setEntityStatusByStatus(address entity, uint8 status) public;
