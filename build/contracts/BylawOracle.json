@@ -1,0 +1,55 @@
+{
+  "contract_name": "BylawOracle",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "actionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "performedAction",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "sig",
+          "type": "bytes4"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "ok",
+          "type": "bool"
+        },
+        {
+          "name": "actionId",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1490633334154
+}

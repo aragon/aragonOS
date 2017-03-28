@@ -18,11 +18,6 @@ contract AbstractCompany {
   mapping (uint8 => address) public stocks;
   uint8 public stockIndex;
 
-  mapping (uint256 => address) public votings;
-  mapping (address => uint256) public reverseVotings;
-  mapping (uint256 => uint8) public voteExecuted;
-  uint256 public votingIndex;
-
   mapping (uint256 => address) public sales;
   mapping (address => uint256) public reverseSales;
   uint256 public saleIndex;
@@ -32,21 +27,29 @@ contract AbstractCompany {
   function isStockSale(address entity) constant public returns (bool);
   function isShareholder(address holder) constant public returns (bool);
 
+  function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool);
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy);
   function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime);
+  function getAddressBylaw(string functionSignature) constant returns (address);
+  function getStatusBylaw(string functionSignature) constant returns (uint8);
 
-  function addStatusBylaw(string functionSignature, AbstractCompany.EntityStatus statusNeeded);
-  function addSpecialStatusBylaw(string functionSignature, AbstractCompany.SpecialEntityStatus statusNeeded);
-  function addVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
+  function setAddressBylaw(string functionSignature, address addr, bool isOracle);
+  function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
+  function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
 
   function setEntityStatusByStatus(address entity, uint8 status) public;
   function setEntityStatus(address entity, uint8 status) public;
 
-  function countVotes(uint256 votingIndex, uint8 optionId) returns (uint256, uint256);
+  function reverseVoting(address _votingAddress) constant public returns (uint256 votingId);
+  function getVotingInfo(uint256 _votingId) constant public returns (address votingAddress, uint64 startDate, uint64 closeDate, bool isExecuted, uint8 executed, bool isClosed);
+  function votingPowerForVoting(uint256 votingId) constant public returns (uint256 votable, uint256 modificable, uint8 voted);
+  function countVotes(uint256 votingIndex, uint8 optionId) constant public returns (uint256, uint256, uint256);
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce);
   function beginPoll(address voting, uint64 closes, bool voteOnCreate, bool executesIfDecided) public;
   function castVote(uint256 voteId, uint8 option, bool executesIfDecided) public;
-  function setVotingExecuted(uint8 option) public;
+  function modifyVote(uint256 votingId, uint8 option, bool removes, bool executesIfDecided) public;
+  function setVotingExecuted(uint256 votingId, uint8 option) public;
+  function hasVotedInOpenedVoting(address holder) constant public returns (bool);
 
   function addStock(address newStock, uint256 issue) public;
   function issueStock(uint8 _stock, uint256 _amount) public;
@@ -65,13 +68,16 @@ contract AbstractCompany {
   function addTreasure(string concept) payable public returns (bool);
   // function registerIncome(string concept) payable public returns (bool);
 
-  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
+  // function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
   function removeRecurringReward(uint index);
   function issueReward(address to, uint256 amount, string concept);
   function splitIntoDividends() payable;
 
+  event NewVoting(uint256 id, address votingAddress, uint64 starts, uint64 closes);
+  event VoteCasted(uint256 id, address votingAddress, address voter);
   event VoteExecuted(uint256 id, address votingAddress, uint8 outcome);
+
   event IssuedStock(address stockAddress, uint8 stockIndex, uint256 amount);
   event NewStockSale(address saleAddress, uint256 saleIndex, uint8 stockIndex);
   event EntityNewStatus(address entity, uint8 status);

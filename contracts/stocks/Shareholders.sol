@@ -1,14 +1,14 @@
 pragma solidity ^0.4.8;
 
-import "zeppelin-solidity/contracts/token/ERC20Basic.sol";
+import "zeppelin/token/ERC20.sol";
 
-contract Shareholders is ERC20Basic {
+contract Shareholders is ERC20 {
   mapping (uint256 => address) public shareholders;
   uint256 public shareholderIndex;
 
-  function transfer(address _to, uint _value) {
+  function transfer(address _to, uint _value) returns (bool success) {
     addShareholder(_to);
-    super.transfer(_to, _value);
+    return super.transfer(_to, _value);
   }
 
   function isShareholder(address holder) returns (bool) {

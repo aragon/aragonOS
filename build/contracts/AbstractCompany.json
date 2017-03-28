@@ -5,6 +5,27 @@
       "constant": false,
       "inputs": [
         {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "name": "isOracle",
+          "type": "bool"
+        }
+      ],
+      "name": "setAddressBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
           "name": "to",
           "type": "address"
         },
@@ -84,6 +105,24 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getAddressBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -110,6 +149,44 @@
       ],
       "name": "setEntityStatusByStatus",
       "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getVotingInfo",
+      "outputs": [
+        {
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "name": "startDate",
+          "type": "uint64"
+        },
+        {
+          "name": "closeDate",
+          "type": "uint64"
+        },
+        {
+          "name": "isExecuted",
+          "type": "bool"
+        },
+        {
+          "name": "executed",
+          "type": "uint8"
+        },
+        {
+          "name": "isClosed",
+          "type": "bool"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
@@ -190,6 +267,50 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
+      "name": "votingPowerForVoting",
+      "outputs": [
+        {
+          "name": "votable",
+          "type": "uint256"
+        },
+        {
+          "name": "modificable",
+          "type": "uint256"
+        },
+        {
+          "name": "voted",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getStatusBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -215,31 +336,26 @@
       "type": "function"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "votingIndex",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": false,
       "inputs": [
         {
-          "name": "functionSignature",
-          "type": "string"
+          "name": "votingId",
+          "type": "uint256"
         },
         {
-          "name": "statusNeeded",
+          "name": "option",
           "type": "uint8"
+        },
+        {
+          "name": "removes",
+          "type": "bool"
+        },
+        {
+          "name": "executesIfDecided",
+          "type": "bool"
         }
       ],
-      "name": "addStatusBylaw",
+      "name": "modifyVote",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -286,6 +402,57 @@
         }
       ],
       "name": "assignStock",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_votingAddress",
+          "type": "address"
+        }
+      ],
+      "name": "reverseVoting",
+      "outputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "setVotingBylaw",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -356,7 +523,7 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
           "name": "votingIndex",
@@ -369,6 +536,10 @@
       ],
       "name": "countVotes",
       "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
         {
           "name": "",
           "type": "uint256"
@@ -477,42 +648,6 @@
     },
     {
       "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "votings",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "reverseVotings",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [],
       "name": "getAccountingPeriodCloses",
       "outputs": [
@@ -582,19 +717,6 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "option",
-          "type": "uint8"
-        }
-      ],
-      "name": "setVotingExecuted",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": true,
       "inputs": [
         {
@@ -616,19 +738,19 @@
       "constant": false,
       "inputs": [
         {
-          "name": "budget",
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
           "type": "uint256"
         },
         {
-          "name": "periodDuration",
-          "type": "uint64"
-        },
-        {
-          "name": "dividendThreshold",
-          "type": "uint256"
+          "name": "isSpecialStatus",
+          "type": "bool"
         }
       ],
-      "name": "setAccountingSettings",
+      "name": "setStatusBylaw",
       "outputs": [],
       "payable": false,
       "type": "function"
@@ -637,15 +759,15 @@
       "constant": true,
       "inputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "name": "holder",
+          "type": "address"
         }
       ],
-      "name": "voteExecuted",
+      "name": "hasVotedInOpenedVoting",
       "outputs": [
         {
           "name": "",
-          "type": "uint8"
+          "type": "bool"
         }
       ],
       "payable": false,
@@ -667,6 +789,23 @@
         }
       ],
       "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "votingId",
+          "type": "uint256"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "setVotingExecuted",
+      "outputs": [],
+      "payable": false,
       "type": "function"
     },
     {
@@ -720,54 +859,79 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
-          "name": "functionSignature",
-          "type": "string"
+          "name": "sig",
+          "type": "bytes4"
         },
         {
-          "name": "support",
-          "type": "uint256"
+          "name": "sender",
+          "type": "address"
         },
         {
-          "name": "base",
-          "type": "uint256"
-        },
-        {
-          "name": "closingRelativeMajority",
-          "type": "bool"
-        },
-        {
-          "name": "minimumVotingTime",
-          "type": "uint64"
-        },
-        {
-          "name": "option",
-          "type": "uint8"
+          "name": "data",
+          "type": "bytes"
         }
       ],
-      "name": "addVotingBylaw",
-      "outputs": [],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
       "payable": false,
       "type": "function"
     },
     {
-      "constant": false,
+      "anonymous": false,
       "inputs": [
         {
-          "name": "functionSignature",
-          "type": "string"
+          "indexed": false,
+          "name": "id",
+          "type": "uint256"
         },
         {
-          "name": "statusNeeded",
-          "type": "uint8"
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "starts",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "name": "closes",
+          "type": "uint64"
         }
       ],
-      "name": "addSpecialStatusBylaw",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
+      "name": "NewVoting",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "votingAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "voter",
+          "type": "address"
+        }
+      ],
+      "name": "VoteCasted",
+      "type": "event"
     },
     {
       "anonymous": false,
@@ -932,5 +1096,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489423105660
+  "updated_at": 1490633334154
 }

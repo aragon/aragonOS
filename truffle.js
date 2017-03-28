@@ -4,6 +4,12 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
+      gas: 10000000,
+    },
+    development46: {
+      network_id: 15,
+      host: 'localhost',
+      port: 8546,
     },
     ropsten: {
       network_id: 3,
@@ -27,6 +33,7 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8546,
+      gas: 100000000,
     },
   },
   build: {},

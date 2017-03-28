@@ -23,6 +23,5 @@ contract GenericBinaryVoting is BinaryVoting("Approve", "Reject") {
 
   function executeOnAppove(AbstractCompany company) internal {
     if (!company.call(data)) throw;
-    super.executeOnAppove(company);
   }
 }

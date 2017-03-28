@@ -2,6 +2,7 @@ pragma solidity ^0.4.8;
 
 import "../AbstractCompany.sol";
 import "../stocks/Stock.sol";
+import "./BylawOracle.sol";
 
 library BylawsLib {
   struct Bylaws {
@@ -10,20 +11,22 @@ library BylawsLib {
 
   struct Bylaw {
     StatusBylaw status;
-    SpecialStatusBylaw specialStatus;
     VotingBylaw voting;
+    AddressBylaw addr;
 
     uint64 updated;
     address updatedBy;
   }
 
-  struct StatusBylaw {
-    uint8 neededStatus;
+  struct AddressBylaw {
+    address addr;
+    bool isOracle;
     bool enforced;
   }
 
-  struct SpecialStatusBylaw {
+  struct StatusBylaw {
     uint8 neededStatus;
+    bool isSpecialStatus;
     bool enforced;
   }
 
@@ -39,7 +42,7 @@ library BylawsLib {
   }
 
   function init() internal returns (Bylaw memory) {
-    return Bylaw(StatusBylaw(0,false), SpecialStatusBylaw(0,false), VotingBylaw(0,0,0,false,0,false), 0, 0x0); // zeroed bylaw
+    return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), AddressBylaw(0x0,false,false), 0, 0x0); // zeroed bylaw
   }
 
   function keyForFunctionSignature(string functionSignature) returns (bytes4) {
@@ -57,36 +60,50 @@ library BylawsLib {
     return getBylaw(self, keyForFunctionSignature(functionSignature));
   }
 
-  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw) {
+  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw storage) {
     return self.bylaws[sig];
   }
 
-  function canPerformAction(Bylaws storage self, bytes4 sig, address sender) returns (bool) {
-    Bylaw b = self.bylaws[sig];
+  function canPerformAction(Bylaws storage self, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
+    return canPerformAction(getBylaw(self, sig), sig, sender, data, value);
+  }
+
+  function canPerformAction(Bylaw storage b, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
     if (b.updated == 0) {
-      // not existent law, allow action only if is executive
+      // not existent law, allow action only if is executive.
       b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
       b.status.enforced = true;
     }
 
     // TODO: Support multi enforcement rules
-
     if (b.status.enforced) {
-      return getStatus(sender) >= b.status.neededStatus;
-    }
-
-    if (b.specialStatus.enforced) {
-      return isSpecialStatus(sender, b.specialStatus.neededStatus);
-    }
-
-    if (b.voting.enforced) {
-      if (checkVoting(sender, b.voting)) {
-        // TODO: Set voting executed here to block reentry
-        return true;
+      if (b.status.isSpecialStatus) {
+        return isSpecialStatus(sender, b.status.neededStatus);
+      } else {
+        return getStatus(sender) >= b.status.neededStatus;
       }
     }
 
+    if (b.voting.enforced) {
+      var (isValidVoting, votingId) = checkVoting(sender, b.voting);
+      return isValidVoting;
+    }
+
+    if (b.addr.enforced) {
+      if (!b.addr.isOracle) return sender == b.addr.addr;
+      var (canPerform,) = BylawOracle(b.addr.addr).canPerformAction(sender, sig, data, value);
+      return canPerform;
+    }
+
     return false;
+  }
+
+  function performedAction(Bylaw storage b, bytes4 sig, address sender) {
+    if (b.voting.enforced) {
+      uint256 votingId = AbstractCompany(this).reverseVoting(sender);
+      if (votingId == 0) return;
+      AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
+    }
   }
 
   function getStatus(address entity) internal returns (uint8) {
@@ -105,36 +122,33 @@ library BylawsLib {
     }
   }
 
-  function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool) {
-    uint256 votingIndex = AbstractCompany(this).reverseVotings(voteAddress);
+  function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
+    uint256 votingId = AbstractCompany(this).reverseVoting(voteAddress);
+    var (_voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfo(votingId);
 
-    if (votingIndex == 0) return false;
-    if (AbstractCompany(this).voteExecuted(votingIndex) > 0) return false;
+    if (votingId == 0) return (false, 0);
+    if (isExecuted) return (false, 0);
+    if (closeDate - startDate < votingBylaw.minimumVotingTime) return (false, 0);
 
-    var (v, totalCastedVotes, votingPower) = countVotes(votingIndex, votingBylaw.approveOption);
+    var (v, totalCastedVotes, votingPower) = AbstractCompany(this).countVotes(votingId, votingBylaw.approveOption);
     uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
+
+    // For edge case with only 1 token, and all votings being automatically approve because of floor rounding.
+    if (v == 0 && neededVotings == 0 && votingPower > 0 && votingBylaw.supportNeeded > 0) neededVotings = 1;
 
     // Test this logic
     if (v < neededVotings) {
-      if (!votingBylaw.closingRelativeMajority) return false;
-      // TODO: Check minimum closing date!!!
-      uint256 voteCloseDate = Stock(AbstractCompany(this).stocks(0)).pollingUntil(votingIndex);
+      if (!votingBylaw.closingRelativeMajority) return (false, 0);
 
-      if (now < voteCloseDate) return false;
+      if (now < closeDate) return (false, 0);
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
-      if (v < neededVotings) return false;
+      if (v < neededVotings) return (false, 0);
     }
 
-    return true;
+    return (true, votingId);
   }
 
-  function countVotes(uint256 votingIndex, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
-    for (uint8 i = 0; i < AbstractCompany(this).stockIndex(); i++) {
-      Stock stock = Stock(AbstractCompany(this).stocks(i));
-
-      votes += stock.votings(votingIndex, optionId);
-      totalCastedVotes += stock.totalCastedVotes(votingIndex);
-      votingPower += stock.totalVotingPower();
-    }
+  function countVotes(uint256 votingId, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
+    return AbstractCompany(this).countVotes(votingId, optionId);
   }
 }

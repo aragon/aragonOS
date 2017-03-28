@@ -156,13 +156,9 @@
       "inputs": [],
       "payable": false,
       "type": "constructor"
-    },
-    {
-      "payable": false,
-      "type": "fallback"
     }
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1489423105664
+  "updated_at": 1490633334159
 }

@@ -4,7 +4,9 @@
   "description": "",
   "main": "truffle.js",
   "scripts": {
-    "postinstall": "truffle migrate --network landing"
+   "test": "truffle test",
+   "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
+   "ci-test": "truffle test"
   },
   "author": "",
   "license": "ISC",

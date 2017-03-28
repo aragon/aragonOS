@@ -1,0 +1,10 @@
+image: node
+
+all_tests:
+  stage: test
+  except:
+    - iwantthistorunalwayslol
+  script:
+   - npm i --only dev
+   - npm i
+   - npm run ci-test

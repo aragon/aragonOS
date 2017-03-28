@@ -31,8 +31,4 @@ contract Voting is Txid {
 
   function executeOnAction(uint8 option, AbstractCompany company);
   function mainSignature() public constant returns (bytes4);
-
-  function () {
-    throw;
-  }
 }

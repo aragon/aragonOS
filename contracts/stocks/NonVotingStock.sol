@@ -1,14 +1,12 @@
 pragma solidity ^0.4.8;
 
-import "./Stock.sol";
 import "./IssueableStock.sol";
-import "./GrantableStock.sol";
 
-contract NonVotingStock is IssueableStock, GrantableStock {
-  function NonVotingStock(address _company) {
-    company = _company;
-    votesPerShare = 0;
-    dividendsPerShare = 1;
+contract NonVotingStock is IssueableStock {
+  function NonVotingStock(address _company)
+           GovernanceToken(_company) {
+    votingPower = 0;
+    economicRights = 1;
     name = "Non-Voting Stock";
     symbol = "CNS";
   }
