@@ -382,17 +382,29 @@
           ],
           "name": "NewCompany",
           "type": "event"
+        },
+        "0x707e8cc63d34f6a1906248ce9fb061134c766bcf45438c21f6a88258f6673929": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "functionSignature",
+              "type": "string"
+            }
+          ],
+          "name": "BylawChanged",
+          "type": "event"
         }
       },
       "links": {
-        "AccountingLib": "0xfaa1dd6df30c6c5d637ff44f666a490b3947fdcd",
-        "BylawsLib": "0x15f679e02006c97b9a5f70b2b070dedf097f6f4a",
-        "VotingLib": "0x0741f335690ffa57a4cb04091cbc49e75ac4f627"
+        "AccountingLib": "0xb1724faed2491c6cb6b84a300fa1baa1d2f4d1b3",
+        "BylawsLib": "0xab6bd99731651cdfd9edf42bcab51ab5eace90b4",
+        "VotingLib": "0xcb49eaf8e1b1bc9a845c12b9a50c6b4e624cfcbf"
       },
-      "address": "0xe45aac59146b18807d72226c649f7980de6a25af",
-      "updated_at": 1490633444972
+      "address": "0x45229e4d0e3afecacbcf3897f468a04d6892633a",
+      "updated_at": 1490721068943
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1490720965819
+  "updated_at": 1490721068943
 }

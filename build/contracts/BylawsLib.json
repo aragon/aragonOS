@@ -260,12 +260,25 @@
       "updated_at": 1490716600904
     },
     "42": {
-      "events": {},
+      "events": {
+        "0x707e8cc63d34f6a1906248ce9fb061134c766bcf45438c21f6a88258f6673929": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "functionSignature",
+              "type": "string"
+            }
+          ],
+          "name": "BylawChanged",
+          "type": "event"
+        }
+      },
       "links": {},
-      "address": "0x15f679e02006c97b9a5f70b2b070dedf097f6f4a",
-      "updated_at": 1490633444968
+      "address": "0xab6bd99731651cdfd9edf42bcab51ab5eace90b4",
+      "updated_at": 1490721068941
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1490720965817
+  "updated_at": 1490721068941
 }
