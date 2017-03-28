@@ -9,6 +9,8 @@ library BylawsLib {
     mapping (bytes4 => Bylaw) bylaws; // function signature to bylaw
   }
 
+  event BylawChanged(string functionSignature);
+
   struct Bylaw {
     StatusBylaw status;
     VotingBylaw voting;
@@ -41,7 +43,7 @@ library BylawsLib {
     bool enforced;
   }
 
-  function init() internal returns (Bylaw memory) {
+  function initBylaw() internal returns (Bylaw memory) {
     return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), AddressBylaw(0x0,false,false), 0, 0x0); // zeroed bylaw
   }
 
@@ -49,11 +51,66 @@ library BylawsLib {
     return bytes4(sha3(functionSignature));
   }
 
+  function setStatusBylaw(Bylaws storage self, string functionSignature, uint statusNeeded, bool isSpecialStatus) {
+    BylawsLib.Bylaw memory bylaw = initBylaw();
+    bylaw.status.neededStatus = uint8(statusNeeded);
+    bylaw.status.isSpecialStatus = isSpecialStatus;
+    bylaw.status.enforced = true;
+
+    addBylaw(self, functionSignature, bylaw);
+  }
+
+  function setAddressBylaw(Bylaws storage self, string functionSignature, address addr, bool isOracle) {
+    BylawsLib.Bylaw memory bylaw = initBylaw();
+    bylaw.addr.addr = addr;
+    bylaw.addr.isOracle = isOracle;
+    bylaw.addr.enforced = true;
+
+    addBylaw(self, functionSignature, bylaw);
+  }
+
+  function setVotingBylaw(Bylaws storage self, string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) {
+    BylawsLib.Bylaw memory bylaw = initBylaw();
+
+    bylaw.voting.supportNeeded = support;
+    bylaw.voting.supportBase = base;
+    bylaw.voting.closingRelativeMajority = closingRelativeMajority;
+    bylaw.voting.minimumVotingTime = minimumVotingTime;
+    bylaw.voting.approveOption = option;
+    bylaw.voting.enforced = true;
+
+    addBylaw(self, functionSignature, bylaw);
+  }
+
   function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
-    bytes4 key = keyForFunctionSignature(functionSignature);
+    addBylaw(self, keyForFunctionSignature(functionSignature), bylaw);
+    BylawChanged(functionSignature);
+  }
+
+  function addBylaw(Bylaws storage self, bytes4 key, Bylaw memory bylaw) internal {
     self.bylaws[key] = bylaw;
     self.bylaws[key].updated = uint64(now);
     self.bylaws[key].updatedBy = msg.sender;
+  }
+
+  function getBylawType(Bylaws storage self, string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
+    BylawsLib.Bylaw memory b = getBylaw(self, functionSignature);
+    updated = b.updated;
+    updatedBy = b.updatedBy;
+
+    if (b.voting.enforced) bylawType = 0;
+    if (b.status.enforced) {
+      if (b.status.isSpecialStatus) { bylawType = 2; }
+      else {
+        bylawType = 1;
+      }
+    }
+    if (b.addr.enforced) {
+      if (b.addr.isOracle) { bylawType = 4; }
+      else {
+        bylawType = 3;
+      }
+    }
   }
 
   function getBylaw(Bylaws storage self, string functionSignature) internal returns (Bylaw) {
@@ -142,6 +199,7 @@ library BylawsLib {
 
       if (now < closeDate) return (false, 0);
       neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
+      if (v == 0 && neededVotings == 0 && votingPower > 0 && votingBylaw.supportNeeded > 0) neededVotings = 1;
       if (v < neededVotings) return (false, 0);
     }
 

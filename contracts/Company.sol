@@ -72,23 +72,7 @@ contract Company is AbstractCompany {
   }
 
   function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
-    BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
-    updated = b.updated;
-    updatedBy = b.updatedBy;
-
-    if (b.voting.enforced) bylawType = 0;
-    if (b.status.enforced) {
-      if (b.status.isSpecialStatus) { bylawType = 2; }
-      else {
-        bylawType = 1;
-      }
-    }
-    if (b.addr.enforced) {
-      if (b.addr.isOracle) { bylawType = 4; }
-      else {
-        bylawType = 3;
-      }
-    }
+    return bylaws.getBylawType(functionSignature);
   }
 
   function getStatusBylaw(string functionSignature) constant returns (uint8) {
@@ -123,40 +107,15 @@ contract Company is AbstractCompany {
   }
 
   function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus) checkBylaws {
-    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
-    bylaw.status.neededStatus = uint8(statusNeeded);
-    bylaw.status.isSpecialStatus = isSpecialStatus;
-    bylaw.status.enforced = true;
-
-    addBylaw(functionSignature, bylaw);
+    bylaws.setStatusBylaw(functionSignature, statusNeeded, isSpecialStatus);
   }
 
   function setAddressBylaw(string functionSignature, address addr, bool isOracle) checkBylaws {
-    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
-    bylaw.addr.addr = addr;
-    bylaw.addr.isOracle = isOracle;
-    bylaw.addr.enforced = true;
-
-    addBylaw(functionSignature, bylaw);
+    bylaws.setAddressBylaw(functionSignature, addr, isOracle);
   }
 
   function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) checkBylaws {
-    BylawsLib.Bylaw memory bylaw = BylawsLib.init();
-
-    bylaw.voting.supportNeeded = support;
-    bylaw.voting.supportBase = base;
-    bylaw.voting.closingRelativeMajority = closingRelativeMajority;
-    bylaw.voting.minimumVotingTime = minimumVotingTime;
-    bylaw.voting.approveOption = option;
-    bylaw.voting.enforced = true;
-
-    addBylaw(functionSignature, bylaw);
-  }
-
-  function addBylaw(string functionSignature, BylawsLib.Bylaw bylaw) private {
-    bylaws.addBylaw(functionSignature, bylaw);
-
-    BylawChanged(functionSignature);
+    bylaws.setVotingBylaw(functionSignature, support, base, closingRelativeMajority, minimumVotingTime, option);
   }
 
   // acl
@@ -300,8 +259,7 @@ contract Company is AbstractCompany {
   }
 
   function removeStock(uint8 stockId, address holder, uint256 units) checkBylaws {
-    // TODO: Gas cuts
-    // IssueableStock(stocks[stockId]).destroyStock(holder, units);
+    IssueableStock(stocks[stockId]).destroyStock(holder, units);
   }
 
   // accounting
@@ -316,8 +274,6 @@ contract Company is AbstractCompany {
   }
 
   function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
-    /*
-    // TODO: Gas cuts
     AccountingLib.AccountingPeriod p = accounting.periods[periodIndex];
     lastTransaction = p.transactions.length - 1;
     started = p.startTimestamp;
@@ -325,12 +281,9 @@ contract Company is AbstractCompany {
     expenses = p.expenses;
     revenue = p.revenue;
     dividends = p.dividends;
-    */
   }
 
   function getRecurringTransactionInfo(uint transactionIndex) constant returns (uint64 period, uint64 lastTransactionDate, address to, address approvedBy, uint256 amount, string concept) {
-    /*
-    // TODO: Gas cuts
     AccountingLib.RecurringTransaction recurring = accounting.recurringTransactions[transactionIndex];
     AccountingLib.Transaction t = recurring.transaction;
     period = recurring.period;
@@ -338,7 +291,6 @@ contract Company is AbstractCompany {
     amount = t.amount;
     approvedBy = t.approvedBy;
     concept = t.concept;
-    */
   }
 
   function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
@@ -352,12 +304,9 @@ contract Company is AbstractCompany {
     concept = t.concept;
   }
 
-  /*
-  // TODO: Gas cuts
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold) checkBylaws public {
     accounting.setAccountingSettings(budget, periodDuration, dividendThreshold);
   }
-  */
 
   function addTreasure(string concept) payable public returns (bool) {
     accounting.addTreasure(concept);
