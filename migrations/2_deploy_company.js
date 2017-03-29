@@ -12,18 +12,24 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 
 // const utils = require('ethereumjs-util')
 
-const networks = {
-  15: [web3.eth.accounts[0], 10e7],
-  3: [web3.eth.accounts[0], 4.712e6],
-  42: ['0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2', 4.99e6],
-}
-
-
-const from = networks[web3.version.network][0]
-const gas = networks[web3.version.network][1]
 
 module.exports = (deployer) => {
   let company = null
+
+  /*
+  const networks = {
+    15: [web3.eth.accounts[0], 10e7],
+    3: [web3.eth.accounts[0], 4.712e6],
+    42: ['0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2', 4.99e6],
+  }
+
+  const from = networks[web3.version.network][0]
+  const gas = networks[web3.version.network][1]
+  */
+
+  // HD provider cannot do sync calls
+  const from = '0x692c16ef3d640b8f5dcec895023b4fc294d85ab3'
+  const gas = 4712000
 
   deployer.deploy(AccountingLib, { gas })
   deployer.link(AccountingLib, [Company, CompanyFactory])
