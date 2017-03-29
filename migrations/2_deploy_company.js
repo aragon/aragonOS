@@ -13,15 +13,14 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 // const utils = require('ethereumjs-util')
 
 const networks = {
-  15: web3.eth.accounts[0],
-  3: '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b',
-  42: '0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2',
+  15: [web3.eth.accounts[0], 10e7],
+  3: [web3.eth.accounts[0], 4.712e6],
+  42: ['0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2', 4.99e6],
 }
 
-const from = networks[web3.version.network]
 
-const nonce = parseInt(Math.random() * 1e15)
-const gas = web3.version.network == 15 ? 10e7 : 5e6
+const from = networks[web3.version.network][0]
+const gas = networks[web3.version.network][1]
 
 module.exports = (deployer) => {
   let company = null

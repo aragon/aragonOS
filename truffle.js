@@ -1,3 +1,8 @@
+var HDWalletProvider = require('truffle-hdwallet-provider');
+
+var mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
+var ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/');
+
 module.exports = {
   networks: {
     development: {
@@ -8,9 +13,7 @@ module.exports = {
     },
     ropsten: {
       network_id: 3,
-      host: 'localhost',
-      port: 8545,
-      from: '0xfcea9c5d4967956d4b209f6b1e9d2162ce96149b',
+      provider: ropstenProvider,
     },
     kovan: {
       network_id: 42,

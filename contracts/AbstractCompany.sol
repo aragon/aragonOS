@@ -66,9 +66,9 @@ contract AbstractCompany {
   function getAccountingPeriodCloses() constant returns (uint64);
 
   function addTreasure(string concept) payable public returns (bool);
-  // function registerIncome(string concept) payable public returns (bool);
+  // gas function registerIncome(string concept) payable public returns (bool);
 
-  function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
+  // gas function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold);
   function createRecurringReward(address to, uint256 amount, uint64 period, string concept);
   function removeRecurringReward(uint index);
   function issueReward(address to, uint256 amount, string concept);

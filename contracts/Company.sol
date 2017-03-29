@@ -269,11 +269,13 @@ contract Company is AbstractCompany {
   }
 
   function getAccountingPeriodCloses() constant returns (uint64) {
-    var (,closes) = accounting.getAccountingPeriodState(accounting.getCurrentPeriod());
-    return closes;
+    // gas var (,closes) = accounting.getAccountingPeriodState(accounting.getCurrentPeriod());
+    return uint64(now + 4 weeks); // closes;
   }
 
   function getPeriodInfo(uint periodIndex) constant returns (uint lastTransaction, uint64 started, uint64 ended, uint256 revenue, uint256 expenses, uint256 dividends) {
+    /*
+    TODO: gas
     AccountingLib.AccountingPeriod p = accounting.periods[periodIndex];
     lastTransaction = p.transactions.length - 1;
     started = p.startTimestamp;
@@ -281,9 +283,12 @@ contract Company is AbstractCompany {
     expenses = p.expenses;
     revenue = p.revenue;
     dividends = p.dividends;
+    */
   }
 
   function getRecurringTransactionInfo(uint transactionIndex) constant returns (uint64 period, uint64 lastTransactionDate, address to, address approvedBy, uint256 amount, string concept) {
+    /*
+    TODO: gas
     AccountingLib.RecurringTransaction recurring = accounting.recurringTransactions[transactionIndex];
     AccountingLib.Transaction t = recurring.transaction;
     period = recurring.period;
@@ -291,6 +296,7 @@ contract Company is AbstractCompany {
     amount = t.amount;
     approvedBy = t.approvedBy;
     concept = t.concept;
+    */
   }
 
   function getTransactionInfo(uint periodIndex, uint transactionIndex) constant returns (bool expense, address from, address to, address approvedBy, uint256 amount, string concept, uint64 timestamp) {
@@ -304,9 +310,12 @@ contract Company is AbstractCompany {
     concept = t.concept;
   }
 
+  /*
   function setAccountingSettings(uint256 budget, uint64 periodDuration, uint256 dividendThreshold) checkBylaws public {
+    // TODO: gas
     accounting.setAccountingSettings(budget, periodDuration, dividendThreshold);
   }
+  */
 
   function addTreasure(string concept) payable public returns (bool) {
     accounting.addTreasure(concept);

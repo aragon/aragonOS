@@ -4,9 +4,9 @@
   "description": "",
   "main": "truffle.js",
   "scripts": {
-   "test": "truffle test",
-   "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
-   "ci-test": "truffle test"
+    "test": "truffle test",
+    "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
+    "ci-test": "truffle test"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "ethereumjs-util": "^5.1.1",
     "keybase-eth": "^0.3.0",
     "truffle": "^3.0.0",
+    "truffle-hdwallet-provider": "0.0.3",
     "zeppelin-solidity": "1.0.1"
   }
 }
