@@ -735,27 +735,6 @@
       "type": "function"
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "functionSignature",
-          "type": "string"
-        },
-        {
-          "name": "statusNeeded",
-          "type": "uint256"
-        },
-        {
-          "name": "isSpecialStatus",
-          "type": "bool"
-        }
-      ],
-      "name": "setStatusBylaw",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
       "constant": true,
       "inputs": [
         {
@@ -770,6 +749,27 @@
           "type": "bool"
         }
       ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
+          "type": "uint8"
+        },
+        {
+          "name": "isSpecialStatus",
+          "type": "bool"
+        }
+      ],
+      "name": "setStatusBylaw",
+      "outputs": [],
       "payable": false,
       "type": "function"
     },
@@ -1096,5 +1096,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1490788381586
+  "updated_at": 1490813901158
 }

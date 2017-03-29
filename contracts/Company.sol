@@ -66,8 +66,8 @@ contract Company is AbstractCompany {
   }
 
   function beginUntrustedPoll(address voting, uint64 closingTime, address sender, bytes32 r, bytes32 s, uint8 v, uint nonce) checkSignature(sender, r, s, v, nonce) {
-    // 0x30ade7af = BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)")
-    if (!canPerformAction(0x30ade7af, sender, new bytes(0))) throw;
+    // 0x554c1fbb = BylawsLib.keyForFunctionSignature("beginPoll(address,uint64,bool,bool)")
+    if (!canPerformAction(0x554c1fbb, sender, new bytes(0))) throw;
     doBeginPoll(voting, closingTime, false, false); // TODO: Make vote on create and execute great again
   }
 
@@ -106,7 +106,7 @@ contract Company is AbstractCompany {
     return b.addr;
   }
 
-  function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus) checkBylaws {
+  function setStatusBylaw(string functionSignature, uint8 statusNeeded, bool isSpecialStatus) checkBylaws {
     bylaws.setStatusBylaw(functionSignature, statusNeeded, isSpecialStatus);
   }
 

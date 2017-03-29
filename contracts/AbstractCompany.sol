@@ -34,7 +34,7 @@ contract AbstractCompany {
   function getStatusBylaw(string functionSignature) constant returns (uint8);
 
   function setAddressBylaw(string functionSignature, address addr, bool isOracle);
-  function setStatusBylaw(string functionSignature, uint statusNeeded, bool isSpecialStatus);
+  function setStatusBylaw(string functionSignature, uint8 statusNeeded, bool isSpecialStatus);
   function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option);
 
   function setEntityStatusByStatus(address entity, uint8 status) public;

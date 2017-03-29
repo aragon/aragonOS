@@ -51,9 +51,9 @@ library BylawsLib {
     return bytes4(sha3(functionSignature));
   }
 
-  function setStatusBylaw(Bylaws storage self, string functionSignature, uint statusNeeded, bool isSpecialStatus) {
+  function setStatusBylaw(Bylaws storage self, string functionSignature, uint8 statusNeeded, bool isSpecialStatus) {
     BylawsLib.Bylaw memory bylaw = initBylaw();
-    bylaw.status.neededStatus = uint8(statusNeeded);
+    bylaw.status.neededStatus = statusNeeded;
     bylaw.status.isSpecialStatus = isSpecialStatus;
     bylaw.status.enforced = true;
 
