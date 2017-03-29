@@ -54,9 +54,9 @@
   "networks": {
     "3": {
       "links": {
-        "AccountingLib": "0x9f409887737d13563ee6183c6c1f96f871fa4a4c",
-        "BylawsLib": "0x8c169857da6721d0f7970749ace5b9b41eeea143",
-        "VotingLib": "0xd1da434f04cc47087cdf3a87c33aec6e2c5c8d2c"
+        "AccountingLib": "0x810feb9edcb315bc9f1e314d6f2c0b3ac3ffdfda",
+        "BylawsLib": "0x31c4cdea03eacdd1b226ddf4f65fbe226041ab83",
+        "VotingLib": "0xafa45603125bde9a9e621d580ba65aa2689649e3"
       },
       "events": {
         "0x6662e2efb20f1e8956d2b72187c1717fe3fc9a699597f5d34742bff45b317ddb": {
@@ -225,8 +225,8 @@
           "type": "event"
         }
       },
-      "updated_at": 1490789334385,
-      "address": "0xa114319842ac822e8a8707d7c48ff9990ef864d2"
+      "updated_at": 1490814806546,
+      "address": "0xa869573c443742dd50cc578c3e8131d192a0c8b7"
     },
     "15": {
       "events": {
@@ -582,5 +582,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1490813937054
+  "updated_at": 1490814806546
 }

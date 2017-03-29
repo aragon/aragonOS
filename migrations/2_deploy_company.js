@@ -16,7 +16,7 @@ const VerifyLib = artifacts.require('VerifyLib.sol')
 module.exports = (deployer) => {
   let company = null
 
-
+  /*
   const networks = {
     15: [web3.eth.accounts[0], 10e7],
     3: [web3.eth.accounts[0], 4.712e6],
@@ -25,12 +25,11 @@ module.exports = (deployer) => {
 
   const from = networks[web3.version.network][0]
   const gas = networks[web3.version.network][1]
+  */
 
-  /*
-  // HD provider cannot do sync calls
+  // HD provider cannot do
   const from = '0x692c16ef3d640b8f5dcec895023b4fc294d85ab3'
   const gas = 4712000
-  */
 
   deployer.deploy(AccountingLib, { gas })
   deployer.link(AccountingLib, [Company, CompanyFactory])

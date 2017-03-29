@@ -204,10 +204,10 @@
   "networks": {
     "3": {
       "links": {
-        "BytesHelper": "0x0f89847c837daf13f1a46e03f6f9fe65221db198"
+        "BytesHelper": "0x83c403db9fa8582b4365a7d52cd36ceddbf08873"
       },
       "events": {},
-      "updated_at": 1490789334387
+      "updated_at": 1490814806549
     },
     "15": {
       "events": {},
@@ -225,5 +225,5 @@
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1490813937055
+  "updated_at": 1490814806549
 }
