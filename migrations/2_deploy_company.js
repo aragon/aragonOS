@@ -28,27 +28,24 @@ module.exports = (deployer) => {
   */
 
   // HD provider cannot do
-  const from = '0x692c16ef3d640b8f5dcec895023b4fc294d85ab3'
-  const gas = 4712000
-
-  deployer.deploy(AccountingLib, { gas })
+  deployer.deploy(AccountingLib)
   deployer.link(AccountingLib, [Company, CompanyFactory])
-  deployer.deploy(BylawsLib, { gas })
+  deployer.deploy(BylawsLib)
   deployer.link(BylawsLib, [Company, CompanyFactory])
   deployer.deploy(VotingLib)
   deployer.link(VotingLib, [Company, CompanyFactory])
 
-  deployer.deploy(BytesHelper, { gas })
+  deployer.deploy(BytesHelper)
   deployer.link(BytesHelper, GenericBinaryVoting)
 
-  deployer.deploy(CompanyConfiguratorFactory, { from, gas })
+  deployer.deploy(CompanyConfiguratorFactory)
     .then(() => CompanyConfiguratorFactory.deployed())
     .then(c => conf = c)
-    .then(() => deployer.deploy(CompanyFactory, conf.address, { from, gas }))
+    .then(() => deployer.deploy(CompanyFactory, conf.address))
     .then(() => CompanyFactory.deployed())
     .then(f => {
       factory = f
-      return conf.setFactory(factory.address, { from, gas })
+      return conf.setFactory(factory.address)
     })
     /*
     .then(() => factory.deployCompany({ from, gas }))

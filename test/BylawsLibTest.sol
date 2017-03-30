@@ -103,6 +103,11 @@ contract BylawsLibTest {
     Assert.isFalse(bylaws.canPerformAction(msg.sig, 0x5, new bytes(0), 0), 'Shouldnt allow action when voting power is one and votes 0');
   }
 
+  function testUnallowCielingRounding() {
+    bylaws.setVotingBylaw('testUnallowCielingRounding()', 1, 2, false, 5, 0);
+    Assert.isFalse(bylaws.canPerformAction(msg.sig, 0x6, new bytes(0), 0), 'Shouldnt allow action when doing bad rounding');
+  }
+
   function testVotingIsExecuted() {
     bylaws.setVotingBylaw('testVotingIsExecuted()', 75, 100, false, 5, 0);
     BylawsLib.Bylaw storage bylaw = bylaws.getBylaw(msg.sig);
@@ -144,6 +149,7 @@ contract BylawsLibTest {
     if (v == 0x3) return 3;
     if (v == 0x4) return 4;
     if (v == 0x5) return 5;
+    if (v == 0x6) return 6;
     return 0;
   }
 
@@ -153,6 +159,7 @@ contract BylawsLibTest {
     if (vId == 3) return (0x3, 0, 1, false, false);
     if (vId == 4) return (0x4, uint64(now - 6), uint64(now - 1), false, false);
     if (vId == 5) return (0x5, 0, 5, false, false);
+    if (vId == 6) return (0x6, 0, 5, false, false);
   }
 
   function countVotes(uint vId, uint8 o) returns (uint, uint, uint) {
@@ -161,6 +168,7 @@ contract BylawsLibTest {
     if (vId == 3) return (80, 80, 100);
     if (vId == 4) return (60, 80, 80);
     if (vId == 5) return (0, 0, 1);
+    if (vId == 6) return (1, 1, 3);
   }
 
   function setVotingExecuted(uint vId, uint8 o) {

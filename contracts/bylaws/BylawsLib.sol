@@ -72,6 +72,8 @@ library BylawsLib {
   function setVotingBylaw(Bylaws storage self, string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) {
     BylawsLib.Bylaw memory bylaw = initBylaw();
 
+    if (base == 0) throw; // Dividing by 0 is not cool
+
     bylaw.voting.supportNeeded = support;
     bylaw.voting.supportBase = base;
     bylaw.voting.closingRelativeMajority = closingRelativeMajority;
@@ -188,18 +190,18 @@ library BylawsLib {
     if (closeDate - startDate < votingBylaw.minimumVotingTime) return (false, 0);
 
     var (v, totalCastedVotes, votingPower) = AbstractCompany(this).countVotes(votingId, votingBylaw.approveOption);
-    uint256 neededVotings = votingPower * votingBylaw.supportNeeded / votingBylaw.supportBase;
 
-    // For edge case with only 1 token, and all votings being automatically approve because of floor rounding.
-    if (v == 0 && neededVotings == 0 && votingPower > 0 && votingBylaw.supportNeeded > 0) neededVotings = 1;
+    if (v == 0 && votingBylaw.supportNeeded > 0) return (false, 0);
 
-    // Test this logic
+    uint256 totalSupport = votingPower * votingBylaw.supportNeeded;
+    uint256 neededVotings = totalSupport / votingBylaw.supportBase + (totalSupport % votingBylaw.supportBase != 0 ? 1 : 0);
+
     if (v < neededVotings) {
       if (!votingBylaw.closingRelativeMajority) return (false, 0);
 
       if (now < closeDate) return (false, 0);
-      neededVotings = totalCastedVotes * votingBylaw.supportNeeded / votingBylaw.supportBase;
-      if (v == 0 && neededVotings == 0 && votingPower > 0 && votingBylaw.supportNeeded > 0) neededVotings = 1;
+      totalSupport = totalCastedVotes * votingBylaw.supportNeeded;
+      neededVotings = totalSupport / votingBylaw.supportBase + (totalSupport % votingBylaw.supportBase != 0 ? 1 : 0);
       if (v < neededVotings) return (false, 0);
     }
 
