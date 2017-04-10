@@ -101,10 +101,10 @@
     "42": {
       "events": {},
       "links": {},
-      "address": "0x8340f5ec014d3dd7d23fb945c165002871ee5b7a",
-      "updated_at": 1490875381143
+      "address": "0x2f39c0ecb6ed249ba906d502f38456a23efa2f01",
+      "updated_at": 1491818752507
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1491818393867
+  "updated_at": 1491818752507
 }

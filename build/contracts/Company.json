@@ -1944,13 +1944,13 @@
         }
       },
       "links": {
-        "AccountingLib": "0x6d5a8eea3101307432fa1f8d2171b3ed7d98e1fe",
-        "BylawsLib": "0xc38477b4ffd6d4e9b351a7bd5b7189fb01713dd7",
-        "VotingLib": "0x8820a4927c30398d89385cf160a675a43094ede4"
+        "AccountingLib": "0xff337a8f5a5233ad634fa759946fb32e6584d40e",
+        "BylawsLib": "0xe17527880772b811fa1e5ba45dec3d4c5d07c58e",
+        "VotingLib": "0xfdc3002e36af850f8cbd2b74cda5ab54aa96f2d1"
       },
-      "updated_at": 1490875381142
+      "updated_at": 1491818752504
     }
   },
   "schema_version": "0.0.5",
-  "updated_at": 1491818393868
+  "updated_at": 1491818752504
 }
