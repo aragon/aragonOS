@@ -7,7 +7,6 @@ const CompanyConfiguratorFactory = artifacts.require('CompanyConfiguratorFactory
 const VotingStock = artifacts.require('VotingStock.sol')
 const NonVotingStock = artifacts.require('NonVotingStock.sol')
 const GenericBinaryVoting = artifacts.require('GenericBinaryVoting.sol')
-const BytesHelper = artifacts.require('BytesHelper.sol')
 const VerifyLib = artifacts.require('VerifyLib.sol')
 
 // const utils = require('ethereumjs-util')
@@ -35,8 +34,6 @@ module.exports = (deployer) => {
   deployer.deploy(VotingLib)
   deployer.link(VotingLib, [Company, CompanyFactory])
 
-  deployer.deploy(BytesHelper)
-  deployer.link(BytesHelper, GenericBinaryVoting)
 
   deployer.deploy(CompanyConfiguratorFactory)
     .then(() => CompanyConfiguratorFactory.deployed())
