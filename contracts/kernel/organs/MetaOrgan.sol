@@ -1,8 +1,8 @@
 pragma solidity ^0.4.8;
 
-import "./Organ.sol";
+import "./DispatcherOrgan.sol";
 
-contract MetaOrgan is Organ {
+contract MetaOrgan is DispatcherOrgan {
   function ceaseToExist() {
     selfdestruct(0xdead);
   }

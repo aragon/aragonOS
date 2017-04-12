@@ -11,7 +11,7 @@ contract Organ is AbstractDAOKernel {
 
   // Just to conform to lower protocols. This default implementations shouldn't be called.
   function getOrgan(uint organN) returns (address organAddress) {
-    return address(this);
+    return organs[organN];
   }
 
   function canPerformAction(address sender, uint256 value, bytes data) returns (bool) {
