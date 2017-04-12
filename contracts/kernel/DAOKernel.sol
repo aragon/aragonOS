@@ -28,16 +28,16 @@ contract DAOKernel is AbstractDAOKernel {
     if (!getDispatcherOrgan().delegatecall(data)) throw;
   }
 
+  function canPerformAction(address sender, uint256 value, bytes data) returns (bool) {
+    return getDispatcherOrgan().canPerformAction(sender, value, data);
+  }
+
   function getOrgan(uint organN) returns (address organAddress) {
     return organs[organN];
   }
 
   function getDispatcherOrgan() internal returns (DispatcherOrgan) {
     return DispatcherOrgan(getOrgan(1));
-  }
-
-  function canPerformAction(address sender, uint256 value, bytes data) returns (bool) {
-    return getDispatcherOrgan().canPerformAction(sender, value, data);
   }
 
   function payload(bytes data, uint nonce) constant public returns (bytes32) {
