@@ -10,6 +10,24 @@ contract DAOKernel is AbstractDAOKernel {
     organs[2] = address(new MetaOrgan());
   }
 
+  function () payable {
+    dispatch(msg.sender, msg.value, msg.data);
+  }
+
+  function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable {
+    bytes32 signingPayload = payload(data, nonce);
+    if (usedSignatures[signingPayload]) throw;
+    address sender = ecrecover(signingPayload, v, r, s);
+    usedSignatures[signingPayload] = true;
+
+    dispatch(sender, msg.value, data);
+  }
+
+  function dispatch(address sender, uint256 value, bytes data) private {
+    if (!canPerformAction(sender, value, data)) throw;
+    if (!getDispatcherOrgan().delegatecall(data)) throw;
+  }
+
   function getOrgan(uint organN) returns (address organAddress) {
     return organs[organN];
   }
@@ -22,8 +40,7 @@ contract DAOKernel is AbstractDAOKernel {
     return getDispatcherOrgan().canPerformAction(sender, value, data);
   }
 
-  function () payable {
-    if (!canPerformAction(msg.sender, msg.value, msg.data)) throw;
-    if (!getDispatcherOrgan().delegatecall(msg.data)) throw;
+  function payload(bytes data, uint nonce) constant public returns (bytes32) {
+    return keccak256(0x19, "Ethereum Signed Message:\n40Preauth ", keccak256(address(this), data, nonce)); // length = 8 ('preauth ') + 20 (sha3 hash)
   }
 }
