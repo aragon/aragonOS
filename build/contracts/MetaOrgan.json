@@ -1,0 +1,157 @@
+{
+  "contract_name": "MetaOrgan",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "organN",
+          "type": "uint256"
+        }
+      ],
+      "name": "getOrgan",
+      "outputs": [
+        {
+          "name": "organAddress",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ],
+      "name": "canHandlePayload",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "organAddress",
+          "type": "address"
+        },
+        {
+          "name": "organN",
+          "type": "uint256"
+        }
+      ],
+      "name": "replaceOrgan",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "ceaseToExist",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_d",
+          "type": "bytes"
+        }
+      ],
+      "name": "getFunctionSignature",
+      "outputs": [
+        {
+          "name": "sig",
+          "type": "bytes4"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newKernel",
+          "type": "address"
+        }
+      ],
+      "name": "replaceKernel",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "kernel",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "organAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "organN",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrganReplaced",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x606060405234610000575b61040e806100196000396000f300606060405236156100725763ffffffff60e060020a60003504166310742b51811461007757806336391444146100a357806353900d7a1461010a5780635bb95c7414610128578063b661513514610137578063c32b3518146101ab578063cebe30ac1461021b578063d4aae0c414610236575b610000565b346100005761008760043561025f565b60408051600160a060020a039092168252519081900360200190f35b34610000576100f6600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284375094965061026695505050505050565b604080519115158252519081900360200190f35b3461000057610126600160a060020a0360043516602435610313565b005b346100005761012661038b565b005b3461000057604080516020600460443581810135601f81018490048402850184019095528484526100f6948235600160a060020a031694602480359560649492939190920191819084018382808284375094965061039295505050505050565b604080519115158252519081900360200190f35b34610000576101fe600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284375094965061039c95505050505050565b60408051600160e060020a03199092168252519081900360200190f35b3461000057610126600160a060020a03600435166103a7565b005b34610000576100876103d3565b60408051600160a060020a039092168252519081900360200190f35b305b919050565b600060006102738361039c565b90507f5bb95c7400000000000000000000000000000000000000000000000000000000600160e060020a0319821614806102d657507fcebe30ac00000000000000000000000000000000000000000000000000000000600160e060020a03198216145b8061030a57507f53900d7a00000000000000000000000000000000000000000000000000000000600160e060020a03198216145b91505b50919050565b600081815260016020908152604091829020805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a038616908117909155825190815290810183905281517f957d0d0cc5596ac3cb7801bdb1767ab5998cc2721573381f3df35783fabfd31b929181900390910190a15b5050565b61deadff5b565b60015b9392505050565b60208101515b919050565b6000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790555b50565b600054600160a060020a0316815600a165627a7a72305820ace070a03d350b73ce5cc7c4377ae46caecfb3b7670db35a4d66a035a208dc2d0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1492011334522
+}

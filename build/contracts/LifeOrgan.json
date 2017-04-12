@@ -1,0 +1,17 @@
+{
+  "contract_name": "LifeOrgan",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "die",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x6060604052346000575b6075806100176000396000f300606060405263ffffffff60e060020a60003504166335f4699481146022575b6000565b34600057602c602e565b005b3073ffffffffffffffffffffffffffffffffffffffff16ff5b5600a165627a7a72305820a497126ea8089fd182e282f4bd69c3560ee34d55472c8bfff288894b23adaa400029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1491823593634
+}
