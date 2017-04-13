@@ -52,6 +52,19 @@
     {
       "constant": true,
       "inputs": [],
+      "name": "etherToken",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
       "name": "kernel",
       "outputs": [
         {
@@ -82,5 +95,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1492074296446
+  "updated_at": 1492077780793
 }

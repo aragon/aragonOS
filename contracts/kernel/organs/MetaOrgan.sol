@@ -11,6 +11,10 @@ contract MetaOrgan is DispatcherOrgan {
     kernel = newKernel;
   }
 
+  function setEtherToken(address newToken) {
+    etherToken = newToken;
+  }
+
   function replaceOrgan(address organAddress, uint organN) {
     organs[organN] = organAddress;
     OrganReplaced(organAddress, organN);
@@ -21,6 +25,7 @@ contract MetaOrgan is DispatcherOrgan {
     return
       sig == 0x5bb95c74 || // ceaseToExist()
       sig == 0xcebe30ac || // replaceKernel(address)
+      sig == 0x6ad419a8 || // setEtherToken(address)
       sig == 0x53900d7a;   // replaceOrgan(address,uint256)
   }
 }

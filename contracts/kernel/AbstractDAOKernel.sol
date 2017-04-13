@@ -12,4 +12,5 @@ contract AbstractDAOKernel is AbstractDAO {
 
   mapping (uint => address) organs;
   mapping (bytes32 => bool) usedSignatures;
+  address public etherToken;
 }

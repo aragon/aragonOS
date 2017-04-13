@@ -5,6 +5,7 @@ import "./organs/DispatcherOrgan.sol";
 import "./organs/MetaOrgan.sol";
 
 import "../tokens/EtherToken.sol";
+import "zeppelin/token/ERC20.sol";
 
 contract DAOKernel is AbstractDAOKernel {
   function DAOKernel() {
@@ -14,6 +15,18 @@ contract DAOKernel is AbstractDAOKernel {
 
   function () payable {
     dispatchEther(msg.sender, msg.value, msg.data);
+  }
+
+  // ERC23 receiver compatible
+  function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) returns (bool ok) {
+    dispatch(_sender, msg.sender, _value, _data);
+    return true;
+  }
+
+  // ApproveAndCall compatible
+  function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) {
+    if (!ERC20(_token).transferFrom(_sender, address(this), _value)) throw;
+    dispatch(_sender, _token, _value, _data);
   }
 
   function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable {
@@ -26,8 +39,7 @@ contract DAOKernel is AbstractDAOKernel {
   }
 
   function dispatchEther(address sender, uint256 value, bytes data) private {
-    address etherToken = 0x0;
-    if (value == 0) return dispatch(sender, etherToken, 0, data);
+    if (value == 0) return dispatch(sender, etherToken, value, data); // shortcut
 
     EtherToken(etherToken).wrapEther.value(value)();
     dispatch(sender, etherToken, value, data);
