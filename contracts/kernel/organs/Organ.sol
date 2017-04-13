@@ -14,7 +14,7 @@ contract Organ is AbstractDAOKernel {
     return organs[organN];
   }
 
-  function canPerformAction(address sender, uint256 value, bytes data) returns (bool) {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
     return true;
   }
 }

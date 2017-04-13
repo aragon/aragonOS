@@ -4,6 +4,8 @@ import "./AbstractDAOKernel.sol";
 import "./organs/DispatcherOrgan.sol";
 import "./organs/MetaOrgan.sol";
 
+import "../tokens/EtherToken.sol";
+
 contract DAOKernel is AbstractDAOKernel {
   function DAOKernel() {
     organs[1] = address(new DispatcherOrgan());
@@ -11,7 +13,7 @@ contract DAOKernel is AbstractDAOKernel {
   }
 
   function () payable {
-    dispatch(msg.sender, msg.value, msg.data);
+    dispatchEther(msg.sender, msg.value, msg.data);
   }
 
   function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable {
@@ -20,16 +22,24 @@ contract DAOKernel is AbstractDAOKernel {
     address sender = ecrecover(signingPayload, v, r, s);
     usedSignatures[signingPayload] = true;
 
-    dispatch(sender, msg.value, data);
+    dispatchEther(sender, msg.value, data);
   }
 
-  function dispatch(address sender, uint256 value, bytes data) private {
-    if (!canPerformAction(sender, value, data)) throw;
+  function dispatchEther(address sender, uint256 value, bytes data) private {
+    address etherToken = 0x0;
+    if (value == 0) return dispatch(sender, etherToken, 0, data);
+
+    EtherToken(etherToken).wrapEther.value(value)();
+    dispatch(sender, etherToken, value, data);
+  }
+
+  function dispatch(address sender, address token, uint256 value, bytes data) private {
+    if (!canPerformAction(sender, token, value, data)) throw;
     if (!getDispatcherOrgan().delegatecall(data)) throw;
   }
 
-  function canPerformAction(address sender, uint256 value, bytes data) returns (bool) {
-    return getDispatcherOrgan().canPerformAction(sender, value, data);
+  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+    return getDispatcherOrgan().canPerformAction(sender, token, value, data);
   }
 
   function getOrgan(uint organN) returns (address organAddress) {

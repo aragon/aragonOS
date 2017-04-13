@@ -45,6 +45,10 @@
           "type": "address"
         },
         {
+          "name": "token",
+          "type": "address"
+        },
+        {
           "name": "value",
           "type": "uint256"
         },
@@ -114,5 +118,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1492019568153
+  "updated_at": 1492074296446
 }

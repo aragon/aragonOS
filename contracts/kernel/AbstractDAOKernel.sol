@@ -8,7 +8,7 @@ contract AbstractDAOKernel is AbstractDAO {
   event OrganReplaced(address organAddress, uint organN);
 
   function getOrgan(uint organN) returns (address organAddress);
-  function canPerformAction(address sender, uint256 value, bytes data) returns (bool);
+  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool);
 
   mapping (uint => address) organs;
   mapping (bytes32 => bool) usedSignatures;
