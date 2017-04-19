@@ -32,10 +32,9 @@ contract DAOKernel is AbstractDAOKernel {
   function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable {
     bytes32 signingPayload = payload(data, nonce);
     if (usedSignatures[signingPayload]) throw;
-    address sender = ecrecover(signingPayload, v, r, s);
-    usedSignatures[signingPayload] = true;
 
-    dispatchEther(sender, msg.value, data);
+    dispatchEther(ecrecover(signingPayload, v, r, s), msg.value, data);
+    usedSignatures[signingPayload] = true;
   }
 
   function dispatchEther(address sender, uint256 value, bytes data) private {
@@ -47,7 +46,9 @@ contract DAOKernel is AbstractDAOKernel {
 
   function dispatch(address sender, address token, uint256 value, bytes data) private {
     if (!canPerformAction(sender, token, value, data)) throw;
+    dao_msg = DAOMessage(sender, token, value);
     if (!getDispatcherOrgan().delegatecall(data)) throw;
+    // dao_msg = DAOMessage(0, 0, 0); // zero it for gas refund. will be reset
   }
 
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
@@ -63,6 +64,6 @@ contract DAOKernel is AbstractDAOKernel {
   }
 
   function payload(bytes data, uint nonce) constant public returns (bytes32) {
-    return keccak256(0x19, "Ethereum Signed Message:\n40Preauth ", keccak256(address(this), data, nonce)); // length = 8 ('preauth ') + 20 (sha3 hash)
+    return keccak256(0x19, "Ethereum Signed Message:\n40Preauth ", keccak256(address(this), data, nonce)); // length = 8 ('preauth ') + 32 (sha3 hash)
   }
 }

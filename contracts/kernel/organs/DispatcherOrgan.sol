@@ -30,7 +30,7 @@ contract DispatcherOrgan is Organ {
     }
   }
 
-  function () payable {
+  function () {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
     if (responsiveOrgan == 0) throw;
     if (!responsiveOrgan.delegatecall(msg.data)) throw;
