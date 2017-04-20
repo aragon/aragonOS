@@ -4,11 +4,16 @@ import "./Organ.sol";
 
 contract DispatcherOrgan is Organ {
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+    // could also return another bool for whether to call performed action
     return true || sender == address(this) || oracleCanPerformAction(sender, token, value, data);
   }
 
+  function performedAction(address sender, address token, uint256 value, bytes data) {
+    return DispatcherOrgan(permissionsOracle).performedAction(sender, token, value, data);
+  }
+
   function oracleCanPerformAction(address sender, address token, uint256 value, bytes data) internal returns (bool) {
-    if (permissionsOracle == 0x0) return false;
+    if (permissionsOracle == 0x0) return true; // if no one has been set to ask, allow it
     return DispatcherOrgan(permissionsOracle).canPerformAction(sender, token, value, data);
   }
 

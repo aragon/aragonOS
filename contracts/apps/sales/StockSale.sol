@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "../Txid.sol";
+import "../../misc/Txid.sol";
 import "./AbstractStockSale.sol";
 
 contract StockSale is AbstractStockSale, Txid {

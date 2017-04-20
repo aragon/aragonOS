@@ -1,0 +1,26 @@
+{
+  "contract_name": "Application",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ],
+      "name": "canHandlePayload",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1492626536511
+}

@@ -3,7 +3,7 @@ pragma solidity ^0.4.8;
 import "./TokensOrgan.sol";
 
 contract Application {
-  function canHandlePayload(bytes payload);
+  function canHandlePayload(bytes payload) constant returns (bool);
 }
 
 contract ApplicationOrgan is TokensOrgan {

@@ -47,12 +47,18 @@ contract DAOKernel is AbstractDAOKernel {
   function dispatch(address sender, address token, uint256 value, bytes data) private {
     if (!canPerformAction(sender, token, value, data)) throw;
     dao_msg = DAOMessage(sender, token, value);
+
+    performedAction(sender, token, value, data);
     if (!getDispatcherOrgan().delegatecall(data)) throw;
     // dao_msg = DAOMessage(0, 0, 0); // zero it for gas refund. will be reset
   }
 
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
     return getDispatcherOrgan().canPerformAction(sender, token, value, data);
+  }
+
+  function performedAction(address sender, address token, uint256 value, bytes data) {
+    getDispatcherOrgan().performedAction(sender, token, value, data);
   }
 
   function getOrgan(uint organN) returns (address organAddress) {
