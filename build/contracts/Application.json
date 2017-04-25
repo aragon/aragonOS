@@ -2,6 +2,27 @@
   "contract_name": "Application",
   "abi": [
     {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "setDAOMsg",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": true,
       "inputs": [
         {
@@ -22,5 +43,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1492626536511
+  "updated_at": 1493139469153
 }
