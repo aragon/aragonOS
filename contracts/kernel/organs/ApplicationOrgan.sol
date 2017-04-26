@@ -1,11 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./TokensOrgan.sol";
-
-contract Application {
-  function canHandlePayload(bytes payload) constant returns (bool);
-  function setDAOMsg(address sender, address token, uint value);
-}
+import "../../apps/AbstractApplication.sol";
 
 contract ApplicationOrgan is TokensOrgan {
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
@@ -17,7 +13,7 @@ contract ApplicationOrgan is TokensOrgan {
     while (true) {
       address applicationAddress = applications[i];
       if (applicationAddress == 0) return 0;
-      if (Application(applicationAddress).canHandlePayload(payload)) return applicationAddress;
+      if (AbstractApplication(applicationAddress).canHandlePayload(payload)) return applicationAddress;
       i++;
     }
   }
@@ -31,9 +27,9 @@ contract ApplicationOrgan is TokensOrgan {
     address responsiveApplication = getResponsiveApplication(msg.data);
     if (responsiveApplication == 0) throw;
 
-    Application app = Application(responsiveApplication);
+    AbstractApplication app = AbstractApplication(responsiveApplication);
     app.setDAOMsg(dao_msg.sender, dao_msg.token, dao_msg.value); // check reentrancy risks
-    if (!app.call(msg.data)) throw;
+    if (!app.call(msg.data)) throw; // every app is sandboxed
   }
 
   mapping (uint => address) applications;

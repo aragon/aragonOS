@@ -1,5 +1,5 @@
 {
-  "contract_name": "Application",
+  "contract_name": "AbstractApplication",
   "abi": [
     {
       "constant": false,
@@ -43,5 +43,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1493197315566
+  "updated_at": 1493197918024
 }
