@@ -4,6 +4,7 @@ import "./DispatcherOrgan.sol";
 
 contract MetaOrgan is DispatcherOrgan {
   function ceaseToExist() {
+    if (this != self || self == 0) throw;
     selfdestruct(0xdead);
   }
 

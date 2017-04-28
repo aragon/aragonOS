@@ -6,6 +6,7 @@ import "../kernel/DAOKernel.sol";
 contract DAO is AbstractDAO {
   function DAO() {
     kernel = address(new DAOKernel());
+    self = address(this);
   }
 
   function () payable {

@@ -38,6 +38,19 @@
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [],
+      "name": "self",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
@@ -131,5 +144,5 @@
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1493197918025
+  "updated_at": 1493379117916
 }

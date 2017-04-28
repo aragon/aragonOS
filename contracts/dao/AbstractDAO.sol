@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 
 contract AbstractDAO {
+  address public self;
   address public kernel;
 }
 

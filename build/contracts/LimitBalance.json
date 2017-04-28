@@ -1,0 +1,32 @@
+{
+  "contract_name": "LimitBalance",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "limit",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "_limit",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
+    }
+  ],
+  "unlinked_binary": "0x6060604052346000576040516020806100a083398101604052515b60008190555b505b6070806100306000396000f300606060405263ffffffff60e060020a600035041663a4d66daf81146022575b6000565b34600057602c603e565b60408051918252519081900360200190f35b600054815600a165627a7a7230582085d6af74504abfce3d95ea02484b0e290b51fad5715fa7e56517aa08ecdbc2b60029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1493379117915
+}

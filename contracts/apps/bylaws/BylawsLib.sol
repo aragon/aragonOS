@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
-import "../AbstractCompany.sol";
-import "../stocks/Stock.sol";
+import "../old/AbstractCompany.sol";
+import "../old/stocks/Stock.sol";
 import "./BylawOracle.sol";
 
 library BylawsLib {

@@ -3,7 +3,7 @@ pragma solidity ^0.4.8;
 import "./AbstractCompany.sol";
 
 import "./accounting/AccountingLib.sol";
-import "./bylaws/BylawsLib.sol";
+import "../bylaws/BylawsLib.sol";
 import "./votes/VotingLib.sol";
 
 import "./stocks/Stock.sol";
