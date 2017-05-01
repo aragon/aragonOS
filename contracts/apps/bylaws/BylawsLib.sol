@@ -9,7 +9,7 @@ library BylawsLib {
     mapping (bytes4 => Bylaw) bylaws; // function signature to bylaw
   }
 
-  event BylawChanged(string functionSignature);
+  event BylawChanged(string functionSignature, uint8 bylawType);
 
   struct Bylaw {
     StatusBylaw status;
@@ -86,7 +86,7 @@ library BylawsLib {
 
   function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
     addBylaw(self, keyForFunctionSignature(functionSignature), bylaw);
-    BylawChanged(functionSignature);
+    BylawChanged(functionSignature, getBylawType(self, functionSignature));
   }
 
   function addBylaw(Bylaws storage self, bytes4 key, Bylaw memory bylaw) internal {
