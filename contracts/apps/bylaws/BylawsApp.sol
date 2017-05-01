@@ -31,17 +31,17 @@ contract BylawsApp is Application {
 
   // Sensitive setters
   function setStatusBylaw(string functionSignature, uint8 statusNeeded, bool isSpecialStatus)
-           onlyDao {
+           onlyDAO {
     bylaws.setStatusBylaw(functionSignature, statusNeeded, isSpecialStatus);
   }
 
   function setAddressBylaw(string functionSignature, address addr, bool isOracle)
-           onlyDao {
+           onlyDAO {
     bylaws.setAddressBylaw(functionSignature, addr, isOracle);
   }
 
   function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option)
-           onlyDao {
+           onlyDAO {
     bylaws.setVotingBylaw(functionSignature, support, base, closingRelativeMajority, minimumVotingTime, option);
   }
 
@@ -80,4 +80,7 @@ contract BylawsApp is Application {
 
     return b.addr;
   }
+
+  // Need to code
+  function canHandlePayload(bytes payload) constant returns (bool);
 }

@@ -3,6 +3,8 @@ pragma solidity ^0.4.8;
 import "../old/AbstractCompany.sol";
 import "../old/stocks/Stock.sol";
 import "./BylawOracle.sol";
+import "../Application.sol";
+import "../status/StatusApp.sol";
 
 library BylawsLib {
   struct Bylaws {
@@ -92,7 +94,7 @@ library BylawsLib {
   function addBylaw(Bylaws storage self, bytes4 key, Bylaw memory bylaw) internal {
     self.bylaws[key] = bylaw;
     self.bylaws[key].updated = uint64(now);
-    self.bylaws[key].updatedBy = msg.sender;
+    self.bylaws[key].updatedBy = msg.sender; // FIX: sender will always be DAO
   }
 
   function getBylawType(Bylaws storage self, string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
@@ -129,9 +131,8 @@ library BylawsLib {
 
   function canPerformAction(Bylaw storage b, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
     if (b.updated == 0) {
-      // not existent law, allow action only if is executive.
-      b.status.neededStatus = uint8(AbstractCompany.EntityStatus.Executive);
-      b.status.enforced = true;
+      // not existent bylaw, always allow action.
+      return true;
     }
 
     // TODO: Support multi enforcement rules
@@ -166,7 +167,7 @@ library BylawsLib {
   }
 
   function getStatus(address entity) internal returns (uint8) {
-    return AbstractCompany(this).entityStatus(entity);
+    return StatusApp(app().dao()).entityStatus(entity);
   }
 
   function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
@@ -210,5 +211,9 @@ library BylawsLib {
 
   function countVotes(uint256 votingId, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
     return AbstractCompany(this).countVotes(votingId, optionId);
+  }
+
+  function app() constant returns (Application) {
+    return Application(address(this));
   }
 }

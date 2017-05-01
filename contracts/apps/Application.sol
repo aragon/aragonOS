@@ -6,17 +6,17 @@ contract Application is AbstractApplication {
   DAOMessage dao_msg;
   address dao;
 
-  modifier onlyDao {
+  modifier onlyDAO {
     if (dao != 0 && msg.sender != dao) throw;
     _;
   }
 
-  function Application(address newDao) {
-    setDao(newDao);
+  function Application(address newDAO) {
+    setDAO(newDAO);
   }
 
-  function setDao(address newDao) onlyDao {
-    dao = newDao;
+  function setDAO(address newDAO) onlyDAO {
+    dao = newDAO;
   }
 
   function setDAOMsg(address sender, address token, uint value) {
