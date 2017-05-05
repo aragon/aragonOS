@@ -14,6 +14,9 @@ contract StatusApp is Application {
 
   event EntityStatusChanged(address entity, uint8 status);
 
+  function StatusApp(address _dao)
+           Application(_dao) {}
+
   function setEntityStatusByStatus(address entity, uint8 status)
            onlyDAO public {
     if (entityStatus[dao_msg.sender] < status) throw; // Cannot set higher status

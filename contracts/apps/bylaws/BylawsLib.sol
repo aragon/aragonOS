@@ -4,7 +4,9 @@ import "../old/AbstractCompany.sol";
 import "../old/stocks/Stock.sol";
 import "./BylawOracle.sol";
 import "../Application.sol";
+
 import "../status/StatusApp.sol";
+import "../capital/CapitalApp.sol";
 
 library BylawsLib {
   struct Bylaws {
@@ -171,14 +173,14 @@ library BylawsLib {
   }
 
   function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
-    AbstractCompany.SpecialEntityStatus status = AbstractCompany.SpecialEntityStatus(neededStatus);
+    CapitalApp.SpecialEntityStatus status = CapitalApp.SpecialEntityStatus(neededStatus);
 
-    if (status == AbstractCompany.SpecialEntityStatus.Shareholder) {
-      return AbstractCompany(this).isShareholder(entity);
+    if (status == CapitalApp.SpecialEntityStatus.Shareholder) {
+      return CapitalApp(app().dao()).isShareholder(entity);
     }
 
     if (status == AbstractCompany.SpecialEntityStatus.StockSale) {
-      return AbstractCompany(this).isStockSale(entity);
+      return CapitalApp(app().dao()).isStockSale(entity);
     }
   }
 

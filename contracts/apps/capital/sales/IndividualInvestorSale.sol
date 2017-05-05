@@ -10,9 +10,9 @@ contract IndividualInvestorSale is StockSale {
 
   bool settled;
 
-  function IndividualInvestorSale(address _companyAddress, uint8 _stockId, address _investor, uint256 _units, uint256 _price, uint64 _closeDate, string _title) {
-    companyAddress = _companyAddress;
-    stockId = _stockId;
+  function IndividualInvestorSale(address _daoAddress, uint8 _tokenId, address _investor, uint256 _units, uint256 _price, uint64 _closeDate, string _title) {
+    dao = _daoAddress;
+    tokenId = _tokenId;
 
     price = _price;
     units = _units;
@@ -22,7 +22,7 @@ contract IndividualInvestorSale is StockSale {
   }
 
   function raiseMaximum() constant returns (uint256) {
-    return units * price;
+    return raiseTarget();
   }
 
   function raiseTarget() constant returns (uint256) {
@@ -31,7 +31,7 @@ contract IndividualInvestorSale is StockSale {
 
   function buy(address holder) payable {
     if (holder != investor) throw;
-    if (msg.value < units * getBuyingPrice(msg.value)) throw;
+    if (msg.value < units * getBuyingPrice(msg.value)) throw; // need exact amount
     if (!isBuyingAllowed(units)) throw;
 
     uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
@@ -68,5 +68,4 @@ contract IndividualInvestorSale is StockSale {
   function isBuyingAllowed(uint256 amount) constant returns (bool) {
     return !settled && availableTokens() == amount && now <= closeDate;
   }
-
 }

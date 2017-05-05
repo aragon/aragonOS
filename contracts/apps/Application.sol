@@ -19,7 +19,7 @@ contract Application is AbstractApplication {
     dao = newDAO;
   }
 
-  function setDAOMsg(address sender, address token, uint value) {
+  function setDAOMsg(address sender, address token, uint value) onlyDAO {
     dao_msg.sender = sender;
     dao_msg.dao = msg.sender;
     dao_msg.token = token;
