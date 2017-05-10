@@ -10,9 +10,9 @@
 
 ### Refactor state
 
-The [master](/aragon/aragon-core/tree/master) branch of this repo is the ongoing refactor to the new, more modular architecture. Even though it compiles, it is currently not possible to run a full DAO using this branch.
+The [master](/tree/master) branch of this repo is the ongoing refactor to the new, more modular architecture. Even though it compiles, it is currently not possible to run a full DAO using this branch.
 
-The version of the contracts that are ran in the latest release of the [Aragon dApp](/aragon/aragon-dapp) live in the [monolith](/aragon/aragon-core/tree/monolith) branch.
+The version of the contracts that are ran in the latest release of the [Aragon dApp](../../aragon/aragon-dapp) live in the [monolith](/tree/monolith) branch.
 
 This refactor will be released with Aragon v0.4.
 
