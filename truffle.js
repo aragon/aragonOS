@@ -8,9 +8,7 @@ module.exports = {
   networks: {
     development: {
       network_id: 15,
-      host: 'localhost',
-      port: 8545,
-      gas: 1e8,
+      provider: require('ethereumjs-testrpc').provider({ gasLimit: 100000000 }),
     },
     ropsten: {
       network_id: 3,

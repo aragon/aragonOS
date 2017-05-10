@@ -1,14 +1,15 @@
 {
-  "name": "cosa-contracts",
+  "name": "aragon-core",
   "version": "1.0.0",
   "description": "",
   "main": "truffle.js",
   "scripts": {
     "test": "truffle test",
     "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
-    "ci-test": "truffle test"
+    "ci-test": "truffle test",
+    "truffle": "truffle console --network development"
   },
-  "author": "",
+  "author": "Jorge Izquierdo (Aragon)",
   "license": "ISC",
   "dependencies": {
     "babel-polyfill": "^6.16.0",

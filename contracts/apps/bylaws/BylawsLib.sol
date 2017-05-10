@@ -1,4 +1,4 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 import "../../../old_contracts/AbstractCompany.sol";
 import "./BylawOracle.sol";

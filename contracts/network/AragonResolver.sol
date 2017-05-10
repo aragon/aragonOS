@@ -1,4 +1,4 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 contract AragonResolver {
   function AragonResolver(bytes32 _namehash, string _suffix, bool _isLegacySignature) {
