@@ -7,9 +7,9 @@ contract BoundedStandardSale is StockSale {
   uint256 public maxUnits;
   uint256 public price;
 
-  function BoundedStandardSale(address _companyAddress, uint8 _stockId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title) {
-    companyAddress = _companyAddress;
-    stockId = _stockId;
+  function BoundedStandardSale(address _daoAddress, uint8 _tokenId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title) {
+    dao = _daoAddress;
+    tokenId = _tokenId;
 
     minUnits = _min;
     maxUnits = _max;

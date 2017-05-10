@@ -1,10 +1,11 @@
 pragma solidity ^0.4.8;
 
+import "../kernel/AbstractDAOKernel.sol";
 import "./AbstractApplication.sol";
 
 contract Application is AbstractApplication {
-  DAOMessage dao_msg;
-  address dao;
+  AbstractDAOKernel.DAOMessage dao_msg;
+  address public dao;
 
   modifier onlyDAO {
     if (dao != 0 && msg.sender != dao) throw;
@@ -21,7 +22,6 @@ contract Application is AbstractApplication {
 
   function setDAOMsg(address sender, address token, uint value) onlyDAO {
     dao_msg.sender = sender;
-    dao_msg.dao = msg.sender;
     dao_msg.token = token;
     dao_msg.value = value;
   }

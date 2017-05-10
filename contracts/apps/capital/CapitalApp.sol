@@ -1,15 +1,17 @@
 pragma solidity ^0.4.8;
 
 import "../Application.sol";
-import "../../kernel/TokensOrgan.sol";
-import "zeppelin/token/ERC20";
+import "../../kernel/organs/TokensOrgan.sol";
+import "zeppelin/token/ERC20.sol";
+
+import "./sales/StockSale.sol";
 
 // TODO: replace for real minime
 contract MiniMeInterface {
   function tokenController() constant returns (address);
 }
 
-contract CapitalApp {
+contract CapitalApp is Application {
   enum SpecialEntityStatus {
     Shareholder,
     StockSale
@@ -30,20 +32,20 @@ contract CapitalApp {
 
   function beginTokenSale(address _saleAddress)
            onlyDAO {
-    AbstractStockSale sale = AbstractStockSale(_saleAddress);
-    if (sale.companyAddress() != address(this)) throw;
+    StockSale sale = StockSale(_saleAddress);
+    if (sale.dao() != address(dao)) throw;
 
-    sales[saleIndex] = _saleAddress;
+    tokenSales[saleIndex] = _saleAddress;
     reverseSales[_saleAddress] = saleIndex;
     saleIndex += 1;
 
     address tknAddr = TokensOrgan(dao).getToken(sale.tokenId());
 
     // Can only start a token sale with controlled tokens
-    if (!MiniMeInterface(tknAddr).tokenController() != dao) throw;
+    if (MiniMeInterface(tknAddr).tokenController() != dao) throw;
     // TODO: Check if token is a wrapper and not allow the sale
 
-    NewTokenSale(_saleAddress, saleIndex - 1, sale.stockId());
+    NewTokenSale(_saleAddress, saleIndex - 1, sale.tokenId());
   }
 
   // Getters

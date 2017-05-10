@@ -20,7 +20,7 @@ contract StockSale is AbstractStockSale, Txid {
   function afterBuy(address buyer, uint256 value, uint256 price) internal {
     soldTokens += value;
     raisedAmount += price * value;
-    boughtAmount[buyer] += value;
+    buyers[buyer] += value;
     buyers[buyerIndex] = buyer;
     buyerIndex += 1;
 

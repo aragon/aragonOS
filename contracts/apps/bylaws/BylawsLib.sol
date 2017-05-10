@@ -1,7 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "../old/AbstractCompany.sol";
-import "../old/stocks/Stock.sol";
+import "../../../old_contracts/AbstractCompany.sol";
 import "./BylawOracle.sol";
 import "../Application.sol";
 
@@ -90,7 +89,8 @@ library BylawsLib {
 
   function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
     addBylaw(self, keyForFunctionSignature(functionSignature), bylaw);
-    BylawChanged(functionSignature, getBylawType(self, functionSignature));
+    var (t,) = getBylawType(self, functionSignature);
+    BylawChanged(functionSignature, t);
   }
 
   function addBylaw(Bylaws storage self, bytes4 key, Bylaw memory bylaw) internal {
@@ -176,11 +176,11 @@ library BylawsLib {
     CapitalApp.SpecialEntityStatus status = CapitalApp.SpecialEntityStatus(neededStatus);
 
     if (status == CapitalApp.SpecialEntityStatus.Shareholder) {
-      return CapitalApp(app().dao()).isShareholder(entity);
+      return CapitalApp(app().dao()).isHolder(entity);
     }
 
-    if (status == AbstractCompany.SpecialEntityStatus.StockSale) {
-      return CapitalApp(app().dao()).isStockSale(entity);
+    if (status == CapitalApp.SpecialEntityStatus.StockSale) {
+      return CapitalApp(app().dao()).isTokenSale(entity);
     }
   }
 

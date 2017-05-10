@@ -39,9 +39,45 @@
       ],
       "payable": false,
       "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "dao",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newDAO",
+          "type": "address"
+        }
+      ],
+      "name": "setDAO",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "newDAO",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
     }
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1493379117912
+  "updated_at": 1494412440469
 }

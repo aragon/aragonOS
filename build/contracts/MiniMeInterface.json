@@ -1,0 +1,21 @@
+{
+  "contract_name": "MiniMeInterface",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "tokenController",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1494412440466
+}

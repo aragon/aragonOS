@@ -37,7 +37,7 @@ contract IndividualInvestorSale is StockSale {
     uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
 
     settled = true;
-    // TODO: DAO assing stock company().assignStock(stockId, investor, units);
+    company().assignStock(stockId, investor, units);
 
     afterBuy(holder, units, getBuyingPrice(msg.value));
 

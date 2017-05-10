@@ -55,7 +55,7 @@ contract BoundedStandardSale is StockSale {
     uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
     if (units <= 0 || !isBuyingAllowed(units))  throw;
 
-    company().assignStock(stockId, holder, units);
+    // TODO: DAO assing stock company().assignStock(stockId, holder, units);
     afterBuy(holder, units, getBuyingPrice(msg.value));
 
     if (returningMoney > 0) {
@@ -65,17 +65,17 @@ contract BoundedStandardSale is StockSale {
 
   function sell() {
     address holder = msg.sender;
-    uint256 buyerBalance = buyers[holder];
+    uint256 buyerBalance = boughtAmount[holder];
     if (!isSellingAllowed(buyerBalance))  throw;
     if (buyerBalance <= 0)  throw;
 
     uint256 returningMoney = getSellingPrice(buyerBalance) * buyerBalance;
-    buyers[holder] = 0;
+    boughtAmount[holder] = 0;
     raisedAmount -= returningMoney;
 
-    company().removeStock(stockId, holder, buyerBalance);
+    // TODO: DAO remove stock company().removeStock(stockId, holder, buyerBalance);
 
-    StockSold(buyerBalance, getSellingPrice(buyerBalance));
+    TokensSold(holder, buyerBalance, getSellingPrice(buyerBalance));
 
     if (!holder.send(returningMoney))  throw;
   }

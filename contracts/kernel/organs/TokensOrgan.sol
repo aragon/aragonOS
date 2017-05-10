@@ -19,7 +19,7 @@ contract TokensOrgan is MetaOrgan {
     governanceTokens.length -= 1;
   }
 
-  function getToken(uint i) returns (address) {
+  function getToken(uint i) returns (address) {
     return governanceTokens[i];
   }
 

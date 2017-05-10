@@ -12,7 +12,7 @@ import "./stocks/IssueableStock.sol";
 import "./votes/BinaryVoting.sol";
 import "./votes/GenericBinaryVoting.sol";
 
-import "./sales/AbstractStockSale.sol";
+// import "./sales/AbstractStockSale.sol";
 
 contract Company is AbstractCompany {
   using AccountingLib for AccountingLib.AccountingLedger;

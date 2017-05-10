@@ -3,6 +3,19 @@
   "abi": [
     {
       "constant": true,
+      "inputs": [],
+      "name": "tokenId",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
       "inputs": [
         {
           "name": "amount",
@@ -55,13 +68,8 @@
     },
     {
       "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "investors",
+      "inputs": [],
+      "name": "dao",
       "outputs": [
         {
           "name": "",
@@ -120,19 +128,6 @@
     },
     {
       "constant": true,
-      "inputs": [],
-      "name": "companyAddress",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [
         {
           "name": "amount",
@@ -178,11 +173,11 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "company",
+      "name": "availableTokens",
       "outputs": [
         {
           "name": "",
-          "type": "address"
+          "type": "uint256"
         }
       ],
       "payable": false,
@@ -190,8 +185,13 @@
     },
     {
       "constant": true,
-      "inputs": [],
-      "name": "availableTokens",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "boughtAmount",
       "outputs": [
         {
           "name": "",
@@ -234,58 +234,6 @@
     },
     {
       "constant": true,
-      "inputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "buyers",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "investor",
-          "type": "address"
-        },
-        {
-          "name": "units",
-          "type": "uint256"
-        },
-        {
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "afterBuy",
-      "outputs": [],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "stockId",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [],
       "name": "saleTitle",
       "outputs": [
@@ -313,7 +261,7 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "investorIndex",
+      "name": "buyerIndex",
       "outputs": [
         {
           "name": "",
@@ -334,6 +282,24 @@
       "name": "buy",
       "outputs": [],
       "payable": true,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "buyers",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
       "type": "function"
     },
     {
@@ -362,6 +328,11 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "name": "buyer",
+          "type": "address"
+        },
+        {
           "indexed": false,
           "name": "units",
           "type": "uint256"
@@ -372,13 +343,18 @@
           "type": "uint256"
         }
       ],
-      "name": "StockBought",
+      "name": "TokensBought",
       "type": "event"
     },
     {
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "name": "buyer",
+          "type": "address"
+        },
+        {
           "indexed": false,
           "name": "units",
           "type": "uint256"
@@ -389,11 +365,11 @@
           "type": "uint256"
         }
       ],
-      "name": "StockSold",
+      "name": "TokensSold",
       "type": "event"
     }
   ],
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1493379117917
+  "updated_at": 1494412440471
 }

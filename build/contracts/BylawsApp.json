@@ -1,0 +1,353 @@
+{
+  "contract_name": "BylawsApp",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "name": "isOracle",
+          "type": "bool"
+        }
+      ],
+      "name": "setAddressBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getAddressBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "setDAOMsg",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ],
+      "name": "canHandlePayload",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getBylawType",
+      "outputs": [
+        {
+          "name": "bylawType",
+          "type": "uint8"
+        },
+        {
+          "name": "updated",
+          "type": "uint64"
+        },
+        {
+          "name": "updatedBy",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "dao",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getStatusBylaw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        },
+        {
+          "name": "option",
+          "type": "uint8"
+        }
+      ],
+      "name": "setVotingBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        }
+      ],
+      "name": "getVotingBylaw",
+      "outputs": [
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "bytes4"
+        }
+      ],
+      "name": "getVotingBylaw",
+      "outputs": [
+        {
+          "name": "support",
+          "type": "uint256"
+        },
+        {
+          "name": "base",
+          "type": "uint256"
+        },
+        {
+          "name": "closingRelativeMajority",
+          "type": "bool"
+        },
+        {
+          "name": "minimumVotingTime",
+          "type": "uint64"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "name": "statusNeeded",
+          "type": "uint8"
+        },
+        {
+          "name": "isSpecialStatus",
+          "type": "bool"
+        }
+      ],
+      "name": "setStatusBylaw",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newDAO",
+          "type": "address"
+        }
+      ],
+      "name": "setDAO",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "sig",
+          "type": "bytes4"
+        },
+        {
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "canPerformAction",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "_dao",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "functionSignature",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "bylawType",
+          "type": "uint8"
+        }
+      ],
+      "name": "BylawChanged",
+      "type": "event"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1494412440466
+}
