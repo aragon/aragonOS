@@ -2,10 +2,11 @@ pragma solidity ^0.4.11;
 
 import "./Organ.sol";
 
+// @dev This organ is responsible for finding what is the first organ that can perform an action
+// and dispatching it.
 contract DispatcherOrgan is Organ {
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
-    // could also return another bool for whether to call performed action
-    return true || sender == address(this) || oracleCanPerformAction(sender, token, value, data);
+    return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {
@@ -29,17 +30,17 @@ contract DispatcherOrgan is Organ {
     uint i = 2; // First checked organ is 2, doesn't check itself.
     while (true) {
       address organAddress = getOrgan(i);
-      if (organAddress == 0) return 0;
-      if (Organ(organAddress).canHandlePayload(payload)) return organAddress;
+      if (organAddress == 0) return 0;  // if a 0 address is returned it means, there is no more organs.
+      if (Organ(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
       i++;
     }
   }
 
-  function () {
+  function () public {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
-    if (responsiveOrgan == 0) throw;
-    if (!responsiveOrgan.delegatecall(msg.data)) throw;
+    assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
+    assert(responsiveOrgan.delegatecall(msg.data))); // delegate call to selected organ
   }
 
-  address permissionsOracle;
+  address public permissionsOracle;
 }
