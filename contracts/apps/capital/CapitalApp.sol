@@ -33,7 +33,7 @@ contract CapitalApp is Application {
   function beginTokenSale(address _saleAddress)
            onlyDAO {
     StockSale sale = StockSale(_saleAddress);
-    if (sale.dao() != address(dao)) throw;
+    require(sale.dao() == address(dao));
 
     tokenSales[saleIndex] = _saleAddress;
     reverseSales[_saleAddress] = saleIndex;
@@ -42,7 +42,7 @@ contract CapitalApp is Application {
     address tknAddr = TokensOrgan(dao).getToken(sale.tokenId());
 
     // Can only start a token sale with controlled tokens
-    if (MiniMeInterface(tknAddr).tokenController() != dao) throw;
+    require(MiniMeInterface(tknAddr).tokenController() == dao);
     // TODO: Check if token is a wrapper and not allow the sale
 
     NewTokenSale(_saleAddress, saleIndex - 1, sale.tokenId());

@@ -16,6 +16,6 @@ contract EtherToken is StandardToken {
     totalSupply = safeSub(totalSupply, amount);
     balances[msg.sender] = safeSub(balances[msg.sender], amount); // will throw if less than 0
 
-    if (!recipient.send(amount)) throw;
+    assert(recipient.send(amount));
   }
 }

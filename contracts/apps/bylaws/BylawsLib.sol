@@ -75,8 +75,6 @@ library BylawsLib {
   function setVotingBylaw(Bylaws storage self, string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) {
     BylawsLib.Bylaw memory bylaw = initBylaw();
 
-    if (base == 0) throw; // Dividing by 0 is not cool
-
     bylaw.voting.supportNeeded = support;
     bylaw.voting.supportBase = base;
     bylaw.voting.closingRelativeMajority = closingRelativeMajority;

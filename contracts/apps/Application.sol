@@ -8,7 +8,7 @@ contract Application is AbstractApplication {
   address public dao;
 
   modifier onlyDAO {
-    if (dao != 0 && msg.sender != dao) throw;
+    require(dao == 0 || msg.sender == dao);
     _;
   }
 

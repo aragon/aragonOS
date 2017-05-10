@@ -19,8 +19,8 @@ contract StatusApp is Application {
 
   function setEntityStatusByStatus(address entity, uint8 status)
            onlyDAO public {
-    if (entityStatus[dao_msg.sender] < status) throw; // Cannot set higher status
-    if (entity != dao_msg.sender && entityStatus[entity] >= entityStatus[dao_msg.sender]) throw; // Cannot change status of higher status
+    require(entityStatus[dao_msg.sender] >= status); // Cannot set higher status
+    require(entity == dao_msg.sender || entityStatus[entity] < entityStatus[dao_msg.sender]); // Cannot change status of higher status
 
     // Exec can set and remove employees.
     // Someone with lesser or same status cannot change ones status

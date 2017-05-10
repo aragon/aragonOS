@@ -7,7 +7,7 @@ contract MetaOrgan is DispatcherOrgan {
   function ceaseToExist() public {
     // Check it is called in DAO context and not from the outside which would
     // delete the organ logic from the EVM
-    if (this != self || self == 0) throw;
+    assert(this == self && self > 0);
     selfdestruct(0xdead);
   }
 

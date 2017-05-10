@@ -9,7 +9,7 @@ contract TokensOrgan is MetaOrgan {
 
   function removeToken(address token) {
     int256 i = indexOf(token);
-    if (i < 0) throw;
+    require(i >= 0);
 
     if (getTokenCount() > 1) {
       // Move last element to the place of the removing item
