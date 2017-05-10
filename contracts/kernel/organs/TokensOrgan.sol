@@ -30,9 +30,10 @@ contract TokensOrgan is MetaOrgan {
   function canHandlePayload(bytes payload) returns (bool) {
     bytes4 sig = getFunctionSignature(payload);
     return
-      sig == 0xd48bfca7 || // addToken(address)
-      sig == 0x5fa7b584;   // removeToken(address)
-      // TODO: getToken and count
+      sig == 0xd48bfca7 ||   // addToken(address)
+      sig == 0x5fa7b584 ||   // removeToken(address)
+      sig == 0xe4b50cb8 ||   // getToken(uint256)
+      sig == 0x78a89567;     // getTokenCount()
   }
 
   function indexOf(address _t) internal returns (int256) {
