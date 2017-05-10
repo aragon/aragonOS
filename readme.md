@@ -1,6 +1,7 @@
 # Aragon Core
 
 **Disclaimer: everything in this repository is experimental software.**
+
 **It is not secure to use this code for production usage until proper security audits have been conducted.**
 
 ### Architecture
@@ -9,7 +10,7 @@
 
 ### Refactor state
 
-The [master](/aragon/aragon-core/tree/master) branch of this repo is the current ongoing refactor. Even though it compiles, it is currently not possible to run a full DAO using this branch.
+The [master](/aragon/aragon-core/tree/master) branch of this repo is the current ongoing refactor to the new, more modular architecture. Even though it compiles, it is currently not possible to run a full DAO using this branch.
 
 The version of the contracts that are ran in the latest release of the [Aragon dApp](/aragon/aragon-dapp) live in the [monolith](/aragon/aragon-core/tree/monolith) branch.
 
