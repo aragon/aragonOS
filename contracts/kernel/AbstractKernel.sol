@@ -2,7 +2,7 @@ pragma solidity ^0.4.11;
 
 import "../dao/AbstractDAO.sol";
 
-contract AbstractDAOKernel is AbstractDAO {
+contract AbstractKernel is AbstractDAO {
   // is AbstractDAO so it inherits DAO's storage
 
   event OrganReplaced(address organAddress, uint organN);

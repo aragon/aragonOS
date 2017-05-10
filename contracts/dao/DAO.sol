@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "./AbstractDAO.sol";
-import "../kernel/DAOKernel.sol";
+import "../kernel/Kernel.sol";
 
 // @dev DAO is the base contract on top of which all DAO lives.
 // This is the only element of the DAO that is non-upgradeable
@@ -11,7 +11,7 @@ import "../kernel/DAOKernel.sol";
 contract DAO is AbstractDAO {
   // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
   function DAO() {
-    kernel = address(new DAOKernel());
+    kernel = address(new Kernel());
     self = address(this);
   }
 

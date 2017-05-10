@@ -1,5 +1,5 @@
 {
-  "contract_name": "Organ",
+  "contract_name": "AbstractKernel",
   "abi": [
     {
       "constant": false,
@@ -14,24 +14,6 @@
         {
           "name": "organAddress",
           "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "payload",
-          "type": "bytes"
-        }
-      ],
-      "name": "canHandlePayload",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool"
         }
       ],
       "payable": false,
@@ -88,24 +70,6 @@
         {
           "name": "",
           "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "_d",
-          "type": "bytes"
-        }
-      ],
-      "name": "getFunctionSignature",
-      "outputs": [
-        {
-          "name": "sig",
-          "type": "bytes4"
         }
       ],
       "payable": false,

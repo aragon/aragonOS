@@ -1,8 +1,8 @@
 pragma solidity ^0.4.11;
 
-import "../AbstractDAOKernel.sol";
+import "../AbstractKernel.sol";
 
-contract Organ is AbstractDAOKernel {
+contract Organ is AbstractKernel {
   function canHandlePayload(bytes payload) returns (bool);
 
   function getFunctionSignature(bytes _d) public constant returns (bytes4 sig) {
