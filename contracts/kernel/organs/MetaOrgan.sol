@@ -24,7 +24,7 @@ contract MetaOrgan is DispatcherOrgan {
     OrganReplaced(organAddress, organN);
   }
 
-  function canHandlePayload(bytes payload) returns (bool) public {
+  function canHandlePayload(bytes payload) public returns (bool) {
     bytes4 sig = getFunctionSignature(payload);
     return
       sig == 0x5bb95c74 || // ceaseToExist()

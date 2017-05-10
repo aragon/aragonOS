@@ -26,6 +26,12 @@ contract DispatcherOrgan is Organ {
     return getResponsiveOrgan(payload) != 0;
   }
 
+  function () public {
+    address responsiveOrgan = getResponsiveOrgan(msg.data);
+    assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
+    assert(responsiveOrgan.delegatecall(msg.data)); // delegate call to selected organ
+  }
+
   function getResponsiveOrgan(bytes payload) returns (address) {
     uint i = 2; // First checked organ is 2, doesn't check itself.
     while (true) {
@@ -34,12 +40,6 @@ contract DispatcherOrgan is Organ {
       if (Organ(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
       i++;
     }
-  }
-
-  function () public {
-    address responsiveOrgan = getResponsiveOrgan(msg.data);
-    assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
-    assert(responsiveOrgan.delegatecall(msg.data))); // delegate call to selected organ
   }
 
   address public permissionsOracle;
