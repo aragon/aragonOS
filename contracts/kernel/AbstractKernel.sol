@@ -1,10 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "../dao/AbstractDAO.sol";
-
-contract AbstractKernel is AbstractDAO {
-  // is AbstractDAO so it inherits DAO's storage
-
+contract AbstractKernel {
   event OrganReplaced(address organAddress, uint organN);
 
   function getOrgan(uint organN) returns (address organAddress);
@@ -16,9 +12,11 @@ contract AbstractKernel is AbstractDAO {
     uint256 value;  // 256 bits
   } // = 3 sstore, with refund it is 15k gas per call
 
-  DAOMessage dao_msg;
+  // TODO: Bring back to life DAOMessage dao_msg;
 
+  /*
   mapping (uint => address) organs;
   mapping (bytes32 => bool) usedSignatures;
   address public etherToken;
+  */
 }

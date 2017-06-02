@@ -5,6 +5,6 @@ pragma solidity ^0.4.11;
 // AbstractDAO to ensure memory is correctly off-setted
 
 contract AbstractDAO {
-  address public self;
-  address public kernel;
+  function getSelf() constant public returns (address);
+  function getKernel() constant public returns (address);
 }

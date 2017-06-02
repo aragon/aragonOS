@@ -6,20 +6,29 @@ import "./Organ.sol";
 // and dispatching it.
 contract DispatcherOrgan is Organ {
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
-    return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
+    return true;
+    // return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {
-    return DispatcherOrgan(permissionsOracle).performedAction(sender, token, value, data);
+    return DispatcherOrgan(permissionsOracle()).performedAction(sender, token, value, data);
   }
 
   function oracleCanPerformAction(address sender, address token, uint256 value, bytes data) internal returns (bool) {
-    if (permissionsOracle == 0x0) return true; // if no one has been set to ask, allow it
-    return DispatcherOrgan(permissionsOracle).canPerformAction(sender, token, value, data);
+    if (permissionsOracle() == 0x0) return true; // if no one has been set to ask, allow it
+    return DispatcherOrgan(permissionsOracle()).canPerformAction(sender, token, value, data);
+  }
+
+  function permissionsOracle() constant returns (address) {
+    return address(storageGet(getStorageKeyForPermissionsOracle()));
   }
 
   function setPermissionOracle(address newOracle) {
-    permissionsOracle = newOracle;
+    storageSet(getStorageKeyForPermissionsOracle(), uint256(newOracle));
+  }
+
+  function getStorageKeyForPermissionsOracle() constant returns (bytes32) {
+    return sha3(0x02, 0x00);
   }
 
   function canHandlePayload(bytes payload) returns (bool) {
@@ -41,6 +50,4 @@ contract DispatcherOrgan is Organ {
       i++;
     }
   }
-
-  address public permissionsOracle;
 }

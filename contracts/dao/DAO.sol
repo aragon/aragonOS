@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./AbstractDAO.sol";
+import "./DAOStorage.sol";
 import "../kernel/Kernel.sol";
 
 // @dev DAO is the base contract on top of which all DAO lives.
@@ -8,15 +8,15 @@ import "../kernel/Kernel.sol";
 // Given the simplicity of this contract, it could be written in LLL and/or
 // be formally proven.
 
-contract DAO is AbstractDAO {
+contract DAO is DAOStorage {
   // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
   function DAO() {
-    kernel = address(new Kernel());
-    self = address(this);
+    setKernel(new Kernel());
+    setSelf(this);
   }
 
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall
   function () payable public {
-    assert(kernel.delegatecall(msg.data)); // In case the call fails, revert state.
+    assert(getKernel().delegatecall(msg.data)); // In case the call fails, revert state.
   }
 }

@@ -5,7 +5,7 @@
       "constant": false,
       "inputs": [
         {
-          "name": "organN",
+          "name": "_organId",
           "type": "uint256"
         }
       ],
@@ -40,7 +40,7 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "self",
+      "name": "getKernel",
       "outputs": [
         {
           "name": "",
@@ -82,19 +82,6 @@
     },
     {
       "constant": true,
-      "inputs": [],
-      "name": "etherToken",
-      "outputs": [
-        {
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [
         {
           "name": "_d",
@@ -114,7 +101,7 @@
     {
       "constant": true,
       "inputs": [],
-      "name": "kernel",
+      "name": "getSelf",
       "outputs": [
         {
           "name": "",
@@ -123,27 +110,10 @@
       ],
       "payable": false,
       "type": "function"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "organAddress",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "organN",
-          "type": "uint256"
-        }
-      ],
-      "name": "OrganReplaced",
-      "type": "event"
     }
   ],
   "unlinked_binary": "0x",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1494425354403
+  "updated_at": 1496420518573
 }
