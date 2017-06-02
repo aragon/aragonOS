@@ -20,10 +20,14 @@ import "../dao/DAOStorage.sol";
 //   - Token tx: approveAndCall and EIP223 tokenFallback support
 contract Kernel is AbstractKernel, DAOStorage {
   // @dev Constructor deploys the basic contracts the kernel needs to function
-  function Kernel() {
+  function setupOrgans() {
     setOrgan(1, new DispatcherOrgan());
     setOrgan(2, new MetaOrgan());
+    LogOrgan(1, getOrgan(1));
+    LogOrgan(2, getOrgan(2));
   }
+
+  event LogOrgan(uint i, address o);
 
   // @dev Vanilla ETH transfers get intercepted in the fallback
   function () payable public {
@@ -62,8 +66,9 @@ contract Kernel is AbstractKernel, DAOStorage {
   // @param value: Transaction's sent ETH value
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
-    // if (value > 0) EtherToken(getEtherToken()).wrapEther.value(value)();
-    dispatch(sender, getEtherToken(), value, data);
+    address etherTokenAddress = getEtherToken();
+    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrapEther.value(value)();
+    dispatch(sender, etherTokenAddress, value, data);
   }
 
   // @dev Sends the transaction to the dispatcher organ
@@ -73,10 +78,11 @@ contract Kernel is AbstractKernel, DAOStorage {
 
     // performedAction(sender, token, value, data); // TODO: Check reentrancy implications
     assert(getDispatcherOrgan().delegatecall(data));
+    // LogOrgan(1, getOrgan(1));
   }
 
   function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
-    return getDispatcherOrgan().canPerformAction(sender, token, value, data);
+    return true; // getDispatcherOrgan().canPerformAction(sender, token, value, data);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {

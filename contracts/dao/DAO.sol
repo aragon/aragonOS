@@ -12,6 +12,7 @@ contract DAO is DAOStorage {
   // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
   function DAO() {
     setKernel(new Kernel());
+    getKernel().delegatecall(0x743d4c1a); // setupOrgans()
     setSelf(this);
   }
 
