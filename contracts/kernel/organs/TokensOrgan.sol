@@ -1,10 +1,12 @@
 pragma solidity ^0.4.11;
 
-import "./MetaOrgan.sol";
+import "./Organ.sol";
 
-contract TokensOrgan is MetaOrgan {
+contract TokensOrgan is Organ {
   function addToken(address token) {
-    governanceTokens.push(token);
+    uint tokenId = getTokenCount();
+    storageSet(getStorageKeyForToken(tokenId), uint256(token));
+    setTokenCount(tokenId + 1);
   }
 
   function removeToken(address token) {
@@ -13,18 +15,26 @@ contract TokensOrgan is MetaOrgan {
 
     if (getTokenCount() > 1) {
       // Move last element to the place of the removing item
-      governanceTokens[uint256(i)] = governanceTokens[governanceTokens.length - 1];
+      storageSet(getStorageKeyForToken(uint256(i)), uint256(getToken(getTokenCount() - 1)));
     }
     // Remove last item
-    governanceTokens.length -= 1;
+    setTokenCount(getTokenCount() - 1);
   }
 
   function getToken(uint i) returns (address) {
-    return governanceTokens[i];
+    return address(storageGet(getStorageKeyForToken(i)));
+  }
+
+  function getStorageKeyForToken(uint tokenId) constant internal returns (bytes32) {
+    return sha3(0x03, 0x00, tokenId);
   }
 
   function getTokenCount() returns (uint) {
-    return governanceTokens.length;
+    return storageGet(sha3(0x03, 0x01));
+  }
+
+  function setTokenCount(uint _count) internal {
+    storageSet(sha3(0x03, 0x01), _count);
   }
 
   function canHandlePayload(bytes payload) returns (bool) {
@@ -37,11 +47,10 @@ contract TokensOrgan is MetaOrgan {
   }
 
   function indexOf(address _t) internal returns (int256) {
-    for (uint256 i = 0; i < governanceTokens.length; i++) {
-      if (governanceTokens[i] == _t) return int256(i);
+    uint count = getTokenCount();
+    for (uint256 i = 0; i < count; i++) {
+      if (getToken(i) == _t) return int256(i);
     }
     return -1;
   }
-
-  address[] public governanceTokens;
 }

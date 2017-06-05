@@ -1,27 +1,36 @@
 pragma solidity ^0.4.11;
 
-import "./DispatcherOrgan.sol";
+import "./Organ.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
-contract MetaOrgan is DispatcherOrgan {
+contract MetaOrgan is Organ {
   function ceaseToExist() public {
     // Check it is called in DAO context and not from the outside which would
     // delete the organ logic from the EVM
+    address self = getSelf();
     assert(this == self && self > 0);
     selfdestruct(0xdead);
   }
 
   function replaceKernel(address newKernel) public {
-    kernel = newKernel;
+    setKernel(newKernel);
   }
 
   function setEtherToken(address newToken) public {
-    etherToken = newToken;
+    storageSet(sha3(0x01, 0x02), uint256(newToken));
   }
 
   function replaceOrgan(address organAddress, uint organN) public {
-    organs[organN] = organAddress;
-    OrganReplaced(organAddress, organN);
+    setOrgan(organN, organAddress);
+    // TODO: DAOEvents OrganReplaced(organAddress, organN);
+  }
+
+  function setOrgan(uint _organId, address _organAddress) {
+    storageSet(storageKeyForOrgan(_organId), uint256(_organAddress));
+  }
+
+  function storageKeyForOrgan(uint _organId) internal returns (bytes32) {
+    return sha3(0x01, 0x00, _organId);
   }
 
   function canHandlePayload(bytes payload) public returns (bool) {

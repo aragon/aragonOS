@@ -7,6 +7,8 @@ import "./organs/MetaOrgan.sol";
 import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
 
+import "../dao/DAOStorage.sol";
+
 // @dev Kernel's purpose is to intercept different types of transactions that can
 // be made to the DAO, and dispatch it using a uniform interface to the DAO organs.
 // The Kernel keeps a registry what organ lives at x priority.
@@ -16,11 +18,11 @@ import "zeppelin/token/ERC20.sol";
 //   - Pre signed ether tx: providing the ECDSA signature of the payload.
 //     allows for preauthorizing a tx that could be sent by other msg.sender
 //   - Token tx: approveAndCall and EIP223 tokenFallback support
-contract Kernel is AbstractKernel {
+contract Kernel is AbstractKernel, DAOStorage {
   // @dev Constructor deploys the basic contracts the kernel needs to function
-  function Kernel() {
-    organs[1] = address(new DispatcherOrgan());
-    organs[2] = address(new MetaOrgan());
+  function setupOrgans() {
+    setOrgan(1, new DispatcherOrgan());
+    setOrgan(2, new MetaOrgan());
   }
 
   // @dev Vanilla ETH transfers get intercepted in the fallback
@@ -36,11 +38,11 @@ contract Kernel is AbstractKernel {
   // @param v: ECDSA signature v value
   function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable public {
     bytes32 signingPayload = payload(data, nonce); // Calculate the hashed payload that was signed
-    require(!usedSignatures[signingPayload]);
+    require(!isUsedPayload(signingPayload));
 
     address sender = ecrecover(signingPayload, v, r, s);
     dispatchEther(sender, msg.value, data);
-    usedSignatures[signingPayload] = true;
+    setUsedPayload(signingPayload);
   }
 
   // EIP223 receiver compatible
@@ -60,29 +62,60 @@ contract Kernel is AbstractKernel {
   // @param value: Transaction's sent ETH value
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
-    if (value > 0) EtherToken(etherToken).wrapEther.value(value)();
-    dispatch(sender, etherToken, value, data);
+    address etherTokenAddress = getEtherToken();
+    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrapEther.value(value)();
+    dispatch(sender, etherTokenAddress, value, data);
   }
 
   // @dev Sends the transaction to the dispatcher organ
-  function dispatch(address sender, address token, uint256 value, bytes data) internal {
-    require(canPerformAction(sender, token, value, data));
-    dao_msg = DAOMessage(sender, token, value); // set dao_msg for other organs to have access
+  function dispatch(address sender, address token, uint256 value, bytes payload) internal {
+    require(canPerformAction(sender, token, value, payload));
+    // dao_msg = DAOMessage(sender, token, value); // set dao_msg for other organs to have access
 
-    performedAction(sender, token, value, data); // TODO: Check reentrancy implications
-    assert(getDispatcherOrgan().delegatecall(data));
+    // performedAction(sender, token, value, data); // TODO: Check reentrancy implications
+    address target = getDispatcherOrgan();
+    uint32 len = getReturnSize(msg.sig);
+    assembly {
+      let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
+      jumpi(invalidJumpLabel, iszero(result))
+      return(0, len)
+    }
   }
 
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
-    return getDispatcherOrgan().canPerformAction(sender, token, value, data);
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
+    return true; // getDispatcherOrgan().canPerformAction(sender, token, value, data);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {
     getDispatcherOrgan().performedAction(sender, token, value, data);
   }
 
-  function getOrgan(uint organN) returns (address organAddress) {
-    return organs[organN];
+  function setUsedPayload(bytes32 _payload) internal {
+    storageSet(getStorageKeyForPayload(_payload), 1);
+  }
+
+  function isUsedPayload(bytes32 _payload) constant returns (bool) {
+    return storageGet(getStorageKeyForPayload(_payload)) == 1;
+  }
+
+  function getStorageKeyForPayload(bytes32 _payload) constant internal returns (bytes32) {
+    return sha3(0x01, 0x01, _payload);
+  }
+
+  function getEtherToken() returns (address) {
+    return address(storageGet(sha3(0x01, 0x02)));
+  }
+
+  function getOrgan(uint _organId) returns (address organAddress) {
+    return address(storageGet(getStorageKeyForOrgan(_organId)));
+  }
+
+  function setOrgan(uint _organId, address _organAddress) internal {
+    storageSet(getStorageKeyForOrgan(_organId), uint256(_organAddress));
+  }
+
+  function getStorageKeyForOrgan(uint _organId) internal returns (bytes32) {
+    return sha3(0x01, 0x00, _organId);
   }
 
   function getDispatcherOrgan() internal returns (DispatcherOrgan) {
