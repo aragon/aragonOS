@@ -23,6 +23,7 @@ contract Kernel is AbstractKernel, DAOStorage {
   function setupOrgans() {
     setOrgan(1, new DispatcherOrgan());
     setOrgan(2, new MetaOrgan());
+    setReturnSize(0x877d08ee, 32); // getEtherToken(...): returns address
   }
 
   // @dev Vanilla ETH transfers get intercepted in the fallback

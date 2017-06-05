@@ -4,6 +4,8 @@ import "./Organ.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
 contract MetaOrgan is Organ {
+  bytes32 constant etherTokenKey = sha3(0x01, 0x02);
+
   function ceaseToExist() public {
     // Check it is called in DAO context and not from the outside which would
     // delete the organ logic from the EVM
@@ -17,7 +19,11 @@ contract MetaOrgan is Organ {
   }
 
   function setEtherToken(address newToken) public {
-    storageSet(sha3(0x01, 0x02), uint256(newToken));
+    storageSet(etherTokenKey, uint256(newToken));
+  }
+
+  function getEtherToken() constant returns (address) {
+    return address(storageGet(etherTokenKey));
   }
 
   function replaceOrgan(address organAddress, uint organN) public {
@@ -39,6 +45,7 @@ contract MetaOrgan is Organ {
       sig == 0x5bb95c74 || // ceaseToExist()
       sig == 0xcebe30ac || // replaceKernel(address)
       sig == 0x6ad419a8 || // setEtherToken(address)
+      sig == 0x877d08ee || // getEtherToken()
       sig == 0x53900d7a;   // replaceOrgan(address,uint256)
   }
 }
