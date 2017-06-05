@@ -1,8 +1,0 @@
-{
-  "contract_name": "UIntStorage",
-  "abi": [],
-  "unlinked_binary": "0x60606040523415600b57fe5b5b60338060196000396000f30060606040525bfe00a165627a7a723058200a01e7280271ee36879741dd0331c7ec8a38e7c01690b3721aa8e80ab914842d0029",
-  "networks": {},
-  "schema_version": "0.0.5",
-  "updated_at": 1496672420385
-}
