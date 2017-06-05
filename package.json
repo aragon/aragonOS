@@ -4,13 +4,10 @@
   "description": "",
   "main": "truffle.js",
   "scripts": {
-    "test": "truffle test",
-    "preci-test": "testrpc -i 15 -l 100000000 > /dev/null &",
-    "ci-test": "truffle test",
-    "truffle": "truffle console --network development"
+    "test": "truffle test"
   },
   "author": "Jorge Izquierdo (Aragon)",
-  "license": "ISC",
+  "license": "ISxC",
   "dependencies": {
     "ethereumjs-testrpc": "^3.0.2",
     "ethereumjs-util": "^5.1.1",

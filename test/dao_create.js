@@ -41,5 +41,10 @@ contract('DAO', function(accounts) {
 
       assert.isTrue(canPerform, 'DAO should allow all actions')
     })
+
+    it('can set ether token', async () => {
+      await metadao.setEtherToken(randomAddress)
+      assert.equal(await metadao.getEtherToken(), randomAddress, 'Should have new ether token')
+    })
   })
 })
