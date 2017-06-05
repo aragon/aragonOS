@@ -16,6 +16,10 @@ contract DAO is DAOStorage {
     setSelf(this);
   }
 
+  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+    // ?
+  }
+
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall
   function () payable public {
     assert(getKernel().delegatecall(msg.data)); // In case the call fails, revert state.
