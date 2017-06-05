@@ -9,7 +9,7 @@ contract AbstractApplication {
 }
 
 contract ApplicationOrgan is Organ {
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     return true; // Asumes it is the last organ and all transactions are intercepted.
   }
 

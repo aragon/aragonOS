@@ -23,11 +23,7 @@ contract Kernel is AbstractKernel, DAOStorage {
   function setupOrgans() {
     setOrgan(1, new DispatcherOrgan());
     setOrgan(2, new MetaOrgan());
-    LogOrgan(1, getOrgan(1));
-    LogOrgan(2, getOrgan(2));
   }
-
-  event LogOrgan(uint i, address o);
 
   // @dev Vanilla ETH transfers get intercepted in the fallback
   function () payable public {
@@ -72,16 +68,21 @@ contract Kernel is AbstractKernel, DAOStorage {
   }
 
   // @dev Sends the transaction to the dispatcher organ
-  function dispatch(address sender, address token, uint256 value, bytes data) internal {
-    require(canPerformAction(sender, token, value, data));
+  function dispatch(address sender, address token, uint256 value, bytes payload) internal {
+    require(canPerformAction(sender, token, value, payload));
     // dao_msg = DAOMessage(sender, token, value); // set dao_msg for other organs to have access
 
     // performedAction(sender, token, value, data); // TODO: Check reentrancy implications
-    assert(getDispatcherOrgan().delegatecall(data));
-    // LogOrgan(1, getOrgan(1));
+    address target = getDispatcherOrgan();
+    uint32 len = getReturnSize(msg.sig);
+    assembly {
+      let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
+      jumpi(invalidJumpLabel, iszero(result))
+      return(0, len)
+    }
   }
 
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     return true; // getDispatcherOrgan().canPerformAction(sender, token, value, data);
   }
 

@@ -18,6 +18,11 @@ contract DAOStorage is AbstractDAO, UIntStorage {
   bytes32 constant kernelKey = sha3(0x00, 0x01);
   bytes32 constant selfKey = sha3(0x00, 0x00);
 
+  function DAOStorage() {
+    // Setup getters allowed to return values
+    setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
+  }
+
   function setKernel(address kernelAddress) internal {
     storageSet(kernelKey, uint256(kernelAddress));
   }
@@ -32,5 +37,17 @@ contract DAOStorage is AbstractDAO, UIntStorage {
 
   function getKernel() constant public returns (address) {
     return address(storageGet(kernelKey));
+  }
+
+  function setReturnSize(bytes4 _sig, uint _size) internal {
+    storageSet(getKeyForReturnSize(_sig), _size);
+  }
+
+  function getReturnSize(bytes4 _sig) internal constant returns (uint32) {
+    return uint32(storageGet(getKeyForReturnSize(_sig)));
+  }
+
+  function getKeyForReturnSize(bytes4 _sig) internal constant returns (bytes32) {
+    return sha3(0x00, 0x02, _sig);
   }
 }

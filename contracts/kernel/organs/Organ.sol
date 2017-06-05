@@ -9,7 +9,7 @@ contract Organ is DAOStorage {
     assembly { sig := mload(add(_d, 0x20)) }
   }
 
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     return true;
   }
 

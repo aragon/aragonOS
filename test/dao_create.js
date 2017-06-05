@@ -1,6 +1,7 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
+var Kernel = artifacts.require('Kernel')
 
 const createDAO = () => DAO.new()
 
@@ -32,7 +33,13 @@ contract('DAO', function(accounts) {
       await metadao.replaceKernel('0xbeef') // second change shouldn't affect as it is done to non-kernel
 
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+    })
 
+    it('allows any action to happen before further config', async () => {
+      const kernel = await Kernel.at(dao.address)
+      const canPerform = await kernel.canPerformAction('0x1', '0x2', 123, '0x1234')
+
+      assert.isTrue(canPerform, 'DAO should allow all actions')
     })
   })
 })

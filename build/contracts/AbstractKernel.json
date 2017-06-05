@@ -20,7 +20,7 @@
       "type": "function"
     },
     {
-      "constant": false,
+      "constant": true,
       "inputs": [
         {
           "name": "sender",
@@ -70,5 +70,5 @@
   "unlinked_binary": "0x",
   "networks": {},
   "schema_version": "0.0.5",
-  "updated_at": 1496659508895
+  "updated_at": 1496672420385
 }

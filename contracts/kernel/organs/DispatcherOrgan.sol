@@ -1,11 +1,12 @@
 pragma solidity ^0.4.11;
 
 import "./Organ.sol";
+import "../../dao/DAOStorage.sol";
 
 // @dev This organ is responsible for finding what is the first organ that can perform an action
 // and dispatching it.
 contract DispatcherOrgan is Organ {
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     return true;
     // return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
   }
@@ -38,7 +39,15 @@ contract DispatcherOrgan is Organ {
   function () public {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
     assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
-    assert(responsiveOrgan.delegatecall(msg.data)); // delegate call to selected organ
+    address target = responsiveOrgan;
+    uint32 len = getReturnSize(msg.sig);
+
+    assembly {
+      calldatacopy(0x0, 0x0, calldatasize)
+      let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
+      jumpi(invalidJumpLabel, iszero(result))
+      return(0, len)
+    }
   }
 
   function getResponsiveOrgan(bytes payload) returns (address) {

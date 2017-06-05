@@ -12,16 +12,19 @@ contract DAO is DAOStorage {
   // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
   function DAO() {
     setKernel(new Kernel());
-    getKernel().delegatecall(0x743d4c1a); // setupOrgans()
+    assert(getKernel().delegatecall(0x743d4c1a)); // setupOrgans()
     setSelf(this);
-  }
-
-  function canPerformAction(address sender, address token, uint256 value, bytes data) returns (bool) {
-    // ?
   }
 
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall
   function () payable public {
-    assert(getKernel().delegatecall(msg.data)); // In case the call fails, revert state.
+    uint32 len = getReturnSize(msg.sig);
+    address target = getKernel();
+    assembly {
+      calldatacopy(0x0, 0x0, calldatasize)
+      let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
+      jumpi(invalidJumpLabel, iszero(result))
+      return(0, len)
+    }
   }
 }
