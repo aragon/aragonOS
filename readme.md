@@ -1,4 +1,4 @@
-# Aragon Core
+# Aragon Core [![Build Status](https://img.shields.io/travis/aragon/aragon-core.svg?branch=master&style=flat-square)](https://travis-ci.org/aragon/aragon-core)
 
 **Disclaimer: everything in this repository is experimental software.**
 
