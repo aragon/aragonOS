@@ -46,4 +46,4 @@ A vague representation of the state of the refactor can be found here:
 - [ ] Vote delegation with MiniMe
 - [ ] Default bylaw installation for all apps and DAOs
 - [ ] Update dapp to new event names and sources
-- [ ] Update org factory to configure basic DAO
+- [ ] Update org factory to configure basic DAO.
