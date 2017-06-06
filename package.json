@@ -7,6 +7,10 @@
     "prepublish": "truffle compile",
     "test": "truffle test"
   },
+  "files": [
+    "index.js",
+    "build/"
+  ],
   "author": "Jorge Izquierdo (Aragon)",
   "license": "ISxC",
   "dependencies": {
