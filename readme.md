@@ -1,8 +1,13 @@
-# Aragon Core [![Build Status](https://img.shields.io/travis/aragon/aragon-core.svg?branch=master&style=flat-square)](https://travis-ci.org/aragon/aragon-core)
+# Aragon Core <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Build Status](https://img.shields.io/travis/aragon/aragon-core.svg?branch=master&style=flat-square)](https://travis-ci.org/aragon/aragon-core)
 
-**Disclaimer: everything in this repository is experimental software.**
+#### 🚨 Everything in this repo is highly experimental software.
+It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
 
-**It is not secure to use this code for production usage until proper security audits have been conducted.**
+#### 🦋 We are using [CommitETH](http://commiteth.com) to reward open source contributions outside the Aragon Core team.
+All issues tagged with **[bounty](https://github.com/aragon/aragon-core/labels/bounty)** are elegible for a bounty on a succesfully merged Pull Request that solves the issues. Even if the bounty says 0 ETH, it is higher than that. Open source is awesome, but it is also hard work that needs to be rewarded to ensure top quality work.
+
+#### 👋 We are tagging tasks that are [begginer friendly](https://github.com/aragon/aragon-core/labels/beginner-friendly) so you can get started contributing to Aragon Core. 
+Don't be shy to contribute even the smallest tweak. Everyone will be specially nice and helpful to beginners to help you get started!
 
 ### Architecture
 
