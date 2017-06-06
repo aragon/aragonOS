@@ -1,9 +1,10 @@
 {
   "name": "aragon-core",
   "version": "1.0.0",
-  "description": "",
-  "main": "truffle.js",
+  "description": "Core contracts for Aragon",
+  "main": "index.js",
   "scripts": {
+    "prepublish": "truffle compile",
     "test": "truffle test"
   },
   "author": "Jorge Izquierdo (Aragon)",
