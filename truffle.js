@@ -4,23 +4,22 @@ require('babel-polyfill');
 var HDWalletProvider = require('truffle-hdwallet-provider');
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
-const ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/');
-const kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.aragon.one');
 
 module.exports = {
   networks: {
     development: {
       network_id: 15,
-      provider: require('ethereumjs-testrpc').provider({ gasLimit: 100000000 }),
+      provider: require('ethereumjs-testrpc').provider({ gasLimit: 1e8 }),
+      gas: 9e6,
     },
     ropsten: {
       network_id: 3,
-      provider: ropstenProvider,
+      // provider: new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/'),
       gas: 4.712e6,
     },
     kovan: {
       network_id: 42,
-      provider: kovanProvider,
+      // provider:  new HDWalletProvider(mnemonic, 'https://kovan.aragon.one'),
       gas: 4.99e6,
     },
     development46: {

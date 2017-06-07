@@ -1,6 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "./Organ.sol";
+import "../../tokens/EtherToken.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
 contract MetaOrgan is Organ {
@@ -10,6 +11,9 @@ contract MetaOrgan is Organ {
     // Intercepted by kernel
     setReturnSize(0x877d08ee, 32); // getEtherToken(): returns address
     setReturnSize(0x10742b51, 32); // getOrgan(uint256)
+
+    // TODO: Remove this
+    setEtherToken(new EtherToken());
   }
 
   function ceaseToExist() public {

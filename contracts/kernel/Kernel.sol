@@ -70,7 +70,7 @@ contract Kernel is AbstractKernel, DAOStorage {
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
     address etherTokenAddress = getEtherToken();
-    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrapEther.value(value)();
+    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrap.value(value)();
     dispatch(sender, etherTokenAddress, value, data);
   }
 
