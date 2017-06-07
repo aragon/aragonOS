@@ -4,6 +4,7 @@ import "../../dao/DAOStorage.sol";
 
 contract Organ is DAOStorage {
   function canHandlePayload(bytes payload) returns (bool);
+  function organWasInstalled();
 
   function getFunctionSignature(bytes _d) public constant returns (bytes4 sig) {
     assembly { sig := mload(add(_d, 0x20)) }

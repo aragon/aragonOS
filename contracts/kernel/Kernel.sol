@@ -19,11 +19,17 @@ import "../dao/DAOStorage.sol";
 //     allows for preauthorizing a tx that could be sent by other msg.sender
 //   - Token tx: approveAndCall and EIP223 tokenFallback support
 contract Kernel is AbstractKernel, DAOStorage {
-  // @dev Constructor deploys the basic contracts the kernel needs to function
+  // @dev Sets up the minimum amount of organs for the kernel to be usable.
+  // All organ installation from this point can be made using MetaOrgan
   function setupOrgans() {
-    setOrgan(1, new DispatcherOrgan());
-    setOrgan(2, new MetaOrgan());
-    setReturnSize(0x877d08ee, 32); // getEtherToken(...): returns address
+    assert(getOrgan(1) == 0); // Make sure it can only be called once on setup
+    installOrgan(1, new DispatcherOrgan());
+    installOrgan(2, new MetaOrgan());
+  }
+
+  function installOrgan(uint256 organN, address organAddress) internal {
+    setOrgan(organN, organAddress);
+    assert(organAddress.delegatecall(0xd11cf3cd)); // organWasInstalled()
   }
 
   // @dev Vanilla ETH transfers get intercepted in the fallback
@@ -103,11 +109,11 @@ contract Kernel is AbstractKernel, DAOStorage {
     return sha3(0x01, 0x01, _payload);
   }
 
-  function getEtherToken() returns (address) {
+  function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(0x01, 0x02)));
   }
 
-  function getOrgan(uint _organId) returns (address organAddress) {
+  function getOrgan(uint _organId) constant returns (address organAddress) {
     return address(storageGet(getStorageKeyForOrgan(_organId)));
   }
 

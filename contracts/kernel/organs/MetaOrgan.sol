@@ -6,6 +6,12 @@ import "./Organ.sol";
 contract MetaOrgan is Organ {
   bytes32 constant etherTokenKey = sha3(0x01, 0x02);
 
+  function organWasInstalled() {
+    // Intercepted by kernel
+    setReturnSize(0x877d08ee, 32); // getEtherToken(): returns address
+    setReturnSize(0x10742b51, 32); // getOrgan(uint256)
+  }
+
   function ceaseToExist() public {
     // Check it is called in DAO context and not from the outside which would
     // delete the organ logic from the EVM
@@ -22,12 +28,9 @@ contract MetaOrgan is Organ {
     storageSet(etherTokenKey, uint256(newToken));
   }
 
-  function getEtherToken() constant returns (address) {
-    return address(storageGet(etherTokenKey));
-  }
-
-  function replaceOrgan(address organAddress, uint organN) public {
+  function installOrgan(address organAddress, uint organN) public {
     setOrgan(organN, organAddress);
+    assert(organAddress.delegatecall(0xd11cf3cd)); // calls organWasInstalled()
     // TODO: DAOEvents OrganReplaced(organAddress, organN);
   }
 
@@ -45,7 +48,6 @@ contract MetaOrgan is Organ {
       sig == 0x5bb95c74 || // ceaseToExist()
       sig == 0xcebe30ac || // replaceKernel(address)
       sig == 0x6ad419a8 || // setEtherToken(address)
-      sig == 0x877d08ee || // getEtherToken()
-      sig == 0x53900d7a;   // replaceOrgan(address,uint256)
+      sig == 0xb61842bc;   // installOrgan(address,uint256)
   }
 }

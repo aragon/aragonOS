@@ -6,6 +6,10 @@ import "../../dao/DAOStorage.sol";
 // @dev This organ is responsible for finding what is the first organ that can perform an action
 // and dispatching it.
 contract DispatcherOrgan is Organ {
+  function organWasInstalled() {
+    setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
+  }
+
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     return true;
     // return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
