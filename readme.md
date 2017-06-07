@@ -4,11 +4,11 @@
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
 
 #### 🦋 We are using [CommitETH](http://commiteth.com) to reward open source contributions outside the Aragon Core team.
-All issues tagged with **[bounty](https://github.com/aragon/aragon-core/labels/bounty)** are elegible for a bounty on a succesfully merged Pull Request that solves the issue. Even if the bounty says 0 ETH, if it has the **bounty** label, it is higher than 0 ETH (until we automate it, we may take a bit to fund the bounties manually).
+All issues tagged with **[bounty](https://github.com/aragon/aragon-core/labels/bounty)** are eligible for a bounty on a succesfully merged Pull Request that solves the issue. Even if the bounty says 0 ETH, if it has the **bounty** label, it is higher than 0 ETH (until we automate it, we may take a bit to fund the bounties manually).
 
 Open source is awesome, but it is also hard work that needs to be rewarded to ensure top quality work, and that everyone in the world gets a fair chance to do it.
 
-#### 👋 We are tagging tasks that are [begginer friendly](https://github.com/aragon/aragon-core/labels/beginner-friendly) so you can get started contributing to Aragon Core. 
+#### 👋 We are tagging tasks that are [beginner friendly](https://github.com/aragon/aragon-core/labels/beginner-friendly) so you can get started contributing to Aragon Core.
 Don't be shy to contribute even the smallest tweak. Everyone will be specially nice and helpful to beginners to help you get started!
 
 ### Architecture
@@ -52,5 +52,5 @@ A vague representation of the state of the refactor can be found here:
 - [ ] Transition own Governance Token logic and use MiniMe
 - [ ] Vote delegation with MiniMe
 - [ ] Default bylaw installation for all apps and DAOs
-- [ ] Update dapp to new event names and sources
+- [ ] Update DApp to new event names and sources
 - [ ] Update org factory to configure basic DAO
