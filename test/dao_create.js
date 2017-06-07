@@ -9,7 +9,7 @@ const createDAO = () => DAO.new({ gas: 9e6 })
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
-contract('DAO', function(accounts) {
+contract('DAO', accounts => {
   it('creates a DAO', async () => {
     const dao = await createDAO()
 

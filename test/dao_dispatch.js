@@ -11,7 +11,7 @@ const createDAO = () => DAO.new({ gas: 9e6 })
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
-contract('Dispatcher', function(accounts) {
+contract('Dispatcher', accounts => {
   let dao, metadao, kernel, mockedOrgan = {}
 
   beforeEach(async () => {

@@ -14,10 +14,6 @@ contract EtherToken is StandardToken {
     Mint(msg.sender, msg.value);
   }
 
-  function withdraw(uint256 amount) {
-    return withdraw(amount, msg.sender);
-  }
-
   function withdraw(uint256 amount, address recipient) {
     totalSupply = safeSub(totalSupply, amount);
     balances[msg.sender] = safeSub(balances[msg.sender], amount); // will throw if less than 0
