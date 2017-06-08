@@ -11,6 +11,7 @@ contract MetaOrgan is Organ {
     // Intercepted by kernel
     setReturnSize(0x877d08ee, 32); // getEtherToken(): returns address
     setReturnSize(0x10742b51, 32); // getOrgan(uint256)
+    setReturnSize(0x57e364c1, 32); // payload(bytes,uint256): returns payload to sign
 
     // TODO: Remove this
     setEtherToken(new EtherToken());
