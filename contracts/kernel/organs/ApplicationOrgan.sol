@@ -1,19 +1,19 @@
 pragma solidity ^0.4.11;
 
-// import "../../apps/AbstractApplication.sol";
+import "../../apps/AbstractApplication.sol";
 import "./Organ.sol";
 
-contract AbstractApplication {
-  function canHandlePayload(bytes payload) constant returns (bool);
-  function setDAOMsg(address sender, address token, uint value);
-}
-
 contract ApplicationOrgan is Organ {
-  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    return true; // Asumes it is the last organ and all transactions are intercepted.
+  // AppOrgan intercepts all the calls
+  function canHandlePayload(bytes payload) public returns (bool) {
+    return true;
   }
 
-  function installApplication(uint i, address application) {
+  function organWasInstalled() {
+    setReturnSize(0x24f3a51b, 32); // getApp(address)
+  }
+
+  function installApp(uint i, address application) {
     storageSet(getApplicationStorageKey(i), uint256(application));
     InstalledApplication(application);
   }
@@ -23,14 +23,19 @@ contract ApplicationOrgan is Organ {
     assert(responsiveApplication > 0);
 
     AbstractApplication app = AbstractApplication(responsiveApplication);
-    // app.setDAOMsg(dao_msg.sender, dao_msg.token, dao_msg.value); // TODO: check reentrancy risks
+    DAOMessage memory daomsg = dao_msg();
+    app.setDAOMsg(daomsg.sender, daomsg.token, daomsg.value); // TODO: check reentrancy risks
     assert(app.call(msg.data)); // every app is sandboxed
   }
 
+  function getApp(uint i) constant public returns (address) {
+    return address(storageGet(getApplicationStorageKey(i)));
+  }
+
   function getResponsiveApplication(bytes payload) returns (address) {
-    uint i = 1; // First checked organ is 2, doesn't check itself.
+    uint i = 1;
     while (true) {
-      address applicationAddress = address(storageGet(getApplicationStorageKey(i)));
+      address applicationAddress = getApp(i);
       if (applicationAddress == 0) return 0;  // if a 0 address is returned it means, there is no more apps.
       if (AbstractApplication(applicationAddress).canHandlePayload(payload)) return applicationAddress;
       i++;

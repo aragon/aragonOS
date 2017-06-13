@@ -1,10 +1,10 @@
 pragma solidity ^0.4.11;
 
-import "../kernel/AbstractKernel.sol";
+import "../dao/DAOStorage.sol";
 import "./AbstractApplication.sol";
 
 contract Application is AbstractApplication {
-  AbstractKernel.DAOMessage dao_msg;
+  DAOStorage.DAOMessage dao_msg;
   address public dao;
 
   modifier onlyDAO {
