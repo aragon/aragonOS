@@ -55,6 +55,11 @@ contract('Applications', accounts => {
       }
       assert.fail('should have thrown before')
     })
+
+    it('can perform unprotected methods from the outside', async () => {
+      await mockApp.unprotectedDoStuff()
+      assert.isTrue(await mockApp.didStuff(), 'should have done stuff')
+    })
   })
 
 })

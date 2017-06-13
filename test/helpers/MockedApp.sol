@@ -7,7 +7,11 @@ contract MockedApp is Application {
 
   function MockedApp(address dao_addr) Application(dao_addr) {}
 
-  function doStuff() onlyDAO returns (bytes32) {
+  function doStuff() onlyDAO {
+    didStuff = true;
+  }
+
+  function unprotectedDoStuff() {
     didStuff = true;
   }
 
