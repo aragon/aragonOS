@@ -136,7 +136,7 @@ contract Kernel is AbstractKernel, DAOStorage {
     return keccak256(address(this), data, nonce);
   }
 
-  function personalSignedPayload(bytes data, uint nonce) internal returns (bytes32) {
+  function personalSignedPayload(bytes data, uint nonce) constant public returns (bytes32) {
     return keccak256(0x19, "Ethereum Signed Message:\n32", payload(data, nonce));
   }
 }
