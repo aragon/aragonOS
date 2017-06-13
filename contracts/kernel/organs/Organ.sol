@@ -10,10 +10,6 @@ contract Organ is DAOStorage {
     assembly { sig := mload(add(_d, 0x20)) }
   }
 
-  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    return true;
-  }
-
   function getOrgan(uint _organId) returns (address organAddress) {
     return address(storageGet(getStorageKeyForOrgan(_organId)));
   }

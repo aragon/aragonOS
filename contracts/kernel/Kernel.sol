@@ -18,6 +18,12 @@ import "../dao/DAOStorage.sol";
 //   - Pre signed ether tx: providing the ECDSA signature of the payload.
 //     allows for preauthorizing a tx that could be sent by other msg.sender
 //   - Token tx: approveAndCall and EIP223 tokenFallback support
+
+contract PermissionsOracle {
+  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
+  function performedAction(address sender, address token, uint256 value, bytes data);
+}
+
 contract Kernel is AbstractKernel, DAOStorage {
   // @dev Sets up the minimum amount of organs for the kernel to be usable.
   // All organ installation from this point can be made using MetaOrgan
@@ -77,13 +83,11 @@ contract Kernel is AbstractKernel, DAOStorage {
   // @dev Sends the transaction to the dispatcher organ
   function dispatch(address sender, address token, uint256 value, bytes payload) internal {
     require(canPerformAction(sender, token, value, payload));
-    // dao_msg = DAOMessage(sender, token, value); // set dao_msg for other organs to have access
 
-    // performedAction(sender, token, value, data); // TODO: Check reentrancy implications
-
+    performedAction(sender, token, value, payload); // TODO: Check reentrancy implications
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
-    address target = getDispatcherOrgan();
+    address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
     uint32 len = getReturnSize(msg.sig);
     assembly {
       let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
@@ -93,11 +97,13 @@ contract Kernel is AbstractKernel, DAOStorage {
   }
 
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    return true; // getDispatcherOrgan().canPerformAction(sender, token, value, data);
+    address p = getPermissionsOracle();
+    return p == 0 ? true : PermissionsOracle(p).canPerformAction(sender, token, value, data);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {
-    getDispatcherOrgan().performedAction(sender, token, value, data);
+    address p = getPermissionsOracle();
+    if (p != 0) PermissionsOracle(p).performedAction(sender, token, value, data);
   }
 
   function setUsedPayload(bytes32 _payload) internal {
@@ -116,6 +122,10 @@ contract Kernel is AbstractKernel, DAOStorage {
     return address(storageGet(sha3(0x01, 0x02)));
   }
 
+  function getPermissionsOracle() constant returns (address) {
+    return address(storageGet(sha3(0x01, 0x03)));
+  }
+
   function getOrgan(uint _organId) constant returns (address organAddress) {
     return address(storageGet(getStorageKeyForOrgan(_organId)));
   }
@@ -126,10 +136,6 @@ contract Kernel is AbstractKernel, DAOStorage {
 
   function getStorageKeyForOrgan(uint _organId) internal returns (bytes32) {
     return sha3(0x01, 0x00, _organId);
-  }
-
-  function getDispatcherOrgan() internal returns (DispatcherOrgan) {
-    return DispatcherOrgan(getOrgan(1));
   }
 
   function payload(bytes data, uint nonce) constant public returns (bytes32) {

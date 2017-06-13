@@ -10,32 +10,6 @@ contract DispatcherOrgan is Organ {
     setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
   }
 
-  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    return true;
-    // return sender == address(this) || oracleCanPerformAction(sender, token, value, data);
-  }
-
-  function performedAction(address sender, address token, uint256 value, bytes data) {
-    return DispatcherOrgan(permissionsOracle()).performedAction(sender, token, value, data);
-  }
-
-  function oracleCanPerformAction(address sender, address token, uint256 value, bytes data) internal returns (bool) {
-    if (permissionsOracle() == 0x0) return true; // if no one has been set to ask, allow it
-    return DispatcherOrgan(permissionsOracle()).canPerformAction(sender, token, value, data);
-  }
-
-  function permissionsOracle() constant returns (address) {
-    return address(storageGet(getStorageKeyForPermissionsOracle()));
-  }
-
-  function setPermissionOracle(address newOracle) {
-    storageSet(getStorageKeyForPermissionsOracle(), uint256(newOracle));
-  }
-
-  function getStorageKeyForPermissionsOracle() constant returns (bytes32) {
-    return sha3(0x02, 0x00);
-  }
-
   function canHandlePayload(bytes payload) returns (bool) {
     return getResponsiveOrgan(payload) != 0;
   }
