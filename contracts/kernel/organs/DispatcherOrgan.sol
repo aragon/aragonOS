@@ -40,7 +40,7 @@ contract DispatcherOrgan is Organ {
     return getResponsiveOrgan(payload) != 0;
   }
 
-  function () public {
+  function () payable public {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
     assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
     address target = responsiveOrgan;

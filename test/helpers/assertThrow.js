@@ -1,3 +1,4 @@
 module.exports = function(error) {
-  assert.isAbove(error.message.search('invalid opcode'), -1, 'Invalid OPCODE error expected');
+  const isError = error.message.search('invalid opcode') > -1 || error.message.search('invalid JUMP') > -1
+  assert.isTrue(isError, 'Error expected');
 }
