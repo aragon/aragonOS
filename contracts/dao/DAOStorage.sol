@@ -18,6 +18,31 @@ contract DAOStorage is AbstractDAO, UIntStorage {
   bytes32 constant kernelKey = sha3(0x00, 0x01);
   bytes32 constant selfKey = sha3(0x00, 0x00);
 
+  // dao_msg storage keys
+  bytes32 constant senderKey = sha3(0x00, 0x02, 0x00);
+  bytes32 constant tokenKey = sha3(0x00, 0x02, 0x01);
+  bytes32 constant valueKey = sha3(0x00, 0x02, 0x02);
+
+  struct DAOMessage {
+    address sender;
+    address token;
+    uint256 value;
+  }
+
+  function dao_msg() internal returns (DAOMessage) {
+    return DAOMessage(
+      address(storageGet(senderKey)),
+      address(storageGet(tokenKey)),
+      storageGet(valueKey)
+    );
+  }
+
+  function setDAOMsg(DAOMessage dao_msg) internal {
+    storageSet(senderKey, uint256(dao_msg.sender));
+    storageSet(tokenKey, uint256(dao_msg.token));
+    storageSet(valueKey, uint256(dao_msg.value));
+  }
+
   function setKernel(address kernelAddress) internal {
     storageSet(kernelKey, uint256(kernelAddress));
   }

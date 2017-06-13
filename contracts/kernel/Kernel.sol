@@ -44,12 +44,12 @@ contract Kernel is AbstractKernel, DAOStorage {
   // @param s: ECDSA signature s value
   // @param v: ECDSA signature v value
   function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable public {
-    bytes32 signingPayload = payload(data, nonce); // Calculate the hashed payload that was signed
+    bytes32 signingPayload = personalSignedPayload(data, nonce); // Calculate the hashed payload that was signed
     require(!isUsedPayload(signingPayload));
+    setUsedPayload(signingPayload);
 
     address sender = ecrecover(signingPayload, v, r, s);
     dispatchEther(sender, msg.value, data);
-    setUsedPayload(signingPayload);
   }
 
   // EIP223 receiver compatible
@@ -80,6 +80,9 @@ contract Kernel is AbstractKernel, DAOStorage {
     // dao_msg = DAOMessage(sender, token, value); // set dao_msg for other organs to have access
 
     // performedAction(sender, token, value, data); // TODO: Check reentrancy implications
+
+    setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
+
     address target = getDispatcherOrgan();
     uint32 len = getReturnSize(msg.sig);
     assembly {
@@ -130,6 +133,10 @@ contract Kernel is AbstractKernel, DAOStorage {
   }
 
   function payload(bytes data, uint nonce) constant public returns (bytes32) {
-    return keccak256(0x19, "Ethereum Signed Message:\n40Preauth ", keccak256(address(this), data, nonce)); // length = 8 ('preauth ') + 32 (sha3 hash)
+    return keccak256(address(this), data, nonce);
+  }
+
+  function personalSignedPayload(bytes data, uint nonce) internal returns (bytes32) {
+    return keccak256(0x19, "Ethereum Signed Message:\n32", payload(data, nonce));
   }
 }

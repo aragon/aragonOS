@@ -42,28 +42,34 @@ contract('Dispatcher', accounts => {
   })
 
   context('dispatches presigned transactions', () => {
+    const signer = accounts[0]
+    const sender = accounts[1]
+
     const signedTransaction = async nonce => {
       const data = mockedOrgan.mock_setNumber.request(4).params[0].data
       const signingPayload = await kernel.payload(data, 1)
-      const signedPayload = await sign(signingPayload, accounts[0])
+      const signature = await sign(signingPayload, signer)
 
       const adding0x = x => '0x'.concat(x)
-      return {
-        r: adding0x(signedPayload.substr(2, 64)),
-        s: adding0x(signedPayload.substr(66, 64)),
-        v: adding0x(signedPayload.substr(130, 2)),
-        data,
-      }
+      return { data, ...signature }
     }
 
     beforeEach(async () => {
       const nonce = 1
       const { r, s, v, data } = await signedTransaction(nonce)
-      await kernel.preauthDispatch(data, nonce, r, s, v)
+      await kernel.preauthDispatch(data, nonce, r, s, v, { from: sender })
     })
 
-    it('basic presigned dispatch', async() => {
+    it('basic presigned dispatch', async () => {
       assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
     })
+
+
+    it('dispatches transaction using the signer identity', async () => {
+      assert.equal(await mockedOrgan.mock_getSender(), signer, 'signer should have been the sender of the transaction')
+    })
+
+    it('allows value transfer with the transaction')
+    it('throws when reusing signed payload')
   })
 })
