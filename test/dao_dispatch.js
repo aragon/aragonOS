@@ -69,7 +69,23 @@ contract('Dispatcher', accounts => {
       assert.equal(await mockedOrgan.mock_getSender(), signer, 'signer should have been the sender of the transaction')
     })
 
-    it('allows value transfer with the transaction')
-    it('throws when reusing signed payload')
+    it('allows value transfer with the transaction', async () => {
+      const { r, s, v, data } = await signedTransaction(2)
+      await kernel.preauthDispatch(data, 2, r, s, v, { from: sender, value: 1})
+
+      const etherToken = EtherToken.at(await kernel.getEtherToken())
+      assert.equal(await etherToken.balanceOf(dao.address), 1, 'transferred ether should be inside ETH token')
+      assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
+    })
+
+    it('throws when reusing signed payload', async () => {
+      const { r, s, v, data } = await signedTransaction(1)
+      try {
+        await kernel.preauthDispatch(data, 1, r, s, v, { from: sender })
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
   })
 })
