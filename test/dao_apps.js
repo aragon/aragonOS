@@ -7,8 +7,6 @@ var MockedApp = artifacts.require('./helpers/MockedApp')
 
 var Kernel = artifacts.require('Kernel')
 
-const { sign } = require('./helpers/web3')
-
 const createDAO = () => DAO.new({ gas: 9e6 })
 
 const zerothAddress = '0x'
