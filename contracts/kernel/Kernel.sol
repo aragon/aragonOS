@@ -52,7 +52,7 @@ contract Kernel is AbstractKernel, DAOStorage {
     dispatchEther(sender, msg.value, data);
   }
 
-  // EIP223 receiver compatible
+  // ERC223 receiver compatible
   function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
     dispatch(_sender, msg.sender, _value, _data);
     return true;

@@ -5,6 +5,8 @@ var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var Kernel = artifacts.require('Kernel')
 var EtherToken = artifacts.require('EtherToken')
 var MockedOrgan = artifacts.require('./helpers/MockedOrgan')
+var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
+var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { sign } = require('./helpers/web3')
 
 const createDAO = () => DAO.new({ gas: 9e6 })
@@ -86,6 +88,37 @@ contract('Dispatcher', accounts => {
         return assertThrow(error)
       }
       assert.fail('should have thrown before')
+    })
+  })
+
+  context('dispatches token transactions', () => {
+    it('using approveAndCall', async () => {
+      const token = await StandardTokenPlus.new()
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+
+      await token.approveAndCall(dao.address, 10, data)
+
+      assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
+      assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
+    })
+
+    it('using ERC223', async () => {
+      const token = await Standard23Token.new()
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+
+      const erc23transfer = (a, v, d, p) => {
+        return new Promise((resolve, reject) => {
+          token.contract.transfer['address,uint256,bytes'](a, v, d, p, (err) => {
+            if (err) return reject(err)
+            resolve()
+          })
+        })
+      }
+
+      await erc23transfer(dao.address, 10, data, { from: accounts[0], gas: 4e6 })
+
+      assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
+      assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
     })
   })
 })
