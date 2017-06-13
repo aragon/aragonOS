@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "truffle/Assert.sol";
-import "../contracts/bylaws/BylawsLib.sol";
+import "../contracts/apps/bylaws/BylawsLib.sol";
 
 import "./mocks/BylawOracleMock.sol";
 

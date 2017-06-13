@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "../../contracts/bylaws/BylawOracle.sol";
+import "../../contracts/apps/bylaws/BylawOracle.sol";
 
 contract BylawOracleMock is BylawOracle {
   bool allows;
