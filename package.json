@@ -14,7 +14,6 @@
   "author": "Jorge Izquierdo (Aragon)",
   "license": "ISxC",
   "dependencies": {
-    "ethereumjs-testrpc": "^3.0.2",
     "ethereumjs-util": "^5.1.1",
     "keybase-eth": "^0.3.0",
     "truffle-hdwallet-provider": "0.0.3",
