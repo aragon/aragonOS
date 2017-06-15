@@ -4,20 +4,15 @@ import "../Application.sol";
 import "../../kernel/organs/TokensOrgan.sol";
 import "../../kernel/organs/ActionsOrgan.sol";
 import "../../misc/Requestor.sol";
+import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 
 import "zeppelin/token/ERC20.sol";
-
-contract MiniMeInterface is ERC20 {
-  function controller() constant returns (address);
-  function generateTokens(address _owner, uint _amount);
-  function grantVestedTokens(address _to, uint256 _value, uint64 _start, uint64 _cliff, uint64 _vesting);
-}
 
 contract OwnershipApp is Application, Requestor {
   function addToken(address tokenAddress, uint256 issueAmount) onlyDAO {
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
-    require(MiniMeInterface(tokenAddress).controller() == dao);
+    require(MiniMeToken(tokenAddress).controller() == dao);
 
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
     issueTokens(tokenId, issueAmount);
@@ -33,19 +28,19 @@ contract OwnershipApp is Application, Requestor {
     // Requestor should be an external contract, but having trouble because solidity
     // doesn't like variable sized types for returns.
     // If this contract needed to have another fallback it wouldn't work.
-    MiniMeInterface(this).generateTokens(dao, amount);
+    MiniMeToken(this).generateTokens(dao, amount);
     executeRequestorAction(tokenAddress);
   }
 
   function grantTokens(uint256 tokenId, uint256 amount, address recipient) onlyDAO {
     address tokenAddress = getTokenAddress(tokenId);
-    MiniMeInterface(this).transfer(recipient, amount);
+    MiniMeToken(this).transfer(recipient, amount);
     executeRequestorAction(tokenAddress);
   }
 
   function grantVestedTokens(uint256 tokenId, uint256 amount, address recipient, uint64 start, uint64 cliff, uint64 vesting) onlyDAO {
     address tokenAddress = getTokenAddress(tokenId);
-    MiniMeInterface(this).grantVestedTokens(recipient, amount, start, cliff, vesting);
+    MiniMeIrrevocableVestedToken(this).grantVestedTokens(recipient, amount, start, cliff, vesting);
     executeRequestorAction(tokenAddress);
   }
 

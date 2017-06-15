@@ -6,7 +6,7 @@ pragma solidity ^0.4.8;
  * see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 {
-  uint public totalSupply;
+  function totalSupply() constant public returns (uint);
   function balanceOf(address who) constant returns (uint);
   function allowance(address owner, address spender) constant returns (uint);
 

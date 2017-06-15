@@ -8,19 +8,24 @@ contract EtherToken is StandardToken {
   uint8 public decimals = 18;
 
   function wrap() payable {
-    totalSupply = safeAdd(totalSupply, msg.value);
+    supply = safeAdd(supply, msg.value);
     balances[msg.sender] = safeAdd(balances[msg.sender], msg.value);
 
     Mint(msg.sender, msg.value);
   }
 
   function withdraw(uint256 amount, address recipient) {
-    totalSupply = safeSub(totalSupply, amount);
+    supply = safeSub(supply, amount);
     balances[msg.sender] = safeSub(balances[msg.sender], amount); // will throw if less than 0
 
     recipient.transfer(amount);
 
     Burn(msg.sender, amount);
+  }
+
+  uint256 supply;
+  function totalSupply() constant public returns (uint) {
+    return supply;
   }
 
   event Mint(address indexed actor, uint value);
