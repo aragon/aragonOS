@@ -28,7 +28,7 @@ contract TokensOrgan is Organ {
     return sha3(0x03, 0x00, tokenId);
   }
 
-  function getTokenCount() returns (uint) {
+  function getTokenCount() constant returns (uint) {
     return storageGet(sha3(0x03, 0x01));
   }
 
@@ -48,5 +48,6 @@ contract TokensOrgan is Organ {
   function organWasInstalled() {
     setReturnSize(0xd48bfca7, 32); // addToken(address)
     setReturnSize(0xe4b50cb8, 32); // getToken(uint256)
+    setReturnSize(0x78a89567, 32); // getTokenCount()
   }
 }

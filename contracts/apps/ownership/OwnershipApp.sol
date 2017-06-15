@@ -8,6 +8,8 @@ import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 
 import "zeppelin/token/ERC20.sol";
 
+// OwnershipApp requires TokensOrgan and ActionsOrgan to be installed in DAO
+
 // TODO: Add token controller functions so it doesn't fail
 contract OwnershipApp is Application, Requestor {
   function OwnershipApp(address daoAddr)
