@@ -15,8 +15,14 @@ contract Standard23Token is ERC23, StandardToken {
   // Mocked initializer
   function Standard23Token() {
     balances[msg.sender] = 100;
-    totalSupply = 100;
+    supply = 100;
   }
+
+  uint256 supply;
+  function totalSupply() constant public returns (uint) {
+    return supply;
+  }
+  
   //function that is called when a user or another contract wants to transfer funds
   function transfer(address _to, uint _value, bytes _data) returns (bool success) {
     //filtering if the target is a contract with bytecode inside it

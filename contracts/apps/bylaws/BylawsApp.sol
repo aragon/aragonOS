@@ -90,8 +90,4 @@ contract BylawsApp is Application, PermissionsOracle {
       sig == 0x010555b8 || // setAddressBylaw(...)
       sig == 0x69207f04;   // setVotingBylaw(...)
   }
-
-  function getSig(bytes d) returns (bytes4 sig) {
-    assembly { sig := mload(add(d, 0x20)) }
-  }
 }

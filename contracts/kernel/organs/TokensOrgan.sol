@@ -20,7 +20,7 @@ contract TokensOrgan is Organ {
     setTokenCount(getTokenCount() - 1);
   }
 
-  function getToken(uint i) returns (address) {
+  function getToken(uint i) constant returns (address) {
     return address(storageGet(getStorageKeyForToken(i)));
   }
 
@@ -47,5 +47,6 @@ contract TokensOrgan is Organ {
 
   function organWasInstalled() {
     setReturnSize(0xd48bfca7, 32); // addToken(address)
+    setReturnSize(0xe4b50cb8, 32); // getToken(uint256)
   }
 }

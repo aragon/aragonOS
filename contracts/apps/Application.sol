@@ -25,4 +25,8 @@ contract Application is AbstractApplication {
     dao_msg.token = token;
     dao_msg.value = value;
   }
+
+  function getSig(bytes d) returns (bytes4 sig) {
+    assembly { sig := mload(add(d, 0x20)) }
+  }
 }

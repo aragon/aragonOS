@@ -8,14 +8,18 @@ import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 
 import "zeppelin/token/ERC20.sol";
 
+// TODO: Add token controller functions so it doesn't fail
 contract OwnershipApp is Application, Requestor {
+  function OwnershipApp(address daoAddr)
+           Application(daoAddr) {}
+
   function addToken(address tokenAddress, uint256 issueAmount) onlyDAO {
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
-    require(MiniMeToken(tokenAddress).controller() == dao);
 
+    require(MiniMeToken(tokenAddress).controller() == dao);
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
-    issueTokens(tokenId, issueAmount);
+    if (issueAmount > 0) issueTokens(tokenId, issueAmount);
   }
 
   function removeToken(uint256 tokenId) onlyDAO {
@@ -50,5 +54,15 @@ contract OwnershipApp is Application, Requestor {
 
   function getTokenAddress(uint256 i) constant returns (address) {
     return TokensOrgan(dao).getToken(i);
+  }
+
+  function canHandlePayload(bytes payload) constant returns (bool) {
+      bytes4 sig = getSig(payload);
+      return
+        sig == 0xaf81c5b9 || // addToken(address,uint256)
+        sig == 0x36c5d724 || // removeToken(uint256)
+        sig == 0x54e35ba2 || // issueTokens(address,uint256)
+        sig == 0xec680c49 || // grantTokens(...)
+        sig == 0x4a11f5bb;   // grantVestedTokens(...)
   }
 }
