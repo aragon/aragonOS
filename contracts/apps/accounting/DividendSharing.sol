@@ -51,6 +51,8 @@ contract DividendSharing is Ownable {
     uint256 balance = dividendsToken.balanceOf(holder);
     uint256 supply = dividendsToken.totalSupply();
 
+    require(balance > 0);
+
     dividendsToken.destroyTokens(holder, balance);
 
     uint count = trackedTokens.length;
@@ -60,7 +62,7 @@ contract DividendSharing is Ownable {
 
       uint256 holderBalance = balance * tokenBalance / supply;
 
-      sharingToken.transfer(holder, holderBalance);
+      assert(sharingToken.transfer(holder, holderBalance));
     }
   }
 
