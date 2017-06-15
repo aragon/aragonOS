@@ -93,7 +93,7 @@ contract MiniMeIrrevocableVestedToken is MiniMeToken, SafeMath {
     if (_vesting < _start) throw;
     if (_vesting < _cliff) throw;
 
-    if (!canCreateGrants[msg.sender]) throw;
+    // if (!canCreateGrants[msg.sender]) throw;
     if (tokenGrantsCount(_to) > 20) throw;   // To prevent a user being spammed and have his balance locked (out of gas attack when calculating vesting).
 
     TokenGrant memory grant = TokenGrant(msg.sender, _value, _cliff, _vesting, _start);
