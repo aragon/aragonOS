@@ -8,12 +8,17 @@ import "../../misc/Requestor.sol";
 import "zeppelin/token/ERC20.sol";
 
 contract MiniMeInterface is ERC20 {
+  function controller() constant returns (address);
   function generateTokens(address _owner, uint _amount);
   function grantVestedTokens(address _to, uint256 _value, uint64 _start, uint64 _cliff, uint64 _vesting);
 }
 
 contract OwnershipApp is Application, Requestor {
   function addToken(address tokenAddress, uint256 issueAmount) onlyDAO {
+    // Only add tokens the DAO is the controller of, so we can control it.
+    // If it is a wrap over another token, the Wrap implementation can remove some functionality.
+    require(MiniMeInterface(tokenAddress).controller() == dao);
+
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
     issueTokens(tokenId, issueAmount);
   }
