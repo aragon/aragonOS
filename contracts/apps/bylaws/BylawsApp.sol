@@ -2,8 +2,9 @@ pragma solidity ^0.4.11;
 
 import "../Application.sol";
 import "./BylawsLib.sol";
+import "../../kernel/Kernel.sol";
 
-contract BylawsApp is Application {
+contract BylawsApp is Application, PermissionsOracle {
   using BylawsLib for BylawsLib.Bylaws;
   using BylawsLib for BylawsLib.Bylaw;
 
@@ -14,12 +15,12 @@ contract BylawsApp is Application {
   function BylawsApp(address _dao)
            Application(_dao) {}
 
-  // Dispatcher permission oracle
+  // Conformance to permission oracle interface
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    bytes4 sig;
-    assembly { sig := mload(add(data, 0x20)) }
-    return canPerformAction(sig, sender, data);
+    return canPerformAction(getSig(data), sender, data);
   }
+
+  function performedAction(address sender, address token, uint256 value, bytes data) {}
 
   function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool) {
     return canPerformAction(bylaws.bylaws[sig], sig, sender, data);
@@ -73,6 +74,7 @@ contract BylawsApp is Application {
     minimumVotingTime = b.minimumVotingTime;
   }
 
+
   function getAddressBylaw(string functionSignature) constant returns (address) {
     BylawsLib.AddressBylaw memory b = bylaws.getBylaw(functionSignature).addr;
 
@@ -81,6 +83,15 @@ contract BylawsApp is Application {
     return b.addr;
   }
 
-  // Need to code
-  function canHandlePayload(bytes payload) constant returns (bool);
+  function canHandlePayload(bytes payload) constant returns (bool) {
+    bytes4 sig = getSig(payload);
+    return
+      sig == 0xde64e15c || // setStatusBylaw(string,uint8,bool)
+      sig == 0x010555b8 || // setAddressBylaw(...)
+      sig == 0x69207f04;   // setVotingBylaw(...)
+  }
+
+  function getSig(bytes d) returns (bytes4 sig) {
+    assembly { sig := mload(add(d, 0x20)) }
+  }
 }
