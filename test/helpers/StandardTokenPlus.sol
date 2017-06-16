@@ -10,7 +10,12 @@ contract StandardTokenPlus is StandardToken {
   // Mocked initializer
   function StandardTokenPlus() {
     balances[msg.sender] = 100;
-    totalSupply = 100;
+    supply = 100;
+  }
+
+  uint256 supply;
+  function totalSupply() constant public returns (uint) {
+    return supply;
   }
 
   function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {

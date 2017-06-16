@@ -3,25 +3,24 @@ pragma solidity ^0.4.11;
 import "./Organ.sol";
 
 contract TokensOrgan is Organ {
-  function addToken(address token) {
+  function addToken(address token) returns (uint256) {
     uint tokenId = getTokenCount();
     storageSet(getStorageKeyForToken(tokenId), uint256(token));
     setTokenCount(tokenId + 1);
+
+    return tokenId;
   }
 
-  function removeToken(address token) {
-    int256 i = indexOf(token);
-    require(i >= 0);
-
+  function removeToken(uint tokenId) {
     if (getTokenCount() > 1) {
       // Move last element to the place of the removing item
-      storageSet(getStorageKeyForToken(uint256(i)), uint256(getToken(getTokenCount() - 1)));
+      storageSet(getStorageKeyForToken(tokenId), uint256(getToken(getTokenCount() - 1)));
     }
     // Remove last item
     setTokenCount(getTokenCount() - 1);
   }
 
-  function getToken(uint i) returns (address) {
+  function getToken(uint i) constant returns (address) {
     return address(storageGet(getStorageKeyForToken(i)));
   }
 
@@ -29,7 +28,7 @@ contract TokensOrgan is Organ {
     return sha3(0x03, 0x00, tokenId);
   }
 
-  function getTokenCount() returns (uint) {
+  function getTokenCount() constant returns (uint) {
     return storageGet(sha3(0x03, 0x01));
   }
 
@@ -41,16 +40,20 @@ contract TokensOrgan is Organ {
     bytes4 sig = getFunctionSignature(payload);
     return
       sig == 0xd48bfca7 ||   // addToken(address)
-      sig == 0x5fa7b584 ||   // removeToken(address)
+      sig == 0x36c5d724 ||   // removeToken(uint256)
       sig == 0xe4b50cb8 ||   // getToken(uint256)
       sig == 0x78a89567;     // getTokenCount()
   }
 
-  function indexOf(address _t) internal returns (int256) {
-    uint count = getTokenCount();
-    for (uint256 i = 0; i < count; i++) {
-      if (getToken(i) == _t) return int256(i);
-    }
-    return -1;
+  function organWasInstalled() {
+    setReturnSize(0xd48bfca7, 32); // addToken(address)
+    setReturnSize(0xe4b50cb8, 32); // getToken(uint256)
+    setReturnSize(0x78a89567, 32); // getTokenCount()
+
+    // MiniMe methods that are handled by the apps
+    // TODO: Move to standalone organ called MiniMeHooksOrgan
+    setReturnSize(0x4a393149, 32); // onTransfer(...)
+    setReturnSize(0xda682aeb, 32); // onApprove(...)
+    setReturnSize(0xf48c3054, 32); // proxyPayment(...)
   }
 }

@@ -2,7 +2,7 @@ const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var Kernel = artifacts.require('Kernel')
-var MockedOrgan = artifacts.require('helpers/MockedOrgan')
+var MockedOrgan = artifacts.require('mocks/MockedOrgan')
 
 const createDAO = () => DAO.new({ gas: 9e6 })
 

@@ -2,7 +2,7 @@ const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
-var MockedApp = artifacts.require('./helpers/MockedApp')
+var MockedApp = artifacts.require('./mocks/MockedApp')
 
 var Kernel = artifacts.require('Kernel')
 
