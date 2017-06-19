@@ -5,6 +5,22 @@ import "../../tokens/EtherToken.sol";
 import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 
+contract IVaultOrgan {
+  function deposit(address _token, uint256 _amount);
+  function getTokenBalance(address _token) constant returns (uint256);
+
+  function halt();
+  function setHaltTime(uint256 _haltTime);
+  function getHaltTime() constant returns (uint256);
+
+  function scapeHatch(address[] _tokens);
+  function setScapeHatch(address _scapeHatch);
+  function getScapeHatch() constant returns (address);
+
+  function setTokenBlacklist(address _token, bool _blacklisted);
+  function isTokenBlacklisted(address _token) constant returns (bool);
+}
+
 contract VaultOrgan is Organ, SafeMath {
   uint8 constant kernelPrimaryKey = 0x01; // probably can move ether token completely here
   uint8 constant vaultPrimaryKey = 0x05;
