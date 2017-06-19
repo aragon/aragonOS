@@ -3,6 +3,7 @@ var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var Kernel = artifacts.require('Kernel')
+var VaultOrgan = artifacts.require('VaultOrgan')
 var EtherToken = artifacts.require('EtherToken')
 var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
 var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
