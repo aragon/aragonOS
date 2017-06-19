@@ -9,6 +9,9 @@ contract IVaultOrgan {
   function deposit(address _token, uint256 _amount);
   function getTokenBalance(address _token) constant returns (uint256);
 
+  function transfer(address _token, address _to, uint256 _amount);
+  function transferEther(address _to, uint256 _amount);
+
   function halt();
   function setHaltTime(uint256 _haltTime);
   function getHaltTime() constant returns (uint256);
