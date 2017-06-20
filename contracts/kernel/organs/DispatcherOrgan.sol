@@ -1,11 +1,11 @@
 pragma solidity ^0.4.11;
 
-import "./Organ.sol";
+import "./IOrgan.sol";
 import "../../dao/DAOStorage.sol";
 
 // @dev This organ is responsible for finding what is the first organ that can perform an action
 // and dispatching it.
-contract DispatcherOrgan is Organ {
+contract DispatcherOrgan is IOrgan {
   function organWasInstalled() {
     setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
   }
@@ -33,7 +33,7 @@ contract DispatcherOrgan is Organ {
     while (true) {
       address organAddress = getOrgan(i);
       if (organAddress == 0) return 0;  // if a 0 address is returned it means, there is no more organs.
-      if (Organ(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
+      if (IOrgan(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
       i++;
     }
   }

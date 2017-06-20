@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "../../../misc/Txid.sol";
-import "../AbstractCompany.sol";
+import "../ICompany.sol";
 
 contract Voting is Txid {
   mapping (uint8 => string) public options;
@@ -26,9 +26,9 @@ contract Voting is Txid {
   }
 
   function votingSupport(address company) constant returns (uint256 support, uint256 base, bool closingRelativeMajority) {
-    (support, base, closingRelativeMajority,) = AbstractCompany(company).getVotingBylaw(mainSignature());
+    (support, base, closingRelativeMajority,) = ICompany(company).getVotingBylaw(mainSignature());
   }
 
-  function executeOnAction(uint8 option, AbstractCompany company);
+  function executeOnAction(uint8 option, ICompany company);
   function mainSignature() public constant returns (bytes4);
 }
