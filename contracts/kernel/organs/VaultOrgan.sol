@@ -22,6 +22,10 @@ contract IVaultOrgan {
 
   function setTokenBlacklist(address _token, bool _blacklisted);
   function isTokenBlacklisted(address _token) constant returns (bool);
+
+  event Deposit(address indexed token, address indexed sender, uint256 amount);
+  event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
+  event NewTokenDeposit(address token);
 }
 
 contract VaultOrgan is Organ, SafeMath {
@@ -30,7 +34,10 @@ contract VaultOrgan is Organ, SafeMath {
 
   uint8 constant balanceSecondaryKey = 0x00;
 
-  event Deposit(address indexed token, uint256 amount);
+  uint constant maxTokenTransferGas = 150000;
+
+  event Deposit(address indexed token, address indexed sender, uint256 amount);
+  event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
   event NewTokenDeposit(address token);
 
   // deposit is not reachable on purpose using normal dispatch route
@@ -51,7 +58,7 @@ contract VaultOrgan is Organ, SafeMath {
     assert(newBalance >= ERC20(_token).balanceOf(this));
     setTokenBalance(_token, newBalance);
 
-    Deposit(_token, _amount);
+    Deposit(_token, dao_msg().sender, _amount);
   }
 
   function depositEther(uint256 _amount) internal {
@@ -59,11 +66,44 @@ contract VaultOrgan is Organ, SafeMath {
     EtherToken(getEtherToken()).wrap.value(_amount)();
   }
 
+  // TODO: Add is halted check
+  function transfer(address _token, address _to, uint256 _amount) {
+    uint newBalance = performTokenTransferAccounting(_token, _amount, _to);
+    secureTokenTransfer(_token, _to, _amount); // perform actual transfer
+
+    assert(ERC20(_token).balanceOf(this) == newBalance);
+  }
+
+  // TODO: Add is halted check
+  function transferEther(address _to, uint256 _amount) {
+    address etherToken = getEtherToken();
+    uint newBalance = performTokenTransferAccounting(etherToken, _amount, _to);
+
+    EtherToken(etherToken).secureWithdraw(_amount, _to);
+
+    assert(ERC20(etherToken).balanceOf(this) == newBalance);
+  }
+
+  function performTokenTransferAccounting(address _token, uint256 _amount, address _to)
+           internal
+           returns (uint256 newBalance) {
+    newBalance = safeSub(getTokenBalance(_token), _amount); // will throw on overflow
+    setTokenBalance(_token, newBalance);
+
+    Withdraw(_token, dao_msg().sender, _amount, _to);
+  }
+
+  function secureTokenTransfer(address _token, address _to, uint256 _amount)
+           max_gas(maxTokenTransferGas)
+           internal {
+    assert(ERC20(_token).transfer(_to, _amount));
+  }
+
   function storageKeyForBalance(address _token) constant returns (bytes32) {
     return sha3(vaultPrimaryKey, balanceSecondaryKey, _token);
   }
 
-  function setTokenBalance(address _token, uint256 _balance) {
+  function setTokenBalance(address _token, uint256 _balance) internal {
     storageSet(storageKeyForBalance(_token), _balance);
   }
 
@@ -87,5 +127,11 @@ contract VaultOrgan is Organ, SafeMath {
 
   function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(0x01, 0x02)));
+  }
+
+  modifier max_gas(uint max_delta) {
+    uint initialGas = msg.gas;
+    _;
+    assert(initialGas - msg.gas < max_delta);
   }
 }
