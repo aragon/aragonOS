@@ -16,15 +16,16 @@ const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('Dispatcher', accounts => {
-  let dao, metadao, kernel, mockedOrgan = {}
+  let dao, metadao, kernel, mockedOrgan, vault = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const vault = await VaultOrgan.new()
-    await metadao.installOrgan(vault.address, 3)
+    const vaultOrgan = await VaultOrgan.new()
+    await metadao.installOrgan(vaultOrgan.address, 3)
+    vault = VaultOrgan.at(dao.address)
 
     const mockOrgan = await MockedOrgan.new()
     await metadao.installOrgan(mockOrgan.address, 4)
@@ -44,6 +45,7 @@ contract('Dispatcher', accounts => {
 
       const etherToken = EtherToken.at(await kernel.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
+      assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
     })
   })
 
@@ -82,6 +84,7 @@ contract('Dispatcher', accounts => {
       const etherToken = EtherToken.at(await kernel.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), 1, 'transferred ether should be inside ETH token')
       assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
+      assert.equal(await vault.getTokenBalance(etherToken.address), 1, 'DAO accounting should know token balance')
     })
 
     it('throws when reusing signed payload', async () => {
@@ -104,6 +107,7 @@ contract('Dispatcher', accounts => {
 
       assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
       assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
+      assert.equal(await vault.getTokenBalance(token.address), 10, 'DAO accounting should know token balance')
     })
 
     it('using ERC223', async () => {
@@ -123,6 +127,7 @@ contract('Dispatcher', accounts => {
 
       assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
       assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
+      assert.equal(await vault.getTokenBalance(token.address), 10, 'DAO accounting should know token balance')
     })
   })
 })

@@ -74,11 +74,15 @@ contract VaultOrgan is Organ, SafeMath {
   function organWasInstalled() {
     // TODO: Replace for constant for EtherToken
     MetaOrgan(this).setEtherToken(address(new EtherToken()));
+    setReturnSize(0x3aecd0e3, 32);
   }
 
   function canHandlePayload(bytes _payload) returns (bool) {
     // TODO: Really return true on handleable functions
-    return false;
+    bytes4 sig = getFunctionSignature(_payload);
+    return
+      sig == 0x3aecd0e3
+    ;
   }
 
   function getEtherToken() constant returns (address) {
