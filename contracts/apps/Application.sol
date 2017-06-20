@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 
 import "../dao/DAOStorage.sol";
-import "./AbstractApplication.sol";
+import "./IApplication.sol";
 
-contract Application is AbstractApplication {
+contract Application is IApplication {
   DAOStorage.DAOMessage dao_msg;
   address public dao;
 

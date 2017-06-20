@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-contract AbstractCompany {
+contract ICompany {
   enum EntityStatus {
     Base,
     Employee,

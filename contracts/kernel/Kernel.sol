@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./AbstractKernel.sol";
+import "./IKernel.sol";
 import "./organs/DispatcherOrgan.sol";
 import "./organs/MetaOrgan.sol";
 
@@ -24,7 +24,7 @@ contract PermissionsOracle {
   function performedAction(address sender, address token, uint256 value, bytes data);
 }
 
-contract Kernel is AbstractKernel, DAOStorage {
+contract Kernel is IKernel, DAOStorage {
   // @dev Sets up the minimum amount of organs for the kernel to be usable.
   // All organ installation from this point can be made using MetaOrgan
   function setupOrgans() {

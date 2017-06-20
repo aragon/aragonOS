@@ -5,7 +5,7 @@ import "zeppelin/token/ERC20.sol";
 import "zeppelin/SafeMath.sol";
 import "./TransferableToken.sol";
 import "./Shareholders.sol";
-import "../AbstractCompany.sol";
+import "../ICompany.sol";
 
 import "./ERC20Wrap.sol";
 
@@ -28,7 +28,7 @@ contract GovernanceToken is ERC20/*Wrap*/, SafeMath, Shareholders, TransferableT
   }
 
   function hasVotedInOpenedVoting(address holder) constant public returns (bool) {
-    return AbstractCompany(governingEntity).hasVotedInOpenedVoting(holder);
+    return ICompany(governingEntity).hasVotedInOpenedVoting(holder);
   }
 
   function transferableTokens(address holder, uint64 time) constant public returns (uint256) {

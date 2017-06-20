@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-contract AbstractKernel {
+contract IKernel {
   event OrganReplaced(address organAddress, uint organN);
 
   function getOrgan(uint organN) constant returns (address organAddress);

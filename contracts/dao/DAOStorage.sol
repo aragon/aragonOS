@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./AbstractDAO.sol";
+import "./IDAO.sol";
 
 contract UIntStorage {
   mapping (bytes32 => uint256) uintStorage;
@@ -14,7 +14,7 @@ contract UIntStorage {
   }
 }
 
-contract DAOStorage is AbstractDAO, UIntStorage {
+contract DAOStorage is IDAO, UIntStorage {
   bytes32 constant kernelKey = sha3(0x00, 0x01);
   bytes32 constant selfKey = sha3(0x00, 0x00);
 

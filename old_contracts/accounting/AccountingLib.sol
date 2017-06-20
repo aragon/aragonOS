@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "../AbstractCompany.sol";
+import "../ICompany.sol";
 
 library AccountingLib {
   event NewPeriod(uint newPeriod);
@@ -224,7 +224,7 @@ library AccountingLib {
 
     if (periodResult > 0 && periodResult > int256(period.dividendThreshold)) {
       period.dividends = uint256(periodResult) - period.dividendThreshold;
-      AbstractCompany(this).splitIntoDividends.value(period.dividends)();
+      ICompany(this).splitIntoDividends.value(period.dividends)();
     }
 
     period.endTimestamp = uint64(period.startTimestamp + period.periodDuration);
