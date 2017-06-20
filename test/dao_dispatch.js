@@ -23,8 +23,11 @@ contract('Dispatcher', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
+    const vault = await VaultOrgan.new()
+    await metadao.installOrgan(vault.address, 3)
+
     const mockOrgan = await MockedOrgan.new()
-    await metadao.installOrgan(mockOrgan.address, 3)
+    await metadao.installOrgan(mockOrgan.address, 4)
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 
@@ -36,7 +39,7 @@ contract('Dispatcher', accounts => {
 
     it('with more than 0 ether', async () => {
       const value = 101
-      await mockedOrgan.mock_setNumber(3, { value })
+      await mockedOrgan.mock_setNumber(3, { value, gas: 10000000 })
       assert.equal(await mockedOrgan.mock_getNumber(), 3, 'should have dispatched method')
 
       const etherToken = EtherToken.at(await kernel.getEtherToken())

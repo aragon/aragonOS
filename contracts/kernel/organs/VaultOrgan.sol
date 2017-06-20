@@ -34,7 +34,7 @@ contract VaultOrgan is Organ, SafeMath {
   event NewTokenDeposit(address token);
 
   // deposit is not reachable on purpose using normal dispatch route
-  function deposit(address _token, uint256 _amount) {
+  function deposit(address _token, uint256 _amount) payable {
     if (_amount == 0) return;
     if (_token == getEtherToken()) depositEther(_amount);
 
@@ -56,7 +56,7 @@ contract VaultOrgan is Organ, SafeMath {
 
   function depositEther(uint256 _amount) internal {
     assert(address(this).balance >= _amount);
-    EtherToken(getEtherToken()).wrap.value(_amount);
+    EtherToken(getEtherToken()).wrap.value(_amount)();
   }
 
   function storageKeyForBalance(address _token) constant returns (bytes32) {

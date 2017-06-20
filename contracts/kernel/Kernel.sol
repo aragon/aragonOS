@@ -118,7 +118,7 @@ contract Kernel is AbstractKernel, DAOStorage {
     return sha3(0x01, 0x01, _payload);
   }
 
-  function vaultDeposit(address token, uint256 amount) {
+  function vaultDeposit(address token, uint256 amount) internal {
     address vaultOrgan = getOrgan(3);
     if (amount == 0 || vaultOrgan == 0) return;
 
