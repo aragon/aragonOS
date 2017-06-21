@@ -108,6 +108,15 @@ contract('Vault', accounts => {
         await vault.transfer(token.address, randomAddress, 1)
         assert.equal(await token.balanceOf(randomAddress), 1, 'receiver should have token balance')
       })
+
+      it('throws when halt period is greater than 7 days', async () => {
+        try {
+          await vault.halt(7 * 24 * 3600 + 1)
+        } catch (error) {
+          return assertThrow(error)
+        }
+        assert.fail('should have thrown before')
+      })
     })
   })
 })
