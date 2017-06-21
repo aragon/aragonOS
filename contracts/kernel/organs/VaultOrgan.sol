@@ -74,7 +74,7 @@ contract VaultOrgan is IVaultOrgan, Organ, SafeMath {
     // Check token balance isn't less than expected.
     // Could be less because of a faulty erc20 implementation (can't trust)
     // Could be more because a token transfer can be done without notifying
-    assert(newBalance >= ERC20(_token).balanceOf(this));
+    assert(newBalance <= ERC20(_token).balanceOf(this));
     setTokenBalance(_token, newBalance);
 
     Deposit(_token, dao_msg().sender, _amount);
@@ -146,6 +146,8 @@ contract VaultOrgan is IVaultOrgan, Organ, SafeMath {
 
     // already checks if delta > 0 or throws
     uint256 tokenDelta = safeSub(tokenBalance, accountedBalance);
+
+    if (tokenDelta == 0) return;
 
     secureTokenTransfer(_token, _to, tokenDelta);
     Recover(_token, dao_msg().sender, tokenDelta, _to);

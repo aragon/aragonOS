@@ -154,4 +154,62 @@ contract('Vault', accounts => {
       })
     })
   })
+
+  context('adding token to blacklist', () => {
+    let blacklistedToken = {}
+
+    beforeEach(async () => {
+      blacklistedToken = await StandardTokenPlus.new()
+      await vault.setTokenBlacklist(blacklistedToken.address, true)
+    })
+
+    it('gets token as blacklisted', async () => {
+      assert.equal(await vault.isTokenBlacklisted(blacklistedToken.address), true)
+    })
+
+    it('throws when transfering a blacklisted token', async () => {
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+
+      try {
+        await blacklistedToken.approveAndCall(dao.address, 10, data)
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
+    it('can remove token from blacklist and receive tokens', async () => {
+      await vault.setTokenBlacklist(blacklistedToken.address, false)
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+      await blacklistedToken.approveAndCall(dao.address, 10, data)
+      assert.equal(await vault.getTokenBalance(blacklistedToken.address), 10, 'DAO accounting should know token balance')
+    })
+  })
+
+  context('accidentally sending tokens to DAO', () => {
+    let token = {}
+
+    beforeEach(async () => {
+      token = await StandardTokenPlus.new()
+      await token.transfer(dao.address, 5)
+    })
+
+    it('can recover not accounted tokens', async () => {
+      await vault.recover(token.address, randomAddress)
+
+      assert.equal(await token.balanceOf(randomAddress), 5, 'recovery address should have tokens')
+      assert.equal(await token.balanceOf(dao.address), 0, 'recovery address should have tokens')
+    })
+
+    it('with accounted tokens recovers only not accounted', async () => {
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+      await token.approveAndCall(dao.address, 10, data)
+
+      await vault.recover(token.address, randomAddress)
+
+      assert.equal(await token.balanceOf(randomAddress), 5, 'recovery address should have tokens')
+      assert.equal(await token.balanceOf(dao.address), 10, 'recovery address should have tokens')
+    })
+
+  })
 })
