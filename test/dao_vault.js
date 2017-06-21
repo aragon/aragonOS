@@ -117,6 +117,41 @@ contract('Vault', accounts => {
         }
         assert.fail('should have thrown before')
       })
+
+      context('for scape hatch', () => {
+        beforeEach(async () => {
+          await vault.setScapeHatch(randomAddress)
+        })
+
+        it('correctly set scape hatch address', async () => {
+          assert.equal(await vault.getScapeHatch(), randomAddress, 'scape hatch address should match')
+        })
+
+        it('executes scape hatch successfully', async () => {
+          // sending another token to the DAO
+          const token2 = await StandardTokenPlus.new()
+          const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+          await token2.approveAndCall(dao.address, 10, data)
+
+          await vault.scapeHatch([token, token2].map(x => x.address))
+
+          assert.equal(await token.balanceOf(dao.address), 0, 'DAO should have 0 tokens after hatch')
+          assert.equal(await token2.balanceOf(dao.address), 0, 'DAO should have 0 tokens after hatch')
+
+          assert.equal(await token.balanceOf(randomAddress), 10, 'scape hatch should have all tokens')
+          assert.equal(await token2.balanceOf(randomAddress), 10, 'scape hatch should have all tokens')
+        })
+
+        it('throws if scape hatch occurs when not halted', async () => {
+          await timer(haltPeriod + 1)
+          try {
+            await vault.scapeHatch([token.address])
+          } catch (error) {
+            return assertThrow(error)
+          }
+          assert.fail('should have thrown before')
+        })
+      })
     })
   })
 })

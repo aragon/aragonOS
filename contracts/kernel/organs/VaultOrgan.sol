@@ -22,6 +22,9 @@ contract IVaultOrgan {
   function setTokenBlacklist(address _token, bool _blacklisted);
   function isTokenBlacklisted(address _token) constant returns (bool);
 
+  // recovery for tokens that were sent by error that are not accounted for
+  function recoverTokens(address _token, address _to);
+
   event Deposit(address indexed token, address indexed sender, uint256 amount);
   event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
   event NewTokenDeposit(address token);
