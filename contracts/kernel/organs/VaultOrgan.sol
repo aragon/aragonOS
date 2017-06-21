@@ -6,7 +6,7 @@ import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 
 contract IVaultOrgan {
-  function deposit(address _token, uint256 _amount);
+  function deposit(address _token, uint256 _amount) payable;
   function getTokenBalance(address _token) constant returns (uint256);
 
   function transfer(address _token, address _to, uint256 _amount);
@@ -23,18 +23,20 @@ contract IVaultOrgan {
   function isTokenBlacklisted(address _token) constant returns (bool);
 
   // recovery for tokens that were sent by error that are not accounted for
-  function recoverTokens(address _token, address _to);
+  function recover(address _token, address _to);
 
   event Deposit(address indexed token, address indexed sender, uint256 amount);
   event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
+  event Recover(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
   event NewTokenDeposit(address token);
 }
 
-contract VaultOrgan is Organ, SafeMath {
+contract VaultOrgan is IVaultOrgan, Organ, SafeMath {
   uint8 constant kernelPrimaryKey = 0x01; // probably can move ether token completely here
   uint8 constant vaultPrimaryKey = 0x05;
 
   uint8 constant balanceSecondaryKey = 0x00;
+  uint8 constant blacklistSecondaryKey = 0x04;
 
   bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, 0x01);
   bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, 0x02);
@@ -51,13 +53,14 @@ contract VaultOrgan is Organ, SafeMath {
   bytes4 constant scapeHatchSig = 0x863ca8f0;      // scapeHatch(address[])
   bytes4 constant setScapeHatchSig = 0xc4e65c99;   // setScapeHatch(address)
   bytes4 constant getScapeHatchSig = 0x4371677c;   // getScapeHatch()
-
-  event Deposit(address indexed token, address indexed sender, uint256 amount);
-  event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
-  event NewTokenDeposit(address token);
+  bytes4 constant setTknBlacklistSig = 0x1ff0769a; // setTokenBlacklist(address,bool)
+  bytes4 constant isTknBlacklistSig = 0xce9be9ba;  // isTokenBlacklisted(address)
+  bytes4 constant recoverSig = 0x648bf774;         // recover(address,address)
 
   // deposit is not reachable on purpose using normal dispatch route
-  function deposit(address _token, uint256 _amount) payable {
+  function deposit(address _token, uint256 _amount)
+           check_blacklist(_token)
+           payable {
     if (_amount == 0) return;
     if (_token == getEtherToken()) depositEther(_amount);
 
@@ -129,6 +132,25 @@ contract VaultOrgan is Organ, SafeMath {
     storageSet(scapeHatchSecondaryKey, uint256(_scapeHatch));
   }
 
+  function setTokenBlacklist(address _token, bool _blacklisted) {
+    storageSet(storageKeyForBlacklist(_token), _blacklisted ? 1 : 0);
+  }
+
+  function isTokenBlacklisted(address _token) constant returns (bool) {
+    return storageGet(storageKeyForBlacklist(_token)) == 1;
+  }
+
+  function recover(address _token, address _to) {
+    uint256 accountedBalance = getTokenBalance(_token);
+    uint256 tokenBalance = ERC20(_token).balanceOf(this);
+
+    // already checks if delta > 0 or throws
+    uint256 tokenDelta = safeSub(tokenBalance, accountedBalance);
+
+    secureTokenTransfer(_token, _to, tokenDelta);
+    Recover(_token, dao_msg().sender, tokenDelta, _to);
+  }
+
   function getScapeHatch() constant returns (address) {
     return address(storageGet(scapeHatchSecondaryKey));
   }
@@ -152,6 +174,10 @@ contract VaultOrgan is Organ, SafeMath {
     return sha3(vaultPrimaryKey, balanceSecondaryKey, _token);
   }
 
+  function storageKeyForBlacklist(address _token) internal constant returns (bytes32) {
+    return sha3(vaultPrimaryKey, blacklistSecondaryKey, _token);
+  }
+
   function setTokenBalance(address _token, uint256 _balance) internal {
     storageSet(storageKeyForBalance(_token), _balance);
   }
@@ -171,6 +197,7 @@ contract VaultOrgan is Organ, SafeMath {
     setReturnSize(getTokenBalanceSig, 32);
     setReturnSize(getHaltTimeSig, 64);  // returns 2 uints
     setReturnSize(getScapeHatchSig, 32);
+    setReturnSize(isTknBlacklistSig, 32);
   }
 
   function canHandlePayload(bytes _payload) returns (bool) {
@@ -184,22 +211,30 @@ contract VaultOrgan is Organ, SafeMath {
       sig == getHaltTimeSig ||
       sig == scapeHatchSig ||
       sig == getScapeHatchSig ||
-      sig == setScapeHatchSig;
+      sig == setScapeHatchSig ||
+      sig == isTknBlacklistSig ||
+      sig == setTknBlacklistSig ||
+      sig == recoverSig;
   }
 
   function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(0x01, 0x02)));
   }
 
-  modifier only_not_halted() {
+  modifier only_not_halted {
     var (,haltEnds) = getHaltTime();
     assert(now >= haltEnds);
     _;
   }
 
-  modifier only_halted() {
+  modifier only_halted {
     var (,haltEnds) = getHaltTime();
     assert(now < haltEnds);
+    _;
+  }
+
+  modifier check_blacklist(address _token) {
+    require(!isTokenBlacklisted(_token));
     _;
   }
 
