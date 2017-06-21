@@ -36,6 +36,10 @@ contract VaultOrgan is Organ, SafeMath {
 
   uint constant maxTokenTransferGas = 150000;
 
+  bytes4 constant getTokenBalanceSig = 0x3aecd0e3; // getTokenBalance(address)
+  bytes4 constant transferSig = 0xbeabacc8;        // transfer(address,address,uint256)
+  bytes4 constant transferEtherSig = 0x05b1137b;   // transferEther(address,uint256)
+
   event Deposit(address indexed token, address indexed sender, uint256 amount);
   event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
   event NewTokenDeposit(address token);
@@ -114,14 +118,16 @@ contract VaultOrgan is Organ, SafeMath {
   function organWasInstalled() {
     // TODO: Replace for constant for EtherToken
     MetaOrgan(this).setEtherToken(address(new EtherToken()));
-    setReturnSize(0x3aecd0e3, 32);
+    setReturnSize(getTokenBalanceSig, 32);
   }
 
   function canHandlePayload(bytes _payload) returns (bool) {
     // TODO: Really return true on handleable functions
     bytes4 sig = getFunctionSignature(_payload);
     return
-      sig == 0x3aecd0e3
+      sig == getTokenBalanceSig ||
+      sig == transferSig        ||
+      sig == transferEtherSig
     ;
   }
 
