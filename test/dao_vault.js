@@ -9,6 +9,7 @@ var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
 var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
 var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { getBalance } = require('./helpers/web3')
+const timer = require('./helpers/timer')
 
 const createDAO = () => DAO.new({ gas: 9e6 })
 
@@ -32,7 +33,7 @@ contract('Vault', accounts => {
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 
-  context('after receiving ether', () => {
+  context('when receiving ether', () => {
     let token = {}
     beforeEach(async () => {
       token = EtherToken.at(await kernel.getEtherToken())
@@ -61,11 +62,52 @@ contract('Vault', accounts => {
 
     it('throws when transfering more tokens than owned', async () => {
       try {
-        await vault.transfer(token.address, accounts[8], 11)
+        await vault.transfer(token.address, randomAddress, 11)
       } catch (error) {
         return assertThrow(error)
       }
       assert.fail('should have thrown before')
+    })
+
+    context('when halting', () => {
+      const haltPeriod = 100
+      let halting = 0
+      beforeEach(async () => {
+        halting = parseInt(+new Date()/1000)
+        await vault.halt(haltPeriod)
+      })
+
+      it('returns correct halt start and period', async () => {
+        // assert.closeTo requires numbers, that's why we need to do the BigNumber conversion here
+        const [haltTime, haltEnds] = await vault.getHaltTime().then(vs => vs.map(x => x.toNumber()))
+
+        assert.closeTo(haltTime, halting, 1, 'halt time should be correct')
+        assert.closeTo(haltEnds, halting + haltPeriod, 1, 'halt ends should be correct')
+      })
+
+      it('throws when transfering tokens during halt', async () => {
+        try {
+          await vault.transfer(token.address, randomAddress, 1)
+        } catch (error) {
+          return assertThrow(error)
+        }
+        assert.fail('should have thrown before')
+      })
+
+      it('can halt during halt and it rewrites old halt', async () => {
+        halting = parseInt(+new Date()/1000)
+        await vault.halt(500)
+        const [haltTime, haltEnds] = await vault.getHaltTime().then(vs => vs.map(x => x.toNumber()))
+
+        assert.closeTo(haltTime, halting, 1, 'halt time should be correct')
+        assert.closeTo(haltEnds, halting + 500, 1, 'halt ends should be correct')
+      })
+
+      it('can transfer again after halting period ends', async () => {
+        await timer(haltPeriod + 1)
+        await vault.transfer(token.address, randomAddress, 1)
+        assert.equal(await token.balanceOf(randomAddress), 1, 'receiver should have token balance')
+      })
     })
   })
 })

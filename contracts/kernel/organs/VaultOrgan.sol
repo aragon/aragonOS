@@ -12,9 +12,8 @@ contract IVaultOrgan {
   function transfer(address _token, address _to, uint256 _amount);
   function transferEther(address _to, uint256 _amount);
 
-  function halt();
-  function setHaltTime(uint256 _haltTime);
-  function getHaltTime() constant returns (uint256);
+  function halt(uint256 _haltTime);
+  function getHaltTime() constant returns (uint256 started, uint256 ends);
 
   function scapeHatch(address[] _tokens);
   function setScapeHatch(address _scapeHatch);
@@ -33,12 +32,20 @@ contract VaultOrgan is Organ, SafeMath {
   uint8 constant vaultPrimaryKey = 0x05;
 
   uint8 constant balanceSecondaryKey = 0x00;
+  uint8 constant haltTimeSecondaryKey = 0x01;
+  uint8 constant haltDurationSecondaryKey = 0x02;
+
+  bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, haltTimeSecondaryKey);
+  bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, haltDurationSecondaryKey);
 
   uint constant maxTokenTransferGas = 150000;
+  uint constant maxHalt = 7 days; // can be prorrogated during halt
 
   bytes4 constant getTokenBalanceSig = 0x3aecd0e3; // getTokenBalance(address)
   bytes4 constant transferSig = 0xbeabacc8;        // transfer(address,address,uint256)
   bytes4 constant transferEtherSig = 0x05b1137b;   // transferEther(address,uint256)
+  bytes4 constant haltSig = 0xfb1fad50;            // halt(uint256)
+  bytes4 constant getHaltTimeSig = 0xae2ae305;     // getHaltTime()
 
   event Deposit(address indexed token, address indexed sender, uint256 amount);
   event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
@@ -71,7 +78,8 @@ contract VaultOrgan is Organ, SafeMath {
   }
 
   // TODO: Add is halted check
-  function transfer(address _token, address _to, uint256 _amount) {
+  function transfer(address _token, address _to, uint256 _amount)
+           only_not_halted {
     uint newBalance = performTokenTransferAccounting(_token, _amount, _to);
     secureTokenTransfer(_token, _to, _amount); // perform actual transfer
 
@@ -79,13 +87,21 @@ contract VaultOrgan is Organ, SafeMath {
   }
 
   // TODO: Add is halted check
-  function transferEther(address _to, uint256 _amount) {
+  function transferEther(address _to, uint256 _amount)
+           only_not_halted {
     address etherToken = getEtherToken();
     uint newBalance = performTokenTransferAccounting(etherToken, _amount, _to);
 
     EtherToken(etherToken).secureWithdraw(_amount, _to);
 
     assert(ERC20(etherToken).balanceOf(this) == newBalance);
+  }
+
+  function halt(uint256 _haltTime) {
+    assert(_haltTime <= maxHalt);
+
+    storageSet(haltTimeKey, now);
+    storageSet(haltDurationKey, _haltTime);
   }
 
   function performTokenTransferAccounting(address _token, uint256 _amount, address _to)
@@ -115,10 +131,16 @@ contract VaultOrgan is Organ, SafeMath {
     return storageGet(storageKeyForBalance(_token));
   }
 
+  function getHaltTime() constant returns (uint256 started, uint256 ends) {
+    started = storageGet(haltTimeKey);
+    ends = safeAdd(started, storageGet(haltDurationKey));
+  }
+
   function organWasInstalled() {
     // TODO: Replace for constant for EtherToken
     MetaOrgan(this).setEtherToken(address(new EtherToken()));
     setReturnSize(getTokenBalanceSig, 32);
+    setReturnSize(getHaltTimeSig, 64);  // returns 2 uints
   }
 
   function canHandlePayload(bytes _payload) returns (bool) {
@@ -127,12 +149,26 @@ contract VaultOrgan is Organ, SafeMath {
     return
       sig == getTokenBalanceSig ||
       sig == transferSig        ||
-      sig == transferEtherSig
+      sig == transferEtherSig   ||
+      sig == haltSig            ||
+      sig == getHaltTimeSig
     ;
   }
 
   function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(0x01, 0x02)));
+  }
+
+  modifier only_not_halted() {
+    var (,haltEnds) = getHaltTime();
+    assert(now >= haltEnds);
+    _;
+  }
+
+  modifier only_halted() {
+    var (,haltEnds) = getHaltTime();
+    assert(now < haltEnds);
+    _;
   }
 
   modifier max_gas(uint max_delta) {
