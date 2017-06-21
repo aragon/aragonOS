@@ -32,11 +32,10 @@ contract VaultOrgan is Organ, SafeMath {
   uint8 constant vaultPrimaryKey = 0x05;
 
   uint8 constant balanceSecondaryKey = 0x00;
-  uint8 constant haltTimeSecondaryKey = 0x01;
-  uint8 constant haltDurationSecondaryKey = 0x02;
 
-  bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, haltTimeSecondaryKey);
-  bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, haltDurationSecondaryKey);
+  bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, 0x01);
+  bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, 0x02);
+  bytes32 constant scapeHatchSecondaryKey = sha3(vaultPrimaryKey, 0x03);
 
   uint constant maxTokenTransferGas = 150000;
   uint constant maxHalt = 7 days; // can be prorrogated during halt
@@ -46,6 +45,9 @@ contract VaultOrgan is Organ, SafeMath {
   bytes4 constant transferEtherSig = 0x05b1137b;   // transferEther(address,uint256)
   bytes4 constant haltSig = 0xfb1fad50;            // halt(uint256)
   bytes4 constant getHaltTimeSig = 0xae2ae305;     // getHaltTime()
+  bytes4 constant scapeHatchSig = 0x863ca8f0;      // scapeHatch(address[])
+  bytes4 constant setScapeHatchSig = 0xc4e65c99;   // setScapeHatch(address)
+  bytes4 constant getScapeHatchSig = 0x4371677c;   // getScapeHatch()
 
   event Deposit(address indexed token, address indexed sender, uint256 amount);
   event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
@@ -80,6 +82,10 @@ contract VaultOrgan is Organ, SafeMath {
   // TODO: Add is halted check
   function transfer(address _token, address _to, uint256 _amount)
            only_not_halted {
+    doTransfer(_token, _to, _amount);
+  }
+
+  function doTransfer(address _token, address _to, uint256 _amount) internal {
     uint newBalance = performTokenTransferAccounting(_token, _amount, _to);
     secureTokenTransfer(_token, _to, _amount); // perform actual transfer
 
@@ -102,6 +108,26 @@ contract VaultOrgan is Organ, SafeMath {
 
     storageSet(haltTimeKey, now);
     storageSet(haltDurationKey, _haltTime);
+  }
+
+  function scapeHatch(address[] _tokens)
+           only_halted {
+    address scapeHatch = getScapeHatch();
+    require(scapeHatch > 0); // check it has been set
+
+    // could go OOG but then you can always split calls in multiple calls with subsets of tokens
+    for (uint i = 0; i < _tokens.length; i++) {
+      address token = _tokens[i];
+      doTransfer(token, scapeHatch, getTokenBalance(token));
+    }
+  }
+
+  function setScapeHatch(address _scapeHatch) {
+    storageSet(scapeHatchSecondaryKey, uint256(_scapeHatch));
+  }
+
+  function getScapeHatch() constant returns (address) {
+    return address(storageGet(scapeHatchSecondaryKey));
   }
 
   function performTokenTransferAccounting(address _token, uint256 _amount, address _to)
@@ -141,6 +167,7 @@ contract VaultOrgan is Organ, SafeMath {
     MetaOrgan(this).setEtherToken(address(new EtherToken()));
     setReturnSize(getTokenBalanceSig, 32);
     setReturnSize(getHaltTimeSig, 64);  // returns 2 uints
+    setReturnSize(getScapeHatchSig, 32);
   }
 
   function canHandlePayload(bytes _payload) returns (bool) {
@@ -148,11 +175,13 @@ contract VaultOrgan is Organ, SafeMath {
     bytes4 sig = getFunctionSignature(_payload);
     return
       sig == getTokenBalanceSig ||
-      sig == transferSig        ||
-      sig == transferEtherSig   ||
-      sig == haltSig            ||
-      sig == getHaltTimeSig
-    ;
+      sig == transferSig ||
+      sig == transferEtherSig ||
+      sig == haltSig ||
+      sig == getHaltTimeSig ||
+      sig == scapeHatchSig ||
+      sig == getScapeHatchSig ||
+      sig == setScapeHatchSig;
   }
 
   function getEtherToken() constant returns (address) {
