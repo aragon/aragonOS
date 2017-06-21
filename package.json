@@ -4,7 +4,6 @@
   "description": "Core contracts for Aragon",
   "main": "index.js",
   "scripts": {
-    "prepublish": "truffle compile",
     "test": "truffle test"
   },
   "files": [
