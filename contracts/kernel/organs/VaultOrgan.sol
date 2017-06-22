@@ -4,7 +4,7 @@ import "../../tokens/EtherToken.sol";
 import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 
-contract IVaultOrgan {
+contract IVaultOrgan is IOrgan {
   function deposit(address _token, uint256 _amount) payable;
   function getTokenBalance(address _token) constant returns (uint256);
 
@@ -30,7 +30,7 @@ contract IVaultOrgan {
   event NewTokenDeposit(address token);
 }
 
-contract VaultOrgan is IVaultOrgan, Organ, SafeMath {
+contract VaultOrgan is IVaultOrgan, SafeMath {
   uint8 constant kernelPrimaryKey = 0x01; // TODO: move ether token logic completely here
   uint8 constant vaultPrimaryKey = 0x05;
 
