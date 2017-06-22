@@ -1,8 +1,8 @@
 pragma solidity ^0.4.11;
 
-import "./Organ.sol";
+import "./IOrgan.sol";
 
-contract TokensOrgan is Organ {
+contract TokensOrgan is IOrgan {
   function addToken(address token) returns (uint256) {
     uint tokenId = getTokenCount();
     storageSet(getStorageKeyForToken(tokenId), uint256(token));

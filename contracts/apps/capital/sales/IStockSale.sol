@@ -1,6 +1,6 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
-contract AbstractStockSale {
+contract IStockSale {
   function raiseMaximum() constant returns (uint256);
   function raiseTarget() constant returns (uint256);
 
@@ -14,7 +14,7 @@ contract AbstractStockSale {
 
   function buy(address holder) payable;
   function sell();
-  
+
   function transferFunds();
 
   event TokensBought(address indexed buyer, uint256 units, uint256 price);

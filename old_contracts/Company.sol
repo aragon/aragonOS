@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "./AbstractCompany.sol";
+import "./ICompany.sol";
 
 import "./accounting/AccountingLib.sol";
 import "../bylaws/BylawsLib.sol";
@@ -12,9 +12,9 @@ import "./stocks/IssueableStock.sol";
 import "./votes/BinaryVoting.sol";
 import "./votes/GenericBinaryVoting.sol";
 
-// import "./sales/AbstractStockSale.sol";
+// import "./sales/IStockSale.sol";
 
-contract Company is AbstractCompany {
+contract Company is ICompany {
   using AccountingLib for AccountingLib.AccountingLedger;
   using BylawsLib for BylawsLib.Bylaws;
   using BylawsLib for BylawsLib.Bylaw;
@@ -30,7 +30,7 @@ contract Company is AbstractCompany {
     accounting.init(1 ether, 4 weeks, 1 wei); // Init with 1 ether budget and 1 moon period
     votings.init();
     // Make contract deployer executive
-    setStatus(msg.sender, uint8(AbstractCompany.EntityStatus.God));
+    setStatus(msg.sender, uint8(ICompany.EntityStatus.God));
   }
 
   modifier checkBylaws {
@@ -235,7 +235,7 @@ contract Company is AbstractCompany {
   // stock sales
 
   function beginSale(address saleAddress) checkBylaws public {
-    AbstractStockSale sale = AbstractStockSale(saleAddress);
+    IStockSale sale = IStockSale(saleAddress);
     if (sale.companyAddress() != address(this)) throw;
 
     sales[saleIndex] = saleAddress;
@@ -246,7 +246,7 @@ contract Company is AbstractCompany {
   }
 
   function transferSaleFunds(uint256 _sale) checkBylaws public {
-    AbstractStockSale(sales[_sale]).transferFunds();
+    IStockSale(sales[_sale]).transferFunds();
   }
 
   function isStockSale(address entity) constant public returns (bool) {

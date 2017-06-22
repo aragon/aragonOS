@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./Voting.sol";
-import "../AbstractCompany.sol";
+import "../ICompany.sol";
 
 contract BinaryVoting is Voting {
   enum VotingOption {
@@ -15,7 +15,7 @@ contract BinaryVoting is Voting {
     lockVoting();
   }
 
-  function executeOnAction(uint8 option, AbstractCompany company) {
+  function executeOnAction(uint8 option, ICompany company) {
     if (option == uint8(VotingOption.Favor)) return executeOnAppove(company);
     // if (option == uint8(VotingOption.Against)) return executeOnReject(company);
   }
@@ -24,5 +24,5 @@ contract BinaryVoting is Voting {
     return 0x0;
   }
 
-  function executeOnAppove(AbstractCompany company) internal;
+  function executeOnAppove(ICompany company) internal;
 }

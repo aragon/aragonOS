@@ -1,10 +1,10 @@
 pragma solidity ^0.4.11;
 
-import "./Organ.sol";
+import "./IOrgan.sol";
 import "../../tokens/EtherToken.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
-contract MetaOrgan is Organ {
+contract MetaOrgan is IOrgan {
   bytes32 constant etherTokenKey = sha3(0x01, 0x02);
   bytes32 constant permissionsOracleKey = sha3(0x01, 0x03);
 

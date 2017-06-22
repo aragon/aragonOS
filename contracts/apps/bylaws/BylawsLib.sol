@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "../../../old_contracts/AbstractCompany.sol";
+import "../../../old_contracts/ICompany.sol";
 import "./BylawOracle.sol";
 import "../Application.sol";
 
@@ -160,9 +160,9 @@ library BylawsLib {
 
   function performedAction(Bylaw storage b, bytes4 sig, address sender) {
     if (b.voting.enforced) {
-      uint256 votingId = AbstractCompany(this).reverseVoting(sender);
+      uint256 votingId = ICompany(this).reverseVoting(sender);
       if (votingId == 0) return;
-      AbstractCompany(this).setVotingExecuted(votingId, b.voting.approveOption);
+      ICompany(this).setVotingExecuted(votingId, b.voting.approveOption);
     }
   }
 
@@ -183,14 +183,14 @@ library BylawsLib {
   }
 
   function checkVoting(address voteAddress, VotingBylaw votingBylaw) internal returns (bool, uint256) {
-    uint256 votingId = AbstractCompany(this).reverseVoting(voteAddress);
-    var (_voteAddress, startDate, closeDate, isExecuted,) = AbstractCompany(this).getVotingInfo(votingId);
+    uint256 votingId = ICompany(this).reverseVoting(voteAddress);
+    var (_voteAddress, startDate, closeDate, isExecuted,) = ICompany(this).getVotingInfo(votingId);
 
     if (votingId == 0) return (false, 0);
     if (isExecuted) return (false, 0);
     if (closeDate - startDate < votingBylaw.minimumVotingTime) return (false, 0);
 
-    var (v, totalCastedVotes, votingPower) = AbstractCompany(this).countVotes(votingId, votingBylaw.approveOption);
+    var (v, totalCastedVotes, votingPower) = ICompany(this).countVotes(votingId, votingBylaw.approveOption);
 
     if (v == 0 && votingBylaw.supportNeeded > 0) return (false, 0);
 
@@ -210,7 +210,7 @@ library BylawsLib {
   }
 
   function countVotes(uint256 votingId, uint8 optionId) internal returns (uint256 votes, uint256 totalCastedVotes, uint256 votingPower) {
-    return AbstractCompany(this).countVotes(votingId, optionId);
+    return ICompany(this).countVotes(votingId, optionId);
   }
 
   function app() constant returns (Application) {

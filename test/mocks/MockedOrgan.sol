@@ -1,8 +1,8 @@
 pragma solidity ^0.4.11;
 
-import "../../contracts/kernel/organs/Organ.sol";
+import "../../contracts/kernel/organs/IOrgan.sol";
 
-contract MockedOrgan is Organ {
+contract MockedOrgan is IOrgan {
   function organWasInstalled() {
     setReturnSize(bytes4(sha3('mock_getNumber()')), 32);
     setReturnSize(bytes4(sha3('mock_getSender()')), 32);

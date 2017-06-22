@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 
-import "../../apps/AbstractApplication.sol";
-import "./Organ.sol";
+import "../../apps/IApplication.sol";
+import "./IOrgan.sol";
 
-contract ApplicationOrgan is Organ {
+contract ApplicationOrgan is IOrgan {
   // AppOrgan intercepts all the calls
   function canHandlePayload(bytes payload) public returns (bool) {
     return true;
@@ -22,7 +22,7 @@ contract ApplicationOrgan is Organ {
     address responsiveApplication = getResponsiveApplication(msg.data);
     assert(responsiveApplication > 0);
 
-    AbstractApplication app = AbstractApplication(responsiveApplication);
+    IApplication app = IApplication(responsiveApplication);
     DAOMessage memory daomsg = dao_msg();
     app.setDAOMsg(daomsg.sender, daomsg.token, daomsg.value); // TODO: check reentrancy risks
     assert(app.call(msg.data)); // every app is sandboxed
@@ -37,7 +37,7 @@ contract ApplicationOrgan is Organ {
     while (true) {
       address applicationAddress = getApp(i);
       if (applicationAddress == 0) return 0;  // if a 0 address is returned it means, there is no more apps.
-      if (AbstractApplication(applicationAddress).canHandlePayload(payload)) return applicationAddress;
+      if (IApplication(applicationAddress).canHandlePayload(payload)) return applicationAddress;
       i++;
     }
   }
