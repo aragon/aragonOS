@@ -15,20 +15,40 @@ import "zeppelin/token/ERC20.sol";
 
 // TODO: Add token controller functions so it doesn't fail
 contract OwnershipApp is Application, Controller, Requestor {
+  struct Token {
+    address tokenAddress;
+    uint128 governanceRights;
+    uint128 economicRights;
+  }
+
+  Token[] tokens;
+  uint8 constant maxTokens = 20; // prevent OOGs when tokens are iterated
+
   function OwnershipApp(address daoAddr)
            Application(daoAddr) {}
 
-  function addToken(address tokenAddress, uint256 issueAmount) onlyDAO {
+  function addToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
-
     require(MiniMeToken(tokenAddress).controller() == dao);
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
+    tokens.push(Token(tokenAddress, governanceRights, economicRights));
     if (issueAmount > 0) issueTokens(tokenId, issueAmount);
   }
 
   function removeToken(uint256 tokenId) onlyDAO {
     TokensOrgan(dao).removeToken(tokenId);
+    if (tokens.length > 1) tokens[tokenId] = tokens[tokens.length - 1];
+    tokens.length--;
+  }
+
+  function getTokenCount() constant returns (uint) {
+    return tokens.length;
+  }
+
+  function getToken(uint tokenId) constant returns (address, uint128, uint128) {
+    Token token = tokens[tokenId];
+    return (token.tokenAddress, token.governanceRights, token.economicRights);
   }
 
   function issueTokens(uint256 tokenId, uint256 amount) onlyDAO {
