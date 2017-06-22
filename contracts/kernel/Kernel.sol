@@ -75,14 +75,14 @@ contract Kernel is IKernel, DAOStorage {
   // @param value: Transaction's sent ETH value
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
-    address etherTokenAddress = getEtherToken();
-    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrap.value(value)();
-    dispatch(sender, etherTokenAddress, value, data);
+    dispatch(sender, getEtherToken(), value, data);
   }
 
   // @dev Sends the transaction to the dispatcher organ
   function dispatch(address sender, address token, uint256 value, bytes payload) internal {
     require(canPerformAction(sender, token, value, payload));
+
+    vaultDeposit(token, value); // deposit tokens that come with the call in the vault
 
     performedAction(sender, token, value, payload); // TODO: Check reentrancy implications
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
@@ -116,6 +116,13 @@ contract Kernel is IKernel, DAOStorage {
 
   function getStorageKeyForPayload(bytes32 _payload) constant internal returns (bytes32) {
     return sha3(0x01, 0x01, _payload);
+  }
+
+  function vaultDeposit(address token, uint256 amount) internal {
+    address vaultOrgan = getOrgan(3);
+    if (amount == 0 || vaultOrgan == 0) return;
+
+    assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
   }
 
   function getEtherToken() constant returns (address) {
