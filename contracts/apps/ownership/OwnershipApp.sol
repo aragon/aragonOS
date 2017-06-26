@@ -13,7 +13,6 @@ import "zeppelin/token/ERC20.sol";
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
 
-// TODO: Add token controller functions so it doesn't fail
 contract OwnershipApp is Application, Controller, Requestor {
   struct Token {
     address tokenAddress;
@@ -27,16 +26,17 @@ contract OwnershipApp is Application, Controller, Requestor {
   function OwnershipApp(address daoAddr)
            Application(daoAddr) {}
 
-  function addToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
+  function addOrgToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
     require(MiniMeToken(tokenAddress).controller() == dao);
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
-    tokens.push(Token(tokenAddress, governanceRights, economicRights));
+    uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights));
+    assert(tokenId == newLength - 1 && newLength <= maxTokens);
     if (issueAmount > 0) issueTokens(tokenId, issueAmount);
   }
 
-  function removeToken(uint256 tokenId) onlyDAO {
+  function removeOrgToken(uint256 tokenId) onlyDAO {
     TokensOrgan(dao).removeToken(tokenId);
     if (tokens.length > 1) tokens[tokenId] = tokens[tokens.length - 1];
     tokens.length--;
@@ -46,7 +46,7 @@ contract OwnershipApp is Application, Controller, Requestor {
     return tokens.length;
   }
 
-  function getToken(uint tokenId) constant returns (address, uint128, uint128) {
+  function getOrgToken(uint tokenId) constant returns (address, uint128, uint128) {
     Token token = tokens[tokenId];
     return (token.tokenAddress, token.governanceRights, token.economicRights);
   }
@@ -78,7 +78,8 @@ contract OwnershipApp is Application, Controller, Requestor {
   }
 
   function getTokenAddress(uint256 i) constant returns (address) {
-    return TokensOrgan(dao).getToken(i);
+    var (tokenAddr,,) = getOrgToken(i);
+    return tokenAddr;
   }
 
   function proxyPayment(address _owner) payable returns (bool) {
@@ -96,11 +97,12 @@ contract OwnershipApp is Application, Controller, Requestor {
   function canHandlePayload(bytes payload) constant returns (bool) {
     bytes4 sig = getSig(payload);
     return
-      sig == 0xaf81c5b9 || // addToken(address,uint256)
-      sig == 0x36c5d724 || // removeToken(uint256)
+      sig == 0x96527cf2 || // addOrgToken(address,uint256,uint128,uint128)
+      sig == 0x0418adf7 || // removeOrgToken(uint256)
       sig == 0x54e35ba2 || // issueTokens(address,uint256)
       sig == 0xec680c49 || // grantTokens(...)
       sig == 0x4a11f5bb || // grantVestedTokens(...)
+      sig == 0xf594ba59 || // getOrgToken(uint256)
       isTokenControllerSignature(sig);
   }
 
