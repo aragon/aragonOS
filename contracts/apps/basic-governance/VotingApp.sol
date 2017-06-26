@@ -8,7 +8,7 @@ import "../Application.sol";
 contract IVotingApp {
   event VoteCreated(uint voteId, address voteAddress);
   event VoteStarted(uint indexed voteId);
-  event VoteCasted(uint indexed voteId, address voter, bool isYay);
+  event VoteCasted(uint indexed voteId, address voter, bool isYay, uint votes);
   event VoteClosed(uint indexed voteId);
 }
 
@@ -26,11 +26,15 @@ contract VotingApp is IVotingApp, Application {
   }
 
   struct Vote {
+    VoteState state;
+
+    address voteCreator;
     address voteAddress;
     uint64 voteCreatedBlock;
     uint64 voteStartsBlock;
     uint64 voteEndsBlock;
     uint256 targetYayPct; // Allows to close vote before hand. % * 10^16 (pe. 5% = 5 * 10^16)
+    uint256 targetYays;
 
     address[] governanceTokens;
     uint128[] votingWeights;
@@ -39,20 +43,34 @@ contract VotingApp is IVotingApp, Application {
     uint256 yays;
     uint256 nays;
     mapping (address => uint) voted; // 1 for yay, 2 for nay
-
-    VoteState state;
   }
 
+  uint constant pctBase = 10 ** 18;
   Vote[] votes;
   mapping (address => uint) voteForAddress;
+
+  function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
+    Vote storage vote = votes[voteId];
+    state = vote.state;
+    voteCreator = vote.voteCreator;
+    voteAddress = vote.voteAddress;
+    voteCreatedBlock = vote.voteCreatedBlock;
+    voteStartsBlock = vote.voteStartsBlock;
+    voteEndsBlock = vote.voteEndsBlock;
+    yays = vote.yays;
+    nays = vote.nays;
+    totalQuorum = vote.totalQuorum;
+  }
 
   function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock, uint256 _targetYayPct) onlyDAO {
     uint voteId = votes.length;
     votes.length++;
 
-    require(getBlockNumber() < _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
+    require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
+    require(_targetYayPct <= pctBase);
 
     Vote vote = votes[voteId];
+    vote.voteCreator = dao_msg.sender;
     vote.voteAddress = _voteAddress;
     vote.voteCreatedBlock = getBlockNumber();
     vote.voteStartsBlock = _voteStartsBlock;
@@ -61,6 +79,7 @@ contract VotingApp is IVotingApp, Application {
     voteForAddress[_voteAddress] = voteId;
 
     VoteCreated(voteId, _voteAddress);
+    transitionStateIfChanged(voteId);
   }
 
   function voteYay(uint voteId) {
@@ -95,7 +114,7 @@ contract VotingApp is IVotingApp, Application {
 
     vote.voted[voter] = isYay ? 1 : 2;
 
-    VoteCasted(voteId, voter, isYay);
+    VoteCasted(voteId, voter, isYay, totalStake);
   }
 
   function getSender() internal returns (address) {
@@ -111,7 +130,7 @@ contract VotingApp is IVotingApp, Application {
       VoteStarted(voteId);
     }
 
-    if (vote.state == VoteState.Voting && (vote.targetYayPct >= vote.yays || getBlockNumber() >= vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
+    if (vote.state == VoteState.Voting && (vote.yays >= vote.targetYays || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
       vote.state = VoteState.Closed;
       VoteClosed(voteId);
     }
@@ -128,9 +147,14 @@ contract VotingApp is IVotingApp, Application {
         vote.governanceTokens.push(tokenAddress);
         vote.votingWeights.push(governanceRights);
         uint tokenSupply = MiniMeToken(tokenAddress).totalSupplyAt(vote.voteStartsBlock);
-        vote.totalQuorum += governanceRights * tokenSupply;
+        vote.totalQuorum += governanceRights * (tokenSupply - MiniMeToken(tokenAddress).balanceOfAt(dao, vote.voteStartsBlock));
       }
     }
+
+    // we calculate and save once to avoid being calculated on every vote
+    vote.targetYays = vote.totalQuorum * vote.targetYayPct / pctBase;
+    vote.targetYayPct = 0; // after being set, we get gas refund
+
     assert(vote.votingWeights.length == vote.governanceTokens.length);
   }
 
@@ -142,6 +166,11 @@ contract VotingApp is IVotingApp, Application {
   // @dev just for mocking purposes
   function getBlockNumber() internal returns (uint64) {
     return uint64(block.number);
+  }
+
+  // TODO: Make only handleable payloads
+  function canHandlePayload(bytes payload) constant returns (bool) {
+    return true;
   }
 
   modifier transitions_state(uint voteId) {
