@@ -1,54 +1,221 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-import "./BylawsLib.sol";
 import "../../kernel/Kernel.sol";
 
-contract BylawsApp is Application, PermissionsOracle {
-  using BylawsLib for BylawsLib.Bylaws;
-  using BylawsLib for BylawsLib.Bylaw;
+import "./BylawOracle.sol";
+import "../Application.sol";
 
-  event BylawChanged(string functionSignature, uint8 bylawType);
+import "../status/StatusApp.sol";
+import "../capital/CapitalApp.sol";
 
-  BylawsLib.Bylaws bylaws;
+contract IVotingApp {
+  function getStatusForVoteAddress(address addr) constant returns (uint state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum);
+}
 
-  function BylawsApp(address _dao)
-           Application(_dao) {}
+contract IBylawsApp {
+  event BylawChanged(bytes4 sig, uint8 bylawType);
+}
 
-  // Conformance to permission oracle interface
+contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
+  enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
+  enum CombinatorType { Or, And, Xor }
+
+  struct Bylaw {
+    BylawType bylawType;
+
+    bool not; // reverse logic
+
+    // a bylaw can be one of these types
+    uint8 status; // For status and special status types
+    address addr; // For address and oracle types
+    VotingBylaw voting;
+    CombinatorBylaw combinator;
+  }
+
+  struct VotingBylaw {
+    uint256 supportPct;       // 16pct % * 10^16 (pe. 5% = 5 * 10^16)
+    uint256 minQuorumPct;     // 16pct
+
+    uint64 minimumDebateTime; // in blocks
+    uint64 minimumVotingTime; // in blocks
+  }
+
+  struct CombinatorBylaw {
+    CombinatorType combinatorType; // if TRUE combinator is AND, if false is an OR combinator
+    uint256 leftBylawId;
+    uint256 rightBylawId;
+  }
+
+  Bylaw[] bylaws;
+  mapping (bytes4 => uint) bylawEntrypoint;
+
+  uint constant pctBase = 10 ** 18;
+
+  function BylawsApp(address dao)
+           Application(dao) {
+    newBylaw(); // so index is 1 for first legit bylaw
+  }
+
+  function canHandlePayload(bytes payload) constant returns (bool) {
+    return true;
+  }
+
+  function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
+    id = bylaws.length;
+    bylaws.length++;
+    newBylaw = bylaws[id];
+  }
+
+  // @dev Links a signature entry point to a bylaw.
+  // @dev It is the only function that needs to be protected as it
+  // @dev a nice side effect is that multiple actions can share the same bylaw
+  function linkBylaw(bytes4 sig, uint id) onlyDAO {
+    require(id < bylaws.length);
+    bylawEntrypoint[sig] = id;
+
+    BylawChanged(sig, getBylawType(id));
+  }
+
+  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
+    bylaw.status = statusNeeded;
+
+    linkBylaw(sig, id);
+  }
+
+  function setAddressBylaw(bytes4 sig, address addr, bool isOracle) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
+    bylaw.addr = addr;
+
+    linkBylaw(sig, id);
+  }
+
+  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime) {
+    var (id, bylaw) = newBylaw();
+
+    require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
+
+    bylaw.bylawType = BylawType.Voting;
+    bylaw.voting.supportPct = supportPct;
+    bylaw.voting.minQuorumPct = minQuorumPct;
+    bylaw.voting.minimumDebateTime = minimumDebateTime;
+    bylaw.voting.minimumVotingTime = minimumVotingTime;
+
+    linkBylaw(sig, id);
+  }
+
+  function getBylawType(uint bylawId) constant returns (uint8) {
+    return uint8(bylaws[bylawId].bylawType);
+  }
+
+  // Permissions Oracle compatibility
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
-    return canPerformAction(getSig(data), sender, data);
+    return canPerformAction(getSig(data), sender, data, token, value);
   }
 
   function performedAction(address sender, address token, uint256 value, bytes data) {}
 
-  function canPerformAction(bytes4 sig, address sender, bytes data) constant public returns (bool) {
-    return canPerformAction(bylaws.bylaws[sig], sig, sender, data);
+  function canPerformAction(bytes4 sig, address sender, bytes data, address token, uint256 value) returns (bool) {
+    uint bylawId = bylawEntrypoint[sig];
+
+    // not existent bylaw, always allow action.
+    if (bylawId == 0) return true;
+
+    return canPerformAction(bylawId, sender, data, token, value);
   }
 
-  function canPerformAction(BylawsLib.Bylaw storage bylaw, bytes4 sig, address sender, bytes data) internal returns (bool) {
-    return bylaw.canPerformAction(sig, sender, data, msg.value);
+  function canPerformAction(uint bylawId, address sender, bytes data, address token, uint256 value) internal returns (bool) {
+    Bylaw storage bylaw = bylaws[bylawId];
+    if (bylaw.bylawType == BylawType.SpecialStatus) {
+      return negateIfNeeded(isSpecialStatus(sender, bylaw.status), bylaw.not);
+    }
+
+    if (bylaw.bylawType == BylawType.Status) {
+      return negateIfNeeded(getStatus(sender) >= bylaw.status, bylaw.not);
+    }
+
+    if (bylaw.bylawType == BylawType.Address) {
+      return negateIfNeeded(sender == bylaw.addr, bylaw.not);
+    }
+
+    if (bylaw.bylawType == BylawType.Oracle) {
+      // var (canPerform,) = BylawOracle(b.addr).canPerformAction(sender, sig, data, value);
+      return true; // canPerform; && !bylaw.not
+    }
+
+    if (bylaw.bylawType == BylawType.Voting) {}
+
+    if (bylaw.bylawType == BylawType.Combinator) {
+      return negateIfNeeded(computeCombinatorBylaw(bylaw, sender, data, token, value), bylaw.not);
+    }
   }
 
-  // Sensitive setters
-  function setStatusBylaw(string functionSignature, uint8 statusNeeded, bool isSpecialStatus)
-           onlyDAO {
-    bylaws.setStatusBylaw(functionSignature, statusNeeded, isSpecialStatus);
+  function computeCombinatorBylaw(Bylaw storage bylaw, address sender, bytes data, address token, uint256 value) internal returns (bool) {
+    bool leftResult = canPerformAction(bylaw.combinator.leftBylawId, sender, data, token, value);
+
+    // shortcuts
+    if (leftResult && bylaw.combinator.combinatorType == CombinatorType.Or) return true;
+    if (!leftResult && bylaw.combinator.combinatorType == CombinatorType.And) return false;
+
+    bool rightResult = canPerformAction(bylaw.combinator.rightBylawId, sender, data, token, value);
+
+    // For or and, this always finishes the execution
+    if (!rightResult && bylaw.combinator.combinatorType == CombinatorType.Or) return false;
+    if (rightResult && bylaw.combinator.combinatorType == CombinatorType.And) return true;
+
+    // redundant as and/or where solved already
+    if (bylaw.combinator.combinatorType == CombinatorType.Xor) {
+      return (leftResult && !rightResult) || (!leftResult && rightResult);
+    }
   }
 
-  function setAddressBylaw(string functionSignature, address addr, bool isOracle)
-           onlyDAO {
-    bylaws.setAddressBylaw(functionSignature, addr, isOracle);
+  function negateIfNeeded(bool result, bool negate) returns (bool) {
+    return negate ? !result : result;
   }
 
-  function setVotingBylaw(string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option)
-           onlyDAO {
-    bylaws.setVotingBylaw(functionSignature, support, base, closingRelativeMajority, minimumVotingTime, option);
+  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
+    return true;
   }
 
-  // Read functions
-  function getBylawType(string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
-    return bylaws.getBylawType(functionSignature);
+  function getStatus(address entity) internal returns (uint8) {
+    return 1;
+  }
+
+  function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
+    IVotingApp votingApp = IVotingApp(0);
+    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
+
+    // check votign timing is correct
+    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minimumDebateTime) return false;
+    if (voteEndsBlock - voteStartsBlock < votingBylaw.minimumVotingTime) return false;
+
+    uint256 quorum = yays + nays;
+    uint256 yaysPct = yays * pctBase / quorum;
+    uint256 quorumPct = quorum * pctBase / totalQuorum;
+
+    return yaysPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
+  }
+
+  /*
+  function getStatus(address entity) internal returns (uint8) {
+    return StatusApp(app().dao()).entityStatus(entity);
+  }
+
+  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
+    CapitalApp.SpecialEntityStatus status = CapitalApp.SpecialEntityStatus(neededStatus);
+
+    if (status == CapitalApp.SpecialEntityStatus.Shareholder) {
+      return CapitalApp(app().dao()).isHolder(entity);
+    }
+
+    if (status == CapitalApp.SpecialEntityStatus.StockSale) {
+      return CapitalApp(app().dao()).isTokenSale(entity);
+    }
   }
 
   function getStatusBylaw(string functionSignature) constant returns (uint8) {
@@ -82,12 +249,5 @@ contract BylawsApp is Application, PermissionsOracle {
 
     return b.addr;
   }
-
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    bytes4 sig = getSig(payload);
-    return
-      sig == 0xde64e15c || // setStatusBylaw(string,uint8,bool)
-      sig == 0x010555b8 || // setAddressBylaw(...)
-      sig == 0x69207f04;   // setVotingBylaw(...)
-  }
+  */
 }
