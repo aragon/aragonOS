@@ -49,19 +49,6 @@ contract VotingApp is IVotingApp, Application {
   Vote[] votes;
   mapping (address => uint) voteForAddress;
 
-  function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
-    Vote storage vote = votes[voteId];
-    state = vote.state;
-    voteCreator = vote.voteCreator;
-    voteAddress = vote.voteAddress;
-    voteCreatedBlock = vote.voteCreatedBlock;
-    voteStartsBlock = vote.voteStartsBlock;
-    voteEndsBlock = vote.voteEndsBlock;
-    yays = vote.yays;
-    nays = vote.nays;
-    totalQuorum = vote.totalQuorum;
-  }
-
   function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock, uint256 _targetYayPct) onlyDAO {
     uint voteId = votes.length;
     votes.length++;
@@ -115,6 +102,23 @@ contract VotingApp is IVotingApp, Application {
     vote.voted[voter] = isYay ? 1 : 2;
 
     VoteCasted(voteId, voter, isYay, totalStake);
+  }
+
+  function getStatusForVoteAddress(address addr) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
+    return getVoteStatus(voteForAddress[addr]);
+  }
+
+  function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
+    Vote storage vote = votes[voteId];
+    state = vote.state;
+    voteCreator = vote.voteCreator;
+    voteAddress = vote.voteAddress;
+    voteCreatedBlock = vote.voteCreatedBlock;
+    voteStartsBlock = vote.voteStartsBlock;
+    voteEndsBlock = vote.voteEndsBlock;
+    yays = vote.yays;
+    nays = vote.nays;
+    totalQuorum = vote.totalQuorum;
   }
 
   function getSender() internal returns (address) {
