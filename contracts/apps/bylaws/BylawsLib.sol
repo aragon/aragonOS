@@ -7,165 +7,164 @@ import "../Application.sol";
 import "../status/StatusApp.sol";
 import "../capital/CapitalApp.sol";
 
-library BylawsLib {
-  struct Bylaws {
-    mapping (bytes4 => Bylaw) bylaws; // function signature to bylaw
-  }
+contract BylawsApp {
+  event BylawChanged(bytes4 sig, uint8 bylawType);
 
-  event BylawChanged(string functionSignature, uint8 bylawType);
+  enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
+  enum CombinatorType { Or, And, Xor }
 
   struct Bylaw {
-    StatusBylaw status;
+    BylawType bylawType;
+
+    bool not; // reverse logic
+
+    // a bylaw can be one of these types
+    uint8 status; // For status and special status types
+    address addr; // For address and oracle types
     VotingBylaw voting;
-    AddressBylaw addr;
 
-    uint64 updated;
-    address updatedBy;
-  }
-
-  struct AddressBylaw {
-    address addr;
-    bool isOracle;
-    bool enforced;
-  }
-
-  struct StatusBylaw {
-    uint8 neededStatus;
-    bool isSpecialStatus;
-    bool enforced;
+    CombinatorBylaw combinator;
   }
 
   struct VotingBylaw {
-    uint256 supportNeeded;
-    uint256 supportBase;
-    uint8 approveOption;
+    uint256 supportPct;       // 16pct % * 10^16 (pe. 5% = 5 * 10^16)
+    uint256 minQuorumPct;     // 16pct
 
-    bool closingRelativeMajority; // When voting date is finished
-    uint64 minimumVotingTime;
-
-    bool enforced;
+    uint64 minimumDebateTime; // in blocks
+    uint64 minimumVotingTime; // in blocks
   }
 
-  function initBylaw() internal returns (Bylaw memory) {
-    return Bylaw(StatusBylaw(0,false,false), VotingBylaw(0,0,0,false,0,false), AddressBylaw(0x0,false,false), 0, 0x0); // zeroed bylaw
+  struct CombinatorBylaw {
+    CombinatorType combinatorType; // if TRUE combinator is AND, if false is an OR combinator
+    uint256 leftBylawId;
+    uint256 rightBylawId;
   }
 
-  function keyForFunctionSignature(string functionSignature) returns (bytes4) {
-    return bytes4(sha3(functionSignature));
+  Bylaw[] bylaws;
+  mapping (bytes4 => uint) bylawEntrypoint;
+
+  uint constant pctBase = 10 ** 18;
+
+  function BylawsApp() {
+    newBylaw(); // so index is 1 for first legit bylaw
   }
 
-  function setStatusBylaw(Bylaws storage self, string functionSignature, uint8 statusNeeded, bool isSpecialStatus) {
-    BylawsLib.Bylaw memory bylaw = initBylaw();
-    bylaw.status.neededStatus = statusNeeded;
-    bylaw.status.isSpecialStatus = isSpecialStatus;
-    bylaw.status.enforced = true;
-
-    addBylaw(self, functionSignature, bylaw);
+  function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
+    id = bylaws.length;
+    bylaws.length++;
+    newBylaw = bylaws[id];
   }
 
-  function setAddressBylaw(Bylaws storage self, string functionSignature, address addr, bool isOracle) {
-    BylawsLib.Bylaw memory bylaw = initBylaw();
-    bylaw.addr.addr = addr;
-    bylaw.addr.isOracle = isOracle;
-    bylaw.addr.enforced = true;
+  function linkBylaw(bytes4 sig, uint id) {
+    bylawEntrypoint[sig] = id;
 
-    addBylaw(self, functionSignature, bylaw);
+    BylawChanged(sig, getBylawType(id));
   }
 
-  function setVotingBylaw(Bylaws storage self, string functionSignature, uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime, uint8 option) {
-    BylawsLib.Bylaw memory bylaw = initBylaw();
+  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus) {
+    var (id, bylaw) = newBylaw();
 
-    bylaw.voting.supportNeeded = support;
-    bylaw.voting.supportBase = base;
-    bylaw.voting.closingRelativeMajority = closingRelativeMajority;
+    bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
+    bylaw.status = statusNeeded;
+
+    linkBylaw(sig, id);
+  }
+
+  function setAddressBylaw(bytes4 sig, address addr, bool isOracle) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
+    bylaw.addr = addr;
+
+    linkBylaw(sig, id);
+  }
+
+  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = BylawType.Voting;
+    bylaw.voting.supportPct = supportPct;
+    bylaw.voting.minQuorumPct = minQuorumPct;
+    bylaw.voting.minimumDebateTime = minimumDebateTime;
     bylaw.voting.minimumVotingTime = minimumVotingTime;
-    bylaw.voting.approveOption = option;
-    bylaw.voting.enforced = true;
 
-    addBylaw(self, functionSignature, bylaw);
+    linkBylaw(sig, id);
   }
 
-  function addBylaw(Bylaws storage self, string functionSignature, Bylaw memory bylaw) internal {
-    addBylaw(self, keyForFunctionSignature(functionSignature), bylaw);
-    var (t,) = getBylawType(self, functionSignature);
-    BylawChanged(functionSignature, t);
+
+  function getBylawType(uint bylawId) constant returns (uint8) {
+    return uint8(bylaws[bylawId].bylawType);
   }
 
-  function addBylaw(Bylaws storage self, bytes4 key, Bylaw memory bylaw) internal {
-    self.bylaws[key] = bylaw;
-    self.bylaws[key].updated = uint64(now);
-    self.bylaws[key].updatedBy = msg.sender; // FIX: sender will always be DAO
+
+  function canPerformAction(bytes4 sig, address sender, bytes data, address token, uint256 value) returns (bool) {
+    uint bylawId = bylawEntrypoint[sig];
+
+    // not existent bylaw, always allow action.
+    if (bylawId == 0) return true;
+
+    return canPerformAction(bylawId, sender, data, token, value);
   }
 
-  function getBylawType(Bylaws storage self, string functionSignature) constant returns (uint8 bylawType, uint64 updated, address updatedBy) {
-    BylawsLib.Bylaw memory b = getBylaw(self, functionSignature);
-    updated = b.updated;
-    updatedBy = b.updatedBy;
-
-    if (b.voting.enforced) bylawType = 0;
-    if (b.status.enforced) {
-      if (b.status.isSpecialStatus) { bylawType = 2; }
-      else {
-        bylawType = 1;
-      }
-    }
-    if (b.addr.enforced) {
-      if (b.addr.isOracle) { bylawType = 4; }
-      else {
-        bylawType = 3;
-      }
-    }
-  }
-
-  function getBylaw(Bylaws storage self, string functionSignature) internal returns (Bylaw) {
-    return getBylaw(self, keyForFunctionSignature(functionSignature));
-  }
-
-  function getBylaw(Bylaws storage self, bytes4 sig) internal returns (Bylaw storage) {
-    return self.bylaws[sig];
-  }
-
-  function canPerformAction(Bylaws storage self, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
-    return canPerformAction(getBylaw(self, sig), sig, sender, data, value);
-  }
-
-  function canPerformAction(Bylaw storage b, bytes4 sig, address sender, bytes data, uint256 value) returns (bool) {
-    if (b.updated == 0) {
-      // not existent bylaw, always allow action.
-      return true;
+  function canPerformAction(uint bylawId, address sender, bytes data, address token, uint256 value) internal returns (bool) {
+    Bylaw storage bylaw = bylaws[bylawId];
+    if (bylaw.bylawType == BylawType.SpecialStatus) {
+      return negateIfNeeded(isSpecialStatus(sender, bylaw.status), bylaw.not);
     }
 
-    // TODO: Support multi enforcement rules
-    if (b.status.enforced) {
-      if (b.status.isSpecialStatus) {
-        return isSpecialStatus(sender, b.status.neededStatus);
-      } else {
-        return getStatus(sender) >= b.status.neededStatus;
-      }
+    if (bylaw.bylawType == BylawType.Status) {
+      return negateIfNeeded(getStatus(sender) >= bylaw.status, bylaw.not);
     }
 
-    if (b.voting.enforced) {
-      var (isValidVoting, votingId) = checkVoting(sender, b.voting);
-      return isValidVoting;
+    if (bylaw.bylawType == BylawType.Address) {
+      return negateIfNeeded(sender == bylaw.addr, bylaw.not);
     }
 
-    if (b.addr.enforced) {
-      if (!b.addr.isOracle) return sender == b.addr.addr;
-      var (canPerform,) = BylawOracle(b.addr.addr).canPerformAction(sender, sig, data, value);
-      return canPerform;
+    if (bylaw.bylawType == BylawType.Oracle) {
+      // var (canPerform,) = BylawOracle(b.addr).canPerformAction(sender, sig, data, value);
+      return true; // canPerform; && !bylaw.not
     }
 
-    return false;
-  }
+    if (bylaw.bylawType == BylawType.Voting) {}
 
-  function performedAction(Bylaw storage b, bytes4 sig, address sender) {
-    if (b.voting.enforced) {
-      uint256 votingId = ICompany(this).reverseVoting(sender);
-      if (votingId == 0) return;
-      ICompany(this).setVotingExecuted(votingId, b.voting.approveOption);
+    if (bylaw.bylawType == BylawType.Combinator) {
+      return negateIfNeeded(computeCombinatorBylaw(bylaw, sender, data, token, value), bylaw.not);
     }
   }
 
+  function computeCombinatorBylaw(Bylaw storage bylaw, address sender, bytes data, address token, uint256 value) internal returns (bool) {
+    bool leftResult = canPerformAction(bylaw.combinator.leftBylawId, sender, data, token, value);
+
+    // shortcuts
+    if (leftResult && bylaw.combinator.combinatorType == CombinatorType.Or) return true;
+    if (!leftResult && bylaw.combinator.combinatorType == CombinatorType.And) return false;
+
+    bool rightResult = canPerformAction(bylaw.combinator.rightBylawId, sender, data, token, value);
+
+    // For or and, this always finishes the execution
+    if (!rightResult && bylaw.combinator.combinatorType == CombinatorType.Or) return false;
+    if (rightResult && bylaw.combinator.combinatorType == CombinatorType.And) return true;
+
+    // redundant as and/or where solved already
+    if (bylaw.combinator.combinatorType == CombinatorType.Xor) {
+      return (leftResult && !rightResult) || (!leftResult && rightResult);
+    }
+  }
+
+  function negateIfNeeded(bool result, bool negate) returns (bool) {
+    return negate ? !result : result;
+  }
+
+  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
+    return true;
+  }
+
+  function getStatus(address entity) internal returns (uint8) {
+    return 1;
+  }
+
+
+  /*
   function getStatus(address entity) internal returns (uint8) {
     return StatusApp(app().dao()).entityStatus(entity);
   }
@@ -216,4 +215,5 @@ library BylawsLib {
   function app() constant returns (Application) {
     return Application(address(this));
   }
+  */
 }
