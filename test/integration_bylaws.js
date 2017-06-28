@@ -3,6 +3,11 @@ var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var BylawsApp = artifacts.require('BylawsApp')
+var OwnershipApp = artifacts.require('OwnershipApp')
+var StatusApp = artifacts.require('StatusApp')
+var MiniMeToken = artifacts.require('MiniMeToken')
+var TokensOrgan = artifacts.require('TokensOrgan')
+var ActionsOrgan = artifacts.require('ActionsOrgan')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
 
 var Kernel = artifacts.require('Kernel')
@@ -20,8 +25,14 @@ contract('Bylaws', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
+    const tokensOrgan = await TokensOrgan.new()
+    await metadao.installOrgan(tokensOrgan.address, 3)
+
+    const actionsOrgan = await ActionsOrgan.new()
+    await metadao.installOrgan(actionsOrgan.address, 4)
+
     const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 3)
+    await metadao.installOrgan(apps.address, 5)
     appOrgan = ApplicationOrgan.at(dao.address)
 
     bylawsApp = await BylawsApp.new(dao.address)
@@ -96,6 +107,85 @@ contract('Bylaws', accounts => {
     it('throws when authorized address does action', async () => {
       try {
         await metadao.replaceKernel(randomAddress, { from: accounts[1] })
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+  })
+
+  context('adding token holder bylaw', () => {
+    let ownershipApp, dao_ownershipApp = {}
+    const holder1 = accounts[1]
+    const holder2 = accounts[2]
+
+    beforeEach(async () => {
+      ownershipApp = await OwnershipApp.new(dao.address)
+      dao_ownershipApp = OwnershipApp.at(dao.address)
+
+      await appOrgan.installApp(2, ownershipApp.address)
+
+      const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
+      await token.changeController(dao.address)
+      await dao_ownershipApp.addOrgToken(token.address, 100, 1, 1, { gas: 1e6 })
+
+      const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
+      await token2.changeController(dao.address)
+      await dao_ownershipApp.addOrgToken(token2.address, 100, 1, 1, { gas: 1e6 })
+
+      await dao_ownershipApp.grantTokens(0, 10, holder1)
+      await dao_ownershipApp.grantTokens(1, 1, holder2)
+
+      await dao_bylawsApp.setStatusBylaw('0xcebe30ac', 0, true, false)
+    })
+
+    it('allows action by holder 1', async () => {
+      await metadao.replaceKernel(randomAddress, { from: holder1 })
+
+      assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+    })
+
+    it('allows action by holder 2', async () => {
+      await metadao.replaceKernel(randomAddress, { from: holder2 })
+
+      assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+    })
+
+    it('throws when another address does action', async () => {
+      try {
+        await metadao.replaceKernel(randomAddress, { from: accounts[0] })
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+  })
+
+  context('adding status bylaw', () => {
+    let statusApp, dao_statusApp = {}
+    const authorized = accounts[3]
+    const lowauth = accounts[4]
+    beforeEach(async () => {
+      statusApp = await StatusApp.new(dao.address)
+      dao_statusApp = StatusApp.at(dao.address)
+
+      await appOrgan.installApp(2, statusApp.address)
+
+      const authLevel = 8
+      await dao_statusApp.setEntityStatus(authorized, authLevel)
+      await dao_statusApp.setEntityStatus(lowauth, authLevel - 1)
+      await dao_bylawsApp.setStatusBylaw('0xcebe30ac', authLevel, false, false)
+    })
+
+    it('allows action by entity with status', async () => {
+      await metadao.replaceKernel(randomAddress, { from: authorized })
+
+      assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+    })
+
+    it('throws when done by entity without status', async () => {
+      try {
+        await metadao.replaceKernel(randomAddress, { from: lowauth })
       } catch (error) {
         return assertThrow(error)
       }

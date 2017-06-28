@@ -57,7 +57,13 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   }
 
   function canHandlePayload(bytes payload) constant returns (bool) {
-    return true;
+    bytes4 sig = getSig(payload);
+
+    return
+      sig == 0xe0982a75 || // setStatusBylaw(bytes4,uint8,bool,bool)
+      sig == 0x38d747a2 || // setVotingBylaw(bytes4,uint256,uint256,uint64,uint64,bool)
+      sig == 0xf25b7916 || // setAddressBylaw(bytes4,address,bool,bool)
+      sig == 0xaee221e3;   // setCombinatorBylaw(bytes4,uint256,uint256,uint256,bool)
   }
 
   function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
@@ -122,6 +128,10 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     }
   }
 
+  function negateIfNeeded(bool result, bool negate) returns (bool) {
+    return negate ? !result : result;
+  }
+
   function computeVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
     VotingApp votingApp = getVotingApp();
     var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
@@ -154,10 +164,6 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     if (bylaw.combinator.combinatorType == CombinatorType.Xor) {
       return (leftResult && !rightResult) || (!leftResult && rightResult);
     }
-  }
-
-  function negateIfNeeded(bool result, bool negate) returns (bool) {
-    return negate ? !result : result;
   }
 
   function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
