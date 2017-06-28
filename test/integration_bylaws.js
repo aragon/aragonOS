@@ -16,6 +16,7 @@ const createDAO = () => DAO.new({ gas: 9e6 })
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
+const changeKernelSig = '0xcebe30ac'
 
 contract('Bylaws', accounts => {
   let dao, metadao, kernel, appOrgan, bylawsApp, dao_bylawsApp = {}
@@ -49,7 +50,7 @@ contract('Bylaws', accounts => {
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
-      await dao_bylawsApp.setAddressBylaw('0xcebe30ac', accounts[1], false, false)
+      await dao_bylawsApp.setAddressBylaw(changeKernelSig, accounts[1], false, false)
     })
 
     it('allows action by specified address', async () => {
@@ -72,7 +73,7 @@ contract('Bylaws', accounts => {
     let oracle = {}
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
-      await dao_bylawsApp.setAddressBylaw('0xcebe30ac', oracle.address, true, false)
+      await dao_bylawsApp.setAddressBylaw(changeKernelSig, oracle.address, true, false)
     })
 
     it('allows action when oracle is enabled', async () => {
@@ -95,7 +96,7 @@ contract('Bylaws', accounts => {
 
   context('adding negated address bylaw', () => {
     beforeEach(async () => {
-      await dao_bylawsApp.setAddressBylaw('0xcebe30ac', accounts[1], false, true)
+      await dao_bylawsApp.setAddressBylaw(changeKernelSig, accounts[1], false, true)
     })
 
     it('allows action by any other than specified address', async () => {
@@ -136,7 +137,7 @@ contract('Bylaws', accounts => {
       await dao_ownershipApp.grantTokens(0, 10, holder1)
       await dao_ownershipApp.grantTokens(1, 1, holder2)
 
-      await dao_bylawsApp.setStatusBylaw('0xcebe30ac', 0, true, false)
+      await dao_bylawsApp.setStatusBylaw(changeKernelSig, 0, true, false)
     })
 
     it('allows action by holder 1', async () => {
@@ -174,7 +175,7 @@ contract('Bylaws', accounts => {
       const authLevel = 8
       await dao_statusApp.setEntityStatus(authorized, authLevel)
       await dao_statusApp.setEntityStatus(lowauth, authLevel - 1)
-      await dao_bylawsApp.setStatusBylaw('0xcebe30ac', authLevel, false, false)
+      await dao_bylawsApp.setStatusBylaw(changeKernelSig, authLevel, false, false)
     })
 
     it('allows action by entity with status', async () => {
@@ -190,6 +191,117 @@ contract('Bylaws', accounts => {
         return assertThrow(error)
       }
       assert.fail('should have thrown before')
+    })
+  })
+
+  context('adding combinable bylaws', () => {
+    const allowedAddress = accounts[2]
+    let oracle = {}
+    beforeEach(async () => {
+      oracle = await BylawOracleMock.new()
+
+      await dao_bylawsApp.setAddressBylaw('0x00', allowedAddress, false, false)
+      await dao_bylawsApp.setAddressBylaw('0x00', oracle.address, true, false)
+    })
+
+    const addressBylaw = 1
+    const oracleBylaw = 2
+
+    context('adding OR bylaw', () => {
+      beforeEach(async () => {
+        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 0, addressBylaw, oracleBylaw, false)
+      })
+
+      it('allows action if address is correct', async () => {
+        await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('allows action if oracle allows is correct', async () => {
+        await oracle.changeAllow(true)
+        await metadao.replaceKernel(randomAddress, { from: accounts[8] })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('allows action if both are true', async () => {
+        await oracle.changeAllow(true)
+        await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('throws when both fail', async () => {
+        try {
+          await metadao.replaceKernel(randomAddress, { from: accounts[8] })
+        } catch (error) {
+          return assertThrow(error)
+        }
+      })
+    })
+
+    context('adding AND bylaw', () => {
+      beforeEach(async () => {
+        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 1, addressBylaw, oracleBylaw, false)
+      })
+
+      it('allows action if both are true', async () => {
+        await oracle.changeAllow(true)
+        await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('throws when first fails', async () => {
+        await oracle.changeAllow(true)
+        try {
+          await metadao.replaceKernel(randomAddress, { from: accounts[8] })
+        } catch (error) {
+          return assertThrow(error)
+        }
+      })
+
+      it('throws when first fails', async () => {
+        await oracle.changeAllow(false)
+        try {
+          await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        } catch (error) {
+          return assertThrow(error)
+        }
+      })
+    })
+
+    context('adding XOR bylaw', () => {
+      beforeEach(async () => {
+        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 2, addressBylaw, oracleBylaw, false)
+      })
+
+      it('allows when only first allows', async () => {
+        await oracle.changeAllow(false)
+        await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('allows when only second allows', async () => {
+        await oracle.changeAllow(true)
+        await metadao.replaceKernel(randomAddress, { from: accounts[8] })
+        assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+      })
+
+      it('throws if both are false', async () => {
+        await oracle.changeAllow(false)
+        try {
+          await metadao.replaceKernel(randomAddress, { from: accounts[8] })
+        } catch (error) {
+          return assertThrow(error)
+        }
+      })
+
+      it('throws if both are true', async () => {
+        await oracle.changeAllow(true)
+        try {
+          await metadao.replaceKernel(randomAddress, { from: allowedAddress })
+        } catch (error) {
+          return assertThrow(error)
+        }
+      })
     })
   })
 })

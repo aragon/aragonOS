@@ -156,13 +156,10 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
     bool rightResult = canPerformAction(bylaw.combinator.rightBylawId, sender, data, token, value);
 
-    // For or and, this always finishes the execution
-    if (!rightResult && bylaw.combinator.combinatorType == CombinatorType.Or) return false;
-    if (rightResult && bylaw.combinator.combinatorType == CombinatorType.And) return true;
-
-    // redundant as and/or where solved already
     if (bylaw.combinator.combinatorType == CombinatorType.Xor) {
       return (leftResult && !rightResult) || (!leftResult && rightResult);
+    } else {
+      return rightResult;
     }
   }
 
