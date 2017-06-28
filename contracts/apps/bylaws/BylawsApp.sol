@@ -7,6 +7,7 @@ import "./BylawOracle.sol";
 import "../Application.sol";
 
 import "../status/StatusApp.sol";
+import "../ownership/OwnershipApp.sol";
 import "../capital/CapitalApp.sol";
 
 contract IVotingApp {
@@ -187,7 +188,7 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   }
 
   function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-    IVotingApp votingApp = IVotingApp(0);
+    IVotingApp votingApp = getVotingApp();
     var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
 
     // check votign timing is correct
@@ -201,6 +202,19 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     return yaysPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
   }
 
+  function getOwnershipApp() internal returns (OwnershipApp) {
+    // gets the app address that can respond to getOrgToken
+    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xf594ba59));
+  }
+
+  function getVotingApp() internal returns (VotingApp) {
+    // gets the app address that can respond to createVote
+    return IVotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+  }
+
+  function getStatusApp() internal returns (StatusApp) {
+    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+  }
   /*
   function getStatus(address entity) internal returns (uint8) {
     return StatusApp(app().dao()).entityStatus(entity);
