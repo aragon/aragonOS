@@ -28,7 +28,6 @@ contract('Bylaws', accounts => {
 
     await appOrgan.installApp(1, bylawsApp.address)
     await metadao.setPermissionsOracle(bylawsApp.address)
-
   })
 
   it('bylaws are successfully installed', async () => {
@@ -38,7 +37,7 @@ contract('Bylaws', accounts => {
 
   context('adding new bylaw to limit kernel replaces', () => {
     beforeEach(async () => {
-      await dao_bylawsApp.setAddressBylaw('replaceKernel(address)', accounts[1], false)
+      await dao_bylawsApp.setAddressBylaw('0xcebe30ac', accounts[1], false, false)
     })
 
     it('allows action by specified address', async () => {
