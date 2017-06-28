@@ -10,7 +10,8 @@ contract ApplicationOrgan is IOrgan {
   }
 
   function organWasInstalled() {
-    setReturnSize(0x24f3a51b, 32); // getApp(address)
+    setReturnSize(0x24f3a51b, 32); // getApp(uint256)
+    setReturnSize(0xed1a3286, 32); // getResponsiveApplicationForSignature(bytes4)
   }
 
   function installApp(uint i, address application) {
@@ -30,6 +31,13 @@ contract ApplicationOrgan is IOrgan {
 
   function getApp(uint i) constant public returns (address) {
     return address(storageGet(getApplicationStorageKey(i)));
+  }
+
+  function getResponsiveApplicationForSignature(bytes4 sig) constant returns (address) {
+    bytes memory p = new bytes(4);
+    p[0] = sig[0]; p[1] = sig[1]; p[2] = sig[2]; p[3] = sig[3];
+
+    return getResponsiveApplication(p);
   }
 
   function getResponsiveApplication(bytes payload) returns (address) {
