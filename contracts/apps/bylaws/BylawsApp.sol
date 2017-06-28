@@ -12,7 +12,7 @@ import "../capital/CapitalApp.sol";
 import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
 
 contract IBylawsApp {
-  event BylawChanged(bytes4 sig, uint8 bylawType);
+  event BylawChanged(bytes4 sig, uint8 bylawType, uint256 bylawId, address changedBy);
 }
 
 contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
@@ -75,61 +75,7 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
     bylawEntrypoint[sig] = id;
 
-    BylawChanged(sig, getBylawType(id));
-  }
-
-  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
-    bylaw.status = statusNeeded;
-    bylaw.not = not;
-
-    linkBylaw(sig, id); // TODO: remove
-  }
-
-  function setAddressBylaw(bytes4 sig, address addr, bool isOracle, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
-    bylaw.addr = addr;
-    bylaw.not = not;
-
-    linkBylaw(sig, id); // TODO: remove
-  }
-
-  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
-
-    bylaw.bylawType = BylawType.Voting;
-    bylaw.voting.supportPct = supportPct;
-    bylaw.voting.minQuorumPct = minQuorumPct;
-    bylaw.voting.minimumDebateTime = minimumDebateTime;
-    bylaw.voting.minimumVotingTime = minimumVotingTime;
-    bylaw.not = not;
-
-    linkBylaw(sig, id); // TODO: remove
-  }
-
-  function setCombinatorBylaw(bytes4 sig, uint combinatorType, uint leftBylawId, uint rightBylawId, bool not)
-           existing_bylaw(leftBylawId) existing_bylaw(rightBylawId) {
-    var (id, bylaw) = newBylaw();
-
-    require(leftBylawId != rightBylawId);
-
-    bylaw.bylawType = BylawType.Combinator;
-    bylaw.combinator.combinatorType = CombinatorType(combinatorType);
-    bylaw.combinator.leftBylawId = leftBylawId;
-    bylaw.combinator.rightBylawId = rightBylawId;
-    bylaw.not = not;
-
-    linkBylaw(sig, id); // TODO: remove
-  }
-
-  function getBylawType(uint bylawId) constant returns (uint8) {
-    return uint8(bylaws[bylawId].bylawType);
+    BylawChanged(sig, getBylawType(id), id, getSender());
   }
 
   // Permissions Oracle compatibility
@@ -223,6 +169,60 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
   function getStatus(address entity) internal returns (uint8) {
     return uint8(getStatusApp().entityStatus(entity));
+  }
+
+  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus, bool not) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
+    bylaw.status = statusNeeded;
+    bylaw.not = not;
+
+    linkBylaw(sig, id); // TODO: remove
+  }
+
+  function setAddressBylaw(bytes4 sig, address addr, bool isOracle, bool not) {
+    var (id, bylaw) = newBylaw();
+
+    bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
+    bylaw.addr = addr;
+    bylaw.not = not;
+
+    linkBylaw(sig, id); // TODO: remove
+  }
+
+  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime, bool not) {
+    var (id, bylaw) = newBylaw();
+
+    require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
+
+    bylaw.bylawType = BylawType.Voting;
+    bylaw.voting.supportPct = supportPct;
+    bylaw.voting.minQuorumPct = minQuorumPct;
+    bylaw.voting.minimumDebateTime = minimumDebateTime;
+    bylaw.voting.minimumVotingTime = minimumVotingTime;
+    bylaw.not = not;
+
+    linkBylaw(sig, id); // TODO: remove
+  }
+
+  function setCombinatorBylaw(bytes4 sig, uint combinatorType, uint leftBylawId, uint rightBylawId, bool not)
+           existing_bylaw(leftBylawId) existing_bylaw(rightBylawId) {
+    var (id, bylaw) = newBylaw();
+
+    require(leftBylawId != rightBylawId);
+
+    bylaw.bylawType = BylawType.Combinator;
+    bylaw.combinator.combinatorType = CombinatorType(combinatorType);
+    bylaw.combinator.leftBylawId = leftBylawId;
+    bylaw.combinator.rightBylawId = rightBylawId;
+    bylaw.not = not;
+
+    linkBylaw(sig, id); // TODO: remove
+  }
+
+  function getBylawType(uint bylawId) constant returns (uint8) {
+    return uint8(bylaws[bylawId].bylawType);
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
