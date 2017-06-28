@@ -143,12 +143,12 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     }
 
     if (bylaw.bylawType == BylawType.Oracle) {
-      // var (canPerform,) = BylawOracle(b.addr).canPerformAction(sender, sig, data, value);
-      return true; // canPerform; && !bylaw.not
+      var (canPerform,) = BylawOracle(bylaw.addr).canPerformAction(sender, data, token, value);
+      return negateIfNeeded(canPerform, bylaw.not);
     }
 
     if (bylaw.bylawType == BylawType.Voting) {
-      return negateIfNeeded(computeVoting(bylaw.voting, sender));
+      return negateIfNeeded(computeVoting(bylaw.voting, sender), bylaw.not);
     }
 
     if (bylaw.bylawType == BylawType.Combinator) {
@@ -220,22 +220,6 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
   }
   /*
-  function getStatus(address entity) internal returns (uint8) {
-    return StatusApp(app().dao()).entityStatus(entity);
-  }
-
-  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
-    CapitalApp.SpecialEntityStatus status = CapitalApp.SpecialEntityStatus(neededStatus);
-
-    if (status == CapitalApp.SpecialEntityStatus.Shareholder) {
-      return CapitalApp(app().dao()).isHolder(entity);
-    }
-
-    if (status == CapitalApp.SpecialEntityStatus.StockSale) {
-      return CapitalApp(app().dao()).isTokenSale(entity);
-    }
-  }
-
   function getStatusBylaw(string functionSignature) constant returns (uint8) {
     BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
 
