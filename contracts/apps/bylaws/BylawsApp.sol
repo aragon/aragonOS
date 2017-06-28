@@ -140,11 +140,22 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     if (voteStartsBlock - voteCreatedBlock < votingBylaw.minimumDebateTime) return false;
     if (voteEndsBlock - voteStartsBlock < votingBylaw.minimumVotingTime) return false;
 
-    uint256 quorum = yays + nays;
-    uint256 yaysPct = yays * pctBase / quorum;
-    uint256 quorumPct = quorum * pctBase / totalQuorum;
+    if (getBlockNumber() >= voteEndsBlock) {
+      uint256 quorum = yays + nays;
+      uint256 yaysQuorumPct = yays * pctBase / quorum;
+      uint256 quorumPct = quorum * pctBase / totalQuorum;
 
-    return yaysPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
+      return yaysQuorumPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
+    } else {
+      uint256 yaysTotalPct = yays * pctBase / totalQuorum;
+
+      return yaysTotalPct >= votingBylaw.supportPct;
+    }
+  }
+
+  // @dev just for mocking purposes
+  function getBlockNumber() internal returns (uint64) {
+    return uint64(block.number);
   }
 
   function computeCombinatorBylaw(Bylaw storage bylaw, address sender, bytes data, address token, uint256 value) internal returns (bool) {
