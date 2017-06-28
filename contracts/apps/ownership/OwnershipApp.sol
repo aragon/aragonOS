@@ -22,6 +22,7 @@ contract OwnershipApp is Application, Controller, Requestor {
 
   Token[] tokens;
   uint8 constant maxTokens = 20; // prevent OOGs when tokens are iterated
+  uint constant holderThreshold = 1; // if owns x tokens is considered holder
 
   function OwnershipApp(address daoAddr)
            Application(daoAddr) {}

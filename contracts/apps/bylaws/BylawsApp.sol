@@ -9,10 +9,7 @@ import "../Application.sol";
 import "../status/StatusApp.sol";
 import "../ownership/OwnershipApp.sol";
 import "../capital/CapitalApp.sol";
-
-contract IVotingApp {
-  function getStatusForVoteAddress(address addr) constant returns (uint state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum);
-}
+import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
 
 contract IBylawsApp {
   event BylawChanged(bytes4 sig, uint8 bylawType);
@@ -20,6 +17,7 @@ contract IBylawsApp {
 
 contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
+  enum SpecialEntityStatus { Holder, TokenSale }
   enum CombinatorType { Or, And, Xor }
 
   struct Bylaw {
@@ -149,11 +147,28 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
       return true; // canPerform; && !bylaw.not
     }
 
-    if (bylaw.bylawType == BylawType.Voting) {}
+    if (bylaw.bylawType == BylawType.Voting) {
+      return negateIfNeeded(computeVoting(bylaw.voting, sender));
+    }
 
     if (bylaw.bylawType == BylawType.Combinator) {
       return negateIfNeeded(computeCombinatorBylaw(bylaw, sender, data, token, value), bylaw.not);
     }
+  }
+
+  function computeVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
+    VotingApp votingApp = getVotingApp();
+    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
+
+    // check votign timing is correct
+    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minimumDebateTime) return false;
+    if (voteEndsBlock - voteStartsBlock < votingBylaw.minimumVotingTime) return false;
+
+    uint256 quorum = yays + nays;
+    uint256 yaysPct = yays * pctBase / quorum;
+    uint256 quorumPct = quorum * pctBase / totalQuorum;
+
+    return yaysPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
   }
 
   function computeCombinatorBylaw(Bylaw storage bylaw, address sender, bytes data, address token, uint256 value) internal returns (bool) {
@@ -180,26 +195,14 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   }
 
   function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
-    return true;
+    SpecialEntityStatus status = SpecialEntityStatus(neededStatus);
+
+    if (status == SpecialEntityStatus.Holder) return getOwnershipApp().isHolder(entity);
+    if (status == SpecialEntityStatus.TokenSale) return false;
   }
 
   function getStatus(address entity) internal returns (uint8) {
-    return 1;
-  }
-
-  function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-    IVotingApp votingApp = getVotingApp();
-    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
-
-    // check votign timing is correct
-    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minimumDebateTime) return false;
-    if (voteEndsBlock - voteStartsBlock < votingBylaw.minimumVotingTime) return false;
-
-    uint256 quorum = yays + nays;
-    uint256 yaysPct = yays * pctBase / quorum;
-    uint256 quorumPct = quorum * pctBase / totalQuorum;
-
-    return yaysPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
+    return uint8(getStatusApp().entityStatus(entity));
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
@@ -209,11 +212,12 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
   function getVotingApp() internal returns (VotingApp) {
     // gets the app address that can respond to createVote
-    return IVotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
   }
 
   function getStatusApp() internal returns (StatusApp) {
-    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+    // gets the app address that can respond to setEntityStatus
+    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
   }
   /*
   function getStatus(address entity) internal returns (uint8) {
