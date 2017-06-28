@@ -69,32 +69,36 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   // @dev Links a signature entry point to a bylaw.
   // @dev It is the only function that needs to be protected as it
   // @dev a nice side effect is that multiple actions can share the same bylaw
-  function linkBylaw(bytes4 sig, uint id) onlyDAO {
-    require(id < bylaws.length);
+  function linkBylaw(bytes4 sig, uint id)
+           existing_bylaw(id)
+           onlyDAO {
+
     bylawEntrypoint[sig] = id;
 
     BylawChanged(sig, getBylawType(id));
   }
 
-  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus) {
+  function setStatusBylaw(bytes4 sig, uint8 statusNeeded, bool isSpecialStatus, bool not) {
     var (id, bylaw) = newBylaw();
 
     bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
     bylaw.status = statusNeeded;
+    bylaw.not = not;
 
-    linkBylaw(sig, id);
+    linkBylaw(sig, id); // TODO: remove
   }
 
-  function setAddressBylaw(bytes4 sig, address addr, bool isOracle) {
+  function setAddressBylaw(bytes4 sig, address addr, bool isOracle, bool not) {
     var (id, bylaw) = newBylaw();
 
     bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
     bylaw.addr = addr;
+    bylaw.not = not;
 
-    linkBylaw(sig, id);
+    linkBylaw(sig, id); // TODO: remove
   }
 
-  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime) {
+  function setVotingBylaw(bytes4 sig, uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime, bool not) {
     var (id, bylaw) = newBylaw();
 
     require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
@@ -104,8 +108,24 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     bylaw.voting.minQuorumPct = minQuorumPct;
     bylaw.voting.minimumDebateTime = minimumDebateTime;
     bylaw.voting.minimumVotingTime = minimumVotingTime;
+    bylaw.not = not;
 
-    linkBylaw(sig, id);
+    linkBylaw(sig, id); // TODO: remove
+  }
+
+  function setCombinatorBylaw(bytes4 sig, uint combinatorType, uint leftBylawId, uint rightBylawId, bool not)
+           existing_bylaw(leftBylawId) existing_bylaw(rightBylawId) {
+    var (id, bylaw) = newBylaw();
+
+    require(leftBylawId != rightBylawId);
+
+    bylaw.bylawType = BylawType.Combinator;
+    bylaw.combinator.combinatorType = CombinatorType(combinatorType);
+    bylaw.combinator.leftBylawId = leftBylawId;
+    bylaw.combinator.rightBylawId = rightBylawId;
+    bylaw.not = not;
+
+    linkBylaw(sig, id); // TODO: remove
   }
 
   function getBylawType(uint bylawId) constant returns (uint8) {
@@ -219,6 +239,13 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     // gets the app address that can respond to setEntityStatus
     return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
   }
+
+  modifier existing_bylaw(uint bylawId) {
+    require(bylawId > 0);
+    require(bylawId < bylaws.length);
+    _;
+  }
+
   /*
   function getStatusBylaw(string functionSignature) constant returns (uint8) {
     BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
