@@ -55,7 +55,7 @@ contract('Dispatcher', accounts => {
 
     const signedTransaction = async nonce => {
       const data = mockedOrgan.mock_setNumber.request(4).params[0].data
-      const signingPayload = await kernel.personalSignedPayload(data, 1)
+      const signingPayload = await kernel.payload(data, 1)
       const signature = await sign(signingPayload, signer)
 
       const adding0x = x => '0x'.concat(x)
