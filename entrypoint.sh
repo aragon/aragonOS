@@ -7,7 +7,6 @@ show_help() {
     echo """
     Commands
     test          : runs test suite
-    start         : start server
     bash          : bash prompt in container
     help          : show this help
     """
