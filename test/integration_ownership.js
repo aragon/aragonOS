@@ -42,25 +42,30 @@ contract('OwnershipApp', accounts => {
     beforeEach(async () => {
       token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addToken(token.address, 0, { gas: 1e6 })
+      await dao_ownershipApp.addOrgToken(token.address, 0, 1, 1, { gas: 1e6 })
     })
 
     it('added the token', async () => {
       assert.equal(await ownershipApp.getTokenAddress(0), token.address, 'token address should match in app')
       assert.equal(await TokensOrgan.at(dao.address).getToken(0), token.address, 'token address should match in organ')
       assert.equal(await TokensOrgan.at(dao.address).getTokenCount(), 1, 'token count should be 1')
+
+      const [tokenAddress, governanceRights, economicRights] = await ownershipApp.getOrgToken(0)
+      assert.equal(tokenAddress, token.address, 'token address should match in app')
+      assert.equal(governanceRights, 1, 'gov rights should match in app')
+      assert.equal(economicRights, 1, 'econ rights should match in app')
     })
 
     it('removes the token', async () => {
-      await dao_ownershipApp.removeToken(0)
+      await dao_ownershipApp.removeOrgToken(0)
       assert.equal(await TokensOrgan.at(dao.address).getTokenCount(), 0, 'token count should be 0')
     })
 
     it('replaces removed token', async () => {
-      await dao_ownershipApp.removeToken(0)
+      await dao_ownershipApp.removeOrgToken(0)
       token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addToken(token.address, 0, { gas: 1e6 })
+      await dao_ownershipApp.addOrgToken(token.address, 0, 1, 1, { gas: 1e6 })
       assert.equal(await ownershipApp.getTokenAddress(0), token.address, 'token address should match in app')
     })
 
@@ -68,7 +73,7 @@ contract('OwnershipApp', accounts => {
       const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token2.changeController(dao.address)
 
-      await dao_ownershipApp.addToken(token2.address, 150, { gas: 1e6 })
+      await dao_ownershipApp.addOrgToken(token2.address, 150, 1, 1, { gas: 1e6 })
 
       assert.equal(await token2.totalSupply(), 150, 'should have correct total supply after issueing')
       assert.equal(await token2.balanceOf(dao.address), 150, 'DAO should have correct balance after issueing')
