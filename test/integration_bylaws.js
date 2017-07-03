@@ -53,7 +53,13 @@ contract('Bylaws', accounts => {
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
-      await dao_bylawsApp.setAddressBylaw(changeKernelSig, accounts[1], false, false)
+      await bylawsApp.setAddressBylaw(accounts[1], false, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+    })
+
+    it('saved bylaw correctly', async () => {
+      assert.equal(await bylawsApp.getBylawType(1), 3, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(1), accounts[1], 'address should be correct')
     })
 
     it('allows action by specified address', async () => {
@@ -76,7 +82,14 @@ contract('Bylaws', accounts => {
     let oracle = {}
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
-      await dao_bylawsApp.setAddressBylaw(changeKernelSig, oracle.address, true, false)
+      await bylawsApp.setAddressBylaw(oracle.address, true, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+    })
+
+    it('saved bylaw correctly', async () => {
+      assert.equal(await bylawsApp.getBylawType(1), 4, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(1), oracle.address, 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(1), false, 'not should be correct')
     })
 
     it('allows action when oracle is enabled', async () => {
@@ -99,7 +112,14 @@ contract('Bylaws', accounts => {
 
   context('adding negated address bylaw', () => {
     beforeEach(async () => {
-      await dao_bylawsApp.setAddressBylaw(changeKernelSig, accounts[1], false, true)
+      await bylawsApp.setAddressBylaw(accounts[1], false, true)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+    })
+
+    it('saved bylaw correctly', async () => {
+      assert.equal(await bylawsApp.getBylawType(1), 3, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(1), accounts[1], 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(1), true, 'not should be correct')
     })
 
     it('allows action by any other than specified address', async () => {
@@ -153,7 +173,8 @@ contract('Bylaws', accounts => {
     })
 
     it('normal vote flow', async () => {
-      await dao_bylawsApp.setVotingBylaw(changeKernelSig, pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
       await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
@@ -162,10 +183,19 @@ contract('Bylaws', accounts => {
 
       await metadao.replaceKernel(randomAddress, { from: voteAddress })
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+
+      assert.equal(await bylawsApp.getBylawType(1), 0, 'bylaw type should be correct')
+
+      const [s, q, d, v] = await bylawsApp.getVotingBylaw(1)
+      assert.equal(s.toNumber(), pct16(50).toNumber(), 'voting support should be correct')
+      assert.equal(q.toNumber(), pct16(40).toNumber(), 'quorum should be correct')
+      assert.equal(d, 5, 'voting debate should be correct')
+      assert.equal(v, 5, 'voting time should be correct')
     })
 
     it('vote prematurely decided flow', async () => {
-      await dao_bylawsApp.setVotingBylaw(changeKernelSig, pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
       await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
@@ -177,7 +207,8 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting hasnt been successful', async () => {
-      await dao_bylawsApp.setVotingBylaw(changeKernelSig, pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
       await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteNay(1, { from: holder31 })
@@ -194,7 +225,8 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting didnt get enough quorum', async () => {
-      await dao_bylawsApp.setVotingBylaw(changeKernelSig, pct16(50), pct16(21), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
       await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder20 })
@@ -232,7 +264,14 @@ contract('Bylaws', accounts => {
       await dao_ownershipApp.grantTokens(0, 10, holder1)
       await dao_ownershipApp.grantTokens(1, 1, holder2)
 
-      await dao_bylawsApp.setStatusBylaw(changeKernelSig, 0, true, false)
+      await bylawsApp.setStatusBylaw(0, true, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+    })
+
+    it('saved bylaw correctly', async () => {
+      assert.equal(await bylawsApp.getBylawType(1), 2, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getStatusBylaw(1), 0, 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(1), false, 'not should be correct')
     })
 
     it('allows action by holder 1', async () => {
@@ -261,16 +300,22 @@ contract('Bylaws', accounts => {
     let statusApp, dao_statusApp = {}
     const authorized = accounts[3]
     const lowauth = accounts[4]
+    const authLevel = 8
     beforeEach(async () => {
       statusApp = await StatusApp.new(dao.address)
       dao_statusApp = StatusApp.at(dao.address)
 
       await appOrgan.installApp(2, statusApp.address)
 
-      const authLevel = 8
       await dao_statusApp.setEntityStatus(authorized, authLevel)
       await dao_statusApp.setEntityStatus(lowauth, authLevel - 1)
-      await dao_bylawsApp.setStatusBylaw(changeKernelSig, authLevel, false, false)
+      await bylawsApp.setStatusBylaw(authLevel, false, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+    })
+
+    it('saved bylaw correctly', async () => {
+      assert.equal(await bylawsApp.getBylawType(1), 1, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getStatusBylaw(1), authLevel, 'status should be correct')
     })
 
     it('allows action by entity with status', async () => {
@@ -295,8 +340,8 @@ contract('Bylaws', accounts => {
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
 
-      await dao_bylawsApp.setAddressBylaw('0x00', allowedAddress, false, false)
-      await dao_bylawsApp.setAddressBylaw('0x00', oracle.address, true, false)
+      await bylawsApp.setAddressBylaw(allowedAddress, false, false)
+      await bylawsApp.setAddressBylaw(oracle.address, true, false)
     })
 
     const addressBylaw = 1
@@ -304,7 +349,16 @@ contract('Bylaws', accounts => {
 
     context('adding OR bylaw', () => {
       beforeEach(async () => {
-        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 0, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(0, addressBylaw, oracleBylaw, false)
+        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
+      })
+
+      it('saved bylaw correctly', async () => {
+        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(t, 0, 'comb type should be correct')
+        assert.equal(l, addressBylaw, 'comb type should be correct')
+        assert.equal(r, oracleBylaw, 'comb type should be correct')
       })
 
       it('allows action if address is correct', async () => {
@@ -335,7 +389,16 @@ contract('Bylaws', accounts => {
 
     context('adding AND bylaw', () => {
       beforeEach(async () => {
-        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 1, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
+        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
+      })
+
+      it('saved bylaw correctly', async () => {
+        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(t, 1, 'comb type should be correct')
+        assert.equal(l, addressBylaw, 'comb type should be correct')
+        assert.equal(r, oracleBylaw, 'comb type should be correct')
       })
 
       it('allows action if both are true', async () => {
@@ -365,8 +428,16 @@ contract('Bylaws', accounts => {
 
     context('adding XOR bylaw', () => {
       beforeEach(async () => {
-        await dao_bylawsApp.setCombinatorBylaw(changeKernelSig, 2, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
+        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
       })
+
+      it('saved bylaw correctly', async () => {
+        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(t, 2, 'comb type should be correct')
+        assert.equal(l, addressBylaw, 'comb type should be correct')
+        assert.equal(r, oracleBylaw, 'comb type should be correct')      })
 
       it('allows when only first allows', async () => {
         await oracle.changeAllow(false)
