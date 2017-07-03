@@ -40,8 +40,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     uint256 supportPct;       // 16pct % * 10^16 (pe. 5% = 5 * 10^16)
     uint256 minQuorumPct;     // 16pct
 
-    uint64 minimumDebateTime; // in blocks
-    uint64 minimumVotingTime; // in blocks
+    uint64 minDebateTime; // in blocks
+    uint64 minVotingTime; // in blocks
   }
 
   struct CombinatorBylaw {
@@ -51,7 +51,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
   }
 
   Bylaw[] bylaws;
-  mapping (bytes4 => uint) bylawEntrypoint;
+  mapping (bytes4 => uint) public bylawEntrypoint;
 
   uint constant pctBase = 10 ** 18;
 
@@ -135,8 +135,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
 
     // check votign timing is correct
-    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minimumDebateTime) return false;
-    if (voteEndsBlock - voteStartsBlock < votingBylaw.minimumVotingTime) return false;
+    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minDebateTime) return false;
+    if (voteEndsBlock - voteStartsBlock < votingBylaw.minVotingTime) return false;
 
     if (getBlockNumber() >= voteEndsBlock) {
       uint256 quorum = yays + nays;
@@ -199,7 +199,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     bylaw.not = not;
   }
 
-  function setVotingBylaw(uint256 supportPct, uint256 minQuorumPct, uint64 minimumDebateTime, uint64 minimumVotingTime, bool not) {
+  function setVotingBylaw(uint256 supportPct, uint256 minQuorumPct, uint64 minDebateTime, uint64 minVotingTime, bool not) {
     var (id, bylaw) = newBylaw();
 
     require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
@@ -207,8 +207,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     bylaw.bylawType = BylawType.Voting;
     bylaw.voting.supportPct = supportPct;
     bylaw.voting.minQuorumPct = minQuorumPct;
-    bylaw.voting.minimumDebateTime = minimumDebateTime;
-    bylaw.voting.minimumVotingTime = minimumVotingTime;
+    bylaw.voting.minDebateTime = minDebateTime;
+    bylaw.voting.minVotingTime = minVotingTime;
     bylaw.not = not;
   }
 
@@ -225,8 +225,43 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     bylaw.not = not;
   }
 
+  modifier existing_bylaw(uint bylawId) {
+    require(bylawId > 0);
+    require(bylawId < bylaws.length);
+    _;
+  }
+
   function getBylawType(uint bylawId) constant returns (uint8) {
     return uint8(bylaws[bylawId].bylawType);
+  }
+
+  function isNot(uint bylawId) constant returns (bool) {
+    return bylaws[bylawId].not;
+  }
+
+  function getStatusBylaw(uint256 bylawId) constant returns (uint8) {
+    return bylaws[bylawId].status;
+  }
+
+  function getAddressBylaw(uint256 bylawId) constant returns (address) {
+    return bylaws[bylawId].addr;
+  }
+
+  function getVotingBylaw(uint256 bylawId) constant returns (uint256 supportPct, uint256 minQuorumPct, uint64 minDebateTime, uint64 minVotingTime) {
+    Bylaw bylaw = bylaws[bylawId];
+
+    supportPct = bylaw.voting.supportPct;
+    minQuorumPct = bylaw.voting.minQuorumPct;
+    minDebateTime = bylaw.voting.minDebateTime;
+    minVotingTime = bylaw.voting.minVotingTime;
+  }
+
+  function getCombinatorBylaw(uint256 bylawId) constant returns (uint combinatorType, uint leftBylawId, uint rightBylawId) {
+    Bylaw bylaw = bylaws[bylawId];
+
+    combinatorType = uint(bylaw.combinator.combinatorType);
+    leftBylawId = bylaw.combinator.leftBylawId;
+    rightBylawId = bylaw.combinator.rightBylawId;
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
@@ -243,44 +278,4 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     // gets the app address that can respond to setEntityStatus
     return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
   }
-
-  modifier existing_bylaw(uint bylawId) {
-    require(bylawId > 0);
-    require(bylawId < bylaws.length);
-    _;
-  }
-
-  /*
-  function getStatusBylaw(string functionSignature) constant returns (uint8) {
-    BylawsLib.Bylaw memory b = bylaws.getBylaw(functionSignature);
-
-    if (b.status.enforced) return b.status.neededStatus;
-
-    return uint8(255);
-  }
-
-  function getVotingBylaw(string functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
-    return getVotingBylaw(bytes4(sha3(functionSignature)));
-  }
-
-  function getVotingBylaw(bytes4 functionSignature) constant returns (uint256 support, uint256 base, bool closingRelativeMajority, uint64 minimumVotingTime) {
-    BylawsLib.VotingBylaw memory b = bylaws.getBylaw(functionSignature).voting;
-
-    if (!b.enforced) return;
-
-    support = b.supportNeeded;
-    base = b.supportBase;
-    closingRelativeMajority = b.closingRelativeMajority;
-    minimumVotingTime = b.minimumVotingTime;
-  }
-
-
-  function getAddressBylaw(string functionSignature) constant returns (address) {
-    BylawsLib.AddressBylaw memory b = bylaws.getBylaw(functionSignature).addr;
-
-    if (!b.enforced) return;
-
-    return b.addr;
-  }
-  */
 }
