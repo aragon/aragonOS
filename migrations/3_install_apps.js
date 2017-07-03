@@ -1,6 +1,6 @@
 var DAO = artifacts.require('DAO')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
-var Application = artifacts.require('Application')
+var MetaOrgan = artifacts.require('MetaOrgan')
 
 const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp']
 
@@ -14,6 +14,7 @@ const deployApps = daoAddress => {
 
 module.exports = (deployer) => {
   let dao, dao_apps = {}
+  let bylawsAddress = ''
 
   const installApp = (app, i) => {
     const n = i + 1
@@ -29,5 +30,12 @@ module.exports = (deployer) => {
 
       return deployApps(dao.address)
     })
-    .then(deployedApps => Promise.all(deployedApps.map(installApp)))
+    .then(deployedApps => {
+      bylawsAddress = deployedApps[0].address
+      return Promise.all(deployedApps.map(installApp))
+    })
+    .then(() => {
+      console.log('Setting BylawsApp as DAO permissions oracle')
+      return MetaOrgan.at(dao.address).setPermissionsOracle(bylawsAddress)
+    })
 }

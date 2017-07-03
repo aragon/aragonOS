@@ -1,5 +1,4 @@
 var DAO = artifacts.require('DAO')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var BylawsApp = artifacts.require('BylawsApp')
 var MiniMeToken = artifacts.require('MiniMeToken')
