@@ -9,10 +9,7 @@ contract ApplicationOrgan is IOrgan {
     return true;
   }
 
-  function organWasInstalled() {
-    setReturnSize(0x24f3a51b, 32); // getApp(uint256)
-    setReturnSize(0xed1a3286, 32); // getResponsiveApplicationForSignature(bytes4)
-  }
+  function organWasInstalled() {}
 
   function installApp(uint i, address application) {
     storageSet(getApplicationStorageKey(i), uint256(application));

@@ -7,9 +7,7 @@ contract ActionsOrgan is IOrgan {
     return to.call(data); // performs action with DAO as msg.sender
   }
 
-  function organWasInstalled() {
-    setReturnSize(0x4036176a, 32); // performAction(address,bytes)
-  }
+  function organWasInstalled() {}
 
   function canHandlePayload(bytes payload) public returns (bool) {
     return getFunctionSignature(payload) == 0x4036176a; // performAction(address,bytes)

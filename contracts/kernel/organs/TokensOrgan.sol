@@ -58,15 +58,5 @@ contract TokensOrgan is ITokensOrgan {
       sig == 0x78a89567;     // getTokenCount()
   }
 
-  function organWasInstalled() {
-    setReturnSize(0xd48bfca7, 32); // addToken(address)
-    setReturnSize(0xe4b50cb8, 32); // getToken(uint256)
-    setReturnSize(0x78a89567, 32); // getTokenCount()
-
-    // MiniMe methods that are handled by the apps
-    // TODO: Move to standalone organ called MiniMeHooksOrgan
-    setReturnSize(0x4a393149, 32); // onTransfer(...)
-    setReturnSize(0xda682aeb, 32); // onApprove(...)
-    setReturnSize(0xf48c3054, 32); // proxyPayment(...)
-  }
+  function organWasInstalled() {}
 }
