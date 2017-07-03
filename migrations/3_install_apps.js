@@ -5,22 +5,15 @@ var MetaOrgan = artifacts.require('MetaOrgan')
 const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp']
 
 let nonce = 0
-const getNonce = () => {
-  return new Promise((resolve, reject) => {
-    web3.eth.getAccounts((err, acc) => {
-      if (err) return reject(err)
-      web3.eth.getTransactionCount(acc[0], (err, n) => {
-        if (err) return reject(err)
-        resolve(n)
-      })
-    })
-  })
-}
+const { getNonce } = require('../test/helpers/web3')
 
-const deployApps = (daoAddress, non) => {
+const deployApps = daoAddress => {
   const appsDeploy = appNames
                       .map(n => artifacts.require(n))
-                      .map((appContract, i) => appContract.new(daoAddress, { nonce: non + i }))
+                      .map((appContract, i) => {
+                        nonce += 1
+                        return appContract.new(daoAddress, { nonce })
+                      })
 
   return Promise.all(appsDeploy)
 }
@@ -29,10 +22,11 @@ module.exports = (deployer) => {
   let dao, dao_apps = {}
   let bylawsAddress = ''
 
-  const installApp = (app, i, non) => {
+  const installApp = (app, i) => {
     const n = i + 1
+    nonce += 1
     console.log('Installing app', app.constructor._json.contract_name, app.address, 'at slot', n)
-    return dao_apps.installApp(n, app.address, { nonce: non + i })
+    return dao_apps.installApp(n, app.address, { nonce })
   }
 
   return deployer
@@ -40,10 +34,10 @@ module.exports = (deployer) => {
     .then(d => {
       dao = d
       dao_apps = ApplicationOrgan.at(dao.address)
-      return getNonce()
+      return getNonce(web3)
     })
     .then(x => {
-      nonce = x
+      nonce = x - 1
       return deployApps(dao.address, x)
     })
     .then(deployedApps => {
