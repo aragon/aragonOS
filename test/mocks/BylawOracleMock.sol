@@ -5,11 +5,11 @@ import "../../contracts/apps/bylaws/BylawOracle.sol";
 contract BylawOracleMock is BylawOracle {
   bool allows;
 
-  function BylawOracleMock(bool _allows) {
+  function changeAllow(bool _allows) {
     allows = _allows;
   }
 
-  function canPerformAction(address sender, bytes4 sig, bytes data, uint256 value) returns (bool ok, uint256 actionId) {
+  function canPerformAction(address sender, bytes data, address token, uint256 value) returns (bool ok, uint256 actionId) {
     return (allows, 0);
   }
 
