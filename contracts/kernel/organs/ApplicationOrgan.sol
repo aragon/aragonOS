@@ -15,6 +15,7 @@ contract ApplicationOrgan is IOrgan {
   }
 
   function installApp(uint i, address application) {
+    require(i > 0);
     storageSet(getApplicationStorageKey(i), uint256(application));
     InstalledApplication(application);
   }
