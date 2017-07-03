@@ -235,7 +235,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     return uint8(bylaws[bylawId].bylawType);
   }
 
-  function isNot(uint bylawId) constant returns (bool) {
+  function getBylawNot(uint bylawId) constant returns (bool) {
     return bylaws[bylawId].not;
   }
 
