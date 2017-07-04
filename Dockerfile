@@ -7,9 +7,7 @@ WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app
 
-RUN npm install -g truffle
-RUN npm install truffle@beta
-RUN npm i
+RUN npm install
 
 COPY . /usr/src/app
 
