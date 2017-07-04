@@ -10,6 +10,15 @@ module.exports = {
     })
   },
 
+  getBlockNumber() {
+    return new Promise((resolve, reject) => {
+      web3.eth.getBlockNumber(async (err, res) => {
+        if (err || !res) return reject(err)
+        resolve(res)
+      })
+    })
+  },
+
   sendTransaction(payload) {
     return new Promise((resolve, reject) => {
       web3.eth.sendTransaction(payload, async (err, res) => {
