@@ -1,3 +1,6 @@
 node_modules/
 npm-debug.log
 build/
+docker_home/
+test-*
+tmp-*
