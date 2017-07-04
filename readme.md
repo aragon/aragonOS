@@ -57,7 +57,7 @@ A vague representation of the state of the refactor can be found here:
 
 ## Contributing
 
-To make it easier for contributers to get up to speed, we provide a docker environment that provides all the requirements to build and test aragon-core.
+To make it easier for contributers to get up to speed, we provide a docker environment that provides all the requirements to build and test Aragon Core
 
 ### Requirements
 
