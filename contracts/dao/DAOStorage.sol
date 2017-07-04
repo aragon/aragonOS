@@ -60,6 +60,6 @@ contract DAOStorage is IDAO, UIntStorage {
   }
 
   function getReturnSize() internal constant returns (uint32) {
-    return 320; // allows for 10 values returned
+    return 8 * 32; // allows for 10 values returned
   }
 }
