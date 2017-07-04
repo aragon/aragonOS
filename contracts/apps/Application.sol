@@ -26,7 +26,11 @@ contract Application is IApplication {
     dao_msg.value = value;
   }
 
-  function getSig(bytes d) returns (bytes4 sig) {
+  function getSig(bytes d) internal returns (bytes4 sig) {
     assembly { sig := mload(add(d, 0x20)) }
+  }
+
+  function getSender() internal returns (address) {
+    return msg.sender == dao ? dao_msg.sender : msg.sender;
   }
 }
