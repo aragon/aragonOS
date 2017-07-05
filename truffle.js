@@ -12,6 +12,12 @@ module.exports = {
       provider: require('ethereumjs-testrpc').provider({ gasLimit: 1e8 }),
       gas: 9e6,
     },
+    testrpc: {
+      network_id: 15,
+      host: 'localhost',
+      port: 8545,
+      gas: 1e8,
+    },
     ropsten: {
       network_id: 3,
       // provider: new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/'),
@@ -19,7 +25,7 @@ module.exports = {
     },
     kovan: {
       network_id: 42,
-      // provider:  new HDWalletProvider(mnemonic, 'https://kovan.aragon.one'),
+      provider:  new HDWalletProvider(mnemonic, 'https://kovan.aragon.one'),
       gas: 4.6e6,
     },
     /*
