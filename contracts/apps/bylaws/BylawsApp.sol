@@ -247,7 +247,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
 
   function getVotingApp() internal returns (VotingApp) {
     // gets the app address that can respond to createVote
-    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
   }
 
   function getStatusApp() internal returns (StatusApp) {

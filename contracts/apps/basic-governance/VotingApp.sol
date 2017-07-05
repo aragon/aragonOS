@@ -121,6 +121,7 @@ contract VotingApp is IVotingApp, VotingConstants, Application, CodeHelper {
     uint voteId = voteForAddress[_voteAddress];
     require(voteId > 0);
     Vote vote = votes[voteId];
+    if (vote.state == VoteState.Debate || vote.totalQuorum == 0) return false;
 
     if (vote.voteStartsBlock - vote.voteCreatedBlock < _minDebateTime) return false;
     if (vote.voteEndsBlock - vote.voteStartsBlock < _minVotingTime) return false;
@@ -204,10 +205,6 @@ contract VotingApp is IVotingApp, VotingConstants, Application, CodeHelper {
     }
 
     assert(vote.votingWeights.length == vote.governanceTokens.length);
-  }
-
-  function contractExists(address _addr) internal constant returns (bool) {
-    return contractSize(_addr) > 0;
   }
 
   function isVoteCodeValid(address _addr) constant returns (bool) {
