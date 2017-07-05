@@ -6,14 +6,20 @@ import "../ownership/OwnershipApp.sol";
 import "../Application.sol";
 import "../../misc/CodeHelper.sol";
 
+import "./Vote.sol";
+
 contract IVotingApp {
   event VoteCreated(uint voteId, address voteAddress);
-  event VoteStarted(uint indexed voteId);
   event VoteCasted(uint indexed voteId, address voter, bool isYay, uint votes);
-  event VoteClosed(uint indexed voteId);
+  event VoteStateChanged(uint indexed voteId, uint oldState, uint newState);
 }
 
-contract VotingApp is IVotingApp, Application, CodeHelper {
+contract VotingConstants {
+  bytes4 constant createVoteSig = bytes4(sha3('createVote(address,uint64,uint64)'));
+  bytes4 constant setValidCodeSig = bytes4(sha3('setValidVoteCode(bytes32,bool)'));
+}
+
+contract VotingApp is IVotingApp, VotingConstants, Application, CodeHelper {
   function VotingApp(address daoAddr)
            Application(daoAddr) {
     votes.length++; // index 0 is empty
@@ -56,6 +62,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     votes.length++;
 
     require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
+    require(isVoteCodeValid(_voteAddress));
 
     Vote vote = votes[voteId];
     vote.voteCreator = dao_msg.sender;
@@ -71,6 +78,12 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
 
   function voteYay(uint voteId) {
     vote(voteId, true, getSender());
+  }
+
+  function voteYayAndClose(uint voteId) {
+    voteYay(voteId);
+    IVote(votes[voteId].voteAddress).execute();
+    transitionStateIfChanged(voteId);
   }
 
   function voteNay(uint voteId) {
@@ -104,6 +117,32 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     VoteCasted(voteId, voter, isYay, totalStake);
   }
 
+  function isVoteApproved(address _voteAddress, uint256 _supportPct, uint256 _minQuorumPct, uint64 _minDebateTime, uint64 _minVotingTime) constant returns (bool) {
+    uint voteId = voteForAddress[_voteAddress];
+    require(voteId > 0);
+    Vote vote = votes[voteId];
+
+    if (vote.voteStartsBlock - vote.voteCreatedBlock < _minDebateTime) return false;
+    if (vote.voteEndsBlock - vote.voteStartsBlock < _minVotingTime) return false;
+
+    if (getBlockNumber() >= vote.voteEndsBlock) {
+      uint256 quorum = vote.yays + vote.nays;
+      uint256 yaysQuorumPct = vote.yays * pctBase / quorum;
+      uint256 quorumPct = quorum * pctBase / vote.totalQuorum;
+
+      return yaysQuorumPct >= _supportPct && quorumPct >= _minQuorumPct;
+    } else {
+      uint256 yaysTotalPct = vote.yays * pctBase / vote.totalQuorum;
+
+      return yaysTotalPct >= _supportPct;
+    }
+  }
+
+  function setValidVoteCode(bytes32 _codeHash, bool _valid) onlyDAO {
+    require(_codeHash > 0);
+    validVoteCode[_codeHash] = _valid;
+  }
+
   function getStatusForVoteAddress(address addr) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
     return getVoteStatus(voteForAddress[addr]);
   }
@@ -132,15 +171,20 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     // Multiple state transitions can happen at once
     if (vote.state == VoteState.Debate && getBlockNumber() >= vote.voteStartsBlock) {
       transitionToVotingState(vote);
-      VoteStarted(voteId);
+      VoteStateChanged(voteId, uint(VoteState.Debate), uint(VoteState.Voting));
     }
 
     // when voting contract has selfdestructed is because of its successful
-    bool voteWasExecuted = !contractExists(vote.voteAddress);
+    bool voteWasExecuted = IVote(votes[voteId].voteAddress).wasExecuted();
 
     if (vote.state == VoteState.Voting && (voteWasExecuted || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
       vote.state = VoteState.Closed;
-      VoteClosed(voteId);
+      VoteStateChanged(voteId, uint(VoteState.Voting), uint(VoteState.Closed));
+    }
+
+    if (vote.state == VoteState.Closed && voteWasExecuted) {
+      vote.state = VoteState.Executed;
+      VoteStateChanged(voteId, uint(VoteState.Closed), uint(VoteState.Executed));
     }
   }
 
@@ -182,7 +226,10 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
 
   // TODO: Make only handleable payloads
   function canHandlePayload(bytes payload) constant returns (bool) {
-    return true;
+    bytes4 sig = getSig(payload);
+    return
+      sig == setValidCodeSig ||
+      sig == createVoteSig;
   }
 
   modifier transitions_state(uint voteId) {
