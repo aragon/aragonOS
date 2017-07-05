@@ -9,8 +9,12 @@ const organs = [VaultOrgan, TokensOrgan, ActionsOrgan, ApplicationOrgan]
 
 const { getNonce } = require('../test/helpers/web3')
 
-module.exports = (deployer) => {
+const liveNetworks = ['kovan', 'ropsten']
+
+module.exports = (deployer, network) => {
   let dao = {}
+
+  const isLive = liveNetworks.indexOf(network) > -1
 
   return deployer.deploy(DAO, { gas: 4e6 })
     .then(() => {
@@ -24,14 +28,17 @@ module.exports = (deployer) => {
         console.log('Installing', organ.constructor._json.contract_name, organ.address, 'at slot', n)
         nonce += 1
 
-        return dao.installOrgan(organ.address, n, { nonce })
+        const params = isLive ? { nonce } : {}
+        return dao.installOrgan(organ.address, n, params)
       }
 
       return getNonce(web3).then(x => {
         nonce = x - 1
         const installOrgans = Promise.all(organs.map((organ, i) => {
           nonce += 1
-          return organ.new({ nonce })
+
+          const params = isLive ? { nonce } : {}
+          return organ.new(params)
         }))
           .then(x => Promise.all(x.map(installOrgan)))
         return installOrgans

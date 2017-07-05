@@ -7,26 +7,33 @@ const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp']
 let nonce = 0
 const { getNonce } = require('../test/helpers/web3')
 
-const deployApps = daoAddress => {
-  const appsDeploy = appNames
-                      .map(n => artifacts.require(n))
-                      .map((appContract, i) => {
-                        nonce += 1
-                        return appContract.new(daoAddress, { nonce })
-                      })
+const liveNetworks = ['kovan', 'ropsten']
 
-  return Promise.all(appsDeploy)
-}
-
-module.exports = (deployer) => {
+module.exports = (deployer, network) => {
   let dao, dao_apps = {}
   let bylawsAddress = ''
+
+  const isLive = liveNetworks.indexOf(network) > -1
 
   const installApp = (app, i) => {
     const n = i + 1
     nonce += 1
+
+    const params = isLive ? { nonce } : {}
     console.log('Installing app', app.constructor._json.contract_name, app.address, 'at slot', n)
-    return dao_apps.installApp(n, app.address, { nonce })
+    return dao_apps.installApp(n, app.address, params)
+  }
+
+  const deployApps = daoAddress => {
+    const appsDeploy = appNames
+                        .map(n => artifacts.require(n))
+                        .map((appContract, i) => {
+                          nonce += 1
+                          const params = isLive ? { nonce } : {}
+                          return appContract.new(daoAddress, params)
+                        })
+
+    return Promise.all(appsDeploy)
   }
 
   return deployer
