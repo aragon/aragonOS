@@ -4,6 +4,7 @@ import "../../tokens/MiniMeToken.sol";
 import "../../kernel/organs/ApplicationOrgan.sol";
 import "../ownership/OwnershipApp.sol";
 import "../Application.sol";
+import "../../misc/CodeHelper.sol";
 
 contract IVotingApp {
   event VoteCreated(uint voteId, address voteAddress);
@@ -12,13 +13,14 @@ contract IVotingApp {
   event VoteClosed(uint indexed voteId);
 }
 
-contract VotingApp is IVotingApp, Application {
+contract VotingApp is IVotingApp, Application, CodeHelper {
   function VotingApp(address daoAddr)
            Application(daoAddr) {
     votes.length++; // index 0 is empty
   }
 
-  mapping (bytes32 => boole) acceptedCode;
+  // hash(bytecode) -> true/false either a particular address has approved voting code
+  mapping (bytes32 => bool) public validVoteCode;
 
   enum VoteState {
     Debate,
@@ -35,7 +37,6 @@ contract VotingApp is IVotingApp, Application {
     uint64 voteCreatedBlock;
     uint64 voteStartsBlock;
     uint64 voteEndsBlock;
-    uint256 targetYayPct; // Allows to close vote before hand. % * 10^16 (pe. 5% = 5 * 10^16)
 
     address[] governanceTokens;
     uint128[] votingWeights;
@@ -50,12 +51,11 @@ contract VotingApp is IVotingApp, Application {
   Vote[] votes;
   mapping (address => uint) voteForAddress;
 
-  function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock, uint256 _targetYayPct) onlyDAO {
+  function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock) onlyDAO {
     uint voteId = votes.length;
     votes.length++;
 
     require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
-    require(_targetYayPct <= pctBase);
 
     Vote vote = votes[voteId];
     vote.voteCreator = dao_msg.sender;
@@ -63,7 +63,6 @@ contract VotingApp is IVotingApp, Application {
     vote.voteCreatedBlock = getBlockNumber();
     vote.voteStartsBlock = _voteStartsBlock;
     vote.voteEndsBlock = _voteEndsBlock;
-    vote.targetYayPct = _targetYayPct;
     voteForAddress[_voteAddress] = voteId;
 
     VoteCreated(voteId, _voteAddress);
@@ -105,11 +104,11 @@ contract VotingApp is IVotingApp, Application {
     VoteCasted(voteId, voter, isYay, totalStake);
   }
 
-  function getStatusForVoteAddress(address addr) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
+  function getStatusForVoteAddress(address addr) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
     return getVoteStatus(voteForAddress[addr]);
   }
 
-  function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum) {
+  function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
     Vote storage vote = votes[voteId];
     state = vote.state;
     voteCreator = vote.voteCreator;
@@ -120,6 +119,7 @@ contract VotingApp is IVotingApp, Application {
     yays = vote.yays;
     nays = vote.nays;
     totalQuorum = vote.totalQuorum;
+    validCode = isVoteCodeValid(vote.voteAddress);
   }
 
   function getSender() internal returns (address) {
@@ -135,7 +135,10 @@ contract VotingApp is IVotingApp, Application {
       VoteStarted(voteId);
     }
 
-    if (vote.state == VoteState.Voting && (vote.yays >= vote.targetYays || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
+    // when voting contract has selfdestructed is because of its successful
+    bool voteWasExecuted = !contractExists(vote.voteAddress);
+
+    if (vote.state == VoteState.Voting && (voteWasExecuted || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
       vote.state = VoteState.Closed;
       VoteClosed(voteId);
     }
@@ -156,11 +159,15 @@ contract VotingApp is IVotingApp, Application {
       }
     }
 
-    // we calculate and save once to avoid being calculated on every vote
-    vote.targetYays = vote.totalQuorum * vote.targetYayPct / pctBase;
-    vote.targetYayPct = 0; // after being set, we get gas refund
-
     assert(vote.votingWeights.length == vote.governanceTokens.length);
+  }
+
+  function contractExists(address _addr) internal constant returns (bool) {
+    return contractSize(_addr) > 0;
+  }
+
+  function isVoteCodeValid(address _addr) constant returns (bool) {
+    return validVoteCode[hashForCode(_addr)];
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
