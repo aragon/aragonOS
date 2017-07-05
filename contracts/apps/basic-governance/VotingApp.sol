@@ -18,6 +18,8 @@ contract VotingApp is IVotingApp, Application {
     votes.length++; // index 0 is empty
   }
 
+  mapping (bytes32 => boole) acceptedCode;
+
   enum VoteState {
     Debate,
     Voting,
@@ -34,7 +36,6 @@ contract VotingApp is IVotingApp, Application {
     uint64 voteStartsBlock;
     uint64 voteEndsBlock;
     uint256 targetYayPct; // Allows to close vote before hand. % * 10^16 (pe. 5% = 5 * 10^16)
-    uint256 targetYays;
 
     address[] governanceTokens;
     uint128[] votingWeights;

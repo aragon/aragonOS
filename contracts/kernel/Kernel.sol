@@ -21,7 +21,6 @@ import "../dao/DAOStorage.sol";
 
 contract PermissionsOracle {
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
-  function performedAction(address sender, address token, uint256 value, bytes data);
 }
 
 contract Kernel is IKernel, DAOStorage {
@@ -84,7 +83,6 @@ contract Kernel is IKernel, DAOStorage {
 
     vaultDeposit(token, value); // deposit tokens that come with the call in the vault
 
-    performedAction(sender, token, value, payload); // TODO: Check reentrancy implications
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
     address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
@@ -99,11 +97,6 @@ contract Kernel is IKernel, DAOStorage {
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
     address p = getPermissionsOracle();
     return p == 0 ? true : PermissionsOracle(p).canPerformAction(sender, token, value, data);
-  }
-
-  function performedAction(address sender, address token, uint256 value, bytes data) {
-    address p = getPermissionsOracle();
-    if (p != 0) PermissionsOracle(p).performedAction(sender, token, value, data);
   }
 
   function setUsedPayload(bytes32 _payload) internal {

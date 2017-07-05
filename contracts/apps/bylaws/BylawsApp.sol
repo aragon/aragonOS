@@ -87,8 +87,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
     return canPerformAction(getSig(data), sender, data, token, value);
   }
 
-  function performedAction(address sender, address token, uint256 value, bytes data) {}
-
   function canPerformAction(bytes4 sig, address sender, bytes data, address token, uint256 value) returns (bool) {
     uint bylawId = bylawEntrypoint[sig];
 
@@ -132,9 +130,9 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
 
   function computeVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
     VotingApp votingApp = getVotingApp();
-    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
+    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum, acceptedVoteContract) = votingApp.getStatusForVoteAddress(voteAddress);
 
-    // check votign timing is correct
+    // check voting timing is correct
     if (voteStartsBlock - voteCreatedBlock < votingBylaw.minDebateTime) return false;
     if (voteEndsBlock - voteStartsBlock < votingBylaw.minVotingTime) return false;
 
