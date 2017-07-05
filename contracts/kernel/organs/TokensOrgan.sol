@@ -2,22 +2,35 @@ pragma solidity ^0.4.11;
 
 import "./IOrgan.sol";
 
-contract TokensOrgan is IOrgan {
+contract ITokensOrgan is IOrgan {
+  event NewToken(address tokenAddress, uint tokenId);
+  event TokenRemoved(address tokenAddress, uint tokenId); // beware that ids change on remove
+
+  function addToken(address token) returns (uint256);
+  function removeToken(uint tokenId);
+  function getTokenCount() constant returns (uint);
+  function getToken(uint i) constant returns (address);
+}
+
+contract TokensOrgan is ITokensOrgan {
   function addToken(address token) returns (uint256) {
     uint tokenId = getTokenCount();
     storageSet(getStorageKeyForToken(tokenId), uint256(token));
     setTokenCount(tokenId + 1);
 
+    NewToken(token, tokenId);
     return tokenId;
   }
 
   function removeToken(uint tokenId) {
+    address removedAddress = getToken(tokenId);
     if (getTokenCount() > 1) {
       // Move last element to the place of the removing item
       storageSet(getStorageKeyForToken(tokenId), uint256(getToken(getTokenCount() - 1)));
     }
     // Remove last item
     setTokenCount(getTokenCount() - 1);
+    TokenRemoved(removedAddress, tokenId);
   }
 
   function getToken(uint i) constant returns (address) {
