@@ -64,6 +64,25 @@ contract('VotingApp', accounts => {
 
   context('creating basic voting', () => {
     let currentBlock, startBlock, finalBlock = 0
+
+    it('throws when vote bytecode is not valid', async () => {
+      try {
+        await dao_votingApp.createVote(dao.address, startBlock, finalBlock, pct16(50))
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
+    it('throws when vote address is a normal account', async () => {
+      try {
+        await dao_votingApp.createVote(accounts[1], startBlock, finalBlock, pct16(50))
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
     beforeEach(async () => {
       currentBlock = await getBlockNumber()
       startBlock = currentBlock + 5
@@ -71,8 +90,6 @@ contract('VotingApp', accounts => {
       await votingApp.mock_setBlockNumber(currentBlock)
       await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
     })
-
-    it('throws when vote bytecode is not valid')
 
     it('has correct initial state', async () => {
       const [state, voteCreator, voteAddress, voteCreatedBlock, voteStartsBlock, voteEndsBlock] = await votingApp.getVoteStatus(1)
