@@ -18,6 +18,7 @@ contract OwnershipApp is Application, Controller, Requestor {
     address tokenAddress;
     uint128 governanceRights;
     uint128 economicRights;
+    bool isController;
   }
 
   Token[] tokens;
@@ -28,13 +29,22 @@ contract OwnershipApp is Application, Controller, Requestor {
            Application(daoAddr) {}
 
   function addOrgToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
-    // Only add tokens the DAO is the controller of, so we can control it.
-    // If it is a wrap over another token, the Wrap implementation can remove some functionality.
-    require(MiniMeToken(tokenAddress).controller() == dao);
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
-    uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights));
+    uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights, false));
     assert(tokenId == newLength - 1 && newLength <= maxTokens);
+
+    // this will update the status on whether the DAO is the controller of the token
+    // function implicitely throws if tokenAddress isn't MiniMe as it will throw
+    updateIsController(tokenId);
+
     if (issueAmount > 0) issueTokens(tokenId, issueAmount);
+  }
+
+  // @dev Updates whether an added token controller state has changed
+  // can be called by anyone at any time
+  function updateIsController(uint tokenId) {
+    Token token = tokens[tokenId];
+    token.isController = MiniMeToken(token.tokenAddress).controller() == dao;
   }
 
   function removeOrgToken(uint256 tokenId) onlyDAO {
@@ -47,12 +57,12 @@ contract OwnershipApp is Application, Controller, Requestor {
     return tokens.length;
   }
 
-  function getOrgToken(uint tokenId) constant returns (address, uint128, uint128) {
+  function getOrgToken(uint tokenId) constant returns (address, uint128, uint128, bool) {
     Token token = tokens[tokenId];
-    return (token.tokenAddress, token.governanceRights, token.economicRights);
+    return (token.tokenAddress, token.governanceRights, token.economicRights, token.isController);
   }
 
-  function issueTokens(uint256 tokenId, uint256 amount) onlyDAO {
+  function issueTokens(uint256 tokenId, uint256 amount) onlyDAO only_controlled(tokenId) {
     address tokenAddress = getTokenAddress(tokenId);
     // TODO: get rid of this MEGA HACK.
     // Requestor should be an external contract, but having trouble because solidity
@@ -62,13 +72,13 @@ contract OwnershipApp is Application, Controller, Requestor {
     executeRequestorAction(tokenAddress);
   }
 
-  function grantTokens(uint256 tokenId, uint256 amount, address recipient) onlyDAO {
+  function grantTokens(uint256 tokenId, uint256 amount, address recipient) onlyDAO only_controlled(tokenId) {
     address tokenAddress = getTokenAddress(tokenId);
     MiniMeToken(this).transfer(recipient, amount);
     executeRequestorAction(tokenAddress);
   }
 
-  function grantVestedTokens(uint256 tokenId, uint256 amount, address recipient, uint64 start, uint64 cliff, uint64 vesting) onlyDAO {
+  function grantVestedTokens(uint256 tokenId, uint256 amount, address recipient, uint64 start, uint64 cliff, uint64 vesting) onlyDAO only_controlled(tokenId) {
     address tokenAddress = getTokenAddress(tokenId);
     MiniMeIrrevocableVestedToken(this).grantVestedTokens(recipient, amount, start, cliff, vesting);
     executeRequestorAction(tokenAddress);
@@ -121,5 +131,10 @@ contract OwnershipApp is Application, Controller, Requestor {
       sig == 0x4a393149 || // onTransfer(...)
       sig == 0xda682aeb || // onApprove(...)
       sig == 0xf48c3054;   // proxyPayment(...)
+  }
+
+  modifier only_controlled(uint tokenId) {
+    require(tokens[tokenId].isController);
+    _;
   }
 }
