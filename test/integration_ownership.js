@@ -1,7 +1,6 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
