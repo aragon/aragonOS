@@ -1,14 +1,13 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-import "../../kernel/organs/TokensOrgan.sol";
 import "../../kernel/organs/ActionsOrgan.sol";
 import "../../misc/Requestor.sol";
 import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 
 import "zeppelin/token/ERC20.sol";
 
-// OwnershipApp requires TokensOrgan and ActionsOrgan to be installed in DAO
+// OwnershipApp requires ActionsOrgan to be installed in DAO
 
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
@@ -31,14 +30,13 @@ contract OwnershipApp is Application, Controller, Requestor {
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
     require(MiniMeToken(tokenAddress).controller() == dao);
-    uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
     uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights));
-    assert(tokenId == newLength - 1 && newLength <= maxTokens);
+    uint256 tokenId = newLength - 1;
+
     if (issueAmount > 0) issueTokens(tokenId, issueAmount);
   }
 
   function removeOrgToken(uint256 tokenId) onlyDAO {
-    TokensOrgan(dao).removeToken(tokenId);
     if (tokens.length > 1) tokens[tokenId] = tokens[tokens.length - 1];
     tokens.length--;
   }

@@ -7,7 +7,6 @@ var OwnershipApp = artifacts.require('OwnershipApp')
 var VotingApp = artifacts.require('mocks/VotingAppMock')
 var StatusApp = artifacts.require('StatusApp')
 var MiniMeToken = artifacts.require('MiniMeToken')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
 
@@ -29,14 +28,11 @@ contract('Bylaws', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const tokensOrgan = await TokensOrgan.new()
-    await metadao.installOrgan(tokensOrgan.address, 3)
-
     const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 4)
+    await metadao.installOrgan(actionsOrgan.address, 3)
 
     const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 5)
+    await metadao.installOrgan(apps.address, 4)
     appOrgan = ApplicationOrgan.at(dao.address)
 
     bylawsApp = await BylawsApp.new(dao.address)

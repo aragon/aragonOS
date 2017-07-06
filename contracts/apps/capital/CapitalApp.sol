@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-import "../../kernel/organs/TokensOrgan.sol";
 import "zeppelin/token/ERC20.sol";
 
 import "./sales/StockSale.sol";
@@ -38,7 +37,7 @@ contract CapitalApp is Application {
     reverseSales[_saleAddress] = saleIndex;
     saleIndex += 1;
 
-    address tknAddr = TokensOrgan(dao).getToken(sale.tokenId());
+    address tknAddr = address(0);
 
     // Can only start a token sale with controlled tokens
     require(MiniMeInterface(tknAddr).tokenController() == dao);

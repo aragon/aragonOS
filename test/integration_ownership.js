@@ -20,14 +20,11 @@ contract('OwnershipApp', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const tokensOrgan = await TokensOrgan.new()
-    await metadao.installOrgan(tokensOrgan.address, 3)
-
     const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 4)
+    await metadao.installOrgan(actionsOrgan.address, 3)
 
     const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 5)
+    await metadao.installOrgan(apps.address, 4)
     appOrgan = ApplicationOrgan.at(dao.address)
 
     ownershipApp = await OwnershipApp.new(dao.address)
@@ -47,8 +44,7 @@ contract('OwnershipApp', accounts => {
 
     it('added the token', async () => {
       assert.equal(await ownershipApp.getTokenAddress(0), token.address, 'token address should match in app')
-      assert.equal(await TokensOrgan.at(dao.address).getToken(0), token.address, 'token address should match in organ')
-      assert.equal(await TokensOrgan.at(dao.address).getTokenCount(), 1, 'token count should be 1')
+      assert.equal(await ownershipApp.getTokenCount(), 1, 'token count should be 1')
 
       const [tokenAddress, governanceRights, economicRights] = await ownershipApp.getOrgToken(0)
       assert.equal(tokenAddress, token.address, 'token address should match in app')
@@ -58,7 +54,7 @@ contract('OwnershipApp', accounts => {
 
     it('removes the token', async () => {
       await dao_ownershipApp.removeOrgToken(0)
-      assert.equal(await TokensOrgan.at(dao.address).getTokenCount(), 0, 'token count should be 0')
+      assert.equal(await ownershipApp.getTokenCount(), 0, 'token count should be 0')
     })
 
     it('replaces removed token', async () => {
@@ -78,8 +74,7 @@ contract('OwnershipApp', accounts => {
       assert.equal(await token2.totalSupply(), 150, 'should have correct total supply after issueing')
       assert.equal(await token2.balanceOf(dao.address), 150, 'DAO should have correct balance after issueing')
       assert.equal(await ownershipApp.getTokenAddress(1), token2.address, 'token address should match in app')
-      assert.equal(await TokensOrgan.at(dao.address).getToken(1), token2.address, 'token address should match in organ')
-      assert.equal(await TokensOrgan.at(dao.address).getTokenCount(), 2, 'token count should be 1')
+      assert.equal(await ownershipApp.getTokenCount(), 2, 'token count should be 1')
     })
 
     context('after issuing tokens', async () => {
