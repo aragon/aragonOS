@@ -124,8 +124,8 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
   }
 
   function isHolder(address _holder) constant returns (bool) {
-    uint tokenCount = tokens.length;
-    for (uint i = 0; i < tokenCount; i++) {
+    uint tokenCount = getTokenCount();
+    for (uint i = 1; i <= tokenCount; i++) {
       address tknAddr = getTokenAddress(i);
       if (ERC20(tknAddr).balanceOf(_holder) >= holderThreshold) return true;
     }
