@@ -48,9 +48,9 @@ contract('VotingApp', accounts => {
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await dao_ownershipApp.addOrgToken(token.address, 1000, 1, 1, { gas: 1e6 })
-    await dao_ownershipApp.grantTokens(0, 30, accounts[0], { gas: 2e6 })
-    await dao_ownershipApp.grantTokens(0, 35, accounts[1], { gas: 2e6 })
+    await dao_ownershipApp.addToken(token.address, 1000, 1, 1, { gas: 1e6 })
+    await dao_ownershipApp.grantTokens(token.address, accounts[0], 30, { gas: 2e6 })
+    await dao_ownershipApp.grantTokens(token.address, accounts[1], 35, { gas: 2e6 })
   })
 
   context('creating basic voting', () => {
