@@ -241,7 +241,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     assert(ERC20(_token).transfer(_to, _amount));
   }
 
-  function getEtherToken() internal returns (address) {
+  function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(kernelPrimaryKey, 0x02)));
   }
 
