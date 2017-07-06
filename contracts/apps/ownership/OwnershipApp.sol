@@ -13,7 +13,7 @@ import "zeppelin/token/ERC20.sol";
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
 
-contract OwnershipApp is Application, Controller, Requestor {
+contract OwnershipApp is Application, Controller, Requestor, SafeMath {
   struct Token {
     address tokenAddress;
     uint128 governanceRights;
@@ -21,12 +21,25 @@ contract OwnershipApp is Application, Controller, Requestor {
     bool isController;
   }
 
+  struct TokenSale {
+    address saleAddress;
+    uint tokenId;
+    bool canDestroy;
+    bool closed;
+  }
+
   Token[] tokens;
+
+  TokenSale[] tokenSales;
+  mapping (address => uint) tokenSaleForAddress;
+
   uint8 constant maxTokens = 20; // prevent OOGs when tokens are iterated
   uint constant holderThreshold = 1; // if owns x tokens is considered holder
 
   function OwnershipApp(address daoAddr)
-           Application(daoAddr) {}
+           Application(daoAddr) {
+    tokenSales.length += 1;
+  }
 
   function addOrgToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
     uint256 tokenId = TokensOrgan(dao).addToken(tokenAddress);
@@ -38,6 +51,31 @@ contract OwnershipApp is Application, Controller, Requestor {
     updateIsController(tokenId);
 
     if (issueAmount > 0) issueTokens(tokenId, issueAmount);
+  }
+
+  function createTokenSale(address saleAddress, uint tokenId, bool canDestroy) onlyDAO only_controlled(tokenId) {
+    uint salesLength = tokenSales.push(TokenSale(saleAddress, tokenId, canDestroy, false));
+    uint saleId = salesLength - 1; // last item is newly added sale
+    tokenSaleForAddress[saleAddress] = saleId;
+  }
+
+  function sale_mintTokens(uint tokenId, address recipient, uint amount) only_active_sale(tokenId) {
+    address tokenAddress = getTokenAddress(tokenId);
+    MiniMeToken(this).generateTokens(recipient, amount);
+    executeRequestorAction(tokenAddress);
+  }
+
+  function sale_destroyTokens(uint tokenId, address holder, uint amount) only_active_sale(tokenId) {
+    require(tokenSales[tokenSaleForAddress[dao_msg.sender]].canDestroy);
+    address tokenAddress = getTokenAddress(tokenId);
+    MiniMeToken(this).destroyTokens(holder, amount);
+    executeRequestorAction(tokenAddress);
+  }
+
+  function sale_closeSale() {
+    uint saleId = tokenSaleForAddress[dao_msg.sender];
+    require(saleId > 0);
+    tokenSales[saleId].closed = true;
   }
 
   // @dev Updates whether an added token controller state has changed
@@ -135,6 +173,14 @@ contract OwnershipApp is Application, Controller, Requestor {
 
   modifier only_controlled(uint tokenId) {
     require(tokens[tokenId].isController);
+    _;
+  }
+
+  modifier only_active_sale(uint tokenId) {
+    uint saleId = tokenSaleForAddress[dao_msg.sender];
+    require(saleId > 0);
+    TokenSale sale = tokenSales[saleId];
+    require(!sale.closed && sale.tokenId == tokenId);
     _;
   }
 }
