@@ -37,7 +37,7 @@ contract AccountingApp is Application {
     TransactionUpdate[] public transactionUpdates;
 
     // Reverse relation of a Transaction ID  -> TransactionsUpdatesIds[]
-    // transactionUpdatesRelation[tid] -> [tuid]
+    // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
     // Create a new transaction and return the id of the new transaction.
