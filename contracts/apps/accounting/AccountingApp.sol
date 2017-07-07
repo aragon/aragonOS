@@ -125,7 +125,9 @@ contract AccountingApp is Application {
         );
     }
 
-    function setDAOMsg(address sender, address token, uint value) {
+    function setDAOMsg(address sender, address token, uint value) onlyDAO {
+        dao_msg.sender = sender;
+        dao_msg.token = token;
+        dao_msg.value = value;
     }
-
 }
