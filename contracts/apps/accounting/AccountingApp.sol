@@ -1,5 +1,7 @@
 pragma solidity ^0.4.11;
 
+import "../Application.sol";
+
 contract AccountingApp is Application {
 
     // The concept of sending tokens to or from the org
