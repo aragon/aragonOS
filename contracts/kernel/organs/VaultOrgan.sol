@@ -264,10 +264,6 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   function organWasInstalled() {
     // TODO: Replace for constant for EtherToken
     MetaOrgan(this).setEtherToken(address(new EtherToken()));
-    setReturnSize(getTokenBalanceSig, 32);
-    setReturnSize(getHaltTimeSig, 64);  // returns 2 uints
-    setReturnSize(getScapeHatchSig, 32);
-    setReturnSize(isTknBlacklistSig, 32);
   }
 
   // @dev Function called by DAO as call for organ to communicate if it handles a payload

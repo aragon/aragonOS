@@ -90,7 +90,7 @@ contract Kernel is IKernel, DAOStorage {
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
     address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
-    uint32 len = getReturnSize(msg.sig);
+    uint32 len = getReturnSize();
     assembly {
       let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
       jumpi(invalidJumpLabel, iszero(result))
