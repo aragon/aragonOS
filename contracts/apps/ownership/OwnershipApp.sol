@@ -31,7 +31,7 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
 
   struct TokenSale {
     address saleAddress;
-    uint tokenId;
+    address tokenAddress;
     bool canDestroy;
     bool closed;
   }
@@ -58,31 +58,29 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
     // Only add tokens the DAO is the controller of, so we can control it.
     // If it is a wrap over another token, the Wrap implementation can remove some functionality.
     require(MiniMeToken(tokenAddress).controller() == dao);
-    uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights));
+    uint newLength = tokens.push(Token(tokenAddress, governanceRights, economicRights, false));
     uint256 tokenId = newLength - 1;
     tokenIdForAddress[tokenAddress] = tokenId;
 
-    updateIsController(tokenId);
+    updateIsController(tokenAddress);
     AddedToken(tokenAddress, tokenId);
 
     if (issueAmount > 0) issueTokens(tokenAddress, issueAmount);
   }
 
-  function createTokenSale(address saleAddress, uint tokenId, bool canDestroy) onlyDAO only_controlled(tokenId) {
-    uint salesLength = tokenSales.push(TokenSale(saleAddress, tokenId, canDestroy, false));
+  function createTokenSale(address saleAddress, address tokenAddress, bool canDestroy) onlyDAO only_controlled(tokenAddress) {
+    uint salesLength = tokenSales.push(TokenSale(saleAddress, tokenAddress, canDestroy, false));
     uint saleId = salesLength - 1; // last item is newly added sale
     tokenSaleForAddress[saleAddress] = saleId;
   }
 
-  function sale_mintTokens(uint tokenId, address recipient, uint amount) only_active_sale(tokenId) {
-    address tokenAddress = getTokenAddress(tokenId);
+  function sale_mintTokens(address tokenAddress, address recipient, uint amount) only_active_sale(tokenAddress) {
     MiniMeToken(this).generateTokens(recipient, amount);
     executeRequestorAction(tokenAddress);
   }
 
-  function sale_destroyTokens(uint tokenId, address holder, uint amount) only_active_sale(tokenId) {
+  function sale_destroyTokens(address tokenAddress, address holder, uint amount) only_active_sale(tokenAddress) {
     require(tokenSales[tokenSaleForAddress[dao_msg.sender]].canDestroy);
-    address tokenAddress = getTokenAddress(tokenId);
     MiniMeToken(this).destroyTokens(holder, amount);
     executeRequestorAction(tokenAddress);
   }
@@ -96,7 +94,7 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
   // @dev Updates whether an added token controller state has changed
   // can be called by anyone at any time
   function updateIsController(address tokenAddress) {
-    Token token = tokens[tokenIdForAddress[tokenAdd]];
+    Token token = tokens[tokenIdForAddress[tokenAddress]];
     token.isController = MiniMeToken(token.tokenAddress).controller() == dao;
   }
 
@@ -119,7 +117,7 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
     return tokens.length - 1; // index 0 is empty
   }
 
-  function getToken(uint tokenId) constant returns (address, uint128, uint128) {
+  function getToken(uint tokenId) constant returns (address, uint128, uint128, bool) {
     Token token = tokens[tokenId];
     return (token.tokenAddress, token.governanceRights, token.economicRights, token.isController);
   }
@@ -195,16 +193,16 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
       sig == 0xf48c3054;   // proxyPayment(...)
   }
 
-  modifier only_controlled(uint tokenId) {
-    require(tokens[tokenId].isController);
+  modifier only_controlled(address tokenAddress) {
+    require(tokens[tokenIdForAddress[tokenAddress]].isController);
     _;
   }
 
-  modifier only_active_sale(uint tokenId) {
+  modifier only_active_sale(address tokenAddress) {
     uint saleId = tokenSaleForAddress[dao_msg.sender];
     require(saleId > 0);
     TokenSale sale = tokenSales[saleId];
-    require(!sale.closed && sale.tokenId == tokenId);
+    require(!sale.closed && sale.tokenAddress == tokenAddress);
     _;
   }
 }

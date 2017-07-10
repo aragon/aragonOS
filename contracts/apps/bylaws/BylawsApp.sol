@@ -8,7 +8,6 @@ import "../Application.sol";
 
 import "../status/StatusApp.sol";
 import "../ownership/OwnershipApp.sol";
-import "../capital/CapitalApp.sol";
 import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
 
 contract IBylawsApp {

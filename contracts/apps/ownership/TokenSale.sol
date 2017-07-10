@@ -11,6 +11,7 @@ contract TokenSale {
   address public dao;
   OwnershipApp public ownershipApp;
   ERC20 public raiseToken;
+  ERC20 public saleToken;
 
   function buy(uint256 amount) internal;
 
@@ -22,7 +23,13 @@ contract TokenSale {
     buy(msg.value);
   }
 
-  function mintToken
+  function mintToken(address _recipient, uint _amount) {
+    ownershipApp.sale_mintTokens(address(saleToken), _recipient, _amount);
+  }
+
+  function destroyTokens(address _holder, uint _amount) {
+    ownershipApp.sale_destroyTokens(address(saleToken), _holder, _amount);
+  }
 
   // @dev make a send that is compatible with any kind of erc20
   function sendFunds() internal {
