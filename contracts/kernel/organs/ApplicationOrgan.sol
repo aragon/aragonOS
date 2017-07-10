@@ -9,10 +9,7 @@ contract ApplicationOrgan is IOrgan {
     return true;
   }
 
-  function organWasInstalled() {
-    setReturnSize(0x24f3a51b, 32); // getApp(uint256)
-    setReturnSize(0xed1a3286, 32); // getResponsiveApplicationForSignature(bytes4)
-  }
+  function organWasInstalled() {}
 
   function installApp(uint i, address application) {
     require(i > 0);
@@ -27,7 +24,14 @@ contract ApplicationOrgan is IOrgan {
     IApplication app = IApplication(responsiveApplication);
     DAOMessage memory daomsg = dao_msg();
     app.setDAOMsg(daomsg.sender, daomsg.token, daomsg.value); // TODO: check reentrancy risks
-    assert(app.call(msg.data)); // every app is sandboxed
+    uint32 len = getReturnSize();
+
+    assembly {
+      calldatacopy(0x0, 0x0, calldatasize)
+      let result := call(sub(gas, 10000), responsiveApplication, 0, 0x0, calldatasize, 0, len)
+      jumpi(invalidJumpLabel, iszero(result))
+      return(0, len)
+    }
   }
 
   function getApp(uint i) constant public returns (address) {
