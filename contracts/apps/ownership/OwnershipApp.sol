@@ -46,12 +46,16 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
   event RemovedToken(address tokenAddress);
   event ChangedTokenId(address tokenAddress, uint oldTokenId, uint newTokenId);
 
+  event NewTokenSale(address saleAddress, uint saleId);
+  event TokenSaleClosed(address saleAddress, uint saleId);
+
   uint8 constant maxTokens = 20; // prevent OOGs when tokens are iterated
   uint constant holderThreshold = 1; // if owns x tokens is considered holder
 
   function OwnershipApp(address daoAddr)
            Application(daoAddr) {
     tokenSales.length += 1;
+    tokens.length += 1;
   }
 
   function addToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) onlyDAO {
@@ -68,27 +72,44 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
     if (issueAmount > 0) issueTokens(tokenAddress, issueAmount);
   }
 
+  bytes4 constant createTokenSaleSig = bytes4(sha3('createTokenSale(address,address,bool)'));
   function createTokenSale(address saleAddress, address tokenAddress, bool canDestroy) onlyDAO only_controlled(tokenAddress) {
     uint salesLength = tokenSales.push(TokenSale(saleAddress, tokenAddress, canDestroy, false));
     uint saleId = salesLength - 1; // last item is newly added sale
     tokenSaleForAddress[saleAddress] = saleId;
+
+    NewTokenSale(saleAddress, saleId);
   }
 
+  bytes4 constant closeTokenSaleSig = bytes4(sha3('closeTokenSale(address)'));
+  function closeTokenSale(address saleAddress) onlyDAO {
+    doCloseSale(saleAddress);
+  }
+
+  bytes4 constant saleMintSig = bytes4(sha3('sale_mintTokens(address,address,uint256)'));
   function sale_mintTokens(address tokenAddress, address recipient, uint amount) only_active_sale(tokenAddress) {
     MiniMeToken(this).generateTokens(recipient, amount);
     executeRequestorAction(tokenAddress);
   }
 
+  bytes4 constant saleDestroySig = bytes4(sha3('sale_destroyTokens(address,address,uint256)'));
   function sale_destroyTokens(address tokenAddress, address holder, uint amount) only_active_sale(tokenAddress) {
     require(tokenSales[tokenSaleForAddress[dao_msg.sender]].canDestroy);
     MiniMeToken(this).destroyTokens(holder, amount);
     executeRequestorAction(tokenAddress);
   }
 
+  bytes4 constant saleCloseSig = bytes4(sha3('sale_closeSale()'));
   function sale_closeSale() {
-    uint saleId = tokenSaleForAddress[dao_msg.sender];
+    doCloseSale(getSender());
+  }
+
+  function doCloseSale(address _saleAddress) internal {
+    uint saleId = tokenSaleForAddress[_saleAddress];
     require(saleId > 0);
     tokenSales[saleId].closed = true;
+
+    TokenSaleClosed(tokenSales[saleId].saleAddress, saleId);
   }
 
   // @dev Updates whether an added token controller state has changed
@@ -120,6 +141,15 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
   function getToken(uint tokenId) constant returns (address, uint128, uint128, bool) {
     Token token = tokens[tokenId];
     return (token.tokenAddress, token.governanceRights, token.economicRights, token.isController);
+  }
+
+  function getTokenSaleCount() constant returns (uint) {
+    return tokenSales.length - 1; // index 0 is empty
+  }
+
+  function getTokenSale(uint tokenSaleId) constant returns (address, address, bool, bool) {
+    TokenSale tokenSale = tokenSales[tokenSaleId];
+    return (tokenSale.saleAddress, tokenSale.tokenAddress, tokenSale.canDestroy, tokenSale.closed);
   }
 
   function issueTokens(address tokenAddress, uint256 amount) onlyDAO {
@@ -183,6 +213,11 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
       sig == grantTokensSig ||
       sig == grantVestedTokensSig ||
       sig == getTokenSig ||
+      sig == createTokenSaleSig ||
+      sig == saleDestroySig ||
+      sig == saleMintSig ||
+      sig == saleCloseSig ||
+      sig == closeTokenSaleSig ||
       isTokenControllerSignature(sig);
   }
 
