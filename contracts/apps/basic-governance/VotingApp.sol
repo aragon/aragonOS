@@ -12,7 +12,7 @@ contract IVotingApp {
   event VoteClosed(uint indexed voteId);
 }
 
-contract VotingApp is IVotingApp, Application {
+contract VotingApp is IVotingApp, OwnershipConstants, Application {
   function VotingApp(address daoAddr)
            Application(daoAddr) {
     votes.length++; // index 0 is empty
@@ -145,8 +145,8 @@ contract VotingApp is IVotingApp, Application {
     OwnershipApp ownershipApp = getOwnershipApp();
 
     uint count = ownershipApp.getTokenCount();
-    for (uint i = 0; i < count; i++) {
-      var (tokenAddress, governanceRights,) = ownershipApp.getOrgToken(i);
+    for (uint i = 1; i <= count; i++) {
+      var (tokenAddress, governanceRights,) = ownershipApp.getToken(i);
       if (governanceRights > 0) {
         vote.governanceTokens.push(tokenAddress);
         vote.votingWeights.push(governanceRights);
@@ -163,8 +163,8 @@ contract VotingApp is IVotingApp, Application {
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getOrgToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xf594ba59));
+    // gets the app address that can respond to getToken
+    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
   }
 
   // @dev just for mocking purposes

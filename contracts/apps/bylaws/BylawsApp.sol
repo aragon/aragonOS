@@ -19,7 +19,7 @@ contract BylawsConstants {
   bytes4 constant linkBylawSig = bytes4(sha3('linkBylaw(bytes4,uint256)'));
 }
 
-contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracle {
+contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Application, PermissionsOracle {
   enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
   enum SpecialEntityStatus { Holder, TokenSale }
   enum CombinatorType { Or, And, Xor }
@@ -265,8 +265,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracl
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getOrgToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xf594ba59));
+    // gets the app address that can respond to getToken
+    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
   }
 
   function getVotingApp() internal returns (VotingApp) {
