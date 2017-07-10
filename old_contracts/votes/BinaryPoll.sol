@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "./BinaryVoting.sol";
-import "../AbstractCompany.sol";
+import "../ICompany.sol";
 
 contract BinaryPoll is BinaryVoting("Yes", "No") {
   string public description;
@@ -9,5 +9,5 @@ contract BinaryPoll is BinaryVoting("Yes", "No") {
     description = _description;
   }
 
-  function executeOnAppove(AbstractCompany company) internal {}
+  function executeOnAppove(ICompany company) internal {}
 }

@@ -3,8 +3,9 @@ var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var Kernel = artifacts.require('Kernel')
+var VaultOrgan = artifacts.require('VaultOrgan')
 var EtherToken = artifacts.require('EtherToken')
-var MockedOrgan = artifacts.require('./helpers/MockedOrgan')
+var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
 var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
 var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { sign } = require('./helpers/web3')
@@ -15,15 +16,19 @@ const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('Dispatcher', accounts => {
-  let dao, metadao, kernel, mockedOrgan = {}
+  let dao, metadao, kernel, mockedOrgan, vault = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
+    const vaultOrgan = await VaultOrgan.new()
+    await metadao.installOrgan(vaultOrgan.address, 3)
+    vault = VaultOrgan.at(dao.address)
+
     const mockOrgan = await MockedOrgan.new()
-    await metadao.installOrgan(mockOrgan.address, 3)
+    await metadao.installOrgan(mockOrgan.address, 4)
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 
@@ -35,11 +40,12 @@ contract('Dispatcher', accounts => {
 
     it('with more than 0 ether', async () => {
       const value = 101
-      await mockedOrgan.mock_setNumber(3, { value })
+      await mockedOrgan.mock_setNumber(3, { value, gas: 10000000 })
       assert.equal(await mockedOrgan.mock_getNumber(), 3, 'should have dispatched method')
 
       const etherToken = EtherToken.at(await kernel.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
+      assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
     })
   })
 
@@ -49,7 +55,7 @@ contract('Dispatcher', accounts => {
 
     const signedTransaction = async nonce => {
       const data = mockedOrgan.mock_setNumber.request(4).params[0].data
-      const signingPayload = await kernel.personalSignedPayload(data, 1)
+      const signingPayload = await kernel.payload(data, 1)
       const signature = await sign(signingPayload, signer)
 
       const adding0x = x => '0x'.concat(x)
@@ -78,6 +84,7 @@ contract('Dispatcher', accounts => {
       const etherToken = EtherToken.at(await kernel.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), 1, 'transferred ether should be inside ETH token')
       assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
+      assert.equal(await vault.getTokenBalance(etherToken.address), 1, 'DAO accounting should know token balance')
     })
 
     it('throws when reusing signed payload', async () => {
@@ -100,6 +107,7 @@ contract('Dispatcher', accounts => {
 
       assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
       assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
+      assert.equal(await vault.getTokenBalance(token.address), 10, 'DAO accounting should know token balance')
     })
 
     it('using ERC223', async () => {
@@ -119,6 +127,7 @@ contract('Dispatcher', accounts => {
 
       assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
       assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
+      assert.equal(await vault.getTokenBalance(token.address), 10, 'DAO accounting should know token balance')
     })
   })
 })

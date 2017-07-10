@@ -10,11 +10,32 @@ module.exports = {
     })
   },
 
+  getBlockNumber() {
+    return new Promise((resolve, reject) => {
+      web3.eth.getBlockNumber(async (err, res) => {
+        if (err || !res) return reject(err)
+        resolve(res)
+      })
+    })
+  },
+
   sendTransaction(payload) {
     return new Promise((resolve, reject) => {
       web3.eth.sendTransaction(payload, async (err, res) => {
         if (err || !res) return reject(err)
         resolve(res)
+      })
+    })
+  },
+
+  getNonce(web3) {
+    return new Promise((resolve, reject) => {
+      web3.eth.getAccounts((err, acc) => {
+        if (err) return reject(err)
+        web3.eth.getTransactionCount(acc[0], (err, n) => {
+          if (err) return reject(err)
+          resolve(n)
+        })
       })
     })
   },

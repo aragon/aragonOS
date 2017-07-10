@@ -1,14 +1,12 @@
 pragma solidity ^0.4.11;
 
-import "./Organ.sol";
+import "./IOrgan.sol";
 import "../../dao/DAOStorage.sol";
 
 // @dev This organ is responsible for finding what is the first organ that can perform an action
 // and dispatching it.
-contract DispatcherOrgan is Organ {
-  function organWasInstalled() {
-    setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
-  }
+contract DispatcherOrgan is IOrgan {
+  function organWasInstalled() {}
 
   function canHandlePayload(bytes payload) returns (bool) {
     return getResponsiveOrgan(payload) != 0;
@@ -18,7 +16,7 @@ contract DispatcherOrgan is Organ {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
     assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
     address target = responsiveOrgan;
-    uint32 len = getReturnSize(msg.sig);
+    uint32 len = getReturnSize();
 
     assembly {
       calldatacopy(0x0, 0x0, calldatasize)
@@ -33,7 +31,7 @@ contract DispatcherOrgan is Organ {
     while (true) {
       address organAddress = getOrgan(i);
       if (organAddress == 0) return 0;  // if a 0 address is returned it means, there is no more organs.
-      if (Organ(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
+      if (IOrgan(organAddress).canHandlePayload(payload)) return organAddress; // If the organ can handle it, return.
       i++;
     }
   }

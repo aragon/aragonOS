@@ -1,13 +1,10 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
-var MockedApp = artifacts.require('./helpers/MockedApp')
+var MockedApp = artifacts.require('./mocks/MockedApp')
 
 var Kernel = artifacts.require('Kernel')
-
-const { sign } = require('./helpers/web3')
 
 const createDAO = () => DAO.new({ gas: 9e6 })
 

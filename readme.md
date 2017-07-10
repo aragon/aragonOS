@@ -54,3 +54,20 @@ A vague representation of the state of the refactor can be found here:
 - [ ] Default bylaw installation for all apps and DAOs
 - [ ] Update DApp to new event names and sources
 - [ ] Update org factory to configure basic DAO
+
+## Contributing
+
+To make it easier for contributers to get up to speed, we provide a docker environment that provides all the requirements to build and test Aragon Core
+
+### Requirements
+
+ - [Docker](https://www.docker.com/get-docker)
+ - [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Run tests
+
+    $ docker-compose run core test
+
+
+
+

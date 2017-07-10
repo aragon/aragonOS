@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./AbstractKernel.sol";
+import "./IKernel.sol";
 import "./organs/DispatcherOrgan.sol";
 import "./organs/MetaOrgan.sol";
 
@@ -24,7 +24,7 @@ contract PermissionsOracle {
   function performedAction(address sender, address token, uint256 value, bytes data);
 }
 
-contract Kernel is AbstractKernel, DAOStorage {
+contract Kernel is IKernel, DAOStorage {
   // @dev Sets up the minimum amount of organs for the kernel to be usable.
   // All organ installation from this point can be made using MetaOrgan
   function setupOrgans() {
@@ -75,20 +75,20 @@ contract Kernel is AbstractKernel, DAOStorage {
   // @param value: Transaction's sent ETH value
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
-    address etherTokenAddress = getEtherToken();
-    if (value > 0 && etherTokenAddress != 0) EtherToken(etherTokenAddress).wrap.value(value)();
-    dispatch(sender, etherTokenAddress, value, data);
+    dispatch(sender, getEtherToken(), value, data);
   }
 
   // @dev Sends the transaction to the dispatcher organ
   function dispatch(address sender, address token, uint256 value, bytes payload) internal {
     require(canPerformAction(sender, token, value, payload));
 
+    vaultDeposit(token, value); // deposit tokens that come with the call in the vault
+
     performedAction(sender, token, value, payload); // TODO: Check reentrancy implications
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
     address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
-    uint32 len = getReturnSize(msg.sig);
+    uint32 len = getReturnSize();
     assembly {
       let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
       jumpi(invalidJumpLabel, iszero(result))
@@ -116,6 +116,13 @@ contract Kernel is AbstractKernel, DAOStorage {
 
   function getStorageKeyForPayload(bytes32 _payload) constant internal returns (bytes32) {
     return sha3(0x01, 0x01, _payload);
+  }
+
+  function vaultDeposit(address token, uint256 amount) internal {
+    address vaultOrgan = getOrgan(3);
+    if (amount == 0 || vaultOrgan == 0) return;
+
+    assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
   }
 
   function getEtherToken() constant returns (address) {

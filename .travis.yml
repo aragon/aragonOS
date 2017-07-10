@@ -1,10 +1,12 @@
-dist: trusty
-sudo: false
-group: beta
-language: node_js
-node_js:
-  - "6"
-before_install:
-  - npm i
+language: python
+
+sudo: required
+python:
+  - "3.4"
+
+services:
+  - docker
+
 script:
-  - npm t
+  - docker-compose run core test
+

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "./AbstractDAO.sol";
+import "./IDAO.sol";
 
 contract UIntStorage {
   mapping (bytes32 => uint256) uintStorage;
@@ -14,7 +14,7 @@ contract UIntStorage {
   }
 }
 
-contract DAOStorage is AbstractDAO, UIntStorage {
+contract DAOStorage is IDAO, UIntStorage {
   bytes32 constant kernelKey = sha3(0x00, 0x01);
   bytes32 constant selfKey = sha3(0x00, 0x00);
 
@@ -59,15 +59,7 @@ contract DAOStorage is AbstractDAO, UIntStorage {
     return address(storageGet(kernelKey));
   }
 
-  function setReturnSize(bytes4 _sig, uint _size) internal {
-    storageSet(getKeyForReturnSize(_sig), _size);
-  }
-
-  function getReturnSize(bytes4 _sig) internal constant returns (uint32) {
-    return uint32(storageGet(getKeyForReturnSize(_sig)));
-  }
-
-  function getKeyForReturnSize(bytes4 _sig) internal constant returns (bytes32) {
-    return sha3(0x00, 0x02, _sig);
+  function getReturnSize() internal constant returns (uint32) {
+    return 8 * 32; // allows for 10 values returned
   }
 }

@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 
 import "../dao/DAOStorage.sol";
-import "./AbstractApplication.sol";
+import "./IApplication.sol";
 
-contract Application is AbstractApplication {
+contract Application is IApplication {
   DAOStorage.DAOMessage dao_msg;
   address public dao;
 
@@ -24,5 +24,13 @@ contract Application is AbstractApplication {
     dao_msg.sender = sender;
     dao_msg.token = token;
     dao_msg.value = value;
+  }
+
+  function getSig(bytes d) internal returns (bytes4 sig) {
+    assembly { sig := mload(add(d, 0x20)) }
+  }
+
+  function getSender() internal returns (address) {
+    return msg.sender == dao ? dao_msg.sender : msg.sender;
   }
 }
