@@ -28,6 +28,18 @@ module.exports = {
     })
   },
 
+  getNonce(web3) {
+    return new Promise((resolve, reject) => {
+      web3.eth.getAccounts((err, acc) => {
+        if (err) return reject(err)
+        web3.eth.getTransactionCount(acc[0], (err, n) => {
+          if (err) return reject(err)
+          resolve(n)
+        })
+      })
+    })
+  },
+
   sign(payload, address) {
     return new Promise((resolve, reject) => {
       web3.eth.sign(address, payload, async (err, signedPayload) => {
