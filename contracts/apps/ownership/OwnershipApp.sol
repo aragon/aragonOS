@@ -94,7 +94,7 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
 
   bytes4 constant saleDestroySig = bytes4(sha3('sale_destroyTokens(address,address,uint256)'));
   function sale_destroyTokens(address tokenAddress, address holder, uint amount) only_active_sale(tokenAddress) {
-    require(tokenSales[tokenSaleForAddress[dao_msg.sender]].canDestroy);
+    require(tokenSales[tokenSaleForAddress[getSender()]].canDestroy);
     MiniMeToken(this).destroyTokens(holder, amount);
     executeRequestorAction(tokenAddress);
   }
@@ -214,9 +214,6 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
       sig == grantVestedTokensSig ||
       sig == getTokenSig ||
       sig == createTokenSaleSig ||
-      sig == saleDestroySig ||
-      sig == saleMintSig ||
-      sig == saleCloseSig ||
       sig == closeTokenSaleSig ||
       isTokenControllerSignature(sig);
   }
@@ -234,7 +231,7 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
   }
 
   modifier only_active_sale(address tokenAddress) {
-    uint saleId = tokenSaleForAddress[dao_msg.sender];
+    uint saleId = tokenSaleForAddress[getSender()];
     require(saleId > 0);
     TokenSale sale = tokenSales[saleId];
     require(!sale.closed && sale.tokenAddress == tokenAddress);

@@ -38,12 +38,16 @@ contract TokenSale {
     buy(_sender, _value);
   }
 
-  function () payable {
+  function buy(address holder) payable {
     EtherToken etherToken = getEtherToken();
     require(raiseToken == etherToken);
 
     etherToken.wrap.value(msg.value)();
-    buy(msg.sender, msg.value);
+    buy(holder, msg.value);
+  }
+
+  function () payable {
+    buy(msg.sender);
   }
 
   function mintTokens(address _recipient, uint _amount) internal {
