@@ -1,8 +1,22 @@
 pragma solidity ^0.4.11;
 
+import "../../kernel/Kernel.sol";
 import "../Application.sol";
+//import "../../misc/Crontab.sol";
+
 
 contract AccountingApp is Application {
+
+
+    function AccountingApp(address dao) Application(dao) {
+
+    }
+
+
+    struct DefaultSettings {
+        address baseToken;
+    }
+
 
     // The concept of sending tokens to or from the org
     struct Transaction {
@@ -42,7 +56,7 @@ contract AccountingApp is Application {
 
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SID = bytes4(sha3('newTransaction(address token, int value, address externalAddress, string reference, TransactionState initialState)'));
+    bytes4 constant NEW_TRANSACTION_SID = bytes4(sha3('newTransaction(address,int,address,string,TransactionState)'));
     function newTransaction(address token, int value, address externalAddress, string reference, TransactionState initialState) returns (uint) {
 
         uint tid = transactions.push(Transaction({
@@ -62,6 +76,7 @@ contract AccountingApp is Application {
     }
 
 
+    // Create new transactionUpdate for the given transaction id
     bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint transactionId, TransactionState state, string reason)'));
     function updateTransaction(uint transactionId, TransactionState state, string reason) returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
@@ -111,9 +126,6 @@ contract AccountingApp is Application {
             stringState = "Failed";
     }
 
-    function AccountingApp() {
-
-    }
 
     function canHandlePayload(bytes payload) constant returns (bool) {
         bytes4 sig = getSig(payload);
@@ -125,9 +137,4 @@ contract AccountingApp is Application {
         );
     }
 
-    function setDAOMsg(address sender, address token, uint value) onlyDAO {
-        dao_msg.sender = sender;
-        dao_msg.token = token;
-        dao_msg.value = value;
-    }
 }
