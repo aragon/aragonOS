@@ -77,7 +77,7 @@ contract AccountingApp is Application {
 
 
     // Create new transactionUpdate for the given transaction id
-    bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint transactionId, TransactionState state, string reason)'));
+    bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint,TransactionState,string)'));
     function updateTransaction(uint transactionId, TransactionState state, string reason) returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
@@ -89,24 +89,24 @@ contract AccountingApp is Application {
         return tuid;
     }
 
-    bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint transactionId, string reason)'));
+    bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint,string)'));
     function setTransactionSucceeded(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }    
 
-    bytes4 constant SET_TRANSACTION_PENDING_APPROVAL_SIG = bytes4(sha3('setTransactionPendingApproval(uint transactionId, string reason)'));
+    bytes4 constant SET_TRANSACTION_PENDING_APPROVAL_SIG = bytes4(sha3('setTransactionPendingApproval(uint,string)'));
     function setTransactionPendingApproval(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.PendingApproval, reason);
     }
 
-    bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint transactionId, string reason)'));
+    bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint,string)'));
     function setTransactionFailed(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.Failed, reason);
     }
 
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint transactionId)'));
+    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint)'));
     function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, string stringState, TransactionState state) {
         Transaction t = transactions[transactionId];
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][transactionUpdatesRelation[transactionId].length - 1];
