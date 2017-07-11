@@ -66,8 +66,8 @@ contract('Applications', accounts => {
 
     it('can create new transaction', async () => {
         await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        console.log(await accountingApp.transactions.call(0))
-        assert.equal(await accountingApp.transactions.length.call(), 1, 'Should have a single transaction')
+        let t0 = await accountingApp.getTransactionState(0)
+        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
     })
   })
 
