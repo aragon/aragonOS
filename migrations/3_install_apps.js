@@ -2,7 +2,7 @@ var DAO = artifacts.require('DAO')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var MetaOrgan = artifacts.require('MetaOrgan')
 
-const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp']
+const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp', 'AccountingApp']
 
 let nonce = 0
 const { getNonce } = require('../test/helpers/web3')

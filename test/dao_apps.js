@@ -2,6 +2,7 @@ const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
+var AccountingApp = artifacts.require('../contrats/app/accounting/AccountingApp')
 var MockedApp = artifacts.require('./mocks/MockedApp')
 
 var Kernel = artifacts.require('Kernel')
@@ -26,12 +27,17 @@ contract('Applications', accounts => {
 
   context('installed app', () => {
     let mockApp = {}
+    let accountingApp = {}
     let dao_mockApp = {}
+    let dao_accountingApp = {}
 
     beforeEach(async () => {
       mockApp = await MockedApp.new(dao.address)
+      accountingApp = await AccountingApp.new(dao.address)
       dao_mockApp = MockedApp.at(dao.address)
+      dao_accountingApp = AccountingApp.at(dao.address)
       await appOrgan.installApp(1, mockApp.address)
+      await appOrgan.installApp(2, accountingApp.address)
     })
 
     it('returns installed app address', async () => {
@@ -56,6 +62,12 @@ contract('Applications', accounts => {
     it('can perform unprotected methods from the outside', async () => {
       await mockApp.unprotectedDoStuff()
       assert.isTrue(await mockApp.didStuff(), 'should have done stuff')
+    })
+
+    it('can create new transaction', async () => {
+        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
+        console.log(await accountingApp.transactions.call(0))
+        assert.equal(await accountingApp.transactions.length.call(), 1, 'Should have a single transaction')
     })
   })
 

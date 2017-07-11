@@ -8,8 +8,8 @@ import "../Application.sol";
 contract AccountingApp is Application {
 
 
-    function AccountingApp(address dao) Application(dao) {
-
+    function AccountingApp(address _dao)
+    Application(_dao) {
     }
 
 
