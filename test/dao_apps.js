@@ -41,7 +41,7 @@ contract('Applications', accounts => {
     })
 
     it('returns installed app address', async () => {
-      assert.equal(await appOrgan.getApp(1), mockApp.address, 'should have returned installed app addr')
+      assert.equal(await appOrgan.getApp(2), mockApp.address, 'should have returned installed app addr')
     })
 
     it('dispatches actions in apps', async () => {

@@ -1,6 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "../dao/DAOStorage.sol";
+import "../misc/Crontab.sol";
 import "./IApplication.sol";
 
 contract Application is IApplication {
