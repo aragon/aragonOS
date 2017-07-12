@@ -9,4 +9,4 @@ services:
         volumes:
         - ./docker_home:/root/
         - ./contracts:/usr/src/app/contracts
-        - ./tests:/usr/src/app/tests
+        - ./test:/usr/src/app/test
