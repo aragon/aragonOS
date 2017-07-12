@@ -76,7 +76,7 @@ contract('Applications', accounts => {
         await accountingApp.updateTransaction(0, 1, 'needs approval')
         let t0 = await accountingApp.getTransactionState(0)
         assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        assert.equal(t0[4], 'Pending', 'Should need approval (state 1)')
+        assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
     })
   })
 
