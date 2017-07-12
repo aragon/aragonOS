@@ -36,8 +36,8 @@ contract('Applications', accounts => {
       accountingApp = await AccountingApp.new(dao.address)
       dao_mockApp = MockedApp.at(dao.address)
       dao_accountingApp = AccountingApp.at(dao.address)
-      await appOrgan.installApp(1, mockApp.address)
-      await appOrgan.installApp(2, accountingApp.address)
+      await appOrgan.installApp(1, accountingApp.address)
+      await appOrgan.installApp(2, mockApp.address)
     })
 
     it('returns installed app address', async () => {
@@ -68,6 +68,15 @@ contract('Applications', accounts => {
         await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
         let t0 = await accountingApp.getTransactionState(0)
         assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
+        assert.equal(t0[4], 0, 'Should be a new transaction (state 0)')
+    })
+
+    it('can update transaction', async () => {
+        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
+        await accountingApp.updateTransaction(0, 1, 'needs approval')
+        let t0 = await accountingApp.getTransactionState(0)
+        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
+        assert.equal(t0[4], 1, 'Should need approval (state 1)')
     })
   })
 
