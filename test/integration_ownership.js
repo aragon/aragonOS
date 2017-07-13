@@ -7,10 +7,12 @@ var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
 var Controller = artifacts.require('Controller')
-var IndividualSale = artifacts.require('IndividualSale')
+var IndividualSale = artifacts.require('mocks/IndividualSaleMock')
 var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
+
+const { getBlockNumber } = require('./helpers/web3')
 
 const createDAO = () => DAO.new({ gas: 9e6 })
 
@@ -109,7 +111,7 @@ contract('OwnershipApp', accounts => {
       })
     })
 
-    context('creating token sale', () => {
+    context('creating individual token sale', () => {
       let sale, raiseToken = {}
       const buyer = accounts[3]
 
@@ -118,8 +120,20 @@ contract('OwnershipApp', accounts => {
         await raiseToken.transfer(buyer, 80)
 
         sale = await IndividualSale.new();
-        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30)
+        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 1e6)
         await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+      })
+
+      it('sale throws when when sale expiry block is past', async () => {
+        sale = await IndividualSale.new();
+        const bn = await getBlockNumber() - 1
+
+        try {
+          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, bn)
+        } catch (error) {
+          return assertThrow(error)
+        }
+        assert.fail('should have thrown before')
       })
 
       it('saves sale information', async () => {
@@ -137,7 +151,7 @@ contract('OwnershipApp', accounts => {
 
       it('throws when re-instantiating sale', async () => {
         try {
-          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30)
+          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 1e6)
         } catch (error) {
           return assertThrow(error)
         }
@@ -172,7 +186,7 @@ contract('OwnershipApp', accounts => {
         const etherToken = await vault.getEtherToken()
 
         sale = await IndividualSale.new();
-        await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 2, 30)
+        await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 2, 30, 1e6)
         await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
       })
 

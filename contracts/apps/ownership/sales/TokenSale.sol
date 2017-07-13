@@ -77,6 +77,11 @@ contract TokenSale {
     return EtherToken(VaultOrgan(dao).getEtherToken());
   }
 
+  // @dev just for mocking purposes
+  function getBlockNumber() internal returns (uint64) {
+    return uint64(block.number);
+  }
+
   modifier onlyToken {
     require(msg.sender != address(raiseToken));
     _;
