@@ -80,7 +80,7 @@ contract('OwnershipApp', accounts => {
       assert.equal(closed, false, 'closed should be correct')
       assert.equal(await sale.buyer(), buyer, 'buyer address should be correct')
       assert.equal(await sale.tokensOffered(), 30, 'tokens sold should be correct')
-      assert.equal(await sale.price(), 2, 'tokens price should be correct')
+      assert.equal(await sale.buyAmount(), 60, 'tokens price should be correct')
       assert.equal(await sale.expireBlock(), 20, 'expiry block should be correct')
     })
 
@@ -175,6 +175,26 @@ contract('OwnershipApp', accounts => {
       assert.equal(await raiseToken.balanceOf(buyer), 50, 'buyer should have received remaining tokens')
       const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
       assert.equal(closed, true, 'Sale should be closed')
+    })
+
+    it('can buy normal amount', async () => {
+      await sale.mock_setBlockNumber(15)
+      await raiseToken.approveAndCall(sale.address, 20, '0x', { from: buyer })
+
+      assert.equal(await token.balanceOf(buyer), 40, 'should have received tokens')
+      assert.equal(await raiseToken.balanceOf(sale.address), 20, 'dao should have tokens')
+      const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
+      assert.equal(closed, false, 'Sale should not be closed')
+    })
+
+    it('throws when buying before starting', async () => {
+      await sale.mock_setBlockNumber(14)
+      try {
+        await raiseToken.approveAndCall(sale.address, 60, '0x', { from: buyer })
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
     })
 
     it('can close sale after close block', async () => {
