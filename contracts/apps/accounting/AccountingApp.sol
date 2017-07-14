@@ -2,21 +2,60 @@ pragma solidity ^0.4.11;
 
 import "../../kernel/Kernel.sol";
 import "../Application.sol";
-//import "../../misc/Crontab.sol";
+import "../../misc/Crontab.sol";
 
 
 contract AccountingApp is Application {
 
+    //
+    // Accounting Periods
+    //
 
-    function AccountingApp(address _dao)
-    Application(_dao) {
-    }
-
-
-    struct DefaultSettings {
+    struct AccountingPeriod {
         address baseToken;
+        
+        bytes2 ct_hour;
+        bytes2 ct_day;
+        bytes2 ct_month;
+        bytes2 ct_weekday;
+        uint start;
+        uint end;
     }
 
+    AccountingPeriod public defaultAccountingPeriodSettings;
+
+    AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
+
+    function getCurrentAccountingPeriodId() returns (uint){
+        require(accountingPeriods.length > 1);
+        // TODO: perhaps we should store the current accountingPeriod ID
+        // separately and allow accounting periods to be generated in advance.
+        // For now the current period is the most recent one
+        return accountingPeriods.length - 1;
+    }
+
+    function getCurrentAccountingPeriod() returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
+        AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
+        return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday);
+    }
+
+    function startNextAccountingPeriod() {
+        AccountingPeriod memory ap = defaultAccountingPeriodSettings;
+        accountingPeriods.push(ap);
+    }
+
+    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday) {
+        defaultAccountingPeriodSettings.baseToken = baseToken;
+        defaultAccountingPeriodSettings.ct_hour = ct_hour;
+        defaultAccountingPeriodSettings.ct_day = ct_day;
+        defaultAccountingPeriodSettings.ct_month = ct_month;
+        defaultAccountingPeriodSettings.ct_weekday = ct_weekday;
+    }
+
+
+    //
+    // TRANSACTIONS
+    //
 
     // The concept of sending tokens to or from the org
     struct Transaction {
@@ -27,6 +66,7 @@ contract AccountingApp is Application {
         address externalAddress;
         string reference;
         uint timestamp;
+        uint accountingPeriodId;  // in which accounting period did this occur
     }    
 
     // The state a transaction update can be.
@@ -67,7 +107,8 @@ contract AccountingApp is Application {
             baseToken: 0x0, 
             baseValue: 1,
             reference: reference, 
-            timestamp: now
+            timestamp: now,
+            accountingPeriodId: getCurrentAccountingPeriodId()
         })) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
@@ -136,5 +177,11 @@ contract AccountingApp is Application {
             sig == GET_TRANSACTION_STATE_SIG
         );
     }
+    function AccountingApp(address _dao) Application(_dao) {
+        // Should setup be an explicit step?
+        setDefaultAccountingPeriodSettings(0x111, '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        startNextAccountingPeriod();
+        require(accountingPeriods.length > 1);
 
+    }
 }

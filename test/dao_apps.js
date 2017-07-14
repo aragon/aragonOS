@@ -78,6 +78,12 @@ contract('Applications', accounts => {
         assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
         assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
     })
+
+    it('can create new accounting periods', async () => {
+        let t0 = await accountingApp.getTransactionState(0)
+        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
+        assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
+    })
   })
 
 })
