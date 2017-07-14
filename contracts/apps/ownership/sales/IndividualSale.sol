@@ -6,9 +6,9 @@ contract IndividualSale is TokenSale {
   address public buyer;
   uint public tokensOffered;
   uint public price;
-  uint public expireBlock;
+  uint64 public expireBlock;
 
-  function instantiate(address _dao, OwnershipApp _ownershipApp, ERC20 _raiseToken, ERC20 _saleToken, address _buyer, uint _price, uint _tokensOffered, uint _expireBlock) {
+  function instantiate(address _dao, OwnershipApp _ownershipApp, ERC20 _raiseToken, ERC20 _saleToken, address _buyer, uint _price, uint _tokensOffered, uint64 _expireBlock) {
     super.instantiate(_dao, _ownershipApp, _raiseToken, _saleToken);
 
     require(buyer == 0 && _buyer != 0);
