@@ -12,8 +12,6 @@ var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
 
-const { getBlockNumber } = require('./helpers/web3')
-
 const createDAO = () => DAO.new({ gas: 9e6 })
 
 contract('OwnershipApp', accounts => {
@@ -119,17 +117,18 @@ contract('OwnershipApp', accounts => {
         raiseToken = await StandardTokenPlus.new()
         await raiseToken.transfer(buyer, 80)
 
-        sale = await IndividualSale.new();
-        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 1e6)
+        sale = await IndividualSale.new()
+        await sale.mock_setBlockNumber(10)
+
+        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 20)
         await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
       })
 
       it('sale throws when when sale expiry block is past', async () => {
         sale = await IndividualSale.new();
-        const bn = await getBlockNumber() - 1
 
         try {
-          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, bn)
+          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 19)
         } catch (error) {
           return assertThrow(error)
         }
@@ -147,11 +146,12 @@ contract('OwnershipApp', accounts => {
         assert.equal(await sale.buyer(), buyer, 'buyer address should be correct')
         assert.equal(await sale.tokensSold(), 30, 'tokens sold should be correct')
         assert.equal(await sale.price(), 2, 'tokens price should be correct')
+        assert.equal(await sale.expireBlock(), 20, 'expiry block should be correct')
       })
 
       it('throws when re-instantiating sale', async () => {
         try {
-          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 1e6)
+          await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 101)
         } catch (error) {
           return assertThrow(error)
         }
@@ -165,6 +165,16 @@ contract('OwnershipApp', accounts => {
         assert.equal(await raiseToken.balanceOf(buyer), 20, 'buyer should have remaining tokens')
         const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
         assert.equal(closed, true, 'Sale should be closed')
+      })
+
+      it('throws when buying after expiry block', async () => {
+        await sale.mock_setBlockNumber(21)
+        try {
+          await raiseToken.approveAndCall(sale.address, 60, '0x', { from: buyer })
+        } catch (error) {
+          return assertThrow(error)
+        }
+        assert.fail('should have thrown before')
       })
 
       it('dao can close sale unilateraly', async () => {
@@ -185,8 +195,9 @@ contract('OwnershipApp', accounts => {
       beforeEach(async () => {
         const etherToken = await vault.getEtherToken()
 
-        sale = await IndividualSale.new();
-        await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 2, 30, 1e6)
+        sale = await IndividualSale.new()
+        await sale.mock_setBlockNumber(10)
+        await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 2, 30, 20)
         await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
       })
 

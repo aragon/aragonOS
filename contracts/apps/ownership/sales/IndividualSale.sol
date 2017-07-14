@@ -13,7 +13,7 @@ contract IndividualSale is TokenSale {
 
     require(buyer == 0 && _buyer != 0);
     require(_tokensSold > 0 && _price > 0);
-    require(expireBlock >= getBlockNumber());
+    require(getBlockNumber() < _expireBlock);
 
     buyer = _buyer;
     tokensSold = _tokensSold;
