@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepublish": "truffle compile",
-    "test": "truffle test"
+    "test": "truffle test",
+    "lint": "solium --dir ./contracts"
   },
   "files": [
     "index.js",
@@ -17,6 +18,7 @@
     "babel-polyfill": "^6.23.0",
     "ethereumjs-util": "^5.1.1",
     "keybase-eth": "^0.3.0",
+    "solium": "^0.5.3",
     "truffle-config": "^1.0.0",
     "truffle-expect": "0.0.3",
     "truffle-hdwallet-provider": "0.0.3"
