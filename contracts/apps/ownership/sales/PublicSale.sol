@@ -37,17 +37,17 @@ contract PublicSale is TokenSale {
     require(_tokenAmount >= minBuy);
 
     uint allowedAmount = _tokenAmount;
-    if (totalCollected + _tokenAmount > cap) allowedAmount = totalCollected + _tokenAmount - cap;
+    if (totalCollected + _tokenAmount > cap) allowedAmount = cap - totalCollected;
+
+    totalCollected += allowedAmount;
 
     uint boughtTokens = getAcquiredTokens(allowedAmount);
     mintTokens(_holder, boughtTokens);
 
     Buy(_holder, boughtTokens);
 
-    if (allowedAmount < _tokenAmount) {
-      raiseToken.transfer(_holder, _tokenAmount - allowedAmount);
-      closeSale();
-    }
+    if (allowedAmount < _tokenAmount) raiseToken.transfer(_holder, _tokenAmount - allowedAmount);
+    if (totalCollected == cap) closeSale();
   }
 
   function close() {

@@ -8,6 +8,7 @@ var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
 var Controller = artifacts.require('Controller')
 var IndividualSale = artifacts.require('mocks/IndividualSaleMock')
+var PublicSale = artifacts.require('mocks/PublicSaleMock')
 var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
@@ -122,7 +123,7 @@ contract('OwnershipApp', accounts => {
     })
   })
 
-  context('creating ether token sale', () => {
+  context('creating ether individual token sale', () => {
     let sale = {}
     const buyer = accounts[3]
 
@@ -141,4 +142,46 @@ contract('OwnershipApp', accounts => {
     })
   })
 
+  context('creating public sale', () => {
+    let sale, raiseToken = {}
+    const buyer = accounts[3]
+
+    beforeEach(async () => {
+      raiseToken = await StandardTokenPlus.new()
+      await raiseToken.transfer(buyer, 80)
+
+      sale = await PublicSale.new()
+      await sale.mock_setBlockNumber(10)
+
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, 2, false, 15, 20)
+      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+    })
+
+    it('saves sale information', async () => {
+      assert.equal(await sale.cap(), 30)
+      assert.equal(await sale.minBuy(), 1)
+      assert.equal(await sale.exchangeRate(), 2)
+      assert.equal(await sale.isInverseRate(), false)
+      assert.equal(await sale.startBlock(), 15)
+      assert.equal(await sale.closeBlock(), 20)
+    })
+
+    it('can buy more than cap which closes sale', async () => {
+      await sale.mock_setBlockNumber(15)
+      await raiseToken.approveAndCall(sale.address, 80, '0x', { from: buyer })
+
+      assert.equal(await token.balanceOf(buyer), 60, 'should have received tokens')
+      assert.equal(await raiseToken.balanceOf(dao.address), 30, 'dao should have tokens')
+      assert.equal(await raiseToken.balanceOf(buyer), 50, 'buyer should have received remaining tokens')
+      const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
+      assert.equal(closed, true, 'Sale should be closed')
+    })
+
+    it('can close sale after close block', async () => {
+      await sale.mock_setBlockNumber(21)
+      await sale.close();
+      const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
+      assert.equal(closed, true, 'Sale should be closed')
+    })
+  })
 })
