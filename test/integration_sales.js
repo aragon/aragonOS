@@ -55,7 +55,7 @@ contract('OwnershipApp', accounts => {
       sale = await IndividualSale.new()
       await sale.mock_setBlockNumber(10)
 
-      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 20)
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 60, 30, 20)
       await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
     })
 
@@ -63,7 +63,7 @@ contract('OwnershipApp', accounts => {
       sale = await IndividualSale.new();
 
       try {
-        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 19)
+        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 60, 30, 19)
       } catch (error) {
         return assertThrow(error)
       }
@@ -86,7 +86,7 @@ contract('OwnershipApp', accounts => {
 
     it('throws when re-instantiating sale', async () => {
       try {
-        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 2, 30, 101)
+        await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 60, 30, 101)
       } catch (error) {
         return assertThrow(error)
       }
@@ -132,7 +132,7 @@ contract('OwnershipApp', accounts => {
 
       sale = await IndividualSale.new()
       await sale.mock_setBlockNumber(10)
-      await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 2, 30, 20)
+      await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 60, 30, 20)
       await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
     })
 
