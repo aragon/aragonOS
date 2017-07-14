@@ -144,7 +144,7 @@ contract('OwnershipApp', accounts => {
         assert.equal(canDestroy, false, 'can destroy should be correct')
         assert.equal(closed, false, 'closed should be correct')
         assert.equal(await sale.buyer(), buyer, 'buyer address should be correct')
-        assert.equal(await sale.tokensSold(), 30, 'tokens sold should be correct')
+        assert.equal(await sale.tokensOffered(), 30, 'tokens sold should be correct')
         assert.equal(await sale.price(), 2, 'tokens price should be correct')
         assert.equal(await sale.expireBlock(), 20, 'expiry block should be correct')
       })
