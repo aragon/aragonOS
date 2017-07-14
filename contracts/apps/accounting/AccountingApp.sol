@@ -27,7 +27,7 @@ contract AccountingApp is Application {
     AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
 
     function getCurrentAccountingPeriodId() returns (uint){
-        require(accountingPeriods.length > 1);
+        require(accountingPeriods.length > 0);
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
         // For now the current period is the most recent one
@@ -148,7 +148,7 @@ contract AccountingApp is Application {
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
     bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint)'));
-    function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, string stringState, TransactionState state) {
+    function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, string stringState, TransactionState state, uint accountingPeriodId) {
         Transaction t = transactions[transactionId];
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][transactionUpdatesRelation[transactionId].length - 1];
         TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
@@ -157,6 +157,7 @@ contract AccountingApp is Application {
         reference = t.reference;
         timestamp = t.timestamp;
         state = tu.state;
+        accountingPeriodId = t.accountingPeriodId;
         if (state == TransactionState.Succeeded) {
             stringState = "Succeeded";
         } else if (state == TransactionState.New) {
@@ -181,7 +182,5 @@ contract AccountingApp is Application {
         // Should setup be an explicit step?
         setDefaultAccountingPeriodSettings(0x111, '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
         startNextAccountingPeriod();
-        require(accountingPeriods.length > 1);
-
     }
 }

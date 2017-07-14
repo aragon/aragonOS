@@ -69,6 +69,7 @@ contract('Applications', accounts => {
         let t0 = await accountingApp.getTransactionState(0)
         assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
         assert.equal(t0[4], 'New', 'Should be a new transaction (state 0)')
+        assert.equal(t0[4], 'New', 'Should be a new transaction (state 0)')
     })
 
     it('can update transaction', async () => {
@@ -77,12 +78,19 @@ contract('Applications', accounts => {
         let t0 = await accountingApp.getTransactionState(0)
         assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
         assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
+        assert.equal(t0[6], 0, 'Should be in the 0th accountingPeriod')
     })
 
     it('can create new accounting periods', async () => {
+        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
         let t0 = await accountingApp.getTransactionState(0)
-        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
+        assert.equal(t0[6], 0, 'Should be in the 0th accountingPeriod')
+
+        await accountingApp.startNextAccountingPeriod()
+        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 345', 0)
+        let t1 = await accountingApp.getTransactionState(1)
+        assert.equal(t1[2], 'Ref 345', 'Should have matching reference number')
+        assert.equal(t1[6], 1, 'Should be in the 1st accountingPeriod')
     })
   })
 
