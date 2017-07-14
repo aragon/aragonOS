@@ -6,9 +6,7 @@ import "../../dao/DAOStorage.sol";
 // @dev This organ is responsible for finding what is the first organ that can perform an action
 // and dispatching it.
 contract DispatcherOrgan is IOrgan {
-  function organWasInstalled() {
-    setReturnSize(0xb18fe4f3, 32); // canPerformAction(...): returns 1 bool (ABI encoded to 32 bytes)
-  }
+  function organWasInstalled() {}
 
   function canHandlePayload(bytes payload) returns (bool) {
     return getResponsiveOrgan(payload) != 0;
@@ -18,7 +16,7 @@ contract DispatcherOrgan is IOrgan {
     address responsiveOrgan = getResponsiveOrgan(msg.data);
     assert(responsiveOrgan > 0); // assert that there is an organ capable of performing the action
     address target = responsiveOrgan;
-    uint32 len = getReturnSize(msg.sig);
+    uint32 len = getReturnSize();
 
     assembly {
       calldatacopy(0x0, 0x0, calldatasize)

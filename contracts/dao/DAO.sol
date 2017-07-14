@@ -18,7 +18,7 @@ contract DAO is DAOStorage {
 
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall
   function () payable public {
-    uint32 len = getReturnSize(msg.sig);
+    uint32 len = getReturnSize();
     address target = getKernel();
     assembly {
       calldatacopy(0x0, 0x0, calldatasize)
