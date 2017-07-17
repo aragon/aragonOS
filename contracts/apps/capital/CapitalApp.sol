@@ -6,10 +6,12 @@ import "zeppelin/token/ERC20.sol";
 
 import "./sales/StockSale.sol";
 
+
 // TODO: replace for real minime
 contract MiniMeInterface {
     function tokenController() constant returns (address);
 }
+
 
 contract CapitalApp is Application {
     enum SpecialEntityStatus {
@@ -25,12 +27,14 @@ contract CapitalApp is Application {
     event NewTokenSale(address saleAddress, uint256 saleIndex, uint8 tokenIndex);
 
     function CapitalApp(address _dao)
-                     Application(_dao) {
+                     Application(_dao)
+    {
         saleIndex = 1;
     }
 
     function beginTokenSale(address _saleAddress)
-                     onlyDAO {
+                     onlyDAO
+    {
         StockSale sale = StockSale(_saleAddress);
         require(sale.dao() == address(dao));
 

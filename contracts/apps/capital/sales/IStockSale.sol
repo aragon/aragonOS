@@ -1,5 +1,6 @@
 pragma solidity ^0.4.11;
 
+
 contract IStockSale {
     function raiseMaximum() constant returns (uint256);
     function raiseTarget() constant returns (uint256);

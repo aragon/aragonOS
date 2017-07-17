@@ -3,11 +3,11 @@ pragma solidity ^0.4.11;
 import "./DAOStorage.sol";
 import "../kernel/Kernel.sol";
 
+
 // @dev DAO is the base contract on top of which all DAO lives.
 // This is the only element of the DAO that is non-upgradeable
 // Given the simplicity of this contract, it could be written in LLL and/or
 // be formally proven.
-
 contract DAO is DAOStorage {
     // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
     function DAO() {

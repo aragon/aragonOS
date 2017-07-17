@@ -3,10 +3,11 @@ pragma solidity ^0.4.11;
 import "./IOrgan.sol";
 import "../../tokens/EtherToken.sol";
 
+
 // @dev MetaOrgan can modify all critical aspects of the DAO.
 contract MetaOrgan is IOrgan {
-    bytes32 constant etherTokenKey = sha3(0x01, 0x02);
-    bytes32 constant permissionsOracleKey = sha3(0x01, 0x03);
+    bytes32 constant ETHER_TOKEN_KEY = sha3(0x01, 0x02);
+    bytes32 constant PERMISSIONS_ORACLE_KEY = sha3(0x01, 0x03);
 
     function organWasInstalled() {}
 
@@ -23,7 +24,7 @@ contract MetaOrgan is IOrgan {
     }
 
     function setEtherToken(address newToken) public {
-        storageSet(etherTokenKey, uint256(newToken));
+        storageSet(ETHER_TOKEN_KEY, uint256(newToken));
     }
 
     function installOrgan(address organAddress, uint organN) public {
@@ -33,7 +34,7 @@ contract MetaOrgan is IOrgan {
     }
 
     function setPermissionsOracle(address newOracle) {
-        storageSet(permissionsOracleKey, uint256(newOracle));
+        storageSet(PERMISSIONS_ORACLE_KEY, uint256(newOracle));
     }
 
     function setOrgan(uint _organId, address _organAddress) {

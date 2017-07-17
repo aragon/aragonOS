@@ -2,12 +2,21 @@ pragma solidity ^0.4.11;
 
 import "./StockSale.sol";
 
+
 contract BoundedStandardSale is StockSale {
     uint256 public minUnits;
     uint256 public maxUnits;
     uint256 public price;
 
-    function BoundedStandardSale(address _daoAddress, uint8 _tokenId, uint256 _min, uint256 _max, uint256 _price, uint64 _closeDate, string _title) {
+    function BoundedStandardSale(
+        address _daoAddress,
+        uint8 _tokenId,
+        uint256 _min,
+        uint256 _max,
+        uint256 _price,
+        uint64 _closeDate,
+        string _title
+    ) {
         dao = _daoAddress;
         tokenId = _tokenId;
 
@@ -53,21 +62,25 @@ contract BoundedStandardSale is StockSale {
     function buy(address holder) payable {
         uint256 units = msg.value / getBuyingPrice(msg.value);
         uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
-        if (units <= 0 || !isBuyingAllowed(units))  throw;
+        if (units <= 0 || !isBuyingAllowed(units))
+            throw;
 
         // TODO: DAO assing stock company().assignStock(stockId, holder, units);
         afterBuy(holder, units, getBuyingPrice(msg.value));
 
         if (returningMoney > 0) {
-            if (!holder.send(returningMoney))  throw;
+            if (!holder.send(returningMoney))
+                throw;
         }
     }
 
     function sell() {
         address holder = msg.sender;
         uint256 buyerBalance = boughtAmount[holder];
-        if (!isSellingAllowed(buyerBalance))  throw;
-        if (buyerBalance <= 0)  throw;
+        if (!isSellingAllowed(buyerBalance))
+            throw;
+        if (buyerBalance <= 0)
+            throw;
 
         uint256 returningMoney = getSellingPrice(buyerBalance) * buyerBalance;
         boughtAmount[holder] = 0;
@@ -76,7 +89,7 @@ contract BoundedStandardSale is StockSale {
         // TODO: DAO remove stock company().removeStock(stockId, holder, buyerBalance);
 
         TokensSold(holder, buyerBalance, getSellingPrice(buyerBalance));
-
-        if (!holder.send(returningMoney))  throw;
+        if (!holder.send(returningMoney))
+            throw;
     }
 }

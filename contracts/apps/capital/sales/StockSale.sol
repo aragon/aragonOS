@@ -3,6 +3,7 @@ pragma solidity ^0.4.11;
 import "../../../misc/Txid.sol";
 import "./IStockSale.sol";
 
+
 contract StockSale is IStockSale, Txid {
     uint256 public soldTokens;
     uint256 public boughtTokens;
@@ -28,9 +29,12 @@ contract StockSale is IStockSale, Txid {
     }
 
     function transferFunds() {
-        if (!isFundsTransferAllowed()) throw;
-        if (msg.sender != dao) throw; // only allow dao to request it
-        if (!dao.send(this.balance)) throw; // send all the funds
+        if (!isFundsTransferAllowed())
+            throw;
+        if (msg.sender != dao)
+            throw; // only allow dao to request it
+        if (!dao.send(this.balance))
+            throw; // send all the funds
     }
 
     function () payable {

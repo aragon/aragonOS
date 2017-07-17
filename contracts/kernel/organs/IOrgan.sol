@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import "../../dao/DAOStorage.sol";
 
+
 contract IOrgan is DAOStorage {
     function canHandlePayload(bytes payload) returns (bool);
     function organWasInstalled();

@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import "./IOrgan.sol";
 
+
 contract ITokensOrgan is IOrgan {
     event NewToken(address tokenAddress, uint tokenId);
     event TokenRemoved(address tokenAddress, uint tokenId); // beware that ids change on remove
@@ -11,6 +12,7 @@ contract ITokensOrgan is IOrgan {
     function getTokenCount() constant returns (uint);
     function getToken(uint i) constant returns (address);
 }
+
 
 contract TokensOrgan is ITokensOrgan {
     function addToken(address token) returns (uint256) {

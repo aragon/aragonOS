@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import "./StockSale.sol";
 
+
 contract IndividualInvestorSale is StockSale {
     uint256 public units;
     uint256 public price;
@@ -10,7 +11,15 @@ contract IndividualInvestorSale is StockSale {
 
     bool settled;
 
-    function IndividualInvestorSale(address _daoAddress, uint8 _tokenId, address _investor, uint256 _units, uint256 _price, uint64 _closeDate, string _title) {
+    function IndividualInvestorSale(
+        address _daoAddress,
+        uint8 _tokenId,
+        address _investor,
+        uint256 _units,
+        uint256 _price,
+        uint64 _closeDate,
+        string _title
+    ) {
         dao = _daoAddress;
         tokenId = _tokenId;
 
@@ -30,9 +39,12 @@ contract IndividualInvestorSale is StockSale {
     }
 
     function buy(address holder) payable {
-        if (holder != investor) throw;
-        if (msg.value < units * getBuyingPrice(msg.value)) throw; // need exact amount
-        if (!isBuyingAllowed(units)) throw;
+        if (holder != investor)
+            throw;
+        if (msg.value < units * getBuyingPrice(msg.value))
+            throw; // need exact amount
+        if (!isBuyingAllowed(units))
+            throw;
 
         uint256 returningMoney = msg.value - (units * getBuyingPrice(msg.value));
 
@@ -42,7 +54,8 @@ contract IndividualInvestorSale is StockSale {
         afterBuy(holder, units, getBuyingPrice(msg.value));
 
         if (returningMoney > 0) {
-            if (!holder.send(returningMoney))  throw;
+            if (!holder.send(returningMoney))
+                throw;
         }
     }
 

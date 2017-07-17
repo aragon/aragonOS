@@ -1,11 +1,17 @@
 pragma solidity ^0.4.11;
 
+
 contract IKernel {
-  event OrganReplaced(address organAddress, uint organN);
+    event OrganReplaced(address organAddress, uint organN);
 
-  function getOrgan(uint organN) constant returns (address organAddress);
-  function getEtherToken() constant returns (address);
-  function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
+    function getOrgan(uint organN) constant returns (address organAddress);
+    function getEtherToken() constant returns (address);
+    function canPerformAction(
+        address sender,
+        address token,
+        uint256 value,
+        bytes data
+    ) constant returns (bool);
 
-  // TODO: Bring back to life DAOMessage dao_msg;
+    // TODO: Bring back to life DAOMessage dao_msg;
 }
