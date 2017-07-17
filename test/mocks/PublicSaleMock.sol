@@ -5,7 +5,7 @@ import "../../contracts/apps/ownership/sales/PublicSale.sol";
 contract PublicSaleMock is PublicSale {
   uint64 mock_block;
 
-  function IndividualSaleMock() {
+  function PublicSaleMock() {
     mock_setBlockNumber(uint64(block.number));
   }
 
