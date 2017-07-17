@@ -9,6 +9,7 @@ var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
 var Controller = artifacts.require('Controller')
 var IndividualSale = artifacts.require('mocks/IndividualSaleMock')
 var PublicSale = artifacts.require('mocks/PublicSaleMock')
+var VariablePriceSale = artifacts.require('mocks/VariablePriceSaleMock')
 var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
@@ -202,6 +203,80 @@ contract('OwnershipApp', accounts => {
       await sale.close();
       const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
       assert.equal(closed, true, 'Sale should be closed')
+    })
+  })
+
+  context('variable sales', () => {
+    let sale, raiseToken = {}
+    const buyer = accounts[3]
+
+    beforeEach(async () => {
+      raiseToken = await StandardTokenPlus.new()
+      await raiseToken.transfer(buyer, 80)
+    })
+
+    const assertAcquiredTokens = async (block, sent, expected) => {
+      await sale.mock_setBlockNumber(block)
+      assert.equal(await sale.getAcquiredTokens(sent), expected, 'should have acquired expected tokens')
+    }
+
+    it('can handle decreasing price sale', async () => {
+      sale = await VariablePriceSale.new()
+      await sale.mock_setBlockNumber(10)
+
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, false, 15, [20, 28], [1, 0, 2, 10])
+
+      await assertAcquiredTokens(16, 1, 1)
+      await assertAcquiredTokens(18, 1, 1)
+      await assertAcquiredTokens(20, 1, 2)
+      await assertAcquiredTokens(23, 1, 5)
+      await assertAcquiredTokens(27, 1, 9)
+    })
+
+    it('can handle increasing price sale', async () => {
+      sale = await VariablePriceSale.new()
+      await sale.mock_setBlockNumber(10)
+
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, false, 15, [20, 28], [1, 0, 10, 2])
+
+      await assertAcquiredTokens(16, 1, 1)
+      await assertAcquiredTokens(18, 1, 1)
+      await assertAcquiredTokens(20, 1, 10)
+      await assertAcquiredTokens(23, 1, 7)
+      await assertAcquiredTokens(27, 1, 3)
+    })
+
+    it('can handle inverse price sales', async () => {
+      sale = await VariablePriceSale.new()
+      await sale.mock_setBlockNumber(10)
+
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, true, 15, [20, 28], [2, 0, 2, 4])
+
+      await assertAcquiredTokens(20, 10, 5)
+      await assertAcquiredTokens(22, 20, 8)
+      await assertAcquiredTokens(24, 21, 7)
+    })
+
+    it('can handle buys, state transitions and capping', async () => {
+      sale = await VariablePriceSale.new()
+      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+
+      await sale.mock_setBlockNumber(10)
+
+      await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, true, 15, [20, 28], [2, 0, 2, 4])
+
+      sale.mock_setBlockNumber(20)
+      await raiseToken.approveAndCall(sale.address, 20, '0x', { from: buyer })
+      assert.equal(await token.balanceOf(buyer), 10, 'should have received tokens')
+      assert.equal(await raiseToken.balanceOf(sale.address), 20, 'sale should have tokens')
+
+      sale.mock_setBlockNumber(24)
+      await raiseToken.approveAndCall(sale.address, 60, '0x', { from: buyer })
+      assert.equal(await token.balanceOf(buyer), 13, 'should have received tokens')
+      assert.equal(await raiseToken.balanceOf(dao.address), 30, 'dao should have tokens')
+
+      const [s, t, c, closed] = await ownershipApp.getTokenSale(1)
+      assert.equal(closed, true, 'Sale should not be closed')
     })
   })
 })

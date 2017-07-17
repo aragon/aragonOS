@@ -45,20 +45,22 @@ contract VariablePriceSale is TokenSale {
   function getAcquiredTokens(uint _amount) constant returns (uint) {
     SalePeriod period = periods[currentPeriod];
 
-    uint exchangeRate = period.initialPrice;
+    uint precision = 10 ** 3;  // given that exchangeRate is a uint, we need more precision for interpolating
+
+    uint exchangeRate = period.initialPrice * precision;
     if (period.finalPrice != 0) { // interpolate
       uint periodDelta = period.periodEnds - periodStartBlock;
       uint periodState = getBlockNumber() - periodStartBlock;
       if (period.finalPrice > period.initialPrice) {
         uint p1 = period.finalPrice - period.initialPrice;
-        exchangeRate += p1 * periodState / periodDelta;
+        exchangeRate += precision * p1 * periodState / periodDelta;
       } else {
         uint p2 = period.initialPrice - period.finalPrice;
-        exchangeRate -= p2 * periodState / periodDelta;
+        exchangeRate -= precision * p2 * periodState / periodDelta;
       }
     }
 
-    return isInverseRate ? _amount / exchangeRate : _amount * exchangeRate;
+    return (isInverseRate ? _amount * precision / exchangeRate : _amount * exchangeRate / precision);
   }
 
   function buy(address _holder, uint _tokenAmount) internal transitionPeriod {
@@ -84,7 +86,7 @@ contract VariablePriceSale is TokenSale {
     closeSale();
   }
 
-  modifier transitionPeriod {
+  function transitionIfNeeded() internal {
     uint64 newStartBlock = periodStartBlock;
     while (getBlockNumber() >= periods[currentPeriod].periodEnds) {
       // In all transitions but last
@@ -98,6 +100,10 @@ contract VariablePriceSale is TokenSale {
     }
 
     if (periodStartBlock != newStartBlock) periodStartBlock = newStartBlock;
+  }
+
+  modifier transitionPeriod {
+    transitionIfNeeded();
     _;
   }
 
