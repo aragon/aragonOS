@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
-import "../../kernel/Kernel.sol";
 import "../Application.sol";
+import "../../kernel/organs/ActionsOrgan.sol";
 import "../../misc/Crontab.sol";
 
 
@@ -18,15 +18,16 @@ contract AccountingApp is Application {
         bytes2 ct_day;
         bytes2 ct_month;
         bytes2 ct_weekday;
-        uint start;
-        uint end;
+        uint startBlock;
+        uint64 startTimestamp;
     }
 
     AccountingPeriod public defaultAccountingPeriodSettings;
 
     AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
 
-    function getCurrentAccountingPeriodId() returns (uint){
+    bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG = bytes4(sha3('getCurrentAccountingPeriodId()'));
+    function getCurrentAccountingPeriodId() onlyDAO returns (uint){
         require(accountingPeriods.length > 0);
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
@@ -34,17 +35,22 @@ contract AccountingApp is Application {
         return accountingPeriods.length - 1;
     }
 
-    function getCurrentAccountingPeriod() returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
+    bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('getCurrentAccountingPeriod(address,bytes2,bytes2,bytes2,bytes2)'));
+    function getCurrentAccountingPeriod() onlyDAO returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
         AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
         return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday);
     }
 
-    function startNextAccountingPeriod() {
+    bytes4 constant START_NEXT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('startNextAccountingPeriod()'));
+    function startNextAccountingPeriod() onlyDAO {
         AccountingPeriod memory ap = defaultAccountingPeriodSettings;
+        ap.startTimestamp = uint64(block.timestamp);
+        ap.startBlock = block.number;
         accountingPeriods.push(ap);
     }
 
-    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday) {
+    bytes4 constant SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG = bytes4(sha3('startNextAccountingPeriod(address,bytes2,bytes2,bytes2,bytes2)'));
+    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday) onlyDAO {
         defaultAccountingPeriodSettings.baseToken = baseToken;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
         defaultAccountingPeriodSettings.ct_day = ct_day;
@@ -96,8 +102,8 @@ contract AccountingApp is Application {
 
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SID = bytes4(sha3('newTransaction(address,int,address,string,TransactionState)'));
-    function newTransaction(address token, int value, address externalAddress, string reference, TransactionState initialState) returns (uint) {
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,int,address,string,TransactionState)'));
+    function newTransaction(address token, int value, address externalAddress, string reference, TransactionState initialState) onlyDAO returns (uint) {
 
         uint tid = transactions.push(Transaction({
             externalAddress: externalAddress, 
@@ -119,7 +125,7 @@ contract AccountingApp is Application {
 
     // Create new transactionUpdate for the given transaction id
     bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint,TransactionState,string)'));
-    function updateTransaction(uint transactionId, TransactionState state, string reason) returns (uint) {
+    function updateTransaction(uint transactionId, TransactionState state, string reason) onlyDAO returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
             state: state,
@@ -131,7 +137,7 @@ contract AccountingApp is Application {
     }
 
     bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint,string)'));
-    function setTransactionSucceeded(uint transactionId, string reason) {
+    function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }    
 
@@ -141,14 +147,14 @@ contract AccountingApp is Application {
     }
 
     bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint,string)'));
-    function setTransactionFailed(uint transactionId, string reason) {
+    function setTransactionFailed(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Failed, reason);
     }
 
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
     bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint)'));
-    function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, string stringState, TransactionState state, uint accountingPeriodId) {
+    function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, TransactionState state, uint accountingPeriodId) {
         Transaction t = transactions[transactionId];
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][transactionUpdatesRelation[transactionId].length - 1];
         TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
@@ -158,20 +164,18 @@ contract AccountingApp is Application {
         timestamp = t.timestamp;
         state = tu.state;
         accountingPeriodId = t.accountingPeriodId;
-        if (state == TransactionState.Succeeded) {
-            stringState = "Succeeded";
-        } else if (state == TransactionState.New) {
-            stringState = "New";
-        } else if (state == TransactionState.PendingApproval) {
-            stringState = "PendingApproval";
-        } else if (state == TransactionState.Failed) 
-            stringState = "Failed";
     }
 
 
     function canHandlePayload(bytes payload) constant returns (bool) {
         bytes4 sig = getSig(payload);
         return (
+            sig == GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG || 
+            sig == GET_CURRENT_ACCOUNTING_PERIOD_SIG || 
+            sig == START_NEXT_ACCOUNTING_PERIOD_SIG || 
+            sig == SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG || 
+            sig == NEW_TRANSACTION_SIG || 
+            sig == UPDATE_TRANSACTION_SIG || 
             sig == SET_TRANSACTION_SUCCEEDED_SIG || 
             sig == SET_TRANSACTION_PENDING_APPROVAL_SIG || 
             sig == SET_TRANSACTION_FAILED_SIG || 
@@ -179,8 +183,6 @@ contract AccountingApp is Application {
         );
     }
     function AccountingApp(address _dao) Application(_dao) {
-        // Should setup be an explicit step?
-        setDefaultAccountingPeriodSettings(0x111, '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
-        startNextAccountingPeriod();
+
     }
 }

@@ -27,21 +27,16 @@ contract('Applications', accounts => {
 
   context('installed app', () => {
     let mockApp = {}
-    let accountingApp = {}
     let dao_mockApp = {}
-    let dao_accountingApp = {}
 
     beforeEach(async () => {
       mockApp = await MockedApp.new(dao.address)
-      accountingApp = await AccountingApp.new(dao.address)
       dao_mockApp = MockedApp.at(dao.address)
-      dao_accountingApp = AccountingApp.at(dao.address)
-      await appOrgan.installApp(1, accountingApp.address)
-      await appOrgan.installApp(2, mockApp.address)
+      await appOrgan.installApp(1, mockApp.address)
     })
 
     it('returns installed app address', async () => {
-      assert.equal(await appOrgan.getApp(2), mockApp.address, 'should have returned installed app addr')
+      assert.equal(await appOrgan.getApp(1), mockApp.address, 'should have returned installed app addr')
     })
 
     it('dispatches actions in apps', async () => {
@@ -64,34 +59,6 @@ contract('Applications', accounts => {
       assert.isTrue(await mockApp.didStuff(), 'should have done stuff')
     })
 
-    it('can create new transaction', async () => {
-        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        let t0 = await accountingApp.getTransactionState(0)
-        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        assert.equal(t0[4], 'New', 'Should be a new transaction (state 0)')
-        assert.equal(t0[4], 'New', 'Should be a new transaction (state 0)')
-    })
-
-    it('can update transaction', async () => {
-        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        await accountingApp.updateTransaction(0, 1, 'needs approval')
-        let t0 = await accountingApp.getTransactionState(0)
-        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        assert.equal(t0[4], 'PendingApproval', 'Should need approval (state 1)')
-        assert.equal(t0[6], 0, 'Should be in the 0th accountingPeriod')
-    })
-
-    it('can create new accounting periods', async () => {
-        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        let t0 = await accountingApp.getTransactionState(0)
-        assert.equal(t0[6], 0, 'Should be in the 0th accountingPeriod')
-
-        await accountingApp.startNextAccountingPeriod()
-        await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 345', 0)
-        let t1 = await accountingApp.getTransactionState(1)
-        assert.equal(t1[2], 'Ref 345', 'Should have matching reference number')
-        assert.equal(t1[6], 1, 'Should be in the 1st accountingPeriod')
-    })
   })
 
 })
