@@ -7,7 +7,6 @@ var OwnershipApp = artifacts.require('OwnershipApp')
 var VotingApp = artifacts.require('mocks/VotingAppMock')
 var StatusApp = artifacts.require('StatusApp')
 var MiniMeToken = artifacts.require('MiniMeToken')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var Vote = artifacts.require('Vote')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
@@ -30,14 +29,11 @@ contract('Bylaws', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const tokensOrgan = await TokensOrgan.new()
-    await metadao.installOrgan(tokensOrgan.address, 3)
-
     const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 4)
+    await metadao.installOrgan(actionsOrgan.address, 3)
 
     const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 5)
+    await metadao.installOrgan(apps.address, 4)
     appOrgan = ApplicationOrgan.at(dao.address)
 
     bylawsApp = await BylawsApp.new(dao.address)
@@ -169,11 +165,11 @@ contract('Bylaws', accounts => {
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addOrgToken(token.address, 100, 1, 1, { gas: 1e6 })
+      await dao_ownershipApp.addToken(token.address, 100, 1, 1, { gas: 1e6 })
 
-      await dao_ownershipApp.grantTokens(0, 20, holder20)
-      await dao_ownershipApp.grantTokens(0, 31, holder31)
-      await dao_ownershipApp.grantTokens(0, 49, holder49)
+      await dao_ownershipApp.grantTokens(token.address, holder20, 20)
+      await dao_ownershipApp.grantTokens(token.address, holder31, 31)
+      await dao_ownershipApp.grantTokens(token.address, holder49, 49)
 
       currentBlock = await getBlockNumber()
       startBlock = currentBlock + 5
@@ -280,14 +276,14 @@ contract('Bylaws', accounts => {
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addOrgToken(token.address, 100, 1, 1, { gas: 1e6 })
+      await dao_ownershipApp.addToken(token.address, 100, 1, 1, { gas: 1e6 })
 
       const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token2.changeController(dao.address)
-      await dao_ownershipApp.addOrgToken(token2.address, 100, 1, 1, { gas: 1e6 })
+      await dao_ownershipApp.addToken(token2.address, 100, 1, 1, { gas: 1e6 })
 
-      await dao_ownershipApp.grantTokens(0, 10, holder1)
-      await dao_ownershipApp.grantTokens(1, 1, holder2)
+      await dao_ownershipApp.grantTokens(token.address, holder1, 10)
+      await dao_ownershipApp.grantTokens(token2.address, holder2, 1)
 
       await bylawsApp.setStatusBylaw(0, true, false)
       await dao_bylawsApp.linkBylaw(changeKernelSig, 1)

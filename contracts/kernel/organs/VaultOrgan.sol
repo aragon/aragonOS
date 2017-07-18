@@ -64,7 +64,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
            check_blacklist(_token)
            payable {
     if (_amount == 0) return;
-    if (_token == getEtherToken()) tokenizeEther(_amount); // if call has ETH, we tokenize it
+    if (_token == getEtherToken() && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
 
     uint256 currentBalance = getTokenBalance(_token);
     // This will actually be dispatched every time balance goes from 0 to non-zero.
@@ -241,7 +241,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     assert(ERC20(_token).transfer(_to, _amount));
   }
 
-  function getEtherToken() internal returns (address) {
+  function getEtherToken() constant returns (address) {
     return address(storageGet(sha3(kernelPrimaryKey, 0x02)));
   }
 

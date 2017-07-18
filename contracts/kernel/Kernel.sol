@@ -83,6 +83,8 @@ contract Kernel is IKernel, DAOStorage {
 
     vaultDeposit(token, value); // deposit tokens that come with the call in the vault
 
+    if (payload.length == 0) return; // Just receive the tokens
+
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
     address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1

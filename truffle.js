@@ -25,7 +25,7 @@ module.exports = {
     },
     kovan: {
       network_id: 42,
-      provider:  new HDWalletProvider(mnemonic, 'https://kovan.aragon.one'),
+      // provider:  new HDWalletProvider(mnemonic, 'https://kovan.aragon.one'),
       gas: 4.6e6,
     },
     /*

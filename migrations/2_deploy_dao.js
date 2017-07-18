@@ -1,11 +1,10 @@
 var DAO = artifacts.require('DAO')
 var MetaOrgan = artifacts.require('MetaOrgan')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 
-const organs = [VaultOrgan, TokensOrgan, ActionsOrgan, ApplicationOrgan]
+const organs = [VaultOrgan, ActionsOrgan, ApplicationOrgan]
 
 const { getNonce } = require('../test/helpers/web3')
 

@@ -18,5 +18,5 @@ contract IStockSale {
   function transferFunds();
 
   event TokensBought(address indexed buyer, uint256 units, uint256 price);
-  event TokensSold(address indexed buyer, uint256 units, uint256 price);
+  event tokensOffered(address indexed buyer, uint256 units, uint256 price);
 }
