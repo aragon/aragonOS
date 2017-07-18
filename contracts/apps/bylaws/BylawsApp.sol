@@ -86,8 +86,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     return canPerformAction(getSig(data), sender, data, token, value);
   }
 
-  function performedAction(address sender, address token, uint256 value, bytes data) {}
-
   function canPerformAction(bytes4 sig, address sender, bytes data, address token, uint256 value) returns (bool) {
     uint bylawId = bylawEntrypoint[sig];
 
@@ -117,7 +115,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     }
 
     if (bylaw.bylawType == BylawType.Voting) {
-      return negateIfNeeded(computeVoting(bylaw.voting, sender), bylaw.not);
+      return negateIfNeeded(checkVoting(bylaw.voting, sender), bylaw.not);
     }
 
     if (bylaw.bylawType == BylawType.Combinator) {
@@ -129,30 +127,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     return negate ? !result : result;
   }
 
-  function computeVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-    VotingApp votingApp = getVotingApp();
-    var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
-
-    // check votign timing is correct
-    if (voteStartsBlock - voteCreatedBlock < votingBylaw.minDebateTime) return false;
-    if (voteEndsBlock - voteStartsBlock < votingBylaw.minVotingTime) return false;
-
-    if (getBlockNumber() >= voteEndsBlock) {
-      uint256 quorum = yays + nays;
-      uint256 yaysQuorumPct = yays * pctBase / quorum;
-      uint256 quorumPct = quorum * pctBase / totalQuorum;
-
-      return yaysQuorumPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
-    } else {
-      uint256 yaysTotalPct = yays * pctBase / totalQuorum;
-
-      return yaysTotalPct >= votingBylaw.supportPct;
-    }
-  }
-
-  // @dev just for mocking purposes
-  function getBlockNumber() internal returns (uint64) {
-    return uint64(block.number);
+  function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
+    return getVotingApp().isVoteApproved(voteAddress, votingBylaw.supportPct, votingBylaw.minQuorumPct, votingBylaw.minDebateTime, votingBylaw.minVotingTime);
   }
 
   function computeCombinatorBylaw(Bylaw storage bylaw, address sender, bytes data, address token, uint256 value) internal returns (bool) {
@@ -270,7 +246,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
 
   function getVotingApp() internal returns (VotingApp) {
     // gets the app address that can respond to createVote
-    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
   }
 
   function getStatusApp() internal returns (StatusApp) {

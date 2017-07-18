@@ -2,12 +2,13 @@ const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
-var BylawsApp = artifacts.require('mocks/BylawsAppMock')
+var BylawsApp = artifacts.require('BylawsApp')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var VotingApp = artifacts.require('mocks/VotingAppMock')
 var StatusApp = artifacts.require('StatusApp')
 var MiniMeToken = artifacts.require('MiniMeToken')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
+var Vote = artifacts.require('Vote')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
 
 var Kernel = artifacts.require('Kernel')
@@ -138,7 +139,8 @@ contract('Bylaws', accounts => {
     let votingApp, dao_votingApp = {}
     let ownershipApp, dao_ownershipApp = {}
 
-    const voteAddress = accounts[8]
+    let vote = {}
+
     const [holder20, holder31, holder49] = accounts
     const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 
@@ -154,6 +156,12 @@ contract('Bylaws', accounts => {
       dao_votingApp = VotingApp.at(dao.address)
 
       await appOrgan.installApp(3, votingApp.address)
+
+      vote = await Vote.new()
+      const voteBytecode = await votingApp.hashForCode(vote.address)
+      await dao_votingApp.setValidVoteCode(voteBytecode, true)
+
+      await vote.instantiate(dao.address, metadao.replaceKernel.request(randomAddress).params[0].data)
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
@@ -171,13 +179,13 @@ contract('Bylaws', accounts => {
     it('normal vote flow', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
+      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
       await votingApp.voteNay(1, { from: holder20 })
-      await bylawsApp.mock_setBlockNumber(finalBlock)
+      await votingApp.mock_setBlockNumber(finalBlock)
 
-      await metadao.replaceKernel(randomAddress, { from: voteAddress })
+      await vote.execute()
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
 
       assert.equal(await bylawsApp.getBylawType(1), 0, 'bylaw type should be correct')
@@ -189,31 +197,30 @@ contract('Bylaws', accounts => {
       assert.equal(v, 5, 'voting time should be correct')
     })
 
-    it('vote prematurely decided flow', async () => {
+    it('vote prematurely decided flow with vote yay and execute', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
+      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
       await votingApp.voteYay(1, { from: holder31 })
-      await votingApp.voteYay(1, { from: holder20 })
+      await votingApp.voteYayAndClose(1, { from: holder20 })
 
-      await metadao.replaceKernel(randomAddress, { from: voteAddress })
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
     })
 
     it('throws if voting hasnt been successful', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
+      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteNay(1, { from: holder31 })
       await votingApp.voteYay(1, { from: holder20 })
 
-      await bylawsApp.mock_setBlockNumber(finalBlock)
+      await votingApp.mock_setBlockNumber(finalBlock)
 
       try {
-        await metadao.replaceKernel(randomAddress, { from: accounts[0] })
+        await vote.execute()
       } catch (error) {
         return assertThrow(error)
       }
@@ -223,14 +230,32 @@ contract('Bylaws', accounts => {
     it('throws if voting didnt get enough quorum', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
       await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(voteAddress, startBlock, finalBlock, pct16(50))
+      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder20 })
 
-      await bylawsApp.mock_setBlockNumber(finalBlock)
+      await votingApp.mock_setBlockNumber(finalBlock)
 
       try {
-        await metadao.replaceKernel(randomAddress, { from: accounts[0] })
+        await vote.execute()
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
+    it('throws when attempting to execute action twice', async () => {
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.mock_setBlockNumber(startBlock)
+      await votingApp.voteYay(1, { from: holder31 })
+      await votingApp.voteNay(1, { from: holder20 })
+      await votingApp.mock_setBlockNumber(finalBlock)
+
+      await vote.execute()
+      try {
+        await vote.execute()
       } catch (error) {
         return assertThrow(error)
       }
