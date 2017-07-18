@@ -40,6 +40,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, 0x01);
   bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, 0x02);
   bytes32 constant scapeHatchSecondaryKey = sha3(vaultPrimaryKey, 0x03);
+  bytes32 constant etherTokenSecondaryKey = sha3(vaultPrimaryKey, 0x04);
 
   uint constant maxTokenTransferGas = 150000;
   uint constant maxHalt = 7 days; // can be prorrogated during halt
@@ -55,6 +56,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   bytes4 constant setTknBlacklistSig  = 0x1ff0769a; // setTokenBlacklist(address,bool)
   bytes4 constant isTknBlacklistSig   = 0xce9be9ba; // isTokenBlacklisted(address)
   bytes4 constant recoverSig          = 0x648bf774; // recover(address,address)
+  bytes4 constant setEtherTokenSig    = bytes4(sha3('setEtherToken(address)'));
+  bytes4 constant getEtherTokenSig    = bytes4(sha3('getEtherToken()'));
 
   // @dev deposit is not reachable on purpose using normal dispatch route
   // expects to be called as a delegatecall from kernel
@@ -64,13 +67,15 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
            check_blacklist(_token)
            payable {
     if (_amount == 0) return;
-    if (_token == getEtherToken() && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
+    if (_token == 0 && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
 
-    uint256 currentBalance = getTokenBalance(_token);
+    address token = _token == 0 ? getEtherToken() : _token;
+
+    uint256 currentBalance = getTokenBalance(token);
     // This will actually be dispatched every time balance goes from 0 to non-zero.
     // The idea is that the frontend can listen for this event in all DAO history.
     // TODO: Is an event for when a certain token balance goes to 0 needed?
-    if (currentBalance == 0) NewTokenDeposit(_token);
+    if (currentBalance == 0) NewTokenDeposit(token);
 
     // TODO: Aragon Network funds redirect goes here :)
 
@@ -78,10 +83,10 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // Check token balance isn't less than expected.
     // Could be less because of a faulty erc20 implementation (can't trust)
     // Could be more because a token transfer can be done without notifying
-    assert(newBalance <= ERC20(_token).balanceOf(this));
+    assert(newBalance <= ERC20(token).balanceOf(this));
 
-    setTokenBalance(_token, newBalance);
-    Deposit(_token, dao_msg().sender, _amount);
+    setTokenBalance(token, newBalance);
+    Deposit(token, dao_msg().sender, _amount);
   }
 
   // @dev Function called from other organs, applications or the outside to send funds
@@ -242,7 +247,11 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   }
 
   function getEtherToken() constant returns (address) {
-    return address(storageGet(sha3(kernelPrimaryKey, 0x02)));
+    return address(storageGet(etherTokenSecondaryKey));
+  }
+
+  function setEtherToken(address newToken) {
+    storageSet(etherTokenSecondaryKey, uint256(newToken));
   }
 
   // @dev get key for token balance
@@ -263,7 +272,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   //      on DAO context
   function organWasInstalled() {
     // TODO: Replace for constant for EtherToken
-    MetaOrgan(this).setEtherToken(address(new EtherToken()));
+    setEtherToken(address(new EtherToken()));
   }
 
   // @dev Function called by DAO as call for organ to communicate if it handles a payload
@@ -283,6 +292,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
       sig == setScapeHatchSig ||
       sig == isTknBlacklistSig ||
       sig == setTknBlacklistSig ||
+      sig == setEtherTokenSig ||
+      sig == getEtherTokenSig ||
       sig == recoverSig;
   }
 

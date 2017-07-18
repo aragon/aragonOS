@@ -82,7 +82,7 @@ contract Kernel is IKernel, DAOStorage {
   // @param value: Transaction's sent ETH value
   // @param data: Transaction data
   function dispatchEther(address sender, uint256 value, bytes data) internal {
-    dispatch(sender, getEtherToken(), value, data);
+    dispatch(sender, 0, value, data);
   }
 
   // @dev Sends the transaction to the dispatcher organ
@@ -126,10 +126,6 @@ contract Kernel is IKernel, DAOStorage {
     if (amount == 0 || vaultOrgan == 0) return;
 
     assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
-  }
-
-  function getEtherToken() constant returns (address) {
-    return address(storageGet(sha3(0x01, 0x02)));
   }
 
   function getPermissionsOracle() constant returns (address) {

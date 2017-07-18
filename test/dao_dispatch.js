@@ -43,7 +43,7 @@ contract('Dispatcher', accounts => {
       await mockedOrgan.mock_setNumber(3, { value, gas: 10000000 })
       assert.equal(await mockedOrgan.mock_getNumber(), 3, 'should have dispatched method')
 
-      const etherToken = EtherToken.at(await kernel.getEtherToken())
+      const etherToken = EtherToken.at(await vault.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
       assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
     })
@@ -81,7 +81,7 @@ contract('Dispatcher', accounts => {
       const { r, s, v, data } = await signedTransaction(2)
       await kernel.preauthDispatch(data, 2, r, s, v, { from: sender, value: 1})
 
-      const etherToken = EtherToken.at(await kernel.getEtherToken())
+      const etherToken = EtherToken.at(await vault.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), 1, 'transferred ether should be inside ETH token')
       assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
       assert.equal(await vault.getTokenBalance(etherToken.address), 1, 'DAO accounting should know token balance')

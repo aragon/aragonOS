@@ -5,7 +5,6 @@ import "../../tokens/EtherToken.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
 contract MetaOrgan is IOrgan {
-  bytes32 constant etherTokenKey = sha3(0x01, 0x02);
   bytes32 constant permissionsOracleKey = sha3(0x01, 0x03);
 
   function organWasInstalled() {}
@@ -20,10 +19,6 @@ contract MetaOrgan is IOrgan {
 
   function replaceKernel(address newKernel) public {
     setKernel(newKernel);
-  }
-
-  function setEtherToken(address newToken) public {
-    storageSet(etherTokenKey, uint256(newToken));
   }
 
   function installOrgan(address organAddress, uint organN) public {
@@ -49,7 +44,6 @@ contract MetaOrgan is IOrgan {
     return
       sig == 0x5bb95c74 || // ceaseToExist()
       sig == 0xcebe30ac || // replaceKernel(address)
-      sig == 0x6ad419a8 || // setEtherToken(address)
       sig == 0x080440a6 || // setPermissionsOracle(address)
       sig == 0xb61842bc;   // installOrgan(address,uint256)
   }

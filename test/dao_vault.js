@@ -36,7 +36,7 @@ contract('Vault', accounts => {
   context('when receiving ether', () => {
     let token = {}
     beforeEach(async () => {
-      token = EtherToken.at(await kernel.getEtherToken())
+      token = EtherToken.at(await vault.getEtherToken())
       await mockedOrgan.mock_setNumber(3, { value: 10, gas: 10000000 })
     })
 

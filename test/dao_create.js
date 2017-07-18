@@ -49,9 +49,9 @@ contract('DAO', accounts => {
       assert.isTrue(canPerform, 'DAO should allow all actions')
     })
 
-    it('can set ether token', async () => {
-      await metadao.setEtherToken(randomAddress)
-      assert.equal(await kernel.getEtherToken(), randomAddress, 'Should have new ether token')
+    it('can set permissions oracle', async () => {
+      await metadao.setPermissionsOracle(randomAddress)
+      assert.equal(await kernel.getPermissionsOracle(), randomAddress, 'Should have new permissions oracle')
     })
 
     it('can install organs', async () => {
