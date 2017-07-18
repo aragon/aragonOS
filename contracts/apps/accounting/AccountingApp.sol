@@ -19,7 +19,7 @@ contract AccountingApp is Application {
         bytes2 ct_month;
         bytes2 ct_weekday;
         uint startBlock;
-        uint64 startTimestamp;
+        uint startTimestamp;
     }
 
     AccountingPeriod public defaultAccountingPeriodSettings;
@@ -27,7 +27,7 @@ contract AccountingApp is Application {
     AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
 
     bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG = bytes4(sha3('getCurrentAccountingPeriodId()'));
-    function getCurrentAccountingPeriodId() onlyDAO returns (uint){
+    function getCurrentAccountingPeriodId() returns (uint){
         require(accountingPeriods.length > 0);
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
@@ -36,7 +36,7 @@ contract AccountingApp is Application {
     }
 
     bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('getCurrentAccountingPeriod(address,bytes2,bytes2,bytes2,bytes2)'));
-    function getCurrentAccountingPeriod() onlyDAO returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
+    function getCurrentAccountingPeriod() returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
         AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
         return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday);
     }
@@ -44,12 +44,12 @@ contract AccountingApp is Application {
     bytes4 constant START_NEXT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('startNextAccountingPeriod()'));
     function startNextAccountingPeriod() onlyDAO {
         AccountingPeriod memory ap = defaultAccountingPeriodSettings;
-        ap.startTimestamp = uint64(block.timestamp);
+        ap.startTimestamp = now;
         ap.startBlock = block.number;
         accountingPeriods.push(ap);
     }
 
-    bytes4 constant SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG = bytes4(sha3('startNextAccountingPeriod(address,bytes2,bytes2,bytes2,bytes2)'));
+    bytes4 constant SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG = bytes4(sha3('setDefaultAccountingPeriodSettings(address,bytes2,bytes2,bytes2,bytes2)'));
     function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday) onlyDAO {
         defaultAccountingPeriodSettings.baseToken = baseToken;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
@@ -102,8 +102,8 @@ contract AccountingApp is Application {
 
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,int,address,string,TransactionState)'));
-    function newTransaction(address token, int value, address externalAddress, string reference, TransactionState initialState) onlyDAO returns (uint) {
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,int,address,string)'));
+    function newTransaction(address token, int value, address externalAddress, string reference) onlyDAO  {
 
         uint tid = transactions.push(Transaction({
             externalAddress: externalAddress, 
@@ -118,8 +118,7 @@ contract AccountingApp is Application {
         })) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
-        updateTransaction(tid, initialState, "new");
-        return tid;
+        updateTransaction(tid, TransactionState.New, "new");
     }
 
 
@@ -133,7 +132,6 @@ contract AccountingApp is Application {
             actor: msg.sender
         })) - 1;
         transactionUpdatesRelation[transactionId].push(tuid);
-        return tuid;
     }
 
     bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint,string)'));
