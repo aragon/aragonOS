@@ -6,12 +6,7 @@ var ActionsOrgan = artifacts.require('ActionsOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 
-<<<<<<< HEAD
-
-const organs = [VaultOrgan, TokensOrgan, ActionsOrgan, ApplicationOrgan]
-=======
 const organs = [VaultOrgan, ActionsOrgan, ApplicationOrgan]
->>>>>>> master
 
 const { getNonce } = require('../test/helpers/web3')
 
