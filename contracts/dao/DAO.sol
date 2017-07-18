@@ -20,6 +20,7 @@ contract DAO is DAOStorage {
   function () payable public {
     uint32 len = getReturnSize();
     address target = getKernel();
+    require(target > 0);
     assembly {
       calldatacopy(0x0, 0x0, calldatasize)
       let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
