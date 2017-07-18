@@ -13,7 +13,7 @@ contract AccountingApp is Application {
 
     struct AccountingPeriod {
         address baseToken;
-        
+
         bytes2 ct_hour;
         bytes2 ct_day;
         bytes2 ct_month;
@@ -73,10 +73,10 @@ contract AccountingApp is Application {
         string reference;
         uint timestamp;
         uint accountingPeriodId;  // in which accounting period did this occur
-    }    
+    }
 
     // The state a transaction update can be.
-    // New states should be added to the end to maintain the 
+    // New states should be added to the end to maintain the
     // order of the index when interfacing with web3.
     enum TransactionState {
         New, // not needed?
@@ -90,8 +90,8 @@ contract AccountingApp is Application {
         uint transactionId; // Parent Transaction
         TransactionState state;
         string reason;
-        address actor; // who performed this update 
-    }    
+        address actor; // who performed this update
+    }
 
     Transaction[] public transactions;
     TransactionUpdate[] public transactionUpdates;
@@ -108,13 +108,13 @@ contract AccountingApp is Application {
 
         Debug('before transation');
         uint tid = transactions.push(Transaction({
-            externalAddress: 0x100, 
-            token: 0x100, 
-            value: 100, 
-            // TODO: get base token and exchange rate from oracle 
-            baseToken: 0x0, 
+            externalAddress: 0x100,
+            token: 0x100,
+            value: 100,
+            // TODO: get base token and exchange rate from oracle
+            baseToken: 0x0,
             baseValue: 1,
-            reference: "Ref 123", 
+            reference: "Ref 123",
             timestamp: now,
             accountingPeriodId: getCurrentAccountingPeriodId()
         })) - 1;
@@ -127,7 +127,7 @@ contract AccountingApp is Application {
 
 
     // Create new transactionUpdate for the given transaction id
-    bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint,TransactionState,string)'));
+    bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint256,uint256,string)'));
     function updateTransaction(uint transactionId, TransactionState state, string reason) onlyDAO returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
@@ -138,24 +138,24 @@ contract AccountingApp is Application {
         transactionUpdatesRelation[transactionId].push(tuid);
     }
 
-    bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint,string)'));
+    bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint256,string)'));
     function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
-    }    
+    }
 
-    bytes4 constant SET_TRANSACTION_PENDING_APPROVAL_SIG = bytes4(sha3('setTransactionPendingApproval(uint,string)'));
+    bytes4 constant SET_TRANSACTION_PENDING_APPROVAL_SIG = bytes4(sha3('setTransactionPendingApproval(uint256,string)'));
     function setTransactionPendingApproval(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.PendingApproval, reason);
     }
 
-    bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint,string)'));
+    bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint256,string)'));
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Failed, reason);
     }
 
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint)'));
+    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint256)'));
     function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, TransactionState state, uint accountingPeriodId) {
         Transaction t = transactions[transactionId];
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][transactionUpdatesRelation[transactionId].length - 1];
@@ -172,15 +172,15 @@ contract AccountingApp is Application {
     function canHandlePayload(bytes payload) constant returns (bool) {
         bytes4 sig = getSig(payload);
         return (
-            sig == GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG || 
-            sig == GET_CURRENT_ACCOUNTING_PERIOD_SIG || 
-            sig == START_NEXT_ACCOUNTING_PERIOD_SIG || 
-            sig == SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG || 
-            sig == NEW_TRANSACTION_SIG || 
-            sig == UPDATE_TRANSACTION_SIG || 
-            sig == SET_TRANSACTION_SUCCEEDED_SIG || 
-            sig == SET_TRANSACTION_PENDING_APPROVAL_SIG || 
-            sig == SET_TRANSACTION_FAILED_SIG || 
+            sig == GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG ||
+            sig == GET_CURRENT_ACCOUNTING_PERIOD_SIG ||
+            sig == START_NEXT_ACCOUNTING_PERIOD_SIG ||
+            sig == SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG ||
+            sig == NEW_TRANSACTION_SIG ||
+            sig == UPDATE_TRANSACTION_SIG ||
+            sig == SET_TRANSACTION_SUCCEEDED_SIG ||
+            sig == SET_TRANSACTION_PENDING_APPROVAL_SIG ||
+            sig == SET_TRANSACTION_FAILED_SIG ||
             sig == GET_TRANSACTION_STATE_SIG
         );
     }
