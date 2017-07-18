@@ -25,12 +25,20 @@ contract PermissionsOracle {
 }
 
 contract Kernel is IKernel, DAOStorage {
+  address public deployedDispatcher;
+  address public deployedMeta;
+
+  function Kernel(address _deployedDispatcher, address _deployedMeta) {
+    deployedDispatcher = _deployedDispatcher;
+    deployedMeta = _deployedMeta;
+  }
+
   // @dev Sets up the minimum amount of organs for the kernel to be usable.
   // All organ installation from this point can be made using MetaOrgan
-  function setupOrgans() {
+  function setupOrgans(address _baseKernel) {
     assert(getOrgan(1) == 0); // Make sure it can only be called once on setup
-    installOrgan(1, new DispatcherOrgan());
-    installOrgan(2, new MetaOrgan());
+    installOrgan(1, Kernel(_baseKernel).deployedDispatcher());
+    installOrgan(2, Kernel(_baseKernel).deployedMeta());
   }
 
   function installOrgan(uint256 organN, address organAddress) internal {

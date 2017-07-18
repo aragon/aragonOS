@@ -10,7 +10,7 @@ var Controller = artifacts.require('Controller')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 contract('OwnershipApp', accounts => {
   let dao, metadao, kernel, appOrgan, ownershipApp, dao_ownershipApp = {}

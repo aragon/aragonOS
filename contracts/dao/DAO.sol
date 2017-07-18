@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 
 import "./DAOStorage.sol";
-import "../kernel/Kernel.sol";
 
 // @dev DAO is the base contract on top of which all DAO lives.
 // This is the only element of the DAO that is non-upgradeable
@@ -9,11 +8,12 @@ import "../kernel/Kernel.sol";
 // be formally proven.
 
 contract DAO is DAOStorage {
-  // @dev DAO constructor deploys its DAO kernel and saves its own identity as self
-  function DAO() {
-    setKernel(new Kernel());
-    assert(getKernel().delegatecall(0x743d4c1a)); // setupOrgans()
+  // @dev DAO constructor references to the DAO kernel and saves its own identity as self
+  function DAO(address deployedKernel) {
+    setKernel(deployedKernel);
+    assert(deployedKernel.delegatecall(0xb2a80631, deployedKernel)); // setupOrgans(address)
     setSelf(this);
+    assert(deployedKernel == getKernel());
   }
 
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall

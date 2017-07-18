@@ -11,7 +11,7 @@ var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { getBalance } = require('./helpers/web3')
 const timer = require('./helpers/timer')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'

@@ -9,7 +9,7 @@ module.exports = {
   networks: {
     development: {
       network_id: 15,
-      provider: require('ethereumjs-testrpc').provider({ gasLimit: 1e8 }),
+      provider: require('ethereumjs-testrpc').provider({ gasLimit: 1e8, network_id: 15 }),
       gas: 9e6,
     },
     testrpc: {

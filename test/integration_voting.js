@@ -13,7 +13,7 @@ var Kernel = artifacts.require('Kernel')
 
 const { getBlockNumber } = require('./helpers/web3')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 

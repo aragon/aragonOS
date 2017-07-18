@@ -10,7 +10,7 @@ var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
 var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { sign } = require('./helpers/web3')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'

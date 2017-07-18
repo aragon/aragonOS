@@ -4,7 +4,7 @@ var MetaOrgan = artifacts.require('MetaOrgan')
 var Kernel = artifacts.require('Kernel')
 var MockedOrgan = artifacts.require('mocks/MockedOrgan')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -26,6 +26,11 @@ contract('DAO', accounts => {
       dao = await createDAO()
       metadao = MetaOrgan.at(dao.address)
       kernel = Kernel.at(dao.address)
+    })
+
+    it('deployed organs', async () => {
+      assert.notEqual(await kernel.getOrgan(1), zerothAddress, 'organs should be deployed')
+      assert.notEqual(await kernel.getOrgan(2), zerothAddress, 'organs should be deployed')
     })
 
     it('can change kernel reference', async () => {
