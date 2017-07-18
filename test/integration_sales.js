@@ -14,9 +14,9 @@ var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
-contract('OwnershipApp', accounts => {
+contract('Token sales', accounts => {
   let dao, metadao, kernel, appOrgan, ownershipApp, dao_ownershipApp, vault, token = {}
 
   beforeEach(async () => {
