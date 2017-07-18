@@ -1,7 +1,6 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
@@ -31,14 +30,11 @@ contract('VotingApp', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const tokensOrgan = await TokensOrgan.new()
-    await metadao.installOrgan(tokensOrgan.address, 3)
-
     const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 4)
+    await metadao.installOrgan(actionsOrgan.address, 3)
 
     const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 5)
+    await metadao.installOrgan(apps.address, 4)
     appOrgan = ApplicationOrgan.at(dao.address)
 
     ownershipApp = await OwnershipApp.new(dao.address)
@@ -52,9 +48,9 @@ contract('VotingApp', accounts => {
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await dao_ownershipApp.addOrgToken(token.address, 1000, 1, 1, { gas: 1e6 })
-    await dao_ownershipApp.grantTokens(0, 30, accounts[0], { gas: 2e6 })
-    await dao_ownershipApp.grantTokens(0, 35, accounts[1], { gas: 2e6 })
+    await dao_ownershipApp.addToken(token.address, 1000, 1, 1, { gas: 1e6 })
+    await dao_ownershipApp.grantTokens(token.address, accounts[0], 30, { gas: 2e6 })
+    await dao_ownershipApp.grantTokens(token.address, accounts[1], 35, { gas: 2e6 })
   })
 
   context('creating basic voting', () => {
