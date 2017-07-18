@@ -100,7 +100,7 @@ contract AccountingApp is Application {
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
-    event Debug(string);
+    event Debug(string lol);
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
     bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction()'));
