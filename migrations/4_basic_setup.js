@@ -18,6 +18,6 @@ module.exports = (deployer) => {
     })
     .then(() => {
       console.log('Adding DAO gov token', token.address)
-      return OwnershipApp.at(dao.address).addOrgToken(token.address, 0, 1, 1, { gas: 1e6 })
+      return OwnershipApp.at(dao.address).addToken(token.address, 0, 1, 1, { gas: 1e6 })
     })
 }

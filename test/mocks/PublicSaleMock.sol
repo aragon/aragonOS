@@ -1,13 +1,13 @@
 pragma solidity ^0.4.11;
 
-import "../../contracts/apps/bylaws/BylawsApp.sol";
+import "../../contracts/apps/ownership/sales/PublicSale.sol";
 
-contract BylawsAppMock is BylawsApp {
-  function BylawsAppMock(address dao) BylawsApp(dao) {
-    mock_block = uint64(block.number);
-  }
-
+contract PublicSaleMock is PublicSale {
   uint64 mock_block;
+
+  function PublicSaleMock() {
+    mock_setBlockNumber(uint64(block.number));
+  }
 
   function mock_setBlockNumber(uint64 blockNumber) {
     mock_block = blockNumber;
