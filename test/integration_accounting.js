@@ -44,9 +44,8 @@ contract('AccountingApp', accounts => {
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
         console.log('=== 2')
         await dao_accountingApp.startNextAccountingPeriod()
-
         console.log('=== 3')
-        await dao_accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123')
+        await dao_accountingApp.newTransaction()
         console.log('=== 4')
         let t0 = await dao_accountingApp.getTransactionState(0)
         console.log('=== 4')

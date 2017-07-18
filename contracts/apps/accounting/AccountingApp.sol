@@ -100,25 +100,29 @@ contract AccountingApp is Application {
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
+    event Debug(string);
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,int,address,string)'));
-    function newTransaction(address token, int value, address externalAddress, string reference) onlyDAO  {
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction()'));
+    function newTransaction() onlyDAO  {
 
+        Debug('before transation');
         uint tid = transactions.push(Transaction({
-            externalAddress: externalAddress, 
-            token: token, 
-            value: value, 
+            externalAddress: 0x100, 
+            token: 0x100, 
+            value: 100, 
             // TODO: get base token and exchange rate from oracle 
             baseToken: 0x0, 
             baseValue: 1,
-            reference: reference, 
+            reference: "Ref 123", 
             timestamp: now,
             accountingPeriodId: getCurrentAccountingPeriodId()
         })) - 1;
+        Debug('after transation');
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
         updateTransaction(tid, TransactionState.New, "new");
+        Debug('end transation');
     }
 
 
