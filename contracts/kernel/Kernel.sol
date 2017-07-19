@@ -23,26 +23,21 @@ contract PermissionsOracle {
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
 }
 
-contract Kernel is IKernel, DAOStorage {
-  address public deployedDispatcher;
+contract Kernel is IKernel, DAOStorage, FunctionRegistry {
   address public deployedMeta;
 
-  function Kernel(address _deployedDispatcher, address _deployedMeta) {
-    deployedDispatcher = _deployedDispatcher;
+  bytes4 constant INSTALL_ORGAN_SIG = 0x12;
+
+  function Kernel(address _deployedMeta) {
     deployedMeta = _deployedMeta;
   }
 
-  // @dev Sets up the minimum amount of organs for the kernel to be usable.
-  // All organ installation from this point can be made using MetaOrgan
+  // @dev Installs 'installOrgan' function from MetaOrgan.
+  // @param _baseKernel an instance to the kernel to call.
   function setupOrgans(address _baseKernel) {
-    assert(getOrgan(1) == 0); // Make sure it can only be called once on setup
-    installOrgan(1, Kernel(_baseKernel).deployedDispatcher());
-    installOrgan(2, Kernel(_baseKernel).deployedMeta());
-  }
-
-  function installOrgan(uint256 organN, address organAddress) internal {
-    setOrgan(organN, organAddress);
-    assert(organAddress.delegatecall(0xd11cf3cd)); // organWasInstalled()
+    bytes4[] memory installOrganSig = new bytes4[](1);
+    installOrganSig[0] = INSTALL_ORGAN_SIG;
+    register(Kernel(_baseKernel).deployedMeta(), installOrganSig, true);
   }
 
   // @dev Vanilla ETH transfers get intercepted in the fallback

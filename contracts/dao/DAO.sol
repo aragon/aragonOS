@@ -29,3 +29,9 @@ contract DAO is DAOStorage {
     }
   }
 }
+
+contract Registy {
+    function register(address implementator, bytes4[] lol) {
+
+    }
+}

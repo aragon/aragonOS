@@ -3,11 +3,35 @@ pragma solidity ^0.4.11;
 import "./IOrgan.sol";
 import "../../tokens/EtherToken.sol";
 
-// @dev MetaOrgan can modify all critical aspects of the DAO.
-contract MetaOrgan is IOrgan {
-  bytes32 constant permissionsOracleKey = sha3(0x01, 0x03);
+contract FunctionRegistry is DAOStorage {
+  function get(bytes4 _sig) constant returns (address, bool) {
+    uint v = storageGet(storageKeyForSig(_sig));
+    bool isDelegate = v >> 8 * 20 == 1;
+    return (address(v), isDelegate);
+  }
 
-  function organWasInstalled() {}
+  function storageKeyForSig(bytes4 _sig) internal returns (bytes32) {
+    return sha3(0x01, 0x00, _sig);
+  }
+
+  function register(address impl, bytes4[] sigs, bool delegate) internal {
+    uint addDelegate = delegate ? 2 ** 8 ** 20 : 0;
+    storageSet(storageKeyForSig(bytes4(sha3(sigs))), identifier(delegate));
+
+    for (uint i = 0; i < sigs.length; i++) {
+      require(delegate || storageGet(storageKeyForSig(sigs[i])) == 0); // don't allow to overwrite on apps
+      storageSet(storageKeyForSig(sigs[i]), uint(address(impl)) + addDelegate);
+    }
+  }
+
+  function identifier(bool isDelegate) internal returns (uint) {
+    return isDelegate ? 2 : 1;
+  }
+}
+
+// @dev MetaOrgan can modify all critical aspects of the DAO.
+contract MetaOrgan is IOrgan, FunctionRegistry {
+  bytes32 constant permissionsOracleKey = sha3(0x01, 0x03);
 
   function ceaseToExist() public {
     // Check it is called in DAO context and not from the outside which would
@@ -21,30 +45,30 @@ contract MetaOrgan is IOrgan {
     setKernel(newKernel);
   }
 
-  function installOrgan(address organAddress, uint organN) public {
-    setOrgan(organN, organAddress);
-    assert(organAddress.delegatecall(0xd11cf3cd)); // calls organWasInstalled()
-    // TODO: DAOEvents OrganReplaced(organAddress, organN);
-  }
-
   function setPermissionsOracle(address newOracle) {
     storageSet(permissionsOracleKey, uint256(newOracle));
   }
 
-  function setOrgan(uint _organId, address _organAddress) {
-    storageSet(storageKeyForOrgan(_organId), uint256(_organAddress));
+  function installApp(address appAddress, bytes4[] sigs) {
+    register(appAddress, sigs, false);
   }
 
-  function storageKeyForOrgan(uint _organId) internal returns (bytes32) {
-    return sha3(0x01, 0x00, _organId);
+  function installOrgan(address organAddress, bytes4[] sigs) {
+    register(organAddress, sigs, true);
   }
 
-  function canHandlePayload(bytes payload) public returns (bool) {
-    bytes4 sig = getFunctionSignature(payload);
-    return
-      sig == 0x5bb95c74 || // ceaseToExist()
-      sig == 0xcebe30ac || // replaceKernel(address)
-      sig == 0x080440a6 || // setPermissionsOracle(address)
-      sig == 0xb61842bc;   // installOrgan(address,uint256)
+  function removeOrgan(bytes4[] sigs) {
+    deregister(sigs, true);
+  }
+
+  function removeApp(bytes4[] sigs) {
+    deregister(sigs, false);
+  }
+
+  function deregister(bytes4[] sigs, bool delegate) internal {
+    // performs integrity check (all sigs being removed) and allows double auth for organs or apps
+    require(storageGet(storageKeyForSig(bytes4(sha3(sigs)))) == identifier(delegate));
+    for (uint i = 0; i < sigs.length; i++)
+      storageSet(storageKeyForSig(sigs[i]), 0);
   }
 }
