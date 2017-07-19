@@ -45,20 +45,6 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   uint constant maxTokenTransferGas = 150000;
   uint constant maxHalt = 7 days; // can be prorrogated during halt
 
-  bytes4 constant getTokenBalanceSig  = 0x3aecd0e3; // getTokenBalance(address)
-  bytes4 constant transferSig         = 0xbeabacc8; // transfer(address,address,uint256)
-  bytes4 constant transferEtherSig    = 0x05b1137b; // transferEther(address,uint256)
-  bytes4 constant haltSig             = 0xfb1fad50; // halt(uint256)
-  bytes4 constant getHaltTimeSig      = 0xae2ae305; // getHaltTime()
-  bytes4 constant scapeHatchSig       = 0x863ca8f0; // scapeHatch(address[])
-  bytes4 constant setScapeHatchSig    = 0xc4e65c99; // setScapeHatch(address)
-  bytes4 constant getScapeHatchSig    = 0x4371677c; // getScapeHatch()
-  bytes4 constant setTknBlacklistSig  = 0x1ff0769a; // setTokenBlacklist(address,bool)
-  bytes4 constant isTknBlacklistSig   = 0xce9be9ba; // isTokenBlacklisted(address)
-  bytes4 constant recoverSig          = 0x648bf774; // recover(address,address)
-  bytes4 constant setEtherTokenSig    = bytes4(sha3('setEtherToken(address)'));
-  bytes4 constant getEtherTokenSig    = bytes4(sha3('getEtherToken()'));
-
   // @dev deposit is not reachable on purpose using normal dispatch route
   // expects to be called as a delegatecall from kernel
   // @param _token: Address for the token being deposited in call
@@ -270,31 +256,9 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
 
   // @dev Function called by the DAO as a delegatecall for organ to do its setup
   //      on DAO context
-  function organWasInstalled() {
-    // TODO: Replace for constant for EtherToken
+  function setupEtherToken() {
+    require(getEtherToken() == 0);
     setEtherToken(address(new EtherToken()));
-  }
-
-  // @dev Function called by DAO as call for organ to communicate if it handles a payload
-  // @param _payload: call data bytes payload
-  // @return whether organ handles a payload or not
-  function canHandlePayload(bytes _payload) returns (bool) {
-    // TODO: Really return true on handleable functions
-    bytes4 sig = getFunctionSignature(_payload);
-    return
-      sig == getTokenBalanceSig ||
-      sig == transferSig ||
-      sig == transferEtherSig ||
-      sig == haltSig ||
-      sig == getHaltTimeSig ||
-      sig == scapeHatchSig ||
-      sig == getScapeHatchSig ||
-      sig == setScapeHatchSig ||
-      sig == isTknBlacklistSig ||
-      sig == setTknBlacklistSig ||
-      sig == setEtherTokenSig ||
-      sig == getEtherTokenSig ||
-      sig == recoverSig;
   }
 
   modifier only_not_halted {

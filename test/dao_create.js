@@ -1,8 +1,11 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
+var IOrgan = artifacts.require('IOrgan')
 var Kernel = artifacts.require('Kernel')
 var MockedOrgan = artifacts.require('mocks/MockedOrgan')
+
+const { signatures } = require('./helpers/web3')
 
 const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
@@ -21,16 +24,21 @@ contract('DAO', accounts => {
     let dao = {}
     let metadao = {}
     let kernel = {}
+    let sigs = {}
 
     beforeEach(async () => {
       dao = await createDAO()
       metadao = MetaOrgan.at(dao.address)
       kernel = Kernel.at(dao.address)
+      sigs = signatures(MetaOrgan, [IOrgan], web3)
+
+      metadao.installOrgan(MetaOrgan.address, sigs)
     })
 
     it('deployed organs', async () => {
-      assert.notEqual(await kernel.getOrgan(1), zerothAddress, 'organs should be deployed')
-      assert.notEqual(await kernel.getOrgan(2), zerothAddress, 'organs should be deployed')
+      const [addr, delegate] = await kernel.get(sigs[0])
+      assert.equal(addr, MetaOrgan.address, 'metaorgan should be installed')
+      assert.isTrue(delegate, 'organs should be called with delegate calls')
     })
 
     it('can change kernel reference', async () => {
@@ -52,12 +60,6 @@ contract('DAO', accounts => {
     it('can set permissions oracle', async () => {
       await metadao.setPermissionsOracle(randomAddress)
       assert.equal(await kernel.getPermissionsOracle(), randomAddress, 'Should have new permissions oracle')
-    })
-
-    it('can install organs', async () => {
-      const mockOrgan = await MockedOrgan.new()
-      await metadao.installOrgan(mockOrgan.address, 3)
-      assert.equal(await kernel.getOrgan(3), mockOrgan.address, 'DAO should have installed organ')
     })
   })
 })

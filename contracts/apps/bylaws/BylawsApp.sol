@@ -241,16 +241,21 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
 
   function getOwnershipApp() internal returns (OwnershipApp) {
     // gets the app address that can respond to getToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
+    return OwnershipApp(getResponsiveApp(getTokenSig));
   }
 
   function getVotingApp() internal returns (VotingApp) {
     // gets the app address that can respond to createVote
-    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
+    return VotingApp(getResponsiveApp(0x3ae05af2));
   }
 
   function getStatusApp() internal returns (StatusApp) {
     // gets the app address that can respond to setEntityStatus
-    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
+    return StatusApp(getResponsiveApp(0x6035fa06));
+  }
+
+  function getResponsiveApp(bytes4 sig) internal returns (address) {
+    var (addr,) = Kernel(dao).get(sig);
+    return addr;
   }
 }

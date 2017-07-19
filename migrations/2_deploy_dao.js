@@ -17,9 +17,9 @@ module.exports = (deployer, network) => {
   const isLive = liveNetworks.indexOf(network) > -1
 
   return deployer
-          .then(() => MetaOrgan.new())
+          .then(() => deployer.deploy(MetaOrgan))
           .then(m => {
-            meta = m
+            meta = MetaOrgan.at(MetaOrgan.address)
 
             return deployer.deploy(Kernel, meta.address)
           })

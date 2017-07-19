@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "../../tokens/MiniMeToken.sol";
-import "../../kernel/organs/ApplicationOrgan.sol";
+import "../../kernel/Kernel.sol";
 import "../ownership/OwnershipApp.sol";
 import "../Application.sol";
 import "../../misc/CodeHelper.sol";
@@ -213,7 +213,8 @@ contract VotingApp is IVotingApp, Application, OwnershipConstants, VotingConstan
 
   function getOwnershipApp() internal returns (OwnershipApp) {
     // gets the app address that can respond to getToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
+    var (addr,) = Kernel(dao).get(getTokenSig);
+    return OwnershipApp(addr);
   }
 
   // @dev just for mocking purposes
