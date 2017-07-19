@@ -1,34 +1,27 @@
 var DAO = artifacts.require('DAO')
 var Kernel = artifacts.require('Kernel')
-var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
+var IOrgan = artifacts.require('IOrgan')
 
-const organs = [VaultOrgan, ActionsOrgan, ApplicationOrgan]
+const organs = [MetaOrgan, VaultOrgan, ActionsOrgan]
 
-const { getNonce } = require('../test/helpers/web3')
+const { getNonce, signatures } = require('../test/helpers/web3')
 
 const liveNetworks = ['kovan', 'ropsten']
 
 module.exports = (deployer, network) => {
-  let dao = {}
+  let dao, meta = {}
 
   const isLive = liveNetworks.indexOf(network) > -1
-
-  let meta, dispatcher = {}
 
   return deployer
           .then(() => MetaOrgan.new())
           .then(m => {
             meta = m
-            return DispatcherOrgan.new()
-          })
-          .then(d => {
-            dispatcher = d
 
-            return deployer.deploy(Kernel, dispatcher.address, meta.address)
+            return deployer.deploy(Kernel, meta.address)
           })
           .then(k => {
             console.log('deploying DAO with Kernel', Kernel.address)
@@ -40,12 +33,13 @@ module.exports = (deployer, network) => {
                 let nonce = 0
 
                 const installOrgan = (organ, i) => {
-                  const n = i + firstOrgan
-                  console.log('Installing', organ.constructor._json.contract_name, organ.address, 'at slot', n)
+                  const sigs = signatures(organ, [IOrgan], web3)
+                  console.log('Installing', organ.constructor._json.contract_name, organ.address, 'for sigs', sigs.join(','))
+
                   nonce += 1
 
                   const params = isLive ? { nonce } : {}
-                  return dao.installOrgan(organ.address, n, params)
+                  return dao.installOrgan(organ.address, sigs, params)
                 }
 
                 return getNonce(web3).then(x => {

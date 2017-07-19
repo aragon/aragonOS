@@ -18,7 +18,7 @@ contract DAO is DAOStorage {
 
   // @dev All calls to the DAO are forwarded to the kernel with a delegatecall
   function () payable public {
-    uint32 len = getReturnSize();
+    uint32 len = RETURN_MEMORY_SIZE;
     address target = getKernel();
     require(target > 0);
     assembly {
@@ -28,10 +28,4 @@ contract DAO is DAOStorage {
       return(0, len)
     }
   }
-}
-
-contract Registy {
-    function register(address implementator, bytes4[] lol) {
-
-    }
 }

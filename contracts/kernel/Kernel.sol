@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 
 import "./IKernel.sol";
-import "./organs/DispatcherOrgan.sol";
 import "./organs/MetaOrgan.sol";
 
 import "../tokens/EtherToken.sol";
@@ -26,7 +25,7 @@ contract PermissionsOracle {
 contract Kernel is IKernel, DAOStorage, FunctionRegistry {
   address public deployedMeta;
 
-  bytes4 constant INSTALL_ORGAN_SIG = 0x12;
+  bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
 
   function Kernel(address _deployedMeta) {
     deployedMeta = _deployedMeta;
@@ -90,12 +89,28 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
 
     setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
 
-    address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
-    uint32 len = getReturnSize();
-    assembly {
-      let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
-      jumpi(invalidJumpLabel, iszero(result))
-      return(0, len)
+    bytes4 sig;
+    assembly { sig := mload(add(payload, 0x20)) }
+    var (target, isDelegate) = get(sig);
+    uint32 len = RETURN_MEMORY_SIZE;
+
+    require(target > 0);
+
+    // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
+    if (isDelegate) {
+      assembly {
+        let result := 0
+        result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
+        jumpi(invalidJumpLabel, iszero(result))
+        return(0, len)
+      }
+    } else {
+      assembly {
+        let result := 0
+        result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)
+        jumpi(invalidJumpLabel, iszero(result))
+        return(0, len)
+      }
     }
   }
 
@@ -117,7 +132,7 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
   }
 
   function vaultDeposit(address token, uint256 amount) internal {
-    address vaultOrgan = getOrgan(3);
+    var (vaultOrgan,) = get(0x47e7ef24);
     if (amount == 0 || vaultOrgan == 0) return;
 
     assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
@@ -125,18 +140,6 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
 
   function getPermissionsOracle() constant returns (address) {
     return address(storageGet(sha3(0x01, 0x03)));
-  }
-
-  function getOrgan(uint _organId) constant returns (address organAddress) {
-    return address(storageGet(getStorageKeyForOrgan(_organId)));
-  }
-
-  function setOrgan(uint _organId, address _organAddress) internal {
-    storageSet(getStorageKeyForOrgan(_organId), uint256(_organAddress));
-  }
-
-  function getStorageKeyForOrgan(uint _organId) internal returns (bytes32) {
-    return sha3(0x01, 0x00, _organId);
   }
 
   function payload(bytes data, uint nonce) constant public returns (bytes32) {
