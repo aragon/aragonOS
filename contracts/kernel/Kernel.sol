@@ -7,6 +7,7 @@ import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
 
 import "../dao/DAOStorage.sol";
+import "../apps/Application.sol";
 
 // @dev Kernel's purpose is to intercept different types of transactions that can
 // be made to the DAO, and dispatch it using a uniform interface to the DAO organs.
@@ -87,8 +88,6 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
 
     if (payload.length == 0) return; // Just receive the tokens
 
-    setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
-
     bytes4 sig;
     assembly { sig := mload(add(payload, 0x20)) }
     var (target, isDelegate) = get(sig);
@@ -98,6 +97,7 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
 
     // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
     if (isDelegate) {
+      setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
       assembly {
         let result := 0
         result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
@@ -105,6 +105,7 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
         return(0, len)
       }
     } else {
+      Application(target).setDAOMsg(sender, token, value);
       assembly {
         let result := 0
         result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)

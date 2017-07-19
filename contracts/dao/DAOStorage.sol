@@ -23,7 +23,7 @@ contract DAOStorage is IDAO, UIntStorage {
   bytes32 constant tokenKey = sha3(0x00, 0x02, 0x01);
   bytes32 constant valueKey = sha3(0x00, 0x02, 0x02);
 
-  uint32 constant RETURN_MEMORY_SIZE = 8 * 32;
+  uint32 constant RETURN_MEMORY_SIZE = 24 * 32;
 
   struct DAOMessage {
     address sender;

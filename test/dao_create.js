@@ -1,13 +1,17 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var IOrgan = artifacts.require('IOrgan')
 var Kernel = artifacts.require('Kernel')
 var MockedOrgan = artifacts.require('mocks/MockedOrgan')
 
+var IOrgan = artifacts.require('IOrgan')
 const { signatures } = require('./helpers/web3')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = async () => {
+  const dao = await DAO.new(Kernel.address, { gas: 9e6 })
+  await MetaOrgan.at(dao.address).installOrgan(MetaOrgan.address, signatures(MetaOrgan, [IOrgan], web3))
+  return dao
+}
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -30,13 +34,10 @@ contract('DAO', accounts => {
       dao = await createDAO()
       metadao = MetaOrgan.at(dao.address)
       kernel = Kernel.at(dao.address)
-      sigs = signatures(MetaOrgan, [IOrgan], web3)
-
-      metadao.installOrgan(MetaOrgan.address, sigs)
     })
 
     it('deployed organs', async () => {
-      const [addr, delegate] = await kernel.get(sigs[0])
+      const [addr, delegate] = await kernel.get(signatures(MetaOrgan, [IOrgan], web3)[0])
       assert.equal(addr, MetaOrgan.address, 'metaorgan should be installed')
       assert.isTrue(delegate, 'organs should be called with delegate calls')
     })

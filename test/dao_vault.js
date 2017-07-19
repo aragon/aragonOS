@@ -1,7 +1,6 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var Kernel = artifacts.require('Kernel')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var EtherToken = artifacts.require('EtherToken')
@@ -9,6 +8,7 @@ var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
 var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
 var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { getBalance } = require('./helpers/web3')
+const { installOrgans } = require('./helpers/installer')
 const timer = require('./helpers/timer')
 
 const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
@@ -24,12 +24,11 @@ contract('Vault', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const vaultOrgan = await VaultOrgan.new()
-    await metadao.installOrgan(vaultOrgan.address, 3)
-    vault = VaultOrgan.at(dao.address)
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, MockedOrgan])
 
-    const mockOrgan = await MockedOrgan.new()
-    await metadao.installOrgan(mockOrgan.address, 4)
+    vault = VaultOrgan.at(dao.address)
+    await vault.setupEtherToken()
+
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 

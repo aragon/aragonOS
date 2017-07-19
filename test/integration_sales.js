@@ -3,7 +3,6 @@ var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
 var Controller = artifacts.require('Controller')
@@ -14,35 +13,26 @@ var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
 
+const { installOrgans, installApps } = require('./helpers/installer')
+
 const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
 
 contract('Token sales', accounts => {
-  let dao, metadao, kernel, appOrgan, ownershipApp, dao_ownershipApp, vault, token = {}
+  let dao, metadao, kernel, appOrgan, ownershipApp, vault, token = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const vaultOrgan = await VaultOrgan.new()
-    await metadao.installOrgan(vaultOrgan.address, 3)
-    vault = VaultOrgan.at(dao.address)
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
+    await installApps(metadao, [OwnershipApp])
 
-    const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 4)
-
-    const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 5)
-    appOrgan = ApplicationOrgan.at(dao.address)
-
-    ownershipApp = await OwnershipApp.new(dao.address)
-    dao_ownershipApp = OwnershipApp.at(dao.address)
-
-    await appOrgan.installApp(1, ownershipApp.address)
+    ownershipApp = OwnershipApp.at(dao.address)
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await dao_ownershipApp.addToken(token.address, 0, 1, 1, { gas: 1e6 })
+    await ownershipApp.addToken(token.address, 0, 1, 1, { gas: 1e6 })
   })
 
   context('creating individual token sale', () => {
@@ -57,7 +47,7 @@ contract('Token sales', accounts => {
       await sale.mock_setBlockNumber(10)
 
       await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, buyer, 60, 30, 20)
-      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+      await ownershipApp.createTokenSale(sale.address, token.address, false)
     })
 
     it('sale throws when when sale expiry block is past', async () => {
@@ -114,7 +104,7 @@ contract('Token sales', accounts => {
     })
 
     it('dao can close sale unilateraly', async () => {
-      await dao_ownershipApp.closeTokenSale(sale.address)
+      await ownershipApp.closeTokenSale(sale.address)
       try {
         await raiseToken.approveAndCall(sale.address, 60, '0x', { from: buyer })
       } catch (error) {
@@ -134,7 +124,7 @@ contract('Token sales', accounts => {
       sale = await IndividualSale.new()
       await sale.mock_setBlockNumber(10)
       await sale.instantiate(dao.address, ownershipApp.address, etherToken, token.address, buyer, 60, 30, 20)
-      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+      await ownershipApp.createTokenSale(sale.address, token.address, false)
     })
 
     it('can buy with ether', async () => {
@@ -155,7 +145,7 @@ contract('Token sales', accounts => {
       await sale.mock_setBlockNumber(10)
 
       await sale.instantiate(dao.address, ownershipApp.address, raiseToken.address, token.address, 30, 1, 2, false, 15, 20)
-      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+      await ownershipApp.createTokenSale(sale.address, token.address, false)
     })
 
     it('saves sale information', async () => {
@@ -259,7 +249,7 @@ contract('Token sales', accounts => {
 
     it('can handle buys, state transitions and capping', async () => {
       sale = await VariablePriceSale.new()
-      await dao_ownershipApp.createTokenSale(sale.address, token.address, false)
+      await ownershipApp.createTokenSale(sale.address, token.address, false)
 
       await sale.mock_setBlockNumber(10)
 

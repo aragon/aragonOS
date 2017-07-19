@@ -1,8 +1,12 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var MockedApp = artifacts.require('./mocks/MockedApp')
+var IOrgan = artifacts.require('IOrgan')
+var Application = artifacts.require('Application')
+
+const { signatures } = require('./helpers/web3')
+const { installOrgans } = require('./helpers/installer')
 
 var Kernel = artifacts.require('Kernel')
 
@@ -12,16 +16,15 @@ const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('Applications', accounts => {
-  let dao, metadao, kernel, appOrgan = {}
+  let dao, metadao, kernel = {}
 
   beforeEach(async () => {
     dao = await createDAO()
-    metadao = MetaOrgan.at(dao.address)
-    kernel = Kernel.at(dao.address)
 
-    const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 3)
-    appOrgan = ApplicationOrgan.at(dao.address)
+    metadao = MetaOrgan.at(dao.address)
+    await installOrgans(metadao, [MetaOrgan])
+
+    kernel = Kernel.at(dao.address)
   })
 
   context('installed app', () => {
@@ -31,11 +34,13 @@ contract('Applications', accounts => {
     beforeEach(async () => {
       mockApp = await MockedApp.new(dao.address)
       dao_mockApp = MockedApp.at(dao.address)
-      await appOrgan.installApp(1, mockApp.address)
+      await metadao.installApp(mockApp.address, signatures(MockedApp, [Application], web3))
     })
 
     it('returns installed app address', async () => {
-      assert.equal(await appOrgan.getApp(1), mockApp.address, 'should have returned installed app addr')
+      const [addr, delegate] = await kernel.get(signatures(MockedApp, [Application], web3)[0])
+      assert.equal(addr, mockApp.address, 'should have returned installed app addr')
+      assert.isFalse(delegate, 'Call to application shouldnt be delegate')
     })
 
     it('dispatches actions in apps', async () => {

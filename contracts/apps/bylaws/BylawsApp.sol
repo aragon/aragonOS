@@ -11,7 +11,7 @@ import "../ownership/OwnershipApp.sol";
 import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
 
 contract IBylawsApp {
-  event BylawChanged(bytes4 sig, uint8 bylawType, uint256 bylawId, address changedBy);
+  event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 }
 
 contract BylawsConstants {
@@ -206,15 +206,15 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     _;
   }
 
-  function getBylawType(uint bylawId) constant returns (uint8) {
-    return uint8(bylaws[bylawId].bylawType);
+  function getBylawType(uint bylawId) constant returns (uint) {
+    return uint(bylaws[bylawId].bylawType);
   }
 
   function getBylawNot(uint bylawId) constant returns (bool) {
     return bylaws[bylawId].not;
   }
 
-  function getStatusBylaw(uint256 bylawId) constant returns (uint8) {
+  function getStatusBylaw(uint256 bylawId) constant returns (uint) {
     return bylaws[bylawId].status;
   }
 
@@ -240,22 +240,14 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getToken
-    return OwnershipApp(getResponsiveApp(getTokenSig));
+    return OwnershipApp(dao);
   }
 
   function getVotingApp() internal returns (VotingApp) {
-    // gets the app address that can respond to createVote
-    return VotingApp(getResponsiveApp(0x3ae05af2));
+    return VotingApp(dao);
   }
 
   function getStatusApp() internal returns (StatusApp) {
-    // gets the app address that can respond to setEntityStatus
-    return StatusApp(getResponsiveApp(0x6035fa06));
-  }
-
-  function getResponsiveApp(bytes4 sig) internal returns (address) {
-    var (addr,) = Kernel(dao).get(sig);
-    return addr;
+    return StatusApp(dao);
   }
 }
