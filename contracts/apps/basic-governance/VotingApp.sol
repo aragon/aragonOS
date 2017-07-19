@@ -14,12 +14,7 @@ contract IVotingApp {
   event VoteStateChanged(uint indexed voteId, uint oldState, uint newState);
 }
 
-contract VotingConstants {
-  bytes4 constant createVoteSig = bytes4(sha3('createVote(address,uint64,uint64)'));
-  bytes4 constant setValidCodeSig = bytes4(sha3('setValidVoteCode(bytes32,bool)'));
-}
-
-contract VotingApp is IVotingApp, Application, OwnershipConstants, VotingConstants, CodeHelper {
+contract VotingApp is IVotingApp, Application, CodeHelper {
   function VotingApp(address daoAddr)
            Application(daoAddr) {
     votes.length++; // index 0 is empty
@@ -212,22 +207,12 @@ contract VotingApp is IVotingApp, Application, OwnershipConstants, VotingConstan
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getToken
-    var (addr,) = Kernel(dao).get(getTokenSig);
-    return OwnershipApp(addr);
+    return OwnershipApp(dao);
   }
 
   // @dev just for mocking purposes
   function getBlockNumber() internal returns (uint64) {
     return uint64(block.number);
-  }
-
-  // TODO: Make only handleable payloads
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    bytes4 sig = getSig(payload);
-    return
-      sig == setValidCodeSig ||
-      sig == createVoteSig;
   }
 
   modifier transitions_state(uint voteId) {

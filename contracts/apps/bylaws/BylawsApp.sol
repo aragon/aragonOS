@@ -14,11 +14,7 @@ contract IBylawsApp {
   event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 }
 
-contract BylawsConstants {
-  bytes4 constant linkBylawSig = bytes4(sha3('linkBylaw(bytes4,uint256)'));
-}
-
-contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Application, PermissionsOracle {
+contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
   enum SpecialEntityStatus { Holder, TokenSale }
   enum CombinatorType { Or, And, Xor }
@@ -57,10 +53,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
   function BylawsApp(address dao)
            Application(dao) {
     newBylaw(); // so index is 1 for first legit bylaw
-  }
-
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    return getSig(payload) == linkBylawSig;
   }
 
   function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
@@ -249,5 +241,9 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
 
   function getStatusApp() internal returns (StatusApp) {
     return StatusApp(dao);
+  }
+
+  function getSig(bytes d) internal returns (bytes4 sig) {
+    assembly { sig := mload(add(d, 0x20)) }
   }
 }

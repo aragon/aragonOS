@@ -12,16 +12,7 @@ import "zeppelin/token/ERC20.sol";
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
 
-contract OwnershipConstants {
-  bytes4 constant addTokenSig = bytes4(sha3('addToken(address,uint256,uint128,uint128)'));
-  bytes4 constant removeTokenSig = bytes4(sha3('removeToken(address)'));
-  bytes4 constant getTokenSig = bytes4(sha3('getToken(uint256)'));
-  bytes4 constant issueTokensSig = bytes4(sha3('issueTokens(address,uint256)'));
-  bytes4 constant grantTokensSig = bytes4(sha3('grantTokens(address,address,uint256)'));
-  bytes4 constant grantVestedTokensSig = bytes4(sha3('grantVestedTokens(address,address,uint256,uint64,uint64,uint64)'));
-}
-
-contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor {
+contract OwnershipApp is Application, Controller, Requestor {
   struct Token {
     address tokenAddress;
     uint128 governanceRights;
@@ -202,27 +193,6 @@ contract OwnershipApp is OwnershipConstants, Application, Controller, Requestor 
       if (ERC20(tknAddr).balanceOf(_holder) >= holderThreshold) return true;
     }
     return false;
-  }
-
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    bytes4 sig = getSig(payload);
-    return
-      sig == addTokenSig ||
-      sig == removeTokenSig ||
-      sig == issueTokensSig ||
-      sig == grantTokensSig ||
-      sig == grantVestedTokensSig ||
-      sig == getTokenSig ||
-      sig == createTokenSaleSig ||
-      sig == closeTokenSaleSig ||
-      isTokenControllerSignature(sig);
-  }
-
-  function isTokenControllerSignature(bytes4 sig) constant returns (bool) {
-    return
-      sig == 0x4a393149 || // onTransfer(...)
-      sig == 0xda682aeb || // onApprove(...)
-      sig == 0xf48c3054;   // proxyPayment(...)
   }
 
   modifier only_controlled(address tokenAddress) {

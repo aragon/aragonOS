@@ -15,10 +15,4 @@ contract StatusApp is Application {
     entityStatus[entity] = status;
     EntityStatusChanged(entity, status);
   }
-
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    bytes4 sig = getSig(payload);
-
-    return sig == 0x6035fa06; // setEntityStatus()
-  }
 }
