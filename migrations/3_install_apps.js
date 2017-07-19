@@ -1,27 +1,28 @@
 var DAO = artifacts.require('DAO')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var MetaOrgan = artifacts.require('MetaOrgan')
+var Application = artifacts.require('Application')
 
 const appNames = ['BylawsApp', 'OwnershipApp', 'VotingApp', 'StatusApp']
 
 let nonce = 0
-const { getNonce } = require('../test/helpers/web3')
+const { getNonce, signatures } = require('../test/helpers/web3')
 
 const liveNetworks = ['kovan', 'ropsten']
 
 module.exports = (deployer, network) => {
-  let dao, dao_apps = {}
+  let dao, meta = {}
   let bylawsAddress = ''
 
   const isLive = liveNetworks.indexOf(network) > -1
 
   const installApp = (app, i) => {
-    const n = i + 1
     nonce += 1
 
     const params = isLive ? { nonce } : {}
-    console.log('Installing app', app.constructor._json.contract_name, app.address, 'at slot', n)
-    return dao_apps.installApp(n, app.address, params)
+    const sigs = signatures(app, [Application], web3)
+
+    console.log('Installing app', app.constructor._json.contract_name, app.address)
+    return meta.installApp(app.address, sigs, params)
   }
 
   const deployApps = daoAddress => {
@@ -40,7 +41,7 @@ module.exports = (deployer, network) => {
     .then(() => DAO.deployed())
     .then(d => {
       dao = d
-      dao_apps = ApplicationOrgan.at(dao.address)
+      meta = MetaOrgan.at(dao.address)
       return getNonce(web3)
     })
     .then(x => {
@@ -53,6 +54,6 @@ module.exports = (deployer, network) => {
     })
     .then(() => {
       console.log('Setting BylawsApp as DAO permissions oracle')
-      return MetaOrgan.at(dao.address).setPermissionsOracle(bylawsAddress)
+      return meta.setPermissionsOracle(bylawsAddress)
     })
 }
