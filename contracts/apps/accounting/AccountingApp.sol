@@ -66,7 +66,7 @@ contract AccountingApp is Application {
     // The concept of sending tokens to or from the org
     struct Transaction {
         address token;
-        int value;
+        int amount;
         address baseToken;
         int baseValue;
         address externalAddress;
@@ -100,29 +100,26 @@ contract AccountingApp is Application {
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
-    event Debug(string lol);
+    event Debug(string str);
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction()'));
-    function newTransaction() onlyDAO  {
-
-        Debug('before transation');
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,address,int256,string)'));
+    function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO  {
         uint tid = transactions.push(Transaction({
-            externalAddress: 0x100,
-            token: 0x100,
-            value: 100,
+            token: token,
+            amount: amount,
             // TODO: get base token and exchange rate from oracle
-            baseToken: 0x0,
+            baseToken: 0x10000000000001,
             baseValue: 1,
-            reference: "Ref 123",
+            externalAddress: externalAddress,
+            reference: "new ref",
             timestamp: now,
             accountingPeriodId: getCurrentAccountingPeriodId()
         })) - 1;
-        Debug('after transation');
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
+        Debug(transactions[tid].reference);
         updateTransaction(tid, TransactionState.New, "new");
-        Debug('end transation');
     }
 
 
@@ -155,17 +152,23 @@ contract AccountingApp is Application {
 
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint256)'));
-    function getTransactionState(uint transactionId) constant returns (address token, int value, string reference, uint timestamp, TransactionState state, uint accountingPeriodId) {
-        Transaction t = transactions[transactionId];
-        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][transactionUpdatesRelation[transactionId].length - 1];
+    bytes4 constant GET_TRANSACTION_INFO_SIG = bytes4(sha3('getTransactionInfo(uint256)'));
+    function getTransactionInfo(uint transactionId) constant returns (address, address, int, string) {
+        Transaction memory t = transactions[transactionId];
+        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
+        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
         TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
-        token = t.token;
-        value = t.value;
-        reference = t.reference;
-        timestamp = t.timestamp;
-        state = tu.state;
-        accountingPeriodId = t.accountingPeriodId;
+        return (t.externalAddress, t.token, t.amount, t.reference);
+    }
+
+
+    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint256)'));
+    function getTransactionState(uint transactionId) constant returns (TransactionState) {
+        Transaction memory t = transactions[transactionId];
+        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
+        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
+        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
+        return (tu.state);
     }
 
 
@@ -181,7 +184,7 @@ contract AccountingApp is Application {
             sig == SET_TRANSACTION_SUCCEEDED_SIG ||
             sig == SET_TRANSACTION_PENDING_APPROVAL_SIG ||
             sig == SET_TRANSACTION_FAILED_SIG ||
-            sig == GET_TRANSACTION_STATE_SIG
+            sig == GET_TRANSACTION_INFO_SIG
         );
     }
     function AccountingApp(address _dao) Application(_dao) {

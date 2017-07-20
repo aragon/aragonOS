@@ -40,28 +40,26 @@ contract('AccountingApp', accounts => {
     })
 
     it('can create new transaction', async () => {
-        console.log('=== 1')
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
-        console.log('=== 2')
         await dao_accountingApp.startNextAccountingPeriod()
-        console.log('=== 3')
-        await dao_accountingApp.newTransaction()
-        console.log('=== 4')
-        let t0 = await dao_accountingApp.getTransactionState(0)
-        console.log('=== 4')
-        assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        assert.equal(t0[3], 'New', 'Should be a new transaction (state 0)')
+        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
+        let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
+        let ts0 = await dao_accountingApp.getTransactionState(0)
+        console.log(ti0)
+        console.log(ts0)
+        // (t.externalAddress, t.token, t.amount, t.reference);
+        assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
+        assert.equal(ts0, 'Ref 123', 'Should have matching reference number')
     })
 
     it('can update transaction', async () => {
-        //await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
-        //await dao_accountingApp.startNextAccountingPeriod()
-        //await dao_accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        //await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
-        //let t0 = await dao_accountingApp.getTransactionState(0)
-        //assert.equal(t0[2], 'Ref 123', 'Should have matching reference number')
-        //assert.equal(t0[3], 'PendingApproval', 'Should need approval (state 1)')
-        //assert.equal(t0[5], 0, 'Should be in the 0th accountingPeriod')
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        await dao_accountingApp.startNextAccountingPeriod()
+        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
+        await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
+        let t0 = await dao_accountingApp.getTransactionState(0)
+        let t0 = await dao_accountingApp.getTransactionState(0)
+        assert.equal(t0[3], 'Ref 123', 'Should have matching reference number')
     })
 
     it('can create new accounting periods', async () => {
