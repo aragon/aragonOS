@@ -76,4 +76,52 @@ contract('Registry', accounts => {
       assert.fail('should have thrown before')
     })
   })
+
+  context('registering apps', () => {
+    beforeEach(async () => {
+      await metadao.installApp(randomAddress, [randSig])
+    })
+
+    it('was registered', async () => {
+      const [addr, isDelegate] = await kernel.get(randSig)
+
+      assert.equal(addr, randomAddress, 'registered address should match')
+      assert.isFalse(isDelegate, 'registered app should not be delegate')
+    })
+
+    it('can only be overwriten by an organ', async () => {
+      try {
+        await metadao.installApp(randomAddress, [randSig])
+      } catch (error) {
+        await metadao.installOrgan(randomAddress, [randSig])
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
+    it('can be removed', async () => {
+      await metadao.removeApp([randSig])
+      const [addr, isDelegate] = await kernel.get(randSig)
+
+      assert.equal(addr, zerothAddress, 'removed app should return 0 address')
+    })
+
+    it('throws when being removed as part of other sigs array', async () => {
+      try {
+        await metadao.removeApp([randSig, '0x50'])
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
+    it('throws when adding bad ordered sigs', async () => {
+      try {
+        await metadao.installApp(randomAddress, ['0x12', '0x50', '0x40'])
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+  })
 })
