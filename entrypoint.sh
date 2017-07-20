@@ -18,9 +18,17 @@ lint_test() {
     npm t
 }
 
+run_coveralls() {
+    cd /usr/src/app
+    npm run coveralls
+}
+
 case "$1" in
     test)
         lint_test
+    ;;
+    coveralls)
+        run_coveralls
     ;;
     help)
         show_help
