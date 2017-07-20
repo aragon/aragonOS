@@ -9,4 +9,3 @@ services:
 
 script:
   - docker-compose run core test
-
