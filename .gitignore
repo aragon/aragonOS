@@ -7,3 +7,4 @@ tmp-*
 coverage/
 coverageEnv/
 coverage.json
+scTopics
