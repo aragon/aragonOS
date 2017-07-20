@@ -66,5 +66,14 @@ contract('Registry', accounts => {
       }
       assert.fail('should have thrown before')
     })
+
+    it('throws when adding bad ordered sigs', async () => {
+      try {
+        await metadao.installOrgan(randomAddress, ['0x12', '0x50', '0x40'])
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
   })
 })

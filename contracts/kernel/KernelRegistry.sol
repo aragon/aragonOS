@@ -19,6 +19,7 @@ contract KernelRegistry is DAOStorage {
 
     for (uint i = 0; i < sigs.length; i++) {
       require(delegate || storageGet(storageKeyForSig(sigs[i])) == 0); // don't allow to overwrite on apps
+      require(i == 0 || sigs[i] > sigs[i - 1]); // assert sigs are ordered
       storageSet(storageKeyForSig(sigs[i]), uint(address(impl)) + addDelegate);
     }
   }
