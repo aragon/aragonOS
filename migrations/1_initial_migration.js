@@ -1,5 +1,6 @@
 const Migrations = artifacts.require('Migrations.sol')
 
 module.exports = (deployer) => {
-  deployer.deploy(Migrations, { gas: 4e6 })
+  console.log('running migrations')
+  deployer.deploy(Migrations)
 }
