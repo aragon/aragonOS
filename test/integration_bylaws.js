@@ -16,7 +16,7 @@ var Kernel = artifacts.require('Kernel')
 const { installOrgans, installApps } = require('./helpers/installer')
 const { getBlockNumber } = require('./helpers/web3')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -152,7 +152,7 @@ contract('Bylaws', accounts => {
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await ownershipApp.addToken(token.address, 100, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token.address, 100, 1, 1)
 
       await ownershipApp.grantTokens(token.address, holder20, 20)
       await ownershipApp.grantTokens(token.address, holder31, 31)
@@ -275,11 +275,11 @@ contract('Bylaws', accounts => {
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await ownershipApp.addToken(token.address, 100, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token.address, 100, 1, 1)
 
       const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token2.changeController(dao.address)
-      await ownershipApp.addToken(token2.address, 100, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token2.address, 100, 1, 1)
 
       await ownershipApp.grantTokens(token.address, holder1, 10)
       await ownershipApp.grantTokens(token2.address, holder2, 1)

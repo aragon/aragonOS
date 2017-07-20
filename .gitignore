@@ -4,3 +4,7 @@ build/
 docker_home/
 test-*
 tmp-*
+coverage/
+coverageEnv/
+coverage.json
+scTopics

@@ -13,7 +13,7 @@ const { installOrgans, installApps } = require('./helpers/installer')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 contract('OwnershipApp', accounts => {
   let dao, metadao, kernel, appOrgan, ownershipApp = {}
@@ -37,7 +37,7 @@ contract('OwnershipApp', accounts => {
     beforeEach(async () => {
       token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await ownershipApp.addToken(token.address, 0, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token.address, 0, 1, 1)
     })
 
     it('added the token', async () => {
@@ -59,7 +59,7 @@ contract('OwnershipApp', accounts => {
       await ownershipApp.removeToken(token.address)
       token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await ownershipApp.addToken(token.address, 0, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token.address, 0, 1, 1)
       assert.equal(await ownershipApp.getTokenAddress(1), token.address, 'token address should match in app')
     })
 
@@ -67,7 +67,7 @@ contract('OwnershipApp', accounts => {
       const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token2.changeController(dao.address)
 
-      await ownershipApp.addToken(token2.address, 150, 1, 1, { gas: 1e6 })
+      await ownershipApp.addToken(token2.address, 150, 1, 1)
 
       assert.equal(await token2.totalSupply(), 150, 'should have correct total supply after issueing')
       assert.equal(await token2.balanceOf(dao.address), 150, 'DAO should have correct balance after issueing')
@@ -77,7 +77,7 @@ contract('OwnershipApp', accounts => {
 
     context('after issuing tokens', async () => {
       beforeEach(async () => {
-        await ownershipApp.issueTokens(token.address, 100, { gas: 1e6 })
+        await ownershipApp.issueTokens(token.address, 100)
       })
 
       it('are properly allocated', async () => {
@@ -86,7 +86,7 @@ contract('OwnershipApp', accounts => {
       })
 
       it('can grant tokens', async () => {
-        await ownershipApp.grantTokens(token.address, accounts[1], 10, { gas: 2e6 })
+        await ownershipApp.grantTokens(token.address, accounts[1], 10)
 
         assert.equal(await token.balanceOf(accounts[1]), 10, 'balances should be correct after transfer')
         assert.equal(await token.balanceOf(dao.address), 90, 'balances should be correct after transfer')

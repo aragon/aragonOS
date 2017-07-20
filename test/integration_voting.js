@@ -13,7 +13,7 @@ var Kernel = artifacts.require('Kernel')
 const { getBlockNumber } = require('./helpers/web3')
 const { installOrgans, installApps } = require('./helpers/installer')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 
@@ -43,9 +43,9 @@ contract('VotingApp', accounts => {
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await ownershipApp.addToken(token.address, 1000, 1, 1, { gas: 1e6 })
-    await ownershipApp.grantTokens(token.address, accounts[0], 30, { gas: 2e6 })
-    await ownershipApp.grantTokens(token.address, accounts[1], 35, { gas: 2e6 })
+    await ownershipApp.addToken(token.address, 1000, 1, 1)
+    await ownershipApp.grantTokens(token.address, accounts[0], 30)
+    await ownershipApp.grantTokens(token.address, accounts[1], 35)
   })
 
   context('creating basic voting', () => {

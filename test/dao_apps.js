@@ -10,7 +10,7 @@ const { installOrgans } = require('./helpers/installer')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'

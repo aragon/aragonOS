@@ -13,7 +13,7 @@ var IOrgan = artifacts.require('IOrgan')
 const { installOrgans } = require('./helpers/installer')
 const { sign } = require('./helpers/web3')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -41,7 +41,7 @@ contract('Dispatcher', accounts => {
 
     it('with more than 0 ether', async () => {
       const value = 101
-      await mockedOrgan.mock_setNumber(3, { value, gas: 10000000 })
+      await mockedOrgan.mock_setNumber(3, { value })
       assert.equal(await mockedOrgan.mock_getNumber(), 3, 'should have dispatched method')
 
       const etherToken = EtherToken.at(await vault.getEtherToken())
@@ -124,7 +124,7 @@ contract('Dispatcher', accounts => {
         })
       }
 
-      await erc23transfer(dao.address, 10, data, { from: accounts[0], gas: 4e6 })
+      await erc23transfer(dao.address, 10, data, { from: accounts[0], gas: 9e6 })
 
       assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
       assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')

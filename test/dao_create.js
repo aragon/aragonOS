@@ -8,7 +8,7 @@ var IOrgan = artifacts.require('IOrgan')
 const { signatures } = require('./helpers/web3')
 
 const createDAO = async () => {
-  const dao = await DAO.new(Kernel.address, { gas: 9e6 })
+  const dao = await DAO.new(Kernel.address)
   await MetaOrgan.at(dao.address).installOrgan(MetaOrgan.address, signatures(MetaOrgan, [IOrgan], web3))
   return dao
 }

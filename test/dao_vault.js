@@ -11,7 +11,7 @@ const { getBalance } = require('./helpers/web3')
 const { installOrgans } = require('./helpers/installer')
 const timer = require('./helpers/timer')
 
-const createDAO = () => DAO.new(Kernel.address, { gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -36,7 +36,7 @@ contract('Vault', accounts => {
     let token = {}
     beforeEach(async () => {
       token = EtherToken.at(await vault.getEtherToken())
-      await mockedOrgan.mock_setNumber(3, { value: 10, gas: 10000000 })
+      await mockedOrgan.mock_setNumber(3, { value: 10 })
     })
 
     it('has correct accounted token balance', async () => {

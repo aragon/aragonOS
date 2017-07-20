@@ -25,7 +25,7 @@ module.exports = (deployer, network) => {
           })
           .then(k => {
             console.log('deploying DAO with Kernel', Kernel.address)
-            return deployer.deploy(DAO, Kernel.address, { gas: 4e6 })
+            return deployer.deploy(DAO, Kernel.address)
               .then(() => {
                 dao = MetaOrgan.at(DAO.address)
 

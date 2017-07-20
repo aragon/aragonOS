@@ -1,12 +1,10 @@
 language: python
-
 sudo: required
 python:
   - "3.4"
-
 services:
   - docker
-
 script:
   - docker-compose run core test
-
+after_script:
+  - docker-compose run core coveralls
