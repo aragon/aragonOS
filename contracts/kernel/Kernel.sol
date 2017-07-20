@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "./IKernel.sol";
-import "./organs/MetaOrgan.sol";
+import "./KernelRegistry.sol";
 
 import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
@@ -23,10 +23,11 @@ contract PermissionsOracle {
   function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
 }
 
-contract Kernel is IKernel, DAOStorage, FunctionRegistry {
+contract Kernel is IKernel, DAOStorage, KernelRegistry {
   address public deployedMeta;
 
   bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
+  bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
 
   function Kernel(address _deployedMeta) {
     deployedMeta = _deployedMeta;
@@ -35,6 +36,8 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
   // @dev Installs 'installOrgan' function from MetaOrgan.
   // @param _baseKernel an instance to the kernel to call.
   function setupOrgans(address _baseKernel) {
+    var (a,) = get(INSTALL_ORGAN_SIG);
+    require(a == 0); // assert this can only be called once in the DAO
     bytes4[] memory installOrganSig = new bytes4[](1);
     installOrganSig[0] = INSTALL_ORGAN_SIG;
     register(Kernel(_baseKernel).deployedMeta(), installOrganSig, true);
@@ -133,10 +136,10 @@ contract Kernel is IKernel, DAOStorage, FunctionRegistry {
   }
 
   function vaultDeposit(address token, uint256 amount) internal {
-    var (vaultOrgan,) = get(0x47e7ef24);
+    var (vaultOrgan,) = get(DEPOSIT_SIG);
     if (amount == 0 || vaultOrgan == 0) return;
 
-    assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
+    assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount)); // deposit(address,uint256)
   }
 
   function getPermissionsOracle() constant returns (address) {
