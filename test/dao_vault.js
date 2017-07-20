@@ -11,7 +11,7 @@ var Standard23Token = artifacts.require('./helpers/Standard23Token')
 const { getBalance } = require('./helpers/web3')
 const timer = require('./helpers/timer')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new()
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -37,7 +37,7 @@ contract('Vault', accounts => {
     let token = {}
     beforeEach(async () => {
       token = EtherToken.at(await kernel.getEtherToken())
-      await mockedOrgan.mock_setNumber(3, { value: 10, gas: 10000000 })
+      await mockedOrgan.mock_setNumber(3, { value: 10 })
     })
 
     it('has correct accounted token balance', async () => {

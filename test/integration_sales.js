@@ -14,7 +14,7 @@ var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new()
 
 contract('OwnershipApp', accounts => {
   let dao, metadao, kernel, appOrgan, ownershipApp, dao_ownershipApp, vault, token = {}
@@ -42,7 +42,7 @@ contract('OwnershipApp', accounts => {
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await dao_ownershipApp.addToken(token.address, 0, 1, 1, { gas: 1e6 })
+    await dao_ownershipApp.addToken(token.address, 0, 1, 1, )
   })
 
   context('creating individual token sale', () => {
