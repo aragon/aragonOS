@@ -24,6 +24,7 @@ contract('Token sales', accounts => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
+    vault = VaultOrgan.at(dao.address)
 
     await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
     await installApps(metadao, [OwnershipApp])
@@ -119,6 +120,7 @@ contract('Token sales', accounts => {
     const buyer = accounts[3]
 
     beforeEach(async () => {
+      await vault.setupEtherToken()
       const etherToken = await vault.getEtherToken()
 
       sale = await IndividualSale.new()
