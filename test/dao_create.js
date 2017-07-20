@@ -4,7 +4,7 @@ var MetaOrgan = artifacts.require('MetaOrgan')
 var Kernel = artifacts.require('Kernel')
 var MockedOrgan = artifacts.require('mocks/MockedOrgan')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new()
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'

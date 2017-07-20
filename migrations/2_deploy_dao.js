@@ -15,7 +15,7 @@ module.exports = (deployer, network) => {
 
   const isLive = liveNetworks.indexOf(network) > -1
 
-  return deployer.deploy(DAO, { gas: 4e6 })
+  return deployer.deploy(DAO)
     .then(() => {
       dao = MetaOrgan.at(DAO.address)
 
