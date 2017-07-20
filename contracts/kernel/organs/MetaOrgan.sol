@@ -24,10 +24,14 @@ contract MetaOrgan is IOrgan, KernelRegistry {
     storageSet(permissionsOracleKey, uint256(newOracle));
   }
 
+  // @param appAddress: address of the receiving contract for functions
+  // @param sigs: should be ordered from 0x0 to 0xffffffff
   function installApp(address appAddress, bytes4[] sigs) {
     register(appAddress, sigs, false);
   }
 
+  // @param organAddress: address of the receiving contract for functions
+  // @param sigs: should be ordered from 0x0 to 0xffffffff
   function installOrgan(address organAddress, bytes4[] sigs) {
     register(organAddress, sigs, true);
   }
