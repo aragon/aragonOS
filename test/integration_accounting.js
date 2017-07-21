@@ -1,50 +1,52 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
+var ActionsOrgan = artifacts.require('ActionsOrgan')
 var AccountingApp = artifacts.require('../contrats/app/accounting/AccountingApp')
+var VaultOrgan = artifacts.require('VaultOrgan')
 var MockedApp = artifacts.require('./mocks/MockedApp')
 
 var Kernel = artifacts.require('Kernel')
 
-const createDAO = () => DAO.new({ gas: 9e6 })
+const createDAO = () => DAO.new(Kernel.address)
+const { installOrgans, installApps } = require('./helpers/installer')
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('AccountingApp', accounts => {
-  let dao, metadao, kernel, appOrgan = {}
+  let dao, metadao, kernel = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
+    await installOrgans(metadao, [MetaOrgan])
     kernel = Kernel.at(dao.address)
-
-    const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 3)
-    appOrgan = ApplicationOrgan.at(dao.address)
   })
 
   context('installed app', () => {
     let accountingApp = {}
-    let dao_accountingApp = {}
+    let installedAccountingApp = {}
 
     beforeEach(async () => {
+      await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
+      await installApps(metadao, [installedAccountingApp])
       accountingApp = await AccountingApp.new(dao.address)
-      dao_accountingApp = AccountingApp.at(dao.address)
-      await appOrgan.installApp(1, accountingApp.address)
     })
 
     it('returns installed app address', async () => {
-      assert.equal(await appOrgan.getApp(1), accountingApp.address, 'should have returned installed app addr')
+      const [addr, delegate] = await kernel.get(signatures(AccountingApp, [Application], web3)[0])
+      assert.equal(addr, accountingApp.address, 'should have returned installed app addr')
+      assert.isFalse(delegate, 'Call to application shouldnt be delegate')
+      //assert.equal(await appOrgan.getApp(1), accountingApp.address, 'should have returned installed app addr')
     })
 
     it('can create new transaction', async () => {
-        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
-        await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
-        let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
-        let ts0 = await dao_accountingApp.getTransactionState(0)
+        await accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
+        await accountingApp.startNextAccountingPeriod()
+        await accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
+        let ti0 = await accountingApp.getTransactionInfo.call(0)
+        let ts0 = await accountingApp.getTransactionState(0)
         console.log(ti0)
         console.log(ts0)
         // (t.externalAddress, t.token, t.amount, t.reference);
@@ -53,24 +55,24 @@ contract('AccountingApp', accounts => {
     })
 
     it('can update transaction', async () => {
-        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
-        await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
-        await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
-        let t0 = await dao_accountingApp.getTransactionState(0)
+        await accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        await accountingApp.startNextAccountingPeriod()
+        await accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
+        await accountingApp.updateTransaction(0, 1, 'needs approval')
+        let t0 = await accountingApp.getTransactionState(0)
         assert.equal(t0[3], 'Ref 123', 'Should have matching reference number')
     })
 
     it('can create new accounting periods', async () => {
-        ///await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
-        //await dao_accountingApp.startNextAccountingPeriod()
-        //await dao_accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
-        //let t0 = await dao_accountingApp.getTransactionState(0)
+        ///await accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        //await accountingApp.startNextAccountingPeriod()
+        //await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 123', 0)
+        //let t0 = await accountingApp.getTransactionState(0)
         //assert.equal(t0[5], 0, 'Should be in the 0th accountingPeriod')
 
-        //await dao_accountingApp.startNextAccountingPeriod()
-        //await dao_accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 345', 0)
-        //let t1 = await dao_accountingApp.getTransactionState(1)
+        //await accountingApp.startNextAccountingPeriod()
+        //await accountingApp.newTransaction( '0x111', 100, '0x100', 'Ref 345', 0)
+        //let t1 = await accountingApp.getTransactionState(1)
         //assert.equal(t1[2], 'Ref 345', 'Should have matching reference number')
         //assert.equal(t1[5], 1, 'Should be in the 1st accountingPeriod')
     })

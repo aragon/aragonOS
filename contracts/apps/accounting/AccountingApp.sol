@@ -172,21 +172,6 @@ contract AccountingApp is Application {
     }
 
 
-    function canHandlePayload(bytes payload) constant returns (bool) {
-        bytes4 sig = getSig(payload);
-        return (
-            sig == GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG ||
-            sig == GET_CURRENT_ACCOUNTING_PERIOD_SIG ||
-            sig == START_NEXT_ACCOUNTING_PERIOD_SIG ||
-            sig == SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG ||
-            sig == NEW_TRANSACTION_SIG ||
-            sig == UPDATE_TRANSACTION_SIG ||
-            sig == SET_TRANSACTION_SUCCEEDED_SIG ||
-            sig == SET_TRANSACTION_PENDING_APPROVAL_SIG ||
-            sig == SET_TRANSACTION_FAILED_SIG ||
-            sig == GET_TRANSACTION_INFO_SIG
-        );
-    }
     function AccountingApp(address _dao) Application(_dao) {
 
     }
