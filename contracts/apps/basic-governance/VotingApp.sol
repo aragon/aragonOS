@@ -33,16 +33,6 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         Executed
     }
 
-    // hash(bytecode) -> true/false either a particular address has approved voting code
-    mapping (bytes32 => bool) public validVoteCode;
-
-    enum VoteState {
-        Debate,
-        Voting,
-        Closed,
-        Executed
-    }
-
     struct Vote {
         VoteState state;
 

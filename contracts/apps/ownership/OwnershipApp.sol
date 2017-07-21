@@ -9,9 +9,9 @@ import "zeppelin/token/ERC20.sol";
 
 
 // OwnershipApp requires ActionsOrgan to be installed in DAO
+
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
-
 contract OwnershipApp is Application, Controller, Requestor {
     struct Token {
         address tokenAddress;
@@ -55,7 +55,7 @@ contract OwnershipApp is Application, Controller, Requestor {
         uint256 issueAmount,
         uint128 governanceRights,
         uint128 economicRights
-    ) 
+    )
     onlyDAO
     {
         // Only add tokens the DAO is the controller of, so we can control it.
@@ -79,8 +79,14 @@ contract OwnershipApp is Application, Controller, Requestor {
             issueTokens(tokenAddress, issueAmount);
     }
 
-    bytes4 constant CREATE_TOKEN_SALE_SIG = bytes4(sha3("createTokenSale(address,address,bool)"));
-    function createTokenSale(address saleAddress, address tokenAddress, bool canDestroy) onlyDAO only_controlled(tokenAddress) {
+    bytes4 constant createTokenSaleSig = bytes4(sha3("createTokenSale(address,address,bool)"));
+    function createTokenSale(
+        address saleAddress,
+        address tokenAddress,
+        bool canDestroy
+    )
+    onlyDAO only_controlled(tokenAddress)
+    {
         uint salesLength = tokenSales.push(
             TokenSale(
                 saleAddress,
@@ -163,7 +169,12 @@ contract OwnershipApp is Application, Controller, Requestor {
 
     function getTokenSale(uint tokenSaleId) constant returns (address, address, bool, bool) {
         TokenSale tokenSale = tokenSales[tokenSaleId];
-        return (tokenSale.saleAddress, tokenSale.tokenAddress, tokenSale.canDestroy, tokenSale.closed);
+        return (
+            tokenSale.saleAddress,
+            tokenSale.tokenAddress,
+            tokenSale.canDestroy,
+            tokenSale.closed
+        );
     }
 
     function issueTokens(address tokenAddress, uint256 amount) onlyDAO {
@@ -228,7 +239,8 @@ contract OwnershipApp is Application, Controller, Requestor {
         uint tokenCount = getTokenCount();
         for (uint i = 1; i <= tokenCount; i++) {
             address tknAddr = getTokenAddress(i);
-            if (ERC20(tknAddr).balanceOf(_holder) >= HOLDER_THRESHOLD) return true;
+            if (ERC20(tknAddr).balanceOf(_holder) >= HOLDER_THRESHOLD)
+                return true;
         }
         return false;
     }

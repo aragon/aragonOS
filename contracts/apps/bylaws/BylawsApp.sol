@@ -12,8 +12,9 @@ import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting i
 
 
 contract IBylawsApp {
-  event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
+    event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 }
+
 
 contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
@@ -38,104 +39,6 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
         uint64 minDebateTime; // in blocks
         uint64 minVotingTime; // in blocks
-    }
-
-    struct CombinatorBylaw {
-        CombinatorType combinatorType; // if TRUE combinator is AND, if false is an OR combinator
-        uint256 leftBylawId;
-        uint256 rightBylawId;
-    }
-
-    Bylaw[] bylaws;
-    mapping (bytes4 => uint) public bylawEntrypoint;
-
-    uint constant PCT_BASE = 10 ** 18;
-
-    function BylawsApp(address dao)
-    Application(dao)
-    {
-        newBylaw(); // so index is 1 for first legit bylaw
-    }
-
-    function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
-        id = bylaws.length;
-        bylaws.length++;
-        newBylaw = bylaws[id];
-    }
-
-    // @dev Links a signature entry point to a bylaw.
-    // @dev It is the only function that needs to be protected as it
-    // @dev a nice side effect is that multiple actions can share the same bylaw
-    function linkBylaw(bytes4 sig, uint id)
-    existing_bylaw(id)
-    onlyDAO
-    {
-
-        bylawEntrypoint[sig] = id;
-
-        BylawChanged(
-            sig,
-            getBylawType(id),
-            id,
-            getSender()
-        );
-    }
-
-    // Permissions Oracle compatibility
-    function canPerformAction(
-        address sender,
-        address token,
-        uint256 value,
-        bytes data
-    ) 
-    constant returns (bool)
-    {
-        return canPerformAction(
-            getSig(data),
-            sender,
-            data,
-            token,
-            value
-        );
-    }
-
-    function canPerformAction(
-        bytes4 sig,
-        address sender,
-        bytes data,
-        address token,
-        uint256 value
-    ) 
-    returns (bool)
-    {
-        uint bylawId = bylawEntrypoint[sig];
-
-        // not existent bylaw, always allow action.
-        if (bylawId == 0)
-            return true;
-
-        return canPerformAction(
-            bylawId,
-            sender,
-            data,
-            token,
-            value
-        );
-    }
-
-    function canPerformAction(
-        uint bylawId,
-        address sender,
-        bytes data,
-        address token,
-        uint256 value
-    ) 
-    internal returns (bool)
-    {
-        Bylaw storage bylaw = bylaws[bylawId];
-        if (bylaw.bylawType == BylawType.SpecialStatus) {
-            return negateIfNeeded(isSpecialStatus(sender, bylaw.status), bylaw.not);
-        }
     }
 
     struct CombinatorBylaw {

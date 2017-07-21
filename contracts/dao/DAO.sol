@@ -18,13 +18,14 @@ contract DAO is DAOStorage {
 
 	// @dev All calls to the DAO are forwarded to the kernel with a delegatecall
 	function () payable public {
-    uint32 len = RETURN_MEMORY_SIZE;
-    address target = getKernel();
-    require(target > 0);
-    assembly {
-        calldatacopy(0x0, 0x0, calldatasize)
-        let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
-        jumpi(invalidJumpLabel, iszero(result))
-        return(0, len)
+        uint32 len = RETURN_MEMORY_SIZE;
+        address target = getKernel();
+        require(target > 0);
+        assembly {
+            calldatacopy(0x0, 0x0, calldatasize)
+            let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
+            jumpi(invalidJumpLabel, iszero(result))
+            return(0, len)
+        }
     }
 }

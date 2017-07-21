@@ -35,31 +35,31 @@ contract DAOStorage is IDAO, UIntStorage {
 
     function dao_msg() internal returns (DAOMessage) {
         return DAOMessage(
-            address(storageGet(senderKey)),
-            address(storageGet(tokenKey)),
-            storageGet(valueKey)
+            address(storageGet(SENDER_KEY)),
+            address(storageGet(TOKEN_KEY)),
+            storageGet(VALUE_KEY)
         );
     }
 
     function setDAOMsg(DAOMessage dao_msg) internal {
-        storageSet(senderKey, uint256(dao_msg.sender));
-        storageSet(tokenKey, uint256(dao_msg.token));
-        storageSet(valueKey, uint256(dao_msg.value));
+        storageSet(SENDER_KEY, uint256(dao_msg.sender));
+        storageSet(TOKEN_KEY, uint256(dao_msg.token));
+        storageSet(VALUE_KEY, uint256(dao_msg.value));
     }
 
     function setKernel(address kernelAddress) internal {
-        storageSet(kernelKey, uint256(kernelAddress));
+        storageSet(KERNAL_KEY, uint256(kernelAddress));
     }
 
     function setSelf(address selfAddress) internal {
-        storageSet(selfKey, uint256(selfAddress));
+        storageSet(SELF_KEY, uint256(selfAddress));
     }
 
     function getSelf() constant public returns (address) {
-        return address(storageGet(selfKey));
+        return address(storageGet(SELF_KEY));
     }
 
     function getKernel() constant public returns (address) {
-        return address(storageGet(kernelKey));
+        return address(storageGet(KERNAL_KEY));
     }
 }

@@ -6,7 +6,7 @@
     "array-declarations": true,
     "operator-whitespace": true,
     "lbrace": true,
-    "mixedcase": true,
+    "mixedcase": false,
     "camelcase": true,
     "uppercase": true,
     "no-with": true,

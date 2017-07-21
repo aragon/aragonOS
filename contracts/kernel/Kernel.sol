@@ -100,21 +100,21 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 
         // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
         if (isDelegate) {
-        setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
-        assembly {
-            let result := 0
-            result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
-            jumpi(invalidJumpLabel, iszero(result))
-            return(0, len)
-        }
+            setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
+            assembly {
+                let result := 0
+                result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
+                jumpi(invalidJumpLabel, iszero(result))
+                return(0, len)
+            }
         } else {
-        Application(target).setDAOMsg(sender, token, value);
-        assembly {
-            let result := 0
-            result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)
-            jumpi(invalidJumpLabel, iszero(result))
-            return(0, len)
-        }
+            Application(target).setDAOMsg(sender, token, value);
+            assembly {
+                let result := 0
+                result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)
+                jumpi(invalidJumpLabel, iszero(result))
+                return(0, len)
+            }
         }
     }
 

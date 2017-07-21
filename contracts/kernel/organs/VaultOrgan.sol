@@ -33,7 +33,6 @@ contract IVaultOrgan is IOrgan {
 
 
 contract VaultOrgan is IVaultOrgan, SafeMath {
-
     uint8 constant KERNEL_PRIMARY_KEY = 0x01; // TODO: move ether token logic completely here
     uint8 constant VAULT_PRIMARY_KEY = 0x05;
 
@@ -43,6 +42,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     bytes32 constant HALT_TIME_KEY = sha3(VAULT_PRIMARY_KEY, 0x01);
     bytes32 constant HALT_DURATION_KEY = sha3(VAULT_PRIMARY_KEY, 0x02);
     bytes32 constant SCAPE_HATCH_SECONDARY_KEY = sha3(VAULT_PRIMARY_KEY, 0x03);
+    bytes32 constant ETHER_TOKEN_SECONDARY_KEY = sha3(VAULT_PRIMARY_KEY, 0x04);
 
     uint constant MAX_TOKEN_TRANSFER_GAS = 150000;
     uint constant MAX_HALT = 7 days; // can be prorrogated during halt
@@ -118,11 +118,11 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @dev Halting vault organ opens the possibility to execute the scape hatch
     // @param _haltTime: Number of seconds vault will be halted (can be overwriten by another shorter halt)
     function halt(uint256 _haltTime) {
-        assert(_haltTime <= maxHalt);
+        assert(_haltTime <= MAX_HALT);
 
         // Store timestamp of the halt and halt period
-        storageSet(haltTimeKey, now);
-        storageSet(haltDurationKey, _haltTime);
+        storageSet(HALT_TIME_KEY, now);
+        storageSet(HALT_DURATION_KEY, _haltTime);
     }
 
     // @dev Function called as a security measure to remove all funds from the DAO
@@ -143,13 +143,13 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
 
     // @param _scapeHatch: New scape hatch address being set
     function setScapeHatch(address _scapeHatch) {
-        storageSet(scapeHatchSecondaryKey, uint256(_scapeHatch));
+        storageSet(SCAPE_HATCH_SECONDARY_KEY, uint256(_scapeHatch));
     }
 
     // @dev Getter for scape hatch
     // @return address for current scape hatch
     function getScapeHatch() constant returns (address) {
-        return address(storageGet(scapeHatchSecondaryKey));
+        return address(storageGet(SCAPE_HATCH_SECONDARY_KEY));
     }
 
     // @dev Getter for token balance
@@ -163,8 +163,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @return started: timestamp for the moment the halt was executed
     // @return ends: timestamp for the moment the halt is scheduled to end
     function getHaltTime() constant returns (uint256 started, uint256 ends) {
-        started = storageGet(haltTimeKey);
-        ends = safeAdd(started, storageGet(haltDurationKey));
+        started = storageGet(HALT_TIME_KEY);
+        ends = safeAdd(started, storageGet(HALT_DURATION_KEY));
     }
 
     // @dev Change the status of a token in the blacklist.
@@ -246,32 +246,32 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _to: Recipient of the tokens
     // @param _amount: Token units being sent
     function secureTokenTransfer(address _token, address _to, uint256 _amount)
-    max_gas(maxTokenTransferGas)
+    max_gas(MAX_TOKEN_TRANSFER_GAS)
     internal
     {
         assert(ERC20(_token).transfer(_to, _amount));
     }
 
     function getEtherToken() constant returns (address) {
-        return address(storageGet(etherTokenSecondaryKey));
+        return address(storageGet(ETHER_TOKEN_SECONDARY_KEY));
     }
 
     function setEtherToken(address newToken) {
-        storageSet(etherTokenSecondaryKey, uint256(newToken));
+        storageSet(ETHER_TOKEN_SECONDARY_KEY, uint256(newToken));
     }
 
     // @dev get key for token balance
     // @param _token: Token address checked
     // @return hash used as key in DAO storage
     function storageKeyForBalance(address _token) internal returns (bytes32) {
-        return sha3(vaultPrimaryKey, balanceSecondaryKey, _token);
+        return sha3(VAULT_PRIMARY_KEY, BALANCE_SECONDARY_KEY, _token);
     }
 
     // @dev get key for token blacklist
     // @param _token: Token address checked
     // @return hash used as key in DAO storage
     function storageKeyForBlacklist(address _token) internal returns (bytes32) {
-        return sha3(vaultPrimaryKey, blacklistSecondaryKey, _token);
+        return sha3(VAULT_PRIMARY_KEY, BLACKLIST_SECONDARY_KEY, _token);
     }
 
     // @dev Function called by the DAO as a delegatecall for organ to do its setup
