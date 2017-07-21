@@ -232,7 +232,10 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     }
 
     function getStatus(address entity) internal returns (uint8) {
-        return uint8(getStatusApp().entityStatus(entity));
+        return uint8(
+            getStatusApp()
+            .entityStatus(entity)
+        );
     }
 
     function setStatusBylaw(uint8 statusNeeded, bool isSpecialStatus, bool not) {
@@ -279,7 +282,8 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
     existing_bylaw(leftBylawId) existing_bylaw(rightBylawId)
     {
         var (id, bylaw) = newBylaw();
-
+        // 'Use' id to ignore error
+        id = id;
         require(leftBylawId != rightBylawId);
 
         bylaw.bylawType = BylawType.Combinator;

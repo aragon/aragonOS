@@ -79,7 +79,7 @@ contract OwnershipApp is Application, Controller, Requestor {
             issueTokens(tokenAddress, issueAmount);
     }
 
-    bytes4 constant createTokenSaleSig = bytes4(sha3("createTokenSale(address,address,bool)"));
+    bytes4 constant CREATE_TOKEN_SALE_SIG = bytes4(sha3("createTokenSale(address,address,bool)"));
     function createTokenSale(
         address saleAddress,
         address tokenAddress,

@@ -52,7 +52,14 @@ contract TokenSale {
         address _token,
         bytes _data
     ) {
-        assert(ERC20(_token).transferFrom(_sender, address(this), _value));
+        assert(
+            ERC20(_token)
+            .transferFrom(
+                _sender,
+                address(this),
+                _value
+            )
+        );
         buy(_sender, _value);
     }
 
@@ -98,7 +105,10 @@ contract TokenSale {
     }
 
     function getEtherToken() constant returns (EtherToken) {
-        return EtherToken(VaultOrgan(dao).getEtherToken());
+        return EtherToken(
+            VaultOrgan(dao)
+            .getEtherToken()
+        );
     }
 
     // @dev just for mocking purposes

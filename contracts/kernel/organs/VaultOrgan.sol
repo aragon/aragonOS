@@ -249,7 +249,10 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     max_gas(MAX_TOKEN_TRANSFER_GAS)
     internal
     {
-        assert(ERC20(_token).transfer(_to, _amount));
+        assert(
+            ERC20(_token)
+            .transfer(_to, _amount)
+        );
     }
 
     function getEtherToken() constant returns (address) {
