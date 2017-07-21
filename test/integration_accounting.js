@@ -21,18 +21,19 @@ contract('AccountingApp', accounts => {
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
-    await installOrgans(metadao, [MetaOrgan])
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
     kernel = Kernel.at(dao.address)
   })
 
   context('installed app', () => {
     let accountingApp = {}
+    let dao_accountingApp = {}
     let installedAccountingApp = {}
 
     beforeEach(async () => {
-      await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
-      await installApps(metadao, [AccountingApp], signatures(AccountingApp, [Application], web3))
       accountingApp = await AccountingApp.new(dao.address)
+      dao_accountingApp = AccountingApp.at(dao.address)
+      await metadao.installApp(metadao, [AccountingApp], signatures(AccountingApp, [Application], web3))
     })
 
     it('returns installed app address', async () => {
