@@ -9,7 +9,7 @@ var Application = artifacts.require('Application')
 var Kernel = artifacts.require('Kernel')
 
 const createDAO = () => DAO.new(Kernel.address)
-const { installOrgans, installApps } = require('./helpers/installer')
+const { installOrgans  } = require('./helpers/installer')
 const { signatures } = require('./helpers/web3')
 
 const zerothAddress = '0x'
@@ -21,48 +21,47 @@ contract('AccountingApp', accounts => {
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
-    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
+    await installOrgans(metadao, [MetaOrgan])
     kernel = Kernel.at(dao.address)
   })
 
   context('installed app', () => {
     let accountingApp = {}
     let dao_accountingApp = {}
-    let installedAccountingApp = {}
 
     beforeEach(async () => {
       accountingApp = await AccountingApp.new(dao.address)
       dao_accountingApp = AccountingApp.at(dao.address)
-      await metadao.installApp(metadao, [AccountingApp], signatures(AccountingApp, [Application], web3))
+      await metadao.installApp(accountingApp.address, signatures(AccountingApp, [Application], web3))
     })
 
     it('returns installed app address', async () => {
       const [addr, delegate] = await kernel.get(signatures(AccountingApp, [Application], web3)[0])
       assert.equal(addr, accountingApp.address, 'should have returned installed app addr')
       assert.isFalse(delegate, 'Call to application shouldnt be delegate')
-      //assert.equal(await appOrgan.getApp(1), accountingApp.address, 'should have returned installed app addr')
     })
 
     it('can create new transaction', async () => {
-        await accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
-        await accountingApp.startNextAccountingPeriod()
-        await accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
-        let ti0 = await accountingApp.getTransactionInfo.call(0)
-        let ts0 = await accountingApp.getTransactionState(0)
-        console.log(ti0)
-        console.log(ts0)
-        // (t.externalAddress, t.token, t.amount, t.reference);
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
+        await dao_accountingApp.startNextAccountingPeriod()
+        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
+        let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
         assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
-        assert.equal(ts0, 'Ref 123', 'Should have matching reference number')
+        let ts0 = await dao_accountingApp.getTransactionState(0)
+        assert.equal(ts0[0], 0, 'Should have state New (0)')
+        assert.equal(ts0[1], 'new', 'Should reason should be new')
     })
 
     it('can update transaction', async () => {
-        await accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
-        await accountingApp.startNextAccountingPeriod()
-        await accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
-        await accountingApp.updateTransaction(0, 1, 'needs approval')
-        let t0 = await accountingApp.getTransactionState(0)
-        assert.equal(t0[3], 'Ref 123', 'Should have matching reference number')
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        await dao_accountingApp.startNextAccountingPeriod()
+        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
+        await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
+        let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
+        assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
+        let ts0 = await dao_accountingApp.getTransactionState(0)
+        assert.equal(ts0[0], 1, 'Should have state PendingApproval (1)')
+        assert.equal(ts0[1], 'needs approval', 'should have a "reason" of "need approval"')
     })
 
     it('can create new accounting periods', async () => {

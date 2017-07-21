@@ -112,7 +112,7 @@ contract AccountingApp is Application {
             baseToken: 0x10000000000001,
             baseValue: 1,
             externalAddress: externalAddress,
-            reference: "new ref",
+            reference: reference,
             timestamp: now,
             accountingPeriodId: getCurrentAccountingPeriodId()
         })) - 1;
@@ -163,12 +163,12 @@ contract AccountingApp is Application {
 
 
     bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint256)'));
-    function getTransactionState(uint transactionId) constant returns (TransactionState) {
+    function getTransactionState(uint transactionId) constant returns (TransactionState, string) {
         Transaction memory t = transactions[transactionId];
         uint tuid = transactionUpdatesRelation[transactionId].length - 1;
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
         TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
-        return (tu.state);
+        return (tu.state, tu.reason);
     }
 
 
