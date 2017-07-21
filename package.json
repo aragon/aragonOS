@@ -18,6 +18,7 @@
   "license": "ISxC",
   "dependencies": {
     "babel-polyfill": "^6.23.0",
+    "ethereumjs-abi": "^0.6.4",
     "ethereumjs-util": "^5.1.1",
     "keybase-eth": "^0.3.0",
     "solium": "^0.5.3",

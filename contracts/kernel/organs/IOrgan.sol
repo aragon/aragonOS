@@ -2,6 +2,7 @@ pragma solidity ^0.4.11;
 
 import "../../dao/DAOStorage.sol";
 
+<<<<<<< HEAD
 
 contract IOrgan is DAOStorage {
     function canHandlePayload(bytes payload) returns (bool);
@@ -19,3 +20,6 @@ contract IOrgan is DAOStorage {
         return sha3(0x01, 0x00, _organId);
     }
 }
+=======
+contract IOrgan is DAOStorage {}
+>>>>>>> master

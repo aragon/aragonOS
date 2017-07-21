@@ -25,6 +25,8 @@ contract DAOStorage is IDAO, UIntStorage {
     bytes32 constant TOKEN_KEY = sha3(0x00, 0x02, 0x01);
     bytes32 constant VALUE_KEY = sha3(0x00, 0x02, 0x02);
 
+    uint32 constant RETURN_MEMORY_SIZE = 24 * 32;
+
     struct DAOMessage {
         address sender;
         address token;
@@ -33,35 +35,31 @@ contract DAOStorage is IDAO, UIntStorage {
 
     function dao_msg() internal returns (DAOMessage) {
         return DAOMessage(
-            address(storageGet(SENDER_KEY)),
-            address(storageGet(TOKEN_KEY)),
-            storageGet(VALUE_KEY)
+        address(storageGet(senderKey)),
+        address(storageGet(tokenKey)),
+        storageGet(valueKey)
         );
     }
 
     function setDAOMsg(DAOMessage dao_msg) internal {
-        storageSet(SENDER_KEY, uint256(dao_msg.sender));
-        storageSet(TOKEN_KEY, uint256(dao_msg.token));
-        storageSet(VALUE_KEY, uint256(dao_msg.value));
+        storageSet(senderKey, uint256(dao_msg.sender));
+        storageSet(tokenKey, uint256(dao_msg.token));
+        storageSet(valueKey, uint256(dao_msg.value));
     }
 
     function setKernel(address kernelAddress) internal {
-        storageSet(KERNAL_KEY, uint256(kernelAddress));
+        storageSet(kernelKey, uint256(kernelAddress));
     }
 
     function setSelf(address selfAddress) internal {
-        storageSet(SELF_KEY, uint256(selfAddress));
+        storageSet(selfKey, uint256(selfAddress));
     }
 
     function getSelf() constant public returns (address) {
-        return address(storageGet(SELF_KEY));
+        return address(storageGet(selfKey));
     }
 
     function getKernel() constant public returns (address) {
-        return address(storageGet(KERNAL_KEY));
-    }
-
-    function getReturnSize() internal constant returns (uint32) {
-        return 8 * 32; // allows for 8 values returned
+        return address(storageGet(kernelKey));
     }
 }

@@ -21,14 +21,15 @@ contract Application is IApplication {
         dao = newDAO;
     }
 
-    function setDAOMsg(address sender, address token, uint value) onlyDAO {
+    function setDAOMsg(
+        address sender,
+        address token,
+        uint value
+    ) onlyDAO
+    {
         dao_msg.sender = sender;
         dao_msg.token = token;
         dao_msg.value = value;
-    }
-
-    function getSig(bytes d) internal returns (bytes4 sig) {
-        assembly { sig := mload(add(d, 0x20)) }
     }
 
     function getSender() internal returns (address) {

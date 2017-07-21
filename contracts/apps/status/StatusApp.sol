@@ -13,15 +13,8 @@ contract StatusApp is Application {
     {}
 
     function setEntityStatus(address entity, uint8 status)
-                     onlyDAO public
-    {
+            onlyDAO public {
         entityStatus[entity] = status;
         EntityStatusChanged(entity, status);
-    }
-
-    function canHandlePayload(bytes payload) constant returns (bool) {
-        bytes4 sig = getSig(payload);
-
-        return sig == 0x6035fa06; // setEntityStatus()
     }
 }

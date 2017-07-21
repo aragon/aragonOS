@@ -1,13 +1,13 @@
 pragma solidity ^0.4.11;
 
 import "./IKernel.sol";
-import "./organs/DispatcherOrgan.sol";
-import "./organs/MetaOrgan.sol";
+import "./KernelRegistry.sol";
 
 import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
 
 import "../dao/DAOStorage.sol";
+import "../apps/Application.sol";
 
 // @dev Kernel's purpose is to intercept different types of transactions that can
 // be made to the DAO, and dispatch it using a uniform interface to the DAO organs.
@@ -23,18 +23,24 @@ contract PermissionsOracle {
     function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
 }
 
-contract Kernel is IKernel, DAOStorage {
-    // @dev Sets up the minimum amount of organs for the kernel to be usable.
-    // All organ installation from this point can be made using MetaOrgan
-    function setupOrgans() {
-        assert(getOrgan(1) == 0); // Make sure it can only be called once on setup
-        installOrgan(1, new DispatcherOrgan());
-        installOrgan(2, new MetaOrgan());
+contract Kernel is IKernel, DAOStorage, KernelRegistry {
+    address public deployedMeta;
+
+    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
+    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
+
+    function Kernel(address _deployedMeta) {
+        deployedMeta = _deployedMeta;
     }
 
-    function installOrgan(uint256 organN, address organAddress) internal {
-        setOrgan(organN, organAddress);
-        assert(organAddress.delegatecall(0xd11cf3cd)); // organWasInstalled()
+    // @dev Installs 'installOrgan' function from MetaOrgan.
+    // @param _baseKernel an instance to the kernel to call.
+    function setupOrgans(address _baseKernel) {
+        var (a,) = get(INSTALL_ORGAN_SIG);
+        require(a == 0); // assert this can only be called once in the DAO
+        bytes4[] memory installOrganSig = new bytes4[](1);
+        installOrganSig[0] = INSTALL_ORGAN_SIG;
+        register(Kernel(_baseKernel).deployedMeta(), installOrganSig, true);
     }
 
     // @dev Vanilla ETH transfers get intercepted in the fallback
@@ -74,7 +80,7 @@ contract Kernel is IKernel, DAOStorage {
     // @param value: Transaction's sent ETH value
     // @param data: Transaction data
     function dispatchEther(address sender, uint256 value, bytes data) internal {
-        dispatch(sender, getEtherToken(), value, data);
+        dispatch(sender, 0, value, data);
     }
 
     // @dev Sends the transaction to the dispatcher organ
@@ -85,14 +91,30 @@ contract Kernel is IKernel, DAOStorage {
 
         if (payload.length == 0) return; // Just receive the tokens
 
-        setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
+        bytes4 sig;
+        assembly { sig := mload(add(payload, 0x20)) }
+        var (target, isDelegate) = get(sig);
+        uint32 len = RETURN_MEMORY_SIZE;
 
-        address target = DispatcherOrgan(getOrgan(1)); // dispatcher is always organ #1
-        uint32 len = getReturnSize();
+        require(target > 0);
+
+        // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
+        if (isDelegate) {
+        setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
         assembly {
-            let result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
+            let result := 0
+            result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
             jumpi(invalidJumpLabel, iszero(result))
             return(0, len)
+        }
+        } else {
+        Application(target).setDAOMsg(sender, token, value);
+        assembly {
+            let result := 0
+            result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)
+            jumpi(invalidJumpLabel, iszero(result))
+            return(0, len)
+        }
         }
     }
 
@@ -114,30 +136,14 @@ contract Kernel is IKernel, DAOStorage {
     }
 
     function vaultDeposit(address token, uint256 amount) internal {
-        address vaultOrgan = getOrgan(3);
+        var (vaultOrgan,) = get(DEPOSIT_SIG);
         if (amount == 0 || vaultOrgan == 0) return;
 
-        assert(vaultOrgan.delegatecall(0x47e7ef24, uint256(token), amount)); // deposit(address,uint256)
-    }
-
-    function getEtherToken() constant returns (address) {
-        return address(storageGet(sha3(0x01, 0x02)));
+        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount)); // deposit(address,uint256)
     }
 
     function getPermissionsOracle() constant returns (address) {
         return address(storageGet(sha3(0x01, 0x03)));
-    }
-
-    function getOrgan(uint _organId) constant returns (address organAddress) {
-        return address(storageGet(getStorageKeyForOrgan(_organId)));
-    }
-
-    function setOrgan(uint _organId, address _organAddress) internal {
-        storageSet(getStorageKeyForOrgan(_organId), uint256(_organAddress));
-    }
-
-    function getStorageKeyForOrgan(uint _organId) internal returns (bytes32) {
-        return sha3(0x01, 0x00, _organId);
     }
 
     function payload(bytes data, uint nonce) constant public returns (bytes32) {

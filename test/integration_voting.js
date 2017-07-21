@@ -2,7 +2,6 @@ const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
 var Controller = artifacts.require('Controller')
@@ -12,8 +11,9 @@ var Vote = artifacts.require('Vote')
 var Kernel = artifacts.require('Kernel')
 
 const { getBlockNumber } = require('./helpers/web3')
+const { installOrgans, installApps } = require('./helpers/installer')
 
-const createDAO = () => DAO.new()
+const createDAO = () => DAO.new(Kernel.address)
 
 const pct16 = x => new web3.BigNumber(x).times(new web3.BigNumber(10).toPower(16))
 
@@ -24,38 +24,28 @@ const states = {
 }
 
 contract('VotingApp', accounts => {
-  let dao, metadao, kernel, appOrgan, ownershipApp, dao_ownershipApp, votingApp, dao_votingApp, token, vote = {}
+  let dao, metadao, kernel, appOrgan, ownershipApp, votingApp, token, vote = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 3)
+    ownershipApp = OwnershipApp.at(dao.address)
+    votingApp = VotingApp.at(dao.address)
 
-    const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 4)
-    appOrgan = ApplicationOrgan.at(dao.address)
-
-    ownershipApp = await OwnershipApp.new(dao.address)
-    dao_ownershipApp = OwnershipApp.at(dao.address)
-
-    votingApp = await VotingApp.new(dao.address)
-    dao_votingApp = VotingApp.at(dao.address)
-
-    await appOrgan.installApp(1, ownershipApp.address)
-    await appOrgan.installApp(2, votingApp.address)
+    await installOrgans(metadao, [MetaOrgan, ActionsOrgan])
+    await installApps(metadao, [VotingApp, OwnershipApp])
 
     vote = await Vote.new()
     const voteBytecode = await votingApp.hashForCode(vote.address)
-    await dao_votingApp.setValidVoteCode(voteBytecode, true)
+    await votingApp.setValidVoteCode(voteBytecode, true)
 
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
-    await dao_ownershipApp.addToken(token.address, 1000, 1, 1, )
-    await dao_ownershipApp.grantTokens(token.address, accounts[0], 30, )
-    await dao_ownershipApp.grantTokens(token.address, accounts[1], 35, )
+    await ownershipApp.addToken(token.address, 1000, 1, 1)
+    await ownershipApp.grantTokens(token.address, accounts[0], 30)
+    await ownershipApp.grantTokens(token.address, accounts[1], 35)
   })
 
   context('creating basic voting', () => {
@@ -63,7 +53,7 @@ contract('VotingApp', accounts => {
 
     it('throws when vote bytecode is not valid', async () => {
       try {
-        await dao_votingApp.createVote(dao.address, startBlock, finalBlock, pct16(50))
+        await votingApp.createVote(dao.address, startBlock, finalBlock, pct16(50))
       } catch (error) {
         return assertThrow(error)
       }
@@ -72,7 +62,7 @@ contract('VotingApp', accounts => {
 
     it('throws when vote address is a normal account', async () => {
       try {
-        await dao_votingApp.createVote(accounts[1], startBlock, finalBlock, pct16(50))
+        await votingApp.createVote(accounts[1], startBlock, finalBlock, pct16(50))
       } catch (error) {
         return assertThrow(error)
       }
@@ -84,7 +74,7 @@ contract('VotingApp', accounts => {
       startBlock = currentBlock + 5
       finalBlock = currentBlock + 10
       await votingApp.mock_setBlockNumber(currentBlock)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
     })
 
     it('has correct initial state', async () => {
@@ -111,6 +101,7 @@ contract('VotingApp', accounts => {
       assert.equal(state, states.voting, 'state should be voting')
       assert.equal(yays, 30, 'yay votes should have been added')
       assert.equal(nays, 35, 'nay votes should have been added')
+
       assert.equal(totalQuorum, 65, 'quorum should be assigned tokens')
     })
 
