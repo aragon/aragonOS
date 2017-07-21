@@ -58,7 +58,6 @@ contract('AccountingApp', accounts => {
         await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
         await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
         let t0 = await dao_accountingApp.getTransactionState(0)
-        let t0 = await dao_accountingApp.getTransactionState(0)
         assert.equal(t0[3], 'Ref 123', 'Should have matching reference number')
     })
 
