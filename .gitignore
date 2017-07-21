@@ -22,5 +22,8 @@ Session.vim
 *~
 # auto-generated tag files
 tags
-
 # End of https://www.gitignore.io/api/vim
+coverage/
+coverageEnv/
+coverage.json
+scTopics
