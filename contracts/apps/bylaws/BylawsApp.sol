@@ -17,21 +17,14 @@ contract IBylawsApp {
 
 
 contract BylawsConstants {
-    bytes4 constant LINK_BY_LAW_SIG = bytes4(sha3("linkBylaw(bytes4,uint256)"));
+    bytes4 constant LINK_BYLAW_SIG = bytes4(sha3("linkBylaw(bytes4,uint256)"));
 }
 
-<<<<<<< HEAD
 
-contract BylawsApp is IBylawsApp, BylawsConstants, Application, PermissionsOracle {
+contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Application, PermissionsOracle {
     enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
     enum SpecialEntityStatus { Holder, TokenSale }
     enum CombinatorType { Or, And, Xor }
-=======
-contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Application, PermissionsOracle {
-  enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
-  enum SpecialEntityStatus { Holder, TokenSale }
-  enum CombinatorType { Or, And, Xor }
->>>>>>> upstream/master
 
     struct Bylaw {
         BylawType bylawType;
@@ -71,7 +64,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     }
 
     function canHandlePayload(bytes payload) constant returns (bool) {
-        return getSig(payload) == LINK_BY_LAW_SIG;
+        return getSig(payload) == LINK_BYLAW_SIG;
     }
 
     function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
@@ -104,7 +97,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
         address token,
         uint256 value,
         bytes data
-    ) constant returns (bool) 
+    ) constant returns (bool)
     {
         return canPerformAction(
             getSig(data),
@@ -115,22 +108,14 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
         );
     }
 
-    function performedAction(
-        address sender,
-        address token,
-        uint256 value,
-        bytes data
-    ) {
-    }
-
     function canPerformAction(
         bytes4 sig,
         address sender,
         bytes data,
         address token,
         uint256 value
-        ) returns (bool) 
-        {
+    ) returns (bool)
+    {
         uint bylawId = bylawEntrypoint[sig];
 
         // not existent bylaw, always allow action.
@@ -178,7 +163,7 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
         }
 
         if (bylaw.bylawType == BylawType.Voting) {
-            return negateIfNeeded(computeVoting(bylaw.voting, sender), bylaw.not);
+            return negateIfNeeded(checkVoting(bylaw.voting, sender), bylaw.not);
         }
 
         if (bylaw.bylawType == BylawType.Combinator) {
@@ -199,37 +184,14 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
         return negate ? !result : result;
     }
 
-<<<<<<< HEAD
-    function computeVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-        VotingApp votingApp = getVotingApp();
-        var (,,, voteCreatedBlock, voteStartsBlock, voteEndsBlock, yays, nays, totalQuorum) = votingApp.getStatusForVoteAddress(voteAddress);
-
-        // check votign timing is correct
-        if (voteStartsBlock - voteCreatedBlock < votingBylaw.minDebateTime)
-            return false;
-        if (voteEndsBlock - voteStartsBlock < votingBylaw.minVotingTime)
-            return false;
-=======
-  function canPerformAction(bytes4 sig, address sender, bytes data, address token, uint256 value) returns (bool) {
-    uint bylawId = bylawEntrypoint[sig];
->>>>>>> upstream/master
-
-        if (getBlockNumber() >= voteEndsBlock) {
-            uint256 quorum = yays + nays;
-            uint256 yaysQuorumPct = yays * PCT_BASE / quorum;
-            uint256 quorumPct = quorum * PCT_BASE / totalQuorum;
-
-            return yaysQuorumPct >= votingBylaw.supportPct && quorumPct >= votingBylaw.minQuorumPct;
-        } else {
-            uint256 yaysTotalPct = yays * PCT_BASE / totalQuorum;
-
-            return yaysTotalPct >= votingBylaw.supportPct;
-        }
-    }
-
-    // @dev just for mocking purposes
-    function getBlockNumber() internal returns (uint64) {
-        return uint64(block.number);
+    function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
+        return getVotingApp().isVoteApproved(
+            voteAddress,
+            votingBylaw.supportPct,
+            votingBylaw.minQuorumPct,
+            votingBylaw.minDebateTime,
+            votingBylaw.minVotingTime
+        );
     }
 
     function computeCombinatorBylaw(
@@ -278,13 +240,8 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
             return false;
     }
 
-<<<<<<< HEAD
     function getStatus(address entity) internal returns (uint8) {
         return uint8(getStatusApp().entityStatus(entity));
-=======
-    if (bylaw.bylawType == BylawType.Voting) {
-      return negateIfNeeded(checkVoting(bylaw.voting, sender), bylaw.not);
->>>>>>> upstream/master
     }
 
     function setStatusBylaw(uint8 statusNeeded, bool isSpecialStatus, bool not) {
@@ -298,7 +255,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     function setAddressBylaw(address addr, bool isOracle, bool not) {
         var (id, bylaw) = newBylaw();
 
-<<<<<<< HEAD
         bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
         bylaw.addr = addr;
         bylaw.not = not;
@@ -359,11 +315,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     function getStatusBylaw(uint256 bylawId) constant returns (uint8) {
         return bylaws[bylawId].status;
     }
-=======
-  function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-    return getVotingApp().isVoteApproved(voteAddress, votingBylaw.supportPct, votingBylaw.minQuorumPct, votingBylaw.minDebateTime, votingBylaw.minVotingTime);
-  }
->>>>>>> upstream/master
 
     function getAddressBylaw(uint256 bylawId) constant returns (address) {
         return bylaws[bylawId].addr;
@@ -387,128 +338,17 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     }
 
     function getOwnershipApp() internal returns (OwnershipApp) {
-        // gets the app address that can respond to getOrgToken
-        return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xf594ba59));
+        // gets the app address that can respond to getToken
+        return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(GET_TOKEN_SIG));
     }
 
     function getVotingApp() internal returns (VotingApp) {
         // gets the app address that can respond to createVote
-        return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0xad8c5d6e));
+        return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
     }
 
     function getStatusApp() internal returns (StatusApp) {
         // gets the app address that can respond to setEntityStatus
         return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
     }
-<<<<<<< HEAD
-=======
-  }
-
-  function isSpecialStatus(address entity, uint8 neededStatus) internal returns (bool) {
-    SpecialEntityStatus status = SpecialEntityStatus(neededStatus);
-
-    if (status == SpecialEntityStatus.Holder) return getOwnershipApp().isHolder(entity);
-    if (status == SpecialEntityStatus.TokenSale) return false;
-  }
-
-  function getStatus(address entity) internal returns (uint8) {
-    return uint8(getStatusApp().entityStatus(entity));
-  }
-
-  function setStatusBylaw(uint8 statusNeeded, bool isSpecialStatus, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
-    bylaw.status = statusNeeded;
-    bylaw.not = not;
-  }
-
-  function setAddressBylaw(address addr, bool isOracle, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
-    bylaw.addr = addr;
-    bylaw.not = not;
-  }
-
-  function setVotingBylaw(uint256 supportPct, uint256 minQuorumPct, uint64 minDebateTime, uint64 minVotingTime, bool not) {
-    var (id, bylaw) = newBylaw();
-
-    require(supportPct > 0 && supportPct <= pctBase); // dont allow weird cases
-
-    bylaw.bylawType = BylawType.Voting;
-    bylaw.voting.supportPct = supportPct;
-    bylaw.voting.minQuorumPct = minQuorumPct;
-    bylaw.voting.minDebateTime = minDebateTime;
-    bylaw.voting.minVotingTime = minVotingTime;
-    bylaw.not = not;
-  }
-
-  function setCombinatorBylaw(uint combinatorType, uint leftBylawId, uint rightBylawId, bool not)
-           existing_bylaw(leftBylawId) existing_bylaw(rightBylawId) {
-    var (id, bylaw) = newBylaw();
-
-    require(leftBylawId != rightBylawId);
-
-    bylaw.bylawType = BylawType.Combinator;
-    bylaw.combinator.combinatorType = CombinatorType(combinatorType);
-    bylaw.combinator.leftBylawId = leftBylawId;
-    bylaw.combinator.rightBylawId = rightBylawId;
-    bylaw.not = not;
-  }
-
-  modifier existing_bylaw(uint bylawId) {
-    require(bylawId > 0);
-    require(bylawId < bylaws.length);
-    _;
-  }
-
-  function getBylawType(uint bylawId) constant returns (uint8) {
-    return uint8(bylaws[bylawId].bylawType);
-  }
-
-  function getBylawNot(uint bylawId) constant returns (bool) {
-    return bylaws[bylawId].not;
-  }
-
-  function getStatusBylaw(uint256 bylawId) constant returns (uint8) {
-    return bylaws[bylawId].status;
-  }
-
-  function getAddressBylaw(uint256 bylawId) constant returns (address) {
-    return bylaws[bylawId].addr;
-  }
-
-  function getVotingBylaw(uint256 bylawId) constant returns (uint256 supportPct, uint256 minQuorumPct, uint64 minDebateTime, uint64 minVotingTime) {
-    Bylaw bylaw = bylaws[bylawId];
-
-    supportPct = bylaw.voting.supportPct;
-    minQuorumPct = bylaw.voting.minQuorumPct;
-    minDebateTime = bylaw.voting.minDebateTime;
-    minVotingTime = bylaw.voting.minVotingTime;
-  }
-
-  function getCombinatorBylaw(uint256 bylawId) constant returns (uint combinatorType, uint leftBylawId, uint rightBylawId) {
-    Bylaw bylaw = bylaws[bylawId];
-
-    combinatorType = uint(bylaw.combinator.combinatorType);
-    leftBylawId = bylaw.combinator.leftBylawId;
-    rightBylawId = bylaw.combinator.rightBylawId;
-  }
-
-  function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
-  }
-
-  function getVotingApp() internal returns (VotingApp) {
-    // gets the app address that can respond to createVote
-    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
-  }
-
-  function getStatusApp() internal returns (StatusApp) {
-    // gets the app address that can respond to setEntityStatus
-    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
-  }
->>>>>>> upstream/master
 }
