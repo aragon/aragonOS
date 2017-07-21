@@ -35,9 +35,9 @@ contract DAOStorage is IDAO, UIntStorage {
 
     function dao_msg() internal returns (DAOMessage) {
         return DAOMessage(
-        address(storageGet(senderKey)),
-        address(storageGet(tokenKey)),
-        storageGet(valueKey)
+            address(storageGet(senderKey)),
+            address(storageGet(tokenKey)),
+            storageGet(valueKey)
         );
     }
 

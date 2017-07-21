@@ -13,7 +13,8 @@ contract StatusApp is Application {
     {}
 
     function setEntityStatus(address entity, uint8 status)
-            onlyDAO public {
+    onlyDAO public
+    {
         entityStatus[entity] = status;
         EntityStatusChanged(entity, status);
     }

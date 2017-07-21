@@ -52,10 +52,13 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _token: Address for the token being deposited in call
     // @param _amount: Token units being deposited
     function deposit(address _token, uint256 _amount)
-            check_blacklist(_token)
-            payable {
-        if (_amount == 0) return;
-        if (_token == 0 && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
+    check_blacklist(_token)
+    payable
+    {
+        if (_amount == 0)
+            return;
+        if (_token == 0 && msg.value == _amount)
+            tokenizeEther(_amount); // if call has ETH, we tokenize it
 
         address token = _token == 0 ? getEtherToken() : _token;
 
@@ -63,7 +66,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
         // This will actually be dispatched every time balance goes from 0 to non-zero.
         // The idea is that the frontend can listen for this event in all DAO history.
         // TODO: Is an event for when a certain token balance goes to 0 needed?
-        if (currentBalance == 0) NewTokenDeposit(token);
+        if (currentBalance == 0)
+            NewTokenDeposit(token);
 
         // TODO: Aragon Network funds redirect goes here :)
 
@@ -82,7 +86,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _to: Recipient of the tokens
     // @param _amount: Token units being sent
     function transfer(address _token, address _to, uint256 _amount)
-            only_not_halted {
+    only_not_halted
+    {
         doTransfer(_token, _to, _amount);
     }
 
@@ -98,7 +103,8 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _to: Recipient of the ether
     // @param _amount: wei amount being sent
     function transferEther(address _to, uint256 _amount)
-            only_not_halted {
+    only_not_halted
+    {
         address etherToken = getEtherToken();
         uint newBalance = performTokenTransferAccounting(etherToken, _amount, _to);
 
@@ -123,14 +129,15 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @dev Can only be executed during a halt
     // @param _tokens: Addresses of the tokens in which we execute the scape hatch (to avoid OOG errors)
     function scapeHatch(address[] _tokens)
-            only_halted {
+    only_halted
+    {
         address scapeHatch = getScapeHatch();
         require(scapeHatch > 0); // check it has been set to avoid burning the tokens
 
         // could go OOG but then you can always split calls in multiple calls with subsets of tokens
         for (uint i = 0; i < _tokens.length; i++) {
-        address token = _tokens[i];
-        doTransfer(token, scapeHatch, getTokenBalance(token));
+            address token = _tokens[i];
+            doTransfer(token, scapeHatch, getTokenBalance(token));
         }
     }
 
@@ -184,13 +191,17 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
         // already checks if delta > 0 or throws
         uint256 tokenDelta = safeSub(tokenBalance, accountedBalance);
 
-        if (tokenDelta == 0) return;
+        if (tokenDelta == 0)
+            return;
 
         secureTokenTransfer(_token, _to, tokenDelta);
-        Recover(_token, dao_msg().sender, tokenDelta, _to);
+        Recover(
+            _token,
+            dao_msg().sender,
+            tokenDelta,
+            _to
+        );
     }
-
-
 
     // @dev Internal function that takes care of tokenizing ether to hold it as a ERC20 token
     // @param _amount: wei being tokenized
@@ -208,12 +219,18 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _amount: Token units being sent
     // @return new balance after substracting tokens being transferred
     function performTokenTransferAccounting(address _token, uint256 _amount, address _to)
-            internal
-            returns (uint256 newBalance) {
+    internal
+    returns (uint256 newBalance)
+    {
         newBalance = safeSub(getTokenBalance(_token), _amount); // will throw on overflow
         setTokenBalance(_token, newBalance);
 
-        Withdraw(_token, dao_msg().sender, _amount, _to);
+        Withdraw(
+            _token,
+            dao_msg().sender,
+            _amount,
+            _to
+        );
     }
 
     // @dev Internal function to modify storage for current token balance
@@ -229,8 +246,9 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // @param _to: Recipient of the tokens
     // @param _amount: Token units being sent
     function secureTokenTransfer(address _token, address _to, uint256 _amount)
-            max_gas(maxTokenTransferGas)
-            internal {
+    max_gas(maxTokenTransferGas)
+    internal
+    {
         assert(ERC20(_token).transfer(_to, _amount));
     }
 

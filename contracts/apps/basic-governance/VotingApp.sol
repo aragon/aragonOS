@@ -15,6 +15,7 @@ contract IVotingApp {
     event VoteStateChanged(uint indexed voteId, uint oldState, uint newState);
 }
 
+
 contract VotingApp is IVotingApp, Application, CodeHelper {
     function VotingApp(address daoAddr)
     Application(daoAddr)
