@@ -5,11 +5,12 @@ var ActionsOrgan = artifacts.require('ActionsOrgan')
 var AccountingApp = artifacts.require('../contrats/app/accounting/AccountingApp')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var MockedApp = artifacts.require('./mocks/MockedApp')
-
+var Application = artifacts.require('Application')
 var Kernel = artifacts.require('Kernel')
 
 const createDAO = () => DAO.new(Kernel.address)
 const { installOrgans, installApps } = require('./helpers/installer')
+const { signatures } = require('./helpers/web3')
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -30,7 +31,7 @@ contract('AccountingApp', accounts => {
 
     beforeEach(async () => {
       await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
-      await installApps(metadao, [installedAccountingApp])
+      await installApps(metadao, [AccountingApp], signatures(AccountingApp, [Application], web3))
       accountingApp = await AccountingApp.new(dao.address)
     })
 
