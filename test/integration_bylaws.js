@@ -1,57 +1,51 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var BylawsApp = artifacts.require('BylawsApp')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var VotingApp = artifacts.require('mocks/VotingAppMock')
 var StatusApp = artifacts.require('StatusApp')
 var MiniMeToken = artifacts.require('MiniMeToken')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
+var VaultOrgan = artifacts.require('VaultOrgan')
 var Vote = artifacts.require('Vote')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
 
 var Kernel = artifacts.require('Kernel')
 
+const { installOrgans, installApps } = require('./helpers/installer')
 const { getBlockNumber } = require('./helpers/web3')
 
-const createDAO = () => DAO.new()
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 const changeKernelSig = '0xcebe30ac'
 
 contract('Bylaws', accounts => {
-  let dao, metadao, kernel, appOrgan, bylawsApp, dao_bylawsApp = {}
+  let dao, metadao, kernel, bylawsApp, installedBylaws = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const actionsOrgan = await ActionsOrgan.new()
-    await metadao.installOrgan(actionsOrgan.address, 3)
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
+    const apps = await installApps(metadao, [BylawsApp])
+    installedBylaws = apps[0]
 
-    const apps = await ApplicationOrgan.new()
-    await metadao.installOrgan(apps.address, 4)
-    appOrgan = ApplicationOrgan.at(dao.address)
-
-    bylawsApp = await BylawsApp.new(dao.address)
-    dao_bylawsApp = BylawsApp.at(dao.address)
-
-    await appOrgan.installApp(1, bylawsApp.address)
-    await metadao.setPermissionsOracle(bylawsApp.address)
+    bylawsApp = BylawsApp.at(dao.address)
+    await metadao.setPermissionsOracle(installedBylaws.address)
   })
 
   it('bylaws are successfully installed', async () => {
-    assert.equal(await kernel.getPermissionsOracle(), bylawsApp.address, 'should have set permissions oracle')
-    assert.equal(await appOrgan.getApp(1), bylawsApp.address, 'should have returned installed app addr')
+    assert.equal(await kernel.getPermissionsOracle(), installedBylaws.address, 'should have set permissions oracle')
   })
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
       await bylawsApp.setAddressBylaw(accounts[1], false, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
     })
 
     it('saved bylaw correctly', async () => {
@@ -80,7 +74,7 @@ contract('Bylaws', accounts => {
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
       await bylawsApp.setAddressBylaw(oracle.address, true, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
     })
 
     it('saved bylaw correctly', async () => {
@@ -110,7 +104,7 @@ contract('Bylaws', accounts => {
   context('adding negated address bylaw', () => {
     beforeEach(async () => {
       await bylawsApp.setAddressBylaw(accounts[1], false, true)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
     })
 
     it('saved bylaw correctly', async () => {
@@ -136,9 +130,7 @@ contract('Bylaws', accounts => {
   })
 
   context('adding voting bylaw', () => {
-    let votingApp, dao_votingApp = {}
-    let ownershipApp, dao_ownershipApp = {}
-
+    let votingApp, ownershipApp = {}
     let vote = {}
 
     const [holder20, holder31, holder49] = accounts
@@ -147,29 +139,24 @@ contract('Bylaws', accounts => {
     let currentBlock, startBlock, finalBlock = 0
 
     beforeEach(async () => {
-      ownershipApp = await OwnershipApp.new(dao.address)
-      dao_ownershipApp = OwnershipApp.at(dao.address)
+      await installApps(metadao, [VotingApp, OwnershipApp])
 
-      await appOrgan.installApp(2, ownershipApp.address)
-
-      votingApp = await VotingApp.new(dao.address)
-      dao_votingApp = VotingApp.at(dao.address)
-
-      await appOrgan.installApp(3, votingApp.address)
+      ownershipApp = OwnershipApp.at(dao.address)
+      votingApp = VotingApp.at(dao.address)
 
       vote = await Vote.new()
       const voteBytecode = await votingApp.hashForCode(vote.address)
-      await dao_votingApp.setValidVoteCode(voteBytecode, true)
+      await votingApp.setValidVoteCode(voteBytecode, true)
 
       await vote.instantiate(dao.address, metadao.replaceKernel.request(randomAddress).params[0].data)
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addToken(token.address, 100, 1, 1)
+      await ownershipApp.addToken(token.address, 100, 1, 1)
 
-      await dao_ownershipApp.grantTokens(token.address, holder20, 20)
-      await dao_ownershipApp.grantTokens(token.address, holder31, 31)
-      await dao_ownershipApp.grantTokens(token.address, holder49, 49)
+      await ownershipApp.grantTokens(token.address, holder20, 20)
+      await ownershipApp.grantTokens(token.address, holder31, 31)
+      await ownershipApp.grantTokens(token.address, holder49, 49)
 
       currentBlock = await getBlockNumber()
       startBlock = currentBlock + 5
@@ -178,8 +165,8 @@ contract('Bylaws', accounts => {
 
     it('normal vote flow', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
       await votingApp.voteNay(1, { from: holder20 })
@@ -188,9 +175,9 @@ contract('Bylaws', accounts => {
       await vote.execute()
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
 
-      assert.equal(await bylawsApp.getBylawType(1), 0, 'bylaw type should be correct')
-
-      const [s, q, d, v] = await bylawsApp.getVotingBylaw(1)
+      // TODO: Figure out why we were getting weird values when called through DAO
+      assert.equal(await installedBylaws.getBylawType(1), 0, 'bylaw type should be correct')
+      const [s, q, d, v] = await installedBylaws.getVotingBylaw(1)
       assert.equal(s.toNumber(), pct16(50).toNumber(), 'voting support should be correct')
       assert.equal(q.toNumber(), pct16(40).toNumber(), 'quorum should be correct')
       assert.equal(d, 5, 'voting debate should be correct')
@@ -199,8 +186,8 @@ contract('Bylaws', accounts => {
 
     it('vote prematurely decided flow with vote yay and execute', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
       await votingApp.voteYay(1, { from: holder31 })
@@ -211,8 +198,8 @@ contract('Bylaws', accounts => {
 
     it('throws if voting hasnt been successful', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteNay(1, { from: holder31 })
       await votingApp.voteYay(1, { from: holder20 })
@@ -227,10 +214,24 @@ contract('Bylaws', accounts => {
       assert.fail('should have thrown before')
     })
 
+    it('throws if voting had no votes', async () => {
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.mock_setBlockNumber(finalBlock)
+
+      try {
+        await vote.execute()
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+    })
+
     it('throws if voting didnt get enough quorum', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder20 })
 
@@ -246,8 +247,8 @@ contract('Bylaws', accounts => {
 
     it('throws when attempting to execute action twice', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
-      await dao_votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
       await votingApp.voteNay(1, { from: holder20 })
@@ -264,29 +265,27 @@ contract('Bylaws', accounts => {
   })
 
   context('adding token holder bylaw', () => {
-    let ownershipApp, dao_ownershipApp = {}
+    let ownershipApp = {}
     const holder1 = accounts[1]
     const holder2 = accounts[2]
 
     beforeEach(async () => {
-      ownershipApp = await OwnershipApp.new(dao.address)
-      dao_ownershipApp = OwnershipApp.at(dao.address)
-
-      await appOrgan.installApp(2, ownershipApp.address)
+      await installApps(metadao, [OwnershipApp])
+      ownershipApp = OwnershipApp.at(dao.address)
 
       const token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token.changeController(dao.address)
-      await dao_ownershipApp.addToken(token.address, 100, 1, 1, )
+      await ownershipApp.addToken(token.address, 100, 1, 1)
 
       const token2 = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
       await token2.changeController(dao.address)
-      await dao_ownershipApp.addToken(token2.address, 100, 1, 1, )
+      await ownershipApp.addToken(token2.address, 100, 1, 1)
 
-      await dao_ownershipApp.grantTokens(token.address, holder1, 10)
-      await dao_ownershipApp.grantTokens(token2.address, holder2, 1)
+      await ownershipApp.grantTokens(token.address, holder1, 10)
+      await ownershipApp.grantTokens(token2.address, holder2, 1)
 
       await bylawsApp.setStatusBylaw(0, true, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
     })
 
     it('saved bylaw correctly', async () => {
@@ -318,20 +317,19 @@ contract('Bylaws', accounts => {
   })
 
   context('adding status bylaw', () => {
-    let statusApp, dao_statusApp = {}
+    let statusApp = {}
     const authorized = accounts[3]
     const lowauth = accounts[4]
     const authLevel = 8
     beforeEach(async () => {
-      statusApp = await StatusApp.new(dao.address)
-      dao_statusApp = StatusApp.at(dao.address)
+      await installApps(metadao, [StatusApp])
 
-      await appOrgan.installApp(2, statusApp.address)
+      statusApp = StatusApp.at(dao.address)
 
-      await dao_statusApp.setEntityStatus(authorized, authLevel)
-      await dao_statusApp.setEntityStatus(lowauth, authLevel - 1)
+      await statusApp.setEntityStatus(authorized, authLevel)
+      await statusApp.setEntityStatus(lowauth, authLevel - 1)
       await bylawsApp.setStatusBylaw(authLevel, false, false)
-      await dao_bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, 1)
     })
 
     it('saved bylaw correctly', async () => {
@@ -371,7 +369,7 @@ contract('Bylaws', accounts => {
     context('adding OR bylaw', () => {
       beforeEach(async () => {
         await bylawsApp.setCombinatorBylaw(0, addressBylaw, oracleBylaw, false)
-        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
+        await bylawsApp.linkBylaw(changeKernelSig, 3)
       })
 
       it('saved bylaw correctly', async () => {
@@ -411,7 +409,7 @@ contract('Bylaws', accounts => {
     context('adding AND bylaw', () => {
       beforeEach(async () => {
         await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
-        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
+        await bylawsApp.linkBylaw(changeKernelSig, 3)
       })
 
       it('saved bylaw correctly', async () => {
@@ -450,7 +448,7 @@ contract('Bylaws', accounts => {
     context('adding XOR bylaw', () => {
       beforeEach(async () => {
         await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
-        await dao_bylawsApp.linkBylaw(changeKernelSig, 3)
+        await bylawsApp.linkBylaw(changeKernelSig, 3)
       })
 
       it('saved bylaw correctly', async () => {

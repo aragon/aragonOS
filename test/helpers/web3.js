@@ -1,6 +1,20 @@
 // TODO: pls abstract promisification over web3
 
 module.exports = {
+  signatures(contract, exclude, web3) {
+    const flatten = x => [].concat.apply([], x)
+    const sig = f => `${f.name}(${f.inputs.map(x=>x.type).join(',')})`
+
+    const excludedSigs = flatten(exclude.map(x => x.abi)).map(sig)
+
+    return contract.abi
+      .filter(x => x.type == 'function')
+      .map(sig)
+      .filter(s => excludedSigs.indexOf(s) < 0)
+      .map(s => web3.sha3(s).slice(0, 10))
+      .sort()
+  },
+
   getBalance(addr) {
     return new Promise((resolve, reject) => {
       web3.eth.getBalance(addr, async (err, res) => {

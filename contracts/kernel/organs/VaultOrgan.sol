@@ -40,21 +40,10 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   bytes32 constant haltTimeKey = sha3(vaultPrimaryKey, 0x01);
   bytes32 constant haltDurationKey = sha3(vaultPrimaryKey, 0x02);
   bytes32 constant scapeHatchSecondaryKey = sha3(vaultPrimaryKey, 0x03);
+  bytes32 constant etherTokenSecondaryKey = sha3(vaultPrimaryKey, 0x04);
 
   uint constant maxTokenTransferGas = 150000;
   uint constant maxHalt = 7 days; // can be prorrogated during halt
-
-  bytes4 constant getTokenBalanceSig  = 0x3aecd0e3; // getTokenBalance(address)
-  bytes4 constant transferSig         = 0xbeabacc8; // transfer(address,address,uint256)
-  bytes4 constant transferEtherSig    = 0x05b1137b; // transferEther(address,uint256)
-  bytes4 constant haltSig             = 0xfb1fad50; // halt(uint256)
-  bytes4 constant getHaltTimeSig      = 0xae2ae305; // getHaltTime()
-  bytes4 constant scapeHatchSig       = 0x863ca8f0; // scapeHatch(address[])
-  bytes4 constant setScapeHatchSig    = 0xc4e65c99; // setScapeHatch(address)
-  bytes4 constant getScapeHatchSig    = 0x4371677c; // getScapeHatch()
-  bytes4 constant setTknBlacklistSig  = 0x1ff0769a; // setTokenBlacklist(address,bool)
-  bytes4 constant isTknBlacklistSig   = 0xce9be9ba; // isTokenBlacklisted(address)
-  bytes4 constant recoverSig          = 0x648bf774; // recover(address,address)
 
   // @dev deposit is not reachable on purpose using normal dispatch route
   // expects to be called as a delegatecall from kernel
@@ -64,13 +53,15 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
            check_blacklist(_token)
            payable {
     if (_amount == 0) return;
-    if (_token == getEtherToken() && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
+    if (_token == 0 && msg.value == _amount) tokenizeEther(_amount); // if call has ETH, we tokenize it
 
-    uint256 currentBalance = getTokenBalance(_token);
+    address token = _token == 0 ? getEtherToken() : _token;
+
+    uint256 currentBalance = getTokenBalance(token);
     // This will actually be dispatched every time balance goes from 0 to non-zero.
     // The idea is that the frontend can listen for this event in all DAO history.
     // TODO: Is an event for when a certain token balance goes to 0 needed?
-    if (currentBalance == 0) NewTokenDeposit(_token);
+    if (currentBalance == 0) NewTokenDeposit(token);
 
     // TODO: Aragon Network funds redirect goes here :)
 
@@ -78,10 +69,10 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     // Check token balance isn't less than expected.
     // Could be less because of a faulty erc20 implementation (can't trust)
     // Could be more because a token transfer can be done without notifying
-    assert(newBalance <= ERC20(_token).balanceOf(this));
+    assert(newBalance <= ERC20(token).balanceOf(this));
 
-    setTokenBalance(_token, newBalance);
-    Deposit(_token, dao_msg().sender, _amount);
+    setTokenBalance(token, newBalance);
+    Deposit(token, dao_msg().sender, _amount);
   }
 
   // @dev Function called from other organs, applications or the outside to send funds
@@ -242,7 +233,11 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
   }
 
   function getEtherToken() constant returns (address) {
-    return address(storageGet(sha3(kernelPrimaryKey, 0x02)));
+    return address(storageGet(etherTokenSecondaryKey));
+  }
+
+  function setEtherToken(address newToken) {
+    storageSet(etherTokenSecondaryKey, uint256(newToken));
   }
 
   // @dev get key for token balance
@@ -261,29 +256,9 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
 
   // @dev Function called by the DAO as a delegatecall for organ to do its setup
   //      on DAO context
-  function organWasInstalled() {
-    // TODO: Replace for constant for EtherToken
-    MetaOrgan(this).setEtherToken(address(new EtherToken()));
-  }
-
-  // @dev Function called by DAO as call for organ to communicate if it handles a payload
-  // @param _payload: call data bytes payload
-  // @return whether organ handles a payload or not
-  function canHandlePayload(bytes _payload) returns (bool) {
-    // TODO: Really return true on handleable functions
-    bytes4 sig = getFunctionSignature(_payload);
-    return
-      sig == getTokenBalanceSig ||
-      sig == transferSig ||
-      sig == transferEtherSig ||
-      sig == haltSig ||
-      sig == getHaltTimeSig ||
-      sig == scapeHatchSig ||
-      sig == getScapeHatchSig ||
-      sig == setScapeHatchSig ||
-      sig == isTknBlacklistSig ||
-      sig == setTknBlacklistSig ||
-      sig == recoverSig;
+  function setupEtherToken() {
+    require(getEtherToken() == 0);
+    setEtherToken(address(new EtherToken()));
   }
 
   modifier only_not_halted {

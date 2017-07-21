@@ -11,14 +11,10 @@ import "../ownership/OwnershipApp.sol";
 import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
 
 contract IBylawsApp {
-  event BylawChanged(bytes4 sig, uint8 bylawType, uint256 bylawId, address changedBy);
+  event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 }
 
-contract BylawsConstants {
-  bytes4 constant linkBylawSig = bytes4(sha3('linkBylaw(bytes4,uint256)'));
-}
-
-contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Application, PermissionsOracle {
+contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
   enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
   enum SpecialEntityStatus { Holder, TokenSale }
   enum CombinatorType { Or, And, Xor }
@@ -57,10 +53,6 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
   function BylawsApp(address dao)
            Application(dao) {
     newBylaw(); // so index is 1 for first legit bylaw
-  }
-
-  function canHandlePayload(bytes payload) constant returns (bool) {
-    return getSig(payload) == linkBylawSig;
   }
 
   function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
@@ -206,15 +198,15 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
     _;
   }
 
-  function getBylawType(uint bylawId) constant returns (uint8) {
-    return uint8(bylaws[bylawId].bylawType);
+  function getBylawType(uint bylawId) constant returns (uint) {
+    return uint(bylaws[bylawId].bylawType);
   }
 
   function getBylawNot(uint bylawId) constant returns (bool) {
     return bylaws[bylawId].not;
   }
 
-  function getStatusBylaw(uint256 bylawId) constant returns (uint8) {
+  function getStatusBylaw(uint256 bylawId) constant returns (uint) {
     return bylaws[bylawId].status;
   }
 
@@ -240,17 +232,18 @@ contract BylawsApp is IBylawsApp, BylawsConstants, OwnershipConstants, Applicati
   }
 
   function getOwnershipApp() internal returns (OwnershipApp) {
-    // gets the app address that can respond to getToken
-    return OwnershipApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(getTokenSig));
+    return OwnershipApp(dao);
   }
 
   function getVotingApp() internal returns (VotingApp) {
-    // gets the app address that can respond to createVote
-    return VotingApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x3ae05af2));
+    return VotingApp(dao);
   }
 
   function getStatusApp() internal returns (StatusApp) {
-    // gets the app address that can respond to setEntityStatus
-    return StatusApp(ApplicationOrgan(dao).getResponsiveApplicationForSignature(0x6035fa06));
+    return StatusApp(dao);
+  }
+
+  function getSig(bytes d) internal returns (bytes4 sig) {
+    assembly { sig := mload(add(d, 0x20)) }
   }
 }

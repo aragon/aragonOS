@@ -8,7 +8,7 @@ const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongu
 let developmentProvider, ropstenProvider, kovanProvider = {}
 
 if (!process.env.SOLIDITY_COVERAGE){
-  developmentProvider = require('ethereumjs-testrpc').provider({ gasLimit: 1e8 })
+  developmentProvider = require('ethereumjs-testrpc').provider({ gasLimit: 1e8, network_id: 15 })
 }
 
 if (process.env.LIVE_NETWORKS) {

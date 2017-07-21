@@ -1,16 +1,19 @@
 const assertThrow = require('./helpers/assertThrow');
 var DAO = artifacts.require('DAO');
 var MetaOrgan = artifacts.require('MetaOrgan')
-var DispatcherOrgan = artifacts.require('DispatcherOrgan')
 var Kernel = artifacts.require('Kernel')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var EtherToken = artifacts.require('EtherToken')
 var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
 var StandardTokenPlus = artifacts.require('./helpers/StandardTokenPlus')
 var Standard23Token = artifacts.require('./helpers/Standard23Token')
+
+var IOrgan = artifacts.require('IOrgan')
+
+const { installOrgans } = require('./helpers/installer')
 const { sign } = require('./helpers/web3')
 
-const createDAO = () => DAO.new()
+const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
@@ -23,12 +26,10 @@ contract('Dispatcher', accounts => {
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    const vaultOrgan = await VaultOrgan.new()
-    await metadao.installOrgan(vaultOrgan.address, 3)
-    vault = VaultOrgan.at(dao.address)
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, MockedOrgan])
 
-    const mockOrgan = await MockedOrgan.new()
-    await metadao.installOrgan(mockOrgan.address, 4)
+    vault = VaultOrgan.at(dao.address)
+    await vault.setupEtherToken()
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 
@@ -43,7 +44,7 @@ contract('Dispatcher', accounts => {
       await mockedOrgan.mock_setNumber(3, { value })
       assert.equal(await mockedOrgan.mock_getNumber(), 3, 'should have dispatched method')
 
-      const etherToken = EtherToken.at(await kernel.getEtherToken())
+      const etherToken = EtherToken.at(await vault.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
       assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
     })
@@ -81,7 +82,7 @@ contract('Dispatcher', accounts => {
       const { r, s, v, data } = await signedTransaction(2)
       await kernel.preauthDispatch(data, 2, r, s, v, { from: sender, value: 1})
 
-      const etherToken = EtherToken.at(await kernel.getEtherToken())
+      const etherToken = EtherToken.at(await vault.getEtherToken())
       assert.equal(await etherToken.balanceOf(dao.address), 1, 'transferred ether should be inside ETH token')
       assert.equal(await mockedOrgan.mock_getNumber(), 4, 'should have dispatched method')
       assert.equal(await vault.getTokenBalance(etherToken.address), 1, 'DAO accounting should know token balance')

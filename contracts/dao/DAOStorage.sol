@@ -23,6 +23,8 @@ contract DAOStorage is IDAO, UIntStorage {
   bytes32 constant tokenKey = sha3(0x00, 0x02, 0x01);
   bytes32 constant valueKey = sha3(0x00, 0x02, 0x02);
 
+  uint32 constant RETURN_MEMORY_SIZE = 24 * 32;
+
   struct DAOMessage {
     address sender;
     address token;
@@ -57,9 +59,5 @@ contract DAOStorage is IDAO, UIntStorage {
 
   function getKernel() constant public returns (address) {
     return address(storageGet(kernelKey));
-  }
-
-  function getReturnSize() internal constant returns (uint32) {
-    return 8 * 32; // allows for 8 values returned
   }
 }
