@@ -8,7 +8,5 @@ contract BylawOracle {
         address token,
         uint256 value
     ) returns (bool ok, uint256 actionId);
-
-    function performedAction(uint256 actionId);
     
 }

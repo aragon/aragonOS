@@ -1,11 +1,10 @@
 var DAO = artifacts.require('DAO')
 var MetaOrgan = artifacts.require('MetaOrgan')
-var TokensOrgan = artifacts.require('TokensOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var ApplicationOrgan = artifacts.require('ApplicationOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 
-const organs = [VaultOrgan, TokensOrgan, ActionsOrgan, ApplicationOrgan]
+const organs = [VaultOrgan, ActionsOrgan, ApplicationOrgan]
 
 const { getNonce } = require('../test/helpers/web3')
 
@@ -16,7 +15,7 @@ module.exports = (deployer, network) => {
 
   const isLive = liveNetworks.indexOf(network) > -1
 
-  return deployer.deploy(DAO, { gas: 4e6 })
+  return deployer.deploy(DAO)
     .then(() => {
       dao = MetaOrgan.at(DAO.address)
 

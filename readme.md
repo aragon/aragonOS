@@ -1,4 +1,4 @@
-# Aragon Core <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Build Status](https://img.shields.io/travis/aragon/aragon-core.svg?branch=master&style=flat-square)](https://travis-ci.org/aragon/aragon-core)
+# Aragon Core <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Build Status](https://img.shields.io/travis/aragon/aragon-core.svg?branch=master&style=flat-square)](https://travis-ci.org/aragon/aragon-core)[![Coverage Status](https://coveralls.io/repos/github/aragon/aragon-core/badge.svg?branch=master)](https://coveralls.io/github/aragon/aragon-core?branch=master)
 
 #### 🚨 Everything in this repo is highly experimental software.
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
@@ -67,7 +67,3 @@ To make it easier for contributers to get up to speed, we provide a docker envir
 ### Run tests
 
     $ docker-compose run core test
-
-
-
-
