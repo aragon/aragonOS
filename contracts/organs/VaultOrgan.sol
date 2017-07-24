@@ -34,7 +34,7 @@ contract IVaultOrgan is IOrgan {
 
 contract VaultOrgan is IVaultOrgan, SafeMath {
     uint8 constant KERNEL_PRIMARY_KEY = 0x01; // TODO: move ether token logic completely here
-    uint8 constant VAULT_PRIMARY_KEY = 0x05;
+    uint8 constant VAULT_PRIMARY_KEY = 0x02;
 
     uint8 constant BALANCE_SECONDARY_KEY = 0x00;
     uint8 constant BLACKLIST_SECONDARY_KEY = 0x04;
