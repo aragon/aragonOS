@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-import "../../kernel/organs/ActionsOrgan.sol";
+import "../../organs/ActionsOrgan.sol";
 import "../../misc/Requestor.sol";
 import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 

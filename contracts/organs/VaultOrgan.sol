@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "../../tokens/EtherToken.sol";
+import "../tokens/EtherToken.sol";
 import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 

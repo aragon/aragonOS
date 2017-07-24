@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "../../contracts/kernel/organs/IOrgan.sol";
+import "../../contracts/organs/IOrgan.sol";
 
 contract MockedOrgan is IOrgan {
   function organWasInstalled() {}

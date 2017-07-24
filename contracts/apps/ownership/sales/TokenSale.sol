@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "zeppelin/token/ERC20.sol";
-import "../../../kernel/organs/VaultOrgan.sol";
+import "../../../organs/VaultOrgan.sol";
 import "../../../kernel/Kernel.sol";
 import "../../../tokens/EtherToken.sol";
 
