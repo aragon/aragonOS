@@ -1,19 +1,19 @@
 pragma solidity ^0.4.11;
 
+
 // Simulates web3 ability to do token.transfer.request() that returns the data needed
 // to perform that call
-
 // Problem: requires to store
 contract Requestor {
-  bytes data;
+    bytes data;
 
-  function getData() returns (bytes) {
-    bytes memory d = data;
-    data = new bytes(0); // remove storage on get so it refunds some gas
-    return d;
-  }
+    function getData() returns (bytes) {
+        bytes memory d = data;
+        data = new bytes(0); // remove storage on get so it refunds some gas
+        return d;
+    }
 
-  function () {
-    data = msg.data;
-  }
+    function () {
+        data = msg.data;
+    }
 }
