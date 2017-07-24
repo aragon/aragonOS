@@ -17,6 +17,7 @@ contract AccountingApp is Application, Crontab {
         bytes2 ct_year;
         uint startBlock;
         uint startTimestamp;
+        uint endTimestamp;
     }
 
     AccountingPeriod public defaultAccountingPeriodSettings;
@@ -62,13 +63,24 @@ contract AccountingApp is Application, Crontab {
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
-    event Debug(string);
+    event Debug(string reason);
 
     function AccountingApp(address _dao) Application(_dao) {
     }
 
+    function startNextAccountingPeriod() {
+        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now){
+            AccountingPeriod memory ap = defaultAccountingPeriodSettings;
+            ap.startTimestamp = now;
+            uint endTimestamp = next("0", "0", ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
+            ap.endTimestamp = endTimestamp;
+            // TODO: store endBlock of last accountingPeriod?
+            ap.startBlock = block.number;
+            accountingPeriods.push(ap);
+        }
+    }
+
     function getCurrentAccountingPeriodId() public constant returns (uint){
-        
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
         // For now the current period is the most recent one
@@ -113,21 +125,6 @@ contract AccountingApp is Application, Crontab {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
-    function startNextAccountingPeriod() onlyDAO {
-        if(accountingPeriods.length > 0) {
-            var (baseToken, ct_hour, ct_day, ct_month, ct_weekday, ct_year) = getCurrentAccountingPeriod();
-            // make sure this cannot be called too soon.
-            if(throttled(ct_hour, ct_day, ct_month, ct_weekday, ct_year, "startNextAccountingPeriod")) {
-                Debug('Throttled');
-                throw;
-            }
-        }
-        AccountingPeriod memory ap = defaultAccountingPeriodSettings;
-        ap.startTimestamp = now;
-        ap.startBlock = block.number;
-        accountingPeriods.push(ap);
-    }
-
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
@@ -168,20 +165,6 @@ contract AccountingApp is Application, Crontab {
 
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Failed, reason);
-    }
-
-    event Throttled(string, uint);
-
-    function throttled(bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes4 ct_year, string key) private returns (bool){
-        uint waitUntil = next("*", "*", ct_hour, ct_day, ct_month, ct_weekday, ct_year, throttledFunctions[key]);
-
-        if (waitUntil > now) {
-            Throttled(key, waitUntil);
-            return true;
-        } else {
-            throttledFunctions[key] = now;
-            return false;
-        }
     }
 
 
