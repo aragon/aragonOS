@@ -42,7 +42,7 @@ contract('AccountingApp', accounts => {
     })
 
     it('can create new transaction', async () => {
-        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0')
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // 5  new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
         await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
         let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
@@ -53,7 +53,8 @@ contract('AccountingApp', accounts => {
     })
 
     it('can update transaction', async () => {
-        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0'); // 5  new accounting period every sunday at midnight
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // 5  new accounting period every sunday at midnight
+        await dao_accountingApp.startNextAccountingPeriod()
         await dao_accountingApp.startNextAccountingPeriod()
         await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
         await dao_accountingApp.updateTransaction(0, 1, 'needs approval')

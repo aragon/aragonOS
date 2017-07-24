@@ -5,11 +5,7 @@ import "../../kernel/organs/ActionsOrgan.sol";
 import "../../misc/Crontab.sol";
 
 
-contract AccountingApp is Application {
-
-    //
-    // Accounting Periods
-    //
+contract AccountingApp is Application, Crontab {
 
     struct AccountingPeriod {
         address baseToken;
@@ -18,50 +14,13 @@ contract AccountingApp is Application {
         bytes2 ct_day;
         bytes2 ct_month;
         bytes2 ct_weekday;
+        bytes2 ct_year;
         uint startBlock;
         uint startTimestamp;
     }
 
     AccountingPeriod public defaultAccountingPeriodSettings;
-
     AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
-
-    bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_ID_SIG = bytes4(sha3('getCurrentAccountingPeriodId()'));
-    function getCurrentAccountingPeriodId() returns (uint){
-        require(accountingPeriods.length > 0);
-        // TODO: perhaps we should store the current accountingPeriod ID
-        // separately and allow accounting periods to be generated in advance.
-        // For now the current period is the most recent one
-        return accountingPeriods.length - 1;
-    }
-
-    bytes4 constant GET_CURRENT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('getCurrentAccountingPeriod(address,bytes2,bytes2,bytes2,bytes2)'));
-    function getCurrentAccountingPeriod() returns (address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday){
-        AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
-        return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday);
-    }
-
-    bytes4 constant START_NEXT_ACCOUNTING_PERIOD_SIG = bytes4(sha3('startNextAccountingPeriod()'));
-    function startNextAccountingPeriod() onlyDAO {
-        AccountingPeriod memory ap = defaultAccountingPeriodSettings;
-        ap.startTimestamp = now;
-        ap.startBlock = block.number;
-        accountingPeriods.push(ap);
-    }
-
-    bytes4 constant SET_DEFAULT_ACCOUNTING_PERIOD_SETTINGS_SIG = bytes4(sha3('setDefaultAccountingPeriodSettings(address,bytes2,bytes2,bytes2,bytes2)'));
-    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday) onlyDAO {
-        defaultAccountingPeriodSettings.baseToken = baseToken;
-        defaultAccountingPeriodSettings.ct_hour = ct_hour;
-        defaultAccountingPeriodSettings.ct_day = ct_day;
-        defaultAccountingPeriodSettings.ct_month = ct_month;
-        defaultAccountingPeriodSettings.ct_weekday = ct_weekday;
-    }
-
-
-    //
-    // TRANSACTIONS
-    //
 
     // The concept of sending tokens to or from the org
     struct Transaction {
@@ -96,15 +55,82 @@ contract AccountingApp is Application {
     Transaction[] public transactions;
     TransactionUpdate[] public transactionUpdates;
 
+    // throttledFunctions[string key] = timstamp last run
+    mapping (string => uint) throttledFunctions;
+
     // Reverse relation of a Transaction ID  -> TransactionsUpdatesIds[]
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
-    event Debug(string str);
+    event Debug(string);
+
+    function AccountingApp(address _dao) Application(_dao) {
+    }
+
+    function getCurrentAccountingPeriodId() public constant returns (uint){
+        
+        // TODO: perhaps we should store the current accountingPeriod ID
+        // separately and allow accounting periods to be generated in advance.
+        // For now the current period is the most recent one
+        return accountingPeriods.length - 1;
+    }
+
+    function getCurrentAccountingPeriod() public constant returns (address, bytes2, bytes2, bytes2, bytes2, bytes2){
+        AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
+        return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
+    }
+
+    function getAccountingPeriodLength() public constant returns (uint) {
+        return transactions.length;
+    }
+
+    // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
+    // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
+    function getTransactionInfo(uint transactionId) constant returns (address, address, int, string) {
+        Transaction memory t = transactions[transactionId];
+        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
+        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
+        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
+        return (t.externalAddress, t.token, t.amount, t.reference);
+    }
+
+    function getTransactionState(uint transactionId) constant returns (TransactionState, string) {
+        Transaction memory t = transactions[transactionId];
+        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
+        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
+        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
+        return (tu.state, tu.reason);
+    }
+
+    // onlyDAO 
+
+    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) onlyDAO {
+        defaultAccountingPeriodSettings.baseToken = baseToken;
+        defaultAccountingPeriodSettings.ct_hour = ct_hour;
+        defaultAccountingPeriodSettings.ct_day = ct_day;
+        defaultAccountingPeriodSettings.ct_month = ct_month;
+        defaultAccountingPeriodSettings.ct_weekday = ct_weekday;
+        defaultAccountingPeriodSettings.ct_year = ct_year;
+    }
+
+    function startNextAccountingPeriod() onlyDAO {
+        if(accountingPeriods.length > 0) {
+            var (baseToken, ct_hour, ct_day, ct_month, ct_weekday, ct_year) = getCurrentAccountingPeriod();
+            // make sure this cannot be called too soon.
+            if(throttled(ct_hour, ct_day, ct_month, ct_weekday, ct_year, "startNextAccountingPeriod")) {
+                Debug('Throttled');
+                throw;
+            }
+        }
+        AccountingPeriod memory ap = defaultAccountingPeriodSettings;
+        ap.startTimestamp = now;
+        ap.startBlock = block.number;
+        accountingPeriods.push(ap);
+    }
+
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,address,int256,string)'));
-    function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO  {
+    function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
@@ -118,13 +144,10 @@ contract AccountingApp is Application {
         })) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
-        Debug(transactions[tid].reference);
         updateTransaction(tid, TransactionState.New, "new");
     }
 
-
     // Create new transactionUpdate for the given transaction id
-    bytes4 constant UPDATE_TRANSACTION_SIG = bytes4(sha3('updateTransaction(uint256,uint256,string)'));
     function updateTransaction(uint transactionId, TransactionState state, string reason) onlyDAO returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
@@ -135,44 +158,31 @@ contract AccountingApp is Application {
         transactionUpdatesRelation[transactionId].push(tuid);
     }
 
-    bytes4 constant SET_TRANSACTION_SUCCEEDED_SIG = bytes4(sha3('setTransactionSucceeded(uint256,string)'));
     function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
 
-    bytes4 constant SET_TRANSACTION_PENDING_APPROVAL_SIG = bytes4(sha3('setTransactionPendingApproval(uint256,string)'));
     function setTransactionPendingApproval(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.PendingApproval, reason);
     }
 
-    bytes4 constant SET_TRANSACTION_FAILED_SIG = bytes4(sha3('setTransactionFailed(uint256,string)'));
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Failed, reason);
     }
 
-    // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
-    // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    bytes4 constant GET_TRANSACTION_INFO_SIG = bytes4(sha3('getTransactionInfo(uint256)'));
-    function getTransactionInfo(uint transactionId) constant returns (address, address, int, string) {
-        Transaction memory t = transactions[transactionId];
-        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
-        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
-        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
-        return (t.externalAddress, t.token, t.amount, t.reference);
+    event Throttled(string, uint);
+
+    function throttled(bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes4 ct_year, string key) private returns (bool){
+        uint waitUntil = next("*", "*", ct_hour, ct_day, ct_month, ct_weekday, ct_year, throttledFunctions[key]);
+
+        if (waitUntil > now) {
+            Throttled(key, waitUntil);
+            return true;
+        } else {
+            throttledFunctions[key] = now;
+            return false;
+        }
     }
 
 
-    bytes4 constant GET_TRANSACTION_STATE_SIG = bytes4(sha3('getTransactionState(uint256)'));
-    function getTransactionState(uint transactionId) constant returns (TransactionState, string) {
-        Transaction memory t = transactions[transactionId];
-        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
-        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
-        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
-        return (tu.state, tu.reason);
-    }
-
-
-    function AccountingApp(address _dao) Application(_dao) {
-
-    }
 }
