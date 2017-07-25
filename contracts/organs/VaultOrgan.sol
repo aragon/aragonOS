@@ -254,7 +254,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath {
     }
 
     function getEtherToken() constant returns (address) {
-        return address(storageGet(VAULT_PRIMARY_KEY, ETHER_TOKEN_SECONDARY_KEY));
+        return address(storageGet(ETHER_TOKEN_SECONDARY_KEY));
     }
 
     function setEtherToken(address newToken) {
