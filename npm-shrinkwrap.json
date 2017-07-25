@@ -2851,8 +2851,6 @@
     "lodash": {
       "version": "https://registry.npmjs.org/lodash/-/lodash-4.17.4.tgz",
       "integrity": "sha1-eCA6TRwyiuHYbcpkYONptX9AVa4="
-<<<<<<< HEAD
-=======
     },
     "lodash._baseassign": {
       "version": "3.2.0",
@@ -2883,7 +2881,6 @@
       "resolved": "https://registry.npmjs.org/lodash._isiterateecall/-/lodash._isiterateecall-3.0.9.tgz",
       "integrity": "sha1-UgOte6Ql+uhCRg5pbbnPPmqsBXw=",
       "dev": true
->>>>>>> coverage
     },
     "lodash.assign": {
       "version": "https://registry.npmjs.org/lodash.assign/-/lodash.assign-4.2.0.tgz",
