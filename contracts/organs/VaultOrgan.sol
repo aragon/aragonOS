@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 
-import "../../tokens/EtherToken.sol";
+import "../tokens/EtherToken.sol";
 import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 
@@ -33,16 +33,14 @@ contract IVaultOrgan is IOrgan {
 
 
 contract VaultOrgan is IVaultOrgan, SafeMath {
-    uint8 constant KERNEL_PRIMARY_KEY = 0x01; // TODO: move ether token logic completely here
-    uint8 constant VAULT_PRIMARY_KEY = 0x05;
+    uint8 constant VAULT_PRIMARY_KEY = 0x02;
 
     uint8 constant BALANCE_SECONDARY_KEY = 0x00;
-    uint8 constant BLACKLIST_SECONDARY_KEY = 0x04;
-
     bytes32 constant HALT_TIME_KEY = sha3(VAULT_PRIMARY_KEY, 0x01);
     bytes32 constant HALT_DURATION_KEY = sha3(VAULT_PRIMARY_KEY, 0x02);
     bytes32 constant SCAPE_HATCH_SECONDARY_KEY = sha3(VAULT_PRIMARY_KEY, 0x03);
-    bytes32 constant ETHER_TOKEN_SECONDARY_KEY = sha3(VAULT_PRIMARY_KEY, 0x04);
+    uint8 constant BLACKLIST_SECONDARY_KEY = 0x04;
+    bytes32 constant ETHER_TOKEN_SECONDARY_KEY = sha3(VAULT_PRIMARY_KEY, 0x05);
 
     uint constant MAX_TOKEN_TRANSFER_GAS = 150000;
     uint constant MAX_HALT = 7 days; // can be prorrogated during halt

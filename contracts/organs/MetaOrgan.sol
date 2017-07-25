@@ -1,9 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "./IOrgan.sol";
-import "../../tokens/EtherToken.sol";
-import "../KernelRegistry.sol";
-
+import "../kernel/KernelRegistry.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
 contract MetaOrgan is IOrgan, KernelRegistry {
