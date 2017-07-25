@@ -78,7 +78,6 @@ contract('AccountingApp', accounts => {
             params: [86400],  // 86400 seconds in a day
             id: new Date().getTime()
         }, async (error, result) => {
-            console.log(x)
             t = await dao_accountingApp.startNextAccountingPeriod()
             ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
             assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
