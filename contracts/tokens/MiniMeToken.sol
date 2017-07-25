@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/token/ERC20.sol";
-import "./MiniMeController";
+import "./MiniMeController.sol";
 
 /**
     Copyright 2017, Jorge Izquierdo (Aragon Foundation)
