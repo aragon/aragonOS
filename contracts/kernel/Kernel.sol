@@ -8,6 +8,7 @@ import "zeppelin/token/ERC20.sol";
 
 import "../dao/DAOStorage.sol";
 import "../apps/Application.sol";
+import "../apps/accounting/AccountingApp.sol";
 
 // @dev Kernel's purpose is to intercept different types of transactions that can
 // be made to the DAO, and dispatch it using a uniform interface to the DAO organs.
@@ -88,7 +89,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
         require(canPerformAction(sender, token, value, payload));
 
         vaultDeposit(token, value); // deposit tokens that come with the call in the vault
-
+		//AccountingApp(address(this)).newTransaction(0x111, 0x100, 100, 'Ref 123');
         if (payload.length == 0) return; // Just receive the tokens
 
         bytes4 sig;
