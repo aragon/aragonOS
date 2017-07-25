@@ -4,6 +4,7 @@ import "../Application.sol";
 import "../../organs/ActionsOrgan.sol";
 import "../../misc/Requestor.sol";
 import "../../tokens/MiniMeIrrevocableVestedToken.sol";
+import "../../tokens/MiniMeController.sol";
 
 import "zeppelin/token/ERC20.sol";
 
@@ -12,7 +13,7 @@ import "zeppelin/token/ERC20.sol";
 
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
-contract OwnershipApp is Application, Controller, Requestor {
+contract OwnershipApp is Application, MiniMeController, Requestor {
     struct Token {
         address tokenAddress;
         uint128 governanceRights;
