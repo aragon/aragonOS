@@ -72,15 +72,17 @@ contract('AccountingApp', accounts => {
         t = await dao_accountingApp.startNextAccountingPeriod()
         ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
         assert.equal(ap_id, 0, "Should STILL be on the 1st (index 0) accounting period")
-        web3.currentProvider.send({
-                jsonrpc: "2.0",
-                method: "evm_increaseTime",
-                params: [86400],  // 86400 seconds in a day
-                id: new Date().getTime()
-        });
-        t = await dao_accountingApp.startNextAccountingPeriod()
-        ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
-        assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
+        web3.currentProvider.sendAsync({
+            jsonrpc: "2.0",
+            method: "evm_increaseTime",
+            params: [86400],  // 86400 seconds in a day
+            id: new Date().getTime()
+        }, async (error, result) => {
+            console.log(x)
+            t = await dao_accountingApp.startNextAccountingPeriod()
+            ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
+            assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
+        })
     })
   })
 })
