@@ -5,7 +5,7 @@ var VaultOrgan = artifacts.require('VaultOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
-var Controller = artifacts.require('Controller')
+var Controller = artifacts.require('MiniMeController')
 var IndividualSale = artifacts.require('mocks/IndividualSaleMock')
 var StandardTokenPlus = artifacts.require('StandardTokenPlus')
 

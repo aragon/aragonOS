@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-import "../../kernel/Kernel.sol";
+import "../../kernel/IPermissionsOracle.sol";
 
 import "./BylawOracle.sol";
 import "../Application.sol";
@@ -15,8 +15,7 @@ contract IBylawsApp {
     event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 }
 
-
-contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
+contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
     enum BylawType { Voting, Status, SpecialStatus, Address, Oracle, Combinator }
     enum SpecialEntityStatus { Holder, TokenSale }
     enum CombinatorType { Or, And, Xor }
@@ -346,5 +345,5 @@ contract BylawsApp is IBylawsApp, Application, PermissionsOracle {
 
     function getSig(bytes d) internal returns (bytes4 sig) {
         assembly { sig := mload(add(d, 0x20)) }
-    }    
+    }
 }
