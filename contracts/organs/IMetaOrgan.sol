@@ -1,11 +1,11 @@
 pragma solidity ^0.4.11;
 
-contract MetaEvents {
+contract IMetaOrganEvents {
     event KernelReplaced(address newKernel);
     event PermissionsOracleReplaced(address newPermissionsOracl);
 }
 
-contract IMetaOrgan is MetaEvents {
+contract IMetaOrgan is IMetaOrganEvents {
     function ceaseToExist() public;
     function replaceKernel(address newKernel) public;
     function setPermissionsOracle(address newOracle) public;
