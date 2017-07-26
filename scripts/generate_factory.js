@@ -15,23 +15,39 @@ const appNames = ['apps/bylaws/BylawsApp.sol', 'apps/ownership/OwnershipApp.sol'
 const excludeOrgans = ['IOrgan'].map(getContract)
 const excludeApps = ['Application'].map(getContract)
 
+const parseBylaw = bylaw => {
+    const args = bylaw.split(':')
+    if (args.length != 2) return console.log('Invalid bylaw syntax', bylaw)
+
+    return { type: args[0], params: args[1].split(',') }
+}
+
+const flattenBylaws = x => {
+    let bylaws = {}
+    flatten(x)
+        .forEach(x => bylaws[x.bylaw] = !bylaws[x.bylaw] ? [x.name] : bylaws[x.bylaw].concat([x.name]))
+
+    return Object.keys(bylaws)
+        .map((k, i) => ({id: i + 1, bylaw: parseBylaw(k), functions: bylaws[k] }))
+}
+
 const getBylaws = (f) => {
     const filePath = path.join(process.cwd(), 'contracts', f)
     const functions = inspector.parseFile(filePath).toJSON().functions
-    return Object.keys(functions)
-                .map(k => functions[k])
-                .map(x => ({ name: x.name, bylaw: x.bylaw }))
+
+    return Object.keys(functions).map(k => functions[k])
                 .filter(x => x.bylaw)
 }
 
-
 const contractName = p => path.basename(p).split('.')[0].toLowerCase()
+
+const assignBylaw =
 
 module.exports = (done) => {
     fs.readFile(factoryTemplate, { encoding: 'utf-8'}, (err, file) => {
         const template = Handlebars.compile(file)
 
-        console.log(flatten(organNames.concat(appNames).map(getBylaws)))
+        const bylaws = flattenBylaws(organNames.concat(appNames).map(getBylaws))
 
         const organData = organNames.map((o, i) => (
             { name: contractName(o), sigs: signatures(getContract(o), excludeOrgans, web3, true) }
