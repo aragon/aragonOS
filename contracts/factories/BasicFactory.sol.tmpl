@@ -8,6 +8,7 @@ import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
 import "../apps/Application.sol";
+import "../apps/ownership/OwnershipApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
@@ -33,12 +34,13 @@ contract BasicFactory {
         {{/apps}}
     }
 
-    function create(string _tokenName, string _tokenSymbol) {
+    function create(string _tokenName, string _tokenSymbol, bool _testrpc) {
         MiniMeIrrevocableVestedToken token = new MiniMeIrrevocableVestedToken(0, 0, 0, _tokenName, 1, _tokenSymbol, true);
         DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
-        installApps(MetaOrgan(dao));
+        installApps(MetaOrgan(dao), _testrpc);
+        issueToken(address(dao), address(token));
 
         DeployedDAO(dao);
     }
@@ -54,15 +56,22 @@ contract BasicFactory {
         {{/organs}}
     }
 
-    function installApps(MetaOrgan dao) internal {
+    function installApps(MetaOrgan dao, bool _testrpc) internal {
         {{#apps}}
-        Application deployed{{name}} = Application(forwarderFactory.createForwarder({{name}}));
+        // Proxies are not working on testrpc, that's why for testing no proxy is created
+        Application deployed{{name}} = Application(_testrpc ? {{name}} : forwarderFactory.createForwarder({{name}}));
         deployed{{name}}.setDAO(address(dao));
         bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
         {{#sigs}}
         {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
         {{/sigs}}
         dao.installApp(deployed{{name}}, {{name}}Sigs);
+
         {{/apps}}
+    }
+
+    function issueToken(address dao, address token) internal {
+        OwnershipApp(dao).addToken(address(token), 1, 1, 1);
+        OwnershipApp(dao).grantTokens(address(token), msg.sender, 1);
     }
 }

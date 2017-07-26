@@ -8,6 +8,7 @@ import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
 import "../apps/Application.sol";
+import "../apps/ownership/OwnershipApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
@@ -35,12 +36,13 @@ contract BasicFactory {
         votingapp = _votingapp;
     }
 
-    function create(string _tokenName, string _tokenSymbol) {
+    function create(string _tokenName, string _tokenSymbol, bool _testrpc) {
         MiniMeIrrevocableVestedToken token = new MiniMeIrrevocableVestedToken(0, 0, 0, _tokenName, 1, _tokenSymbol, true);
         DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
-        installApps(MetaOrgan(dao));
+        installApps(MetaOrgan(dao), _testrpc);
+        issueToken(address(dao), address(token));
 
         DeployedDAO(dao);
     }
@@ -81,8 +83,9 @@ contract BasicFactory {
 
     }
 
-    function installApps(MetaOrgan dao) internal {
-        Application deployedbylawsapp = Application(forwarderFactory.createForwarder(bylawsapp));
+    function installApps(MetaOrgan dao, bool _testrpc) internal {
+        // Proxies are not working on testrpc, that's why for testing no proxy is created
+        Application deployedbylawsapp = Application(_testrpc ? bylawsapp : forwarderFactory.createForwarder(bylawsapp));
         deployedbylawsapp.setDAO(address(dao));
         bytes4[] memory bylawsappSigs = new bytes4[](15);
         bylawsappSigs[0] = 0x1d304a28; // getStatusBylaw(uint256)
@@ -101,7 +104,9 @@ contract BasicFactory {
         bylawsappSigs[13] = 0xe69308d2; // getCombinatorBylaw(uint256)
         bylawsappSigs[14] = 0xea986c0a; // bylawEntrypoint(bytes4)
         dao.installApp(deployedbylawsapp, bylawsappSigs);
-        Application deployedownershipapp = Application(forwarderFactory.createForwarder(ownershipapp));
+
+        // Proxies are not working on testrpc, that's why for testing no proxy is created
+        Application deployedownershipapp = Application(_testrpc ? ownershipapp : forwarderFactory.createForwarder(ownershipapp));
         deployedownershipapp.setDAO(address(dao));
         bytes4[] memory ownershipappSigs = new bytes4[](23);
         ownershipappSigs[0] = 0x10451468; // sale_closeSale()
@@ -128,13 +133,17 @@ contract BasicFactory {
         ownershipappSigs[21] = 0xf48c3054; // proxyPayment(address)
         ownershipappSigs[22] = 0xf881a92f; // grantTokens(address,address,uint256)
         dao.installApp(deployedownershipapp, ownershipappSigs);
-        Application deployedstatusapp = Application(forwarderFactory.createForwarder(statusapp));
+
+        // Proxies are not working on testrpc, that's why for testing no proxy is created
+        Application deployedstatusapp = Application(_testrpc ? statusapp : forwarderFactory.createForwarder(statusapp));
         deployedstatusapp.setDAO(address(dao));
         bytes4[] memory statusappSigs = new bytes4[](2);
         statusappSigs[0] = 0x6035fa06; // setEntityStatus(address,uint8)
         statusappSigs[1] = 0x6b87cdc4; // entityStatus(address)
         dao.installApp(deployedstatusapp, statusappSigs);
-        Application deployedvotingapp = Application(forwarderFactory.createForwarder(votingapp));
+
+        // Proxies are not working on testrpc, that's why for testing no proxy is created
+        Application deployedvotingapp = Application(_testrpc ? votingapp : forwarderFactory.createForwarder(votingapp));
         deployedvotingapp.setDAO(address(dao));
         bytes4[] memory votingappSigs = new bytes4[](13);
         votingappSigs[0] = 0x014396f2; // voteNay(uint256)
@@ -151,5 +160,11 @@ contract BasicFactory {
         votingappSigs[11] = 0xcf9883e2; // voteYayAndClose(uint256)
         votingappSigs[12] = 0xeb67cee8; // contractSize(address)
         dao.installApp(deployedvotingapp, votingappSigs);
+
+    }
+
+    function issueToken(address dao, address token) internal {
+        OwnershipApp(dao).addToken(address(token), 1, 1, 1);
+        OwnershipApp(dao).grantTokens(address(token), msg.sender, 1);
     }
 }
