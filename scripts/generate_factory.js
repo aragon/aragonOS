@@ -8,6 +8,7 @@ const factoryTemplate = path.join(process.cwd(), '../contracts/factories/BasicFa
 const resultFile = path.join(process.cwd(), '../contracts/factories/BasicFactory.sol')
 
 const getContract = x => artifacts.require(x)
+const flatten = x => [].concat.apply([], x)
 
 const organNames = ['organs/MetaOrgan.sol', 'organs/VaultOrgan.sol', 'organs/ActionsOrgan.sol']
 const appNames = ['apps/bylaws/BylawsApp.sol', 'apps/ownership/OwnershipApp.sol', 'apps/status/StatusApp.sol', 'apps/basic-governance/VotingApp.sol']
@@ -15,7 +16,7 @@ const excludeOrgans = ['IOrgan'].map(getContract)
 const excludeApps = ['Application'].map(getContract)
 
 const getBylaws = (f) => {
-    const filePath = path.join(process.cwd(), '../contracts', f)
+    const filePath = path.join(process.cwd(), 'contracts', f)
     const functions = inspector.parseFile(filePath).toJSON().functions
     return Object.keys(functions)
                 .map(k => functions[k])
@@ -23,13 +24,14 @@ const getBylaws = (f) => {
                 .filter(x => x.bylaw)
 }
 
-console.log(getBylaws(organNames[0]))
 
 const contractName = p => path.basename(p).split('.')[0].toLowerCase()
 
 module.exports = (done) => {
     fs.readFile(factoryTemplate, { encoding: 'utf-8'}, (err, file) => {
         const template = Handlebars.compile(file)
+
+        console.log(flatten(organNames.concat(appNames).map(getBylaws)))
 
         const organData = organNames.map((o, i) => (
             { name: contractName(o), sigs: signatures(getContract(o), excludeOrgans, web3, true) }
