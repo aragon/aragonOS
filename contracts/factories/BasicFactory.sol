@@ -43,6 +43,7 @@ contract BasicFactory {
         installOrgans(MetaOrgan(dao));
         installApps(MetaOrgan(dao), _testrpc);
         issueToken(address(dao), address(token));
+        // TODO: set status for sender
 
         DeployedDAO(dao);
     }
