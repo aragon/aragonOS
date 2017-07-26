@@ -2,8 +2,8 @@ pragma solidity ^0.4.11;
 
 import "./IVaultOrgan.sol";
 
+import "./IOrgan.sol";
 import "../tokens/EtherToken.sol";
-import "./MetaOrgan.sol";
 import "zeppelin/SafeMath.sol";
 
 contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {

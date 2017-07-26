@@ -1,11 +1,10 @@
 pragma solidity ^0.4.11;
 
-import "../dao/DAOStorage.sol";
+import "../organs/IOrgan.sol";
 import "./IApplication.sol";
 
-
 contract Application is IApplication {
-    DAOStorage.DAOMessage dao_msg;
+    IOrgan.DAOMessage dao_msg;
     address public dao;
 
     modifier onlyDAO {
@@ -21,12 +20,7 @@ contract Application is IApplication {
         dao = newDAO;
     }
 
-    function setDAOMsg(
-        address sender,
-        address token,
-        uint value
-    ) onlyDAO
-    {
+    function setDAOMsg(address sender, address token, uint value) onlyDAO {
         dao_msg.sender = sender;
         dao_msg.token = token;
         dao_msg.value = value;

@@ -4,7 +4,7 @@ var MetaOrgan = artifacts.require('MetaOrgan')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var OwnershipApp = artifacts.require('OwnershipApp')
 var MiniMeToken = artifacts.require('MiniMeIrrevocableVestedToken')
-var Controller = artifacts.require('Controller')
+var Controller = artifacts.require('MiniMeController')
 var VotingApp = artifacts.require('./mocks/VotingAppMock')
 var Vote = artifacts.require('Vote')
 
