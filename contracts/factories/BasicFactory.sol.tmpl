@@ -50,7 +50,7 @@ contract BasicFactory {
         {{#organs}}
         bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
         {{#sigs}}
-        {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
+        {{../name}}Sigs[{{@index}}] = o{{@../index}}_s{{@index}}; // {{name}}
         {{/sigs}}
         dao.installOrgan({{name}}, {{name}}Sigs);
 
@@ -64,7 +64,7 @@ contract BasicFactory {
         deployed{{name}}.setDAO(address(dao));
         bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
         {{#sigs}}
-        {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
+        {{../name}}Sigs[{{@index}}] = a{{@../index}}_s{{@index}}; // {{name}}
         {{/sigs}}
         dao.installApp(deployed{{name}}, {{name}}Sigs);
 
@@ -75,4 +75,16 @@ contract BasicFactory {
         OwnershipApp(dao).addToken(address(token), 1, 1, 1);
         OwnershipApp(dao).grantTokens(address(token), msg.sender, 1);
     }
+
+    {{#organs}}
+    {{#sigs}}
+    bytes4 constant o{{@../index}}_s{{@index}} = {{bytes}};
+    {{/sigs}}
+    {{/organs}}
+
+    {{#apps}}
+    {{#sigs}}
+    bytes4 constant a{{@../index}}_s{{@index}} = {{bytes}};
+    {{/sigs}}
+    {{/apps}}
 }

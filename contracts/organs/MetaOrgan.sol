@@ -10,7 +10,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Destruct organization for ever (non-recoverable)
-    * @bylaw voting: 80, 100
+    * #bylaw voting: 80, 100
     */
     function ceaseToExist() public {
         // Check it is called in DAO context and not from the outside which would
@@ -22,7 +22,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Change DAO Kernel to Kernel at address `address`
-    * @bylaw voting: 75, 0
+    * #bylaw voting: 75, 0
     */
     function replaceKernel(address newKernel) public {
         setKernel(newKernel);
@@ -31,7 +31,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Set `address` as permissions oracle
-    * @bylaw voting: 75, 0
+    * #bylaw voting: 75, 0
     */
     function setPermissionsOracle(address newOracle) public {
         storageSet(PERMISSION_ORACLE_KEY, uint256(newOracle));
@@ -40,7 +40,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Install application at address `address`
-    * @bylaw status: 3
+    * #bylaw status: 3
     * @param appAddress address of the receiving contract for functions
     * @param sigs should be ordered from 0x0 to 0xffffffff
     */
@@ -50,7 +50,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Install organ at address `address`
-    * @bylaw voting: 75, 0
+    * #bylaw voting: 75, 0
     * @param organAddress address of the receiving contract for functions
     * @param sigs should be ordered from 0x0 to 0xffffffff
     */
@@ -60,7 +60,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Remove organ, you will lose functionality in your org
-    * @bylaw voting: 75, 0
+    * #bylaw voting: 75, 0
     * @param sigs should be ordered from 0x0 to 0xffffffff
     */
     function removeOrgan(bytes4[] sigs) public {
@@ -69,7 +69,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
 
     /**
     * @notice Remove application, you will lose functionality in your org
-    * @bylaw voting: 75, 0
+    * #bylaw voting: 75, 0
     * @param sigs should be ordered from 0x0 to 0xffffffff
     */
     function removeApp(bytes4[] sigs) public {
