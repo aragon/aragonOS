@@ -7,25 +7,29 @@ pragma solidity ^0.4.11;
 import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
-import "./ApplicationFactory.sol";
+import "../apps/Application.sol";
+import "./ForwarderFactory.sol";
 
 contract BasicFactory {
-    address kernel;
+    event DeployedDAO(address dao);
+    address public kernel;
+    ForwarderFactory public forwarderFactory;
     {{#organs}}
-    address {{name}};
+    address public {{name}};
     {{/organs}}
 
     {{#apps}}
-    ApplicationFactory {{name}};
+    address public {{name}};
     {{/apps}}
 
-    function BasicFactory(address _kernel, {{#organs}}address _{{name}}, {{/organs}}{{#apps}}address _{{name}}{{^last}}, {{/last}}{{/apps}}) {
+    function BasicFactory(address _kernel, ForwarderFactory _forwarderFactory, {{#organs}}address _{{name}}, {{/organs}}{{#apps}}address _{{name}}{{^last}}, {{/last}}{{/apps}}) {
         kernel = _kernel;
+        forwarderFactory = _forwarderFactory;
         {{#organs}}
         {{name}} = _{{name}};
         {{/organs}}
         {{#apps}}
-        {{name}} = ApplicationFactory(_{{name}});
+        {{name}} = _{{name}};
         {{/apps}}
     }
 
@@ -34,6 +38,9 @@ contract BasicFactory {
         DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
+        installApps(MetaOrgan(dao));
+
+        DeployedDAO(dao);
     }
 
     function installOrgans(MetaOrgan dao) internal {
@@ -49,13 +56,13 @@ contract BasicFactory {
 
     function installApps(MetaOrgan dao) internal {
         {{#apps}}
-        address deployed{{name}} = {{name}}.deployApp(address(dao));
+        Application deployed{{name}} = Application(forwarderFactory.createForwarder({{name}}));
+        deployed{{name}}.setDAO(address(dao));
         bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
         {{#sigs}}
         {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
         {{/sigs}}
-        dao.installOrgan(deployed{{name}}, {{name}}Sigs);
-
+        dao.installApp(deployed{{name}}, {{name}}Sigs);
         {{/apps}}
     }
 }

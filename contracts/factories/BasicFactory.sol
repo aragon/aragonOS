@@ -7,33 +7,42 @@ pragma solidity ^0.4.11;
 import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
-import "./ApplicationFactory.sol";
+import "../apps/Application.sol";
+import "./ForwarderFactory.sol";
 
 contract BasicFactory {
-    address metaorgan;
-    address vaultorgan;
-    address actionsorgan;
+    event DeployedDAO(address dao);
+    address public kernel;
+    ForwarderFactory public forwarderFactory;
+    address public metaorgan;
+    address public vaultorgan;
+    address public actionsorgan;
 
-    ApplicationFactory bylawsapp;
-    ApplicationFactory ownershipapp;
-    ApplicationFactory statusapp;
-    ApplicationFactory votingapp;
+    address public bylawsapp;
+    address public ownershipapp;
+    address public statusapp;
+    address public votingapp;
 
-    function BasicFactory(address _kernel, address _metaorgan, address _vaultorgan, address _actionsorgan, address _bylawsapp, address _ownershipapp, address _statusapp, address _votingapp) {
+    function BasicFactory(address _kernel, ForwarderFactory _forwarderFactory, address _metaorgan, address _vaultorgan, address _actionsorgan, address _bylawsapp, address _ownershipapp, address _statusapp, address _votingapp) {
+        kernel = _kernel;
+        forwarderFactory = _forwarderFactory;
         metaorgan = _metaorgan;
         vaultorgan = _vaultorgan;
         actionsorgan = _actionsorgan;
-        bylawsapp = ApplicationFactory(_bylawsapp);
-        ownershipapp = ApplicationFactory(_ownershipapp);
-        statusapp = ApplicationFactory(_statusapp);
-        votingapp = ApplicationFactory(_votingapp);
+        bylawsapp = _bylawsapp;
+        ownershipapp = _ownershipapp;
+        statusapp = _statusapp;
+        votingapp = _votingapp;
     }
 
     function create(string _tokenName, string _tokenSymbol) {
         MiniMeIrrevocableVestedToken token = new MiniMeIrrevocableVestedToken(0, 0, 0, _tokenName, 1, _tokenSymbol, true);
-        DAO dao = new DAO(0);
+        DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
+        installApps(MetaOrgan(dao));
+
+        DeployedDAO(dao);
     }
 
     function installOrgans(MetaOrgan dao) internal {
@@ -73,7 +82,8 @@ contract BasicFactory {
     }
 
     function installApps(MetaOrgan dao) internal {
-        address deployedbylawsapp = bylawsapp.deployApp(address(dao));
+        Application deployedbylawsapp = Application(forwarderFactory.createForwarder(bylawsapp));
+        deployedbylawsapp.setDAO(address(dao));
         bytes4[] memory bylawsappSigs = new bytes4[](15);
         bylawsappSigs[0] = 0x1d304a28; // getStatusBylaw(uint256)
         bylawsappSigs[1] = 0x29fcb9e4; // setCombinatorBylaw(uint256,uint256,uint256,bool)
@@ -90,9 +100,9 @@ contract BasicFactory {
         bylawsappSigs[12] = 0xe289793e; // getBylawNot(uint256)
         bylawsappSigs[13] = 0xe69308d2; // getCombinatorBylaw(uint256)
         bylawsappSigs[14] = 0xea986c0a; // bylawEntrypoint(bytes4)
-        dao.installOrgan(deployedbylawsapp, bylawsappSigs);
-
-        address deployedownershipapp = ownershipapp.deployApp(address(dao));
+        dao.installApp(deployedbylawsapp, bylawsappSigs);
+        Application deployedownershipapp = Application(forwarderFactory.createForwarder(ownershipapp));
+        deployedownershipapp.setDAO(address(dao));
         bytes4[] memory ownershipappSigs = new bytes4[](23);
         ownershipappSigs[0] = 0x10451468; // sale_closeSale()
         ownershipappSigs[1] = 0x1fbc147b; // getTokenSale(uint256)
@@ -117,15 +127,15 @@ contract BasicFactory {
         ownershipappSigs[20] = 0xe4b50cb8; // getToken(uint256)
         ownershipappSigs[21] = 0xf48c3054; // proxyPayment(address)
         ownershipappSigs[22] = 0xf881a92f; // grantTokens(address,address,uint256)
-        dao.installOrgan(deployedownershipapp, ownershipappSigs);
-
-        address deployedstatusapp = statusapp.deployApp(address(dao));
+        dao.installApp(deployedownershipapp, ownershipappSigs);
+        Application deployedstatusapp = Application(forwarderFactory.createForwarder(statusapp));
+        deployedstatusapp.setDAO(address(dao));
         bytes4[] memory statusappSigs = new bytes4[](2);
         statusappSigs[0] = 0x6035fa06; // setEntityStatus(address,uint8)
         statusappSigs[1] = 0x6b87cdc4; // entityStatus(address)
-        dao.installOrgan(deployedstatusapp, statusappSigs);
-
-        address deployedvotingapp = votingapp.deployApp(address(dao));
+        dao.installApp(deployedstatusapp, statusappSigs);
+        Application deployedvotingapp = Application(forwarderFactory.createForwarder(votingapp));
+        deployedvotingapp.setDAO(address(dao));
         bytes4[] memory votingappSigs = new bytes4[](13);
         votingappSigs[0] = 0x014396f2; // voteNay(uint256)
         votingappSigs[1] = 0x0519bb83; // getVoteStatus(uint256)
@@ -140,7 +150,6 @@ contract BasicFactory {
         votingappSigs[10] = 0xad5dd1f5; // getStatusForVoteAddress(address)
         votingappSigs[11] = 0xcf9883e2; // voteYayAndClose(uint256)
         votingappSigs[12] = 0xeb67cee8; // contractSize(address)
-        dao.installOrgan(deployedvotingapp, votingappSigs);
-
+        dao.installApp(deployedvotingapp, votingappSigs);
     }
 }
