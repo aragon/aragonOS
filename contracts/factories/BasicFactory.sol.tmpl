@@ -1,0 +1,61 @@
+/*
+{{ disclaimer }}
+*/
+
+pragma solidity ^0.4.11;
+
+import "../tokens/MiniMeIrrevocableVestedToken.sol";
+import "../dao/DAO.sol";
+import "../organs/MetaOrgan.sol";
+import "./ApplicationFactory.sol";
+
+contract BasicFactory {
+    address kernel;
+    {{#organs}}
+    address {{name}};
+    {{/organs}}
+
+    {{#apps}}
+    ApplicationFactory {{name}};
+    {{/apps}}
+
+    function BasicFactory(address _kernel, {{#organs}}address _{{name}}, {{/organs}}{{#apps}}address _{{name}}{{^last}}, {{/last}}{{/apps}}) {
+        kernel = _kernel;
+        {{#organs}}
+        {{name}} = _{{name}};
+        {{/organs}}
+        {{#apps}}
+        {{name}} = ApplicationFactory(_{{name}});
+        {{/apps}}
+    }
+
+    function create(string _tokenName, string _tokenSymbol) {
+        MiniMeIrrevocableVestedToken token = new MiniMeIrrevocableVestedToken(0, 0, 0, _tokenName, 1, _tokenSymbol, true);
+        DAO dao = new DAO(kernel);
+        token.changeController(address(dao));
+        installOrgans(MetaOrgan(dao));
+    }
+
+    function installOrgans(MetaOrgan dao) internal {
+        {{#organs}}
+        bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
+        {{#sigs}}
+        {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
+        {{/sigs}}
+        dao.installOrgan({{name}}, {{name}}Sigs);
+
+        {{/organs}}
+    }
+
+    function installApps(MetaOrgan dao) internal {
+        {{#apps}}
+        address deployed{{name}} = {{name}}.deployApp(address(dao));
+        bytes4[] memory {{name}}Sigs = new bytes4[]({{sigs.length}});
+        {{#sigs}}
+        {{../name}}Sigs[{{@index}}] = {{bytes}}; // {{name}}
+        {{/sigs}}
+        dao.installOrgan(deployed{{name}}, {{name}}Sigs);
+
+        {{/apps}}
+    }
+}
