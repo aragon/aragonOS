@@ -9,6 +9,7 @@ import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
 import "../apps/Application.sol";
 import "../apps/ownership/OwnershipApp.sol";
+import "../apps/bylaws/BylawsApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
@@ -39,8 +40,10 @@ contract BasicFactory {
         DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
-        installApps(MetaOrgan(dao), _testrpc);
+        address bylawsApp = installApps(MetaOrgan(dao), _testrpc);
         issueToken(address(dao), address(token));
+        installBylaws(BylawsApp(bylawsApp), BylawsApp(address(dao)));
+        MetaOrgan(dao).setPermissionsOracle(bylawsApp);
         // TODO: set status for sender
 
         DeployedDAO(dao);
@@ -57,7 +60,7 @@ contract BasicFactory {
         {{/organs}}
     }
 
-    function installApps(MetaOrgan dao, bool _testrpc) internal {
+    function installApps(MetaOrgan dao, bool _testrpc) internal returns (address app) {
         {{#apps}}
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployed{{name}} = Application(_testrpc ? {{name}} : forwarderFactory.createForwarder({{name}}));
@@ -69,6 +72,37 @@ contract BasicFactory {
         dao.installApp(deployed{{name}}, {{name}}Sigs);
 
         {{/apps}}
+        return deployed{{apps.0.name}}; // first app is bylaws
+    }
+
+    function installBylaws(BylawsApp bylaws, BylawsApp dao_bylaws) internal {
+        {{#bylaws}}
+        {{#if status}}
+        uint bylaw_id_{{@index}} = bylaws.setStatusBylaw({{status.[0]}}, false, false);
+        {{/if}}
+        {{#if voting}}
+        uint bylaw_id_{{@index}} = bylaws.setVotingBylaw(pct({{voting.[0]}}), pct({{voting.[1]}}), 1 days, 7 days, false);
+        {{/if}}
+        {{/bylaws}}
+
+        {{#organs}}
+        {{#sigs}}
+        {{#if bylaw}}
+        dao_bylaws.linkBylaw(o{{@../index}}_s{{@index}}, bylaw_id_{{bylaw}}); // {{name}}
+        {{/if}}
+        {{/sigs}}
+        {{/organs}}
+        {{#apps}}
+        {{#sigs}}
+        {{#if bylaw}}
+        dao_bylaws.linkBylaw(a{{@../index}}_s{{@index}}, bylaw_id_{{bylaw}}); // {{name}}
+        {{/if}}
+        {{/sigs}}
+        {{/apps}}
+    }
+
+    function pct(uint x) internal constant returns (uint) {
+        return x * 10 ** 16;
     }
 
     function issueToken(address dao, address token) internal {
@@ -78,13 +112,13 @@ contract BasicFactory {
 
     {{#organs}}
     {{#sigs}}
-    bytes4 constant o{{@../index}}_s{{@index}} = {{bytes}};
+    bytes4 constant o{{@../index}}_s{{@index}} = {{bytes}}; // {name}
     {{/sigs}}
     {{/organs}}
 
     {{#apps}}
     {{#sigs}}
-    bytes4 constant a{{@../index}}_s{{@index}} = {{bytes}};
+    bytes4 constant a{{@../index}}_s{{@index}} = {{bytes}}; // {name}
     {{/sigs}}
     {{/apps}}
 }

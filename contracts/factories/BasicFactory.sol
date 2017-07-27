@@ -9,6 +9,7 @@ import "../dao/DAO.sol";
 import "../organs/MetaOrgan.sol";
 import "../apps/Application.sol";
 import "../apps/ownership/OwnershipApp.sol";
+import "../apps/bylaws/BylawsApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
@@ -41,8 +42,10 @@ contract BasicFactory {
         DAO dao = new DAO(kernel);
         token.changeController(address(dao));
         installOrgans(MetaOrgan(dao));
-        installApps(MetaOrgan(dao), _testrpc);
+        address bylawsApp = installApps(MetaOrgan(dao), _testrpc);
         issueToken(address(dao), address(token));
+        installBylaws(BylawsApp(bylawsApp), BylawsApp(address(dao)));
+        MetaOrgan(dao).setPermissionsOracle(bylawsApp);
         // TODO: set status for sender
 
         DeployedDAO(dao);
@@ -84,11 +87,11 @@ contract BasicFactory {
 
     }
 
-    function installApps(MetaOrgan dao, bool _testrpc) internal {
+    function installApps(MetaOrgan dao, bool _testrpc) internal returns (address app) {
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedbylawsapp = Application(_testrpc ? bylawsapp : forwarderFactory.createForwarder(bylawsapp));
         deployedbylawsapp.setDAO(address(dao));
-        bytes4[] memory bylawsappSigs = new bytes4[](15);
+        bytes4[] memory bylawsappSigs = new bytes4[](14);
         bylawsappSigs[0] = a0_s0; // getStatusBylaw(uint256)
         bylawsappSigs[1] = a0_s1; // setCombinatorBylaw(uint256,uint256,uint256,bool)
         bylawsappSigs[2] = a0_s2; // linkBylaw(bytes4,uint256)
@@ -100,10 +103,9 @@ contract BasicFactory {
         bylawsappSigs[8] = a0_s8; // getVotingBylaw(uint256)
         bylawsappSigs[9] = a0_s9; // setAddressBylaw(address,bool,bool)
         bylawsappSigs[10] = a0_s10; // canPerformAction(address,address,uint256,bytes)
-        bylawsappSigs[11] = a0_s11; // canPerformAction(bytes4,address,bytes,address,uint256)
-        bylawsappSigs[12] = a0_s12; // getBylawNot(uint256)
-        bylawsappSigs[13] = a0_s13; // getCombinatorBylaw(uint256)
-        bylawsappSigs[14] = a0_s14; // bylawEntrypoint(bytes4)
+        bylawsappSigs[11] = a0_s11; // getBylawNot(uint256)
+        bylawsappSigs[12] = a0_s12; // getCombinatorBylaw(uint256)
+        bylawsappSigs[13] = a0_s13; // bylawEntrypoint(bytes4)
         dao.installApp(deployedbylawsapp, bylawsappSigs);
 
         // Proxies are not working on testrpc, that's why for testing no proxy is created
@@ -162,6 +164,24 @@ contract BasicFactory {
         votingappSigs[12] = a3_s12; // contractSize(address)
         dao.installApp(deployedvotingapp, votingappSigs);
 
+        return deployedbylawsapp; // first app is bylaws
+    }
+
+    function installBylaws(BylawsApp bylaws, BylawsApp dao_bylaws) internal {
+        uint bylaw_id_0 = bylaws.setVotingBylaw(pct(80), pct(100), 1 days, 7 days, false);
+        uint bylaw_id_1 = bylaws.setVotingBylaw(pct(75), pct(0), 1 days, 7 days, false);
+        uint bylaw_id_2 = bylaws.setStatusBylaw(3, false, false);
+
+        dao_bylaws.linkBylaw(o0_s0, bylaw_id_1); // setPermissionsOracle(address)
+        dao_bylaws.linkBylaw(o0_s1, bylaw_id_1); // removeOrgan(bytes4[])
+        dao_bylaws.linkBylaw(o0_s2, bylaw_id_1); // installOrgan(address,bytes4[])
+        dao_bylaws.linkBylaw(o0_s3, bylaw_id_2); // installApp(address,bytes4[])
+        dao_bylaws.linkBylaw(o0_s6, bylaw_id_1); // removeApp(bytes4[])
+        dao_bylaws.linkBylaw(o0_s7, bylaw_id_1); // replaceKernel(address)
+    }
+
+    function pct(uint x) internal constant returns (uint) {
+        return x * 10 ** 16;
     }
 
     function issueToken(address dao, address token) internal {
@@ -205,10 +225,9 @@ contract BasicFactory {
     bytes4 constant a0_s8 = 0x7b0dfa35;
     bytes4 constant a0_s9 = 0x81a08245;
     bytes4 constant a0_s10 = 0xb18fe4f3;
-    bytes4 constant a0_s11 = 0xbbd8f9e1;
-    bytes4 constant a0_s12 = 0xe289793e;
-    bytes4 constant a0_s13 = 0xe69308d2;
-    bytes4 constant a0_s14 = 0xea986c0a;
+    bytes4 constant a0_s11 = 0xe289793e;
+    bytes4 constant a0_s12 = 0xe69308d2;
+    bytes4 constant a0_s13 = 0xea986c0a;
     bytes4 constant a1_s0 = 0x10451468;
     bytes4 constant a1_s1 = 0x1fbc147b;
     bytes4 constant a1_s2 = 0x3bc5de30;

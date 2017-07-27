@@ -104,7 +104,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         bytes data,
         address token,
         uint256 value
-    ) returns (bool)
+    ) internal returns (bool)
     {
         uint bylawId = bylawEntrypoint[sig];
 
@@ -237,20 +237,24 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         );
     }
 
-    function setStatusBylaw(uint8 statusNeeded, bool isSpecialStatus, bool not) {
+    function setStatusBylaw(uint8 statusNeeded, bool isSpecialStatus, bool not) returns (uint) {
         var (id, bylaw) = newBylaw();
 
         bylaw.bylawType = isSpecialStatus ? BylawType.SpecialStatus : BylawType.Status;
         bylaw.status = statusNeeded;
         bylaw.not = not;
+
+        return id;
     }
 
-    function setAddressBylaw(address addr, bool isOracle, bool not) {
+    function setAddressBylaw(address addr, bool isOracle, bool not) returns (uint) {
         var (id, bylaw) = newBylaw();
 
         bylaw.bylawType = isOracle ? BylawType.Oracle : BylawType.Address;
         bylaw.addr = addr;
         bylaw.not = not;
+
+        return id;
     }
 
     function setVotingBylaw(
@@ -259,7 +263,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         uint64 minDebateTime,
         uint64 minVotingTime,
         bool not
-    ) {
+    ) returns (uint) {
         var (id, bylaw) = newBylaw();
 
         require(supportPct > 0 && supportPct <= PCT_BASE); // dont allow weird cases
@@ -270,6 +274,8 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         bylaw.voting.minDebateTime = minDebateTime;
         bylaw.voting.minVotingTime = minVotingTime;
         bylaw.not = not;
+
+        return id;
     }
 
     function setCombinatorBylaw(
@@ -279,6 +285,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         bool not
     )
     existing_bylaw(leftBylawId) existing_bylaw(rightBylawId)
+    returns (uint)
     {
         var (id, bylaw) = newBylaw();
         // 'Use' id to ignore error
@@ -290,6 +297,8 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         bylaw.combinator.leftBylawId = leftBylawId;
         bylaw.combinator.rightBylawId = rightBylawId;
         bylaw.not = not;
+
+        return id;
     }
 
     modifier existing_bylaw(uint bylawId) {

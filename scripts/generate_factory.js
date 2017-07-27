@@ -19,7 +19,9 @@ const parseBylaw = bylaw => {
     const args = bylaw.split(':')
     if (args.length != 2) return console.log('Invalid bylaw syntax', bylaw)
 
-    return { type: args[0], params: args[1].split(',') }
+    let dir = {}
+    dir[args[0]] = args[1].split(',')
+    return dir
 }
 
 const flattenBylaws = x => {
@@ -28,7 +30,7 @@ const flattenBylaws = x => {
         .forEach(x => bylaws[x.bylaw] = !bylaws[x.bylaw] ? [x.name] : bylaws[x.bylaw].concat([x.name]))
 
     return Object.keys(bylaws)
-        .map((k, i) => ({id: i + 1, bylaw: parseBylaw(k), functions: bylaws[k] }))
+        .map((k, i) => ({id: i, bylaw: parseBylaw(k), functions: bylaws[k] }))
 }
 
 const getBylaws = (f) => {
@@ -39,9 +41,20 @@ const getBylaws = (f) => {
                 .filter(x => x.bylaw)
 }
 
-const contractName = p => path.basename(p).split('.')[0].toLowerCase()
+const assignBylaw = (bylaws, fn) => {
+    for (var bylaw of bylaws) {
+        for (var _fn of bylaw.functions) {
+            // remove [] as solidity-parser fails to get array types
+            if (fn.name.replace(/\[\]/g, '') == _fn) {
+                fn.bylaw = bylaw.id
+                return fn
+            }
+        }
+    }
+    return fn
+}
 
-const assignBylaw =
+const contractName = p => path.basename(p).split('.')[0].toLowerCase()
 
 module.exports = (done) => {
     fs.readFile(factoryTemplate, { encoding: 'utf-8'}, (err, file) => {
@@ -49,13 +62,15 @@ module.exports = (done) => {
 
         const bylaws = flattenBylaws(organNames.concat(appNames).map(getBylaws))
 
-        const organData = organNames.map((o, i) => (
-            { name: contractName(o), sigs: signatures(getContract(o), excludeOrgans, web3, true) }
-        ))
+        const organData = organNames.map((o, i) => {
+            const sigs = signatures(getContract(o), excludeOrgans, web3, true)
+            return { name: contractName(o), sigs: sigs.map(x => assignBylaw(bylaws, x)) }
+        })
 
-        const appData = appNames.map((a, i) => (
-            { name: contractName(a), sigs: signatures(getContract(a), excludeApps, web3, true) }
-        ))
+        const appData = appNames.map((a, i) => {
+            const sigs = signatures(getContract(a), excludeApps, web3, true)
+            return { name: contractName(a), sigs: sigs.map(x => assignBylaw(bylaws, x)) }
+        })
 
         appData[appData.length-1].last = true
 
@@ -63,6 +78,7 @@ module.exports = (done) => {
             disclaimer: 'This is an automatically generated file. Please edit BasicFactory.sol.tmpl or the generate_factory.js script',
             apps: appData,
             organs: organData,
+            bylaws: bylaws.map(x => x.bylaw),
         }
 
         const content = template(data)
