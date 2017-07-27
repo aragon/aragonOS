@@ -33,6 +33,7 @@ contract('Token sales', accounts => {
     token = await MiniMeToken.new('0x0', '0x0', 0, 'hola', 18, '', true)
     await token.changeController(dao.address)
     await ownershipApp.addToken(token.address, 0, 1, 1)
+    await vault.setupEtherToken()
   })
 
   context('creating individual token sale', () => {
@@ -119,7 +120,6 @@ contract('Token sales', accounts => {
     const buyer = accounts[3]
 
     beforeEach(async () => {
-      await vault.setupEtherToken()
       const etherToken = await vault.getEtherToken()
 
       sale = await IndividualSale.new()

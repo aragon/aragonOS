@@ -86,7 +86,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     */
     function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
         // TODO: Check whether msg.sender token is trusted
-        require(_token == msg.sender);
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
         dispatch(_sender, _token, _value, _data);
     }
