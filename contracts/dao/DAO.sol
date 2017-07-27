@@ -10,7 +10,6 @@ pragma solidity ^0.4.11;
 */
 
 import "./DAOStorage.sol";
-
 contract DAO is DAOStorage {
 	/**
 	* @dev DAO constructor references to the DAO kernel and saves its own identity as self
@@ -37,7 +36,7 @@ contract DAO is DAOStorage {
         assembly {
             calldatacopy(0x0, 0x0, calldatasize)
             let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
-            jumpi(invalidJumpLabel, iszero(result))
+            switch result case 0 { invalid() }
             return(0, len)
         }
     }

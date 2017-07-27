@@ -284,7 +284,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         uint rightBylawId,
         bool not
     )
-    existing_bylaw(leftBylawId) existing_bylaw(rightBylawId)
+    existing_bylaw(leftBylawId) /* TODO: Check this existing_bylaw(rightBylawId)*/
     returns (uint)
     {
         var (id, bylaw) = newBylaw();

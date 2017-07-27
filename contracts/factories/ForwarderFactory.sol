@@ -14,7 +14,7 @@ contract ForwarderFactory {
             mstore(add(contractCode, 0x1b), shiftedAddress) // Add target address
             mstore(add(contractCode, 0x2f), b2)             // Final part of bytecode
             fwdContract := create(0, contractCode, 0x3A)    // total length 58 dec = 3a
-            jumpi(invalidJumpLabel, iszero(extcodesize(fwdContract)))
+            switch extcodesize(fwdContract) case 0 { invalid() }
         }
 
         ForwarderDeployed(fwdContract, target);
