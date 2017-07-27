@@ -166,7 +166,7 @@ contract('Bylaws', accounts => {
     it('normal vote flow', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
       await votingApp.voteNay(1, { from: holder20 })
@@ -187,7 +187,7 @@ contract('Bylaws', accounts => {
     it('vote prematurely decided flow with vote yay and execute', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
       await votingApp.voteYay(1, { from: holder31 })
@@ -199,7 +199,7 @@ contract('Bylaws', accounts => {
     it('throws if voting hasnt been successful', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteNay(1, { from: holder31 })
       await votingApp.voteYay(1, { from: holder20 })
@@ -217,7 +217,7 @@ contract('Bylaws', accounts => {
     it('throws if voting had no votes', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
 
       try {
@@ -231,7 +231,7 @@ contract('Bylaws', accounts => {
     it('throws if voting didnt get enough quorum', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder20 })
 
@@ -248,7 +248,7 @@ contract('Bylaws', accounts => {
     it('throws when attempting to execute action twice', async () => {
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.linkBylaw(changeKernelSig, 1)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
       await votingApp.voteNay(1, { from: holder20 })

@@ -53,7 +53,7 @@ contract('VotingApp', accounts => {
 
     it('throws when vote bytecode is not valid', async () => {
       try {
-        await votingApp.createVote(dao.address, startBlock, finalBlock, pct16(50))
+        await votingApp.createVote(dao.address, startBlock, finalBlock)
       } catch (error) {
         return assertThrow(error)
       }
@@ -62,7 +62,7 @@ contract('VotingApp', accounts => {
 
     it('throws when vote address is a normal account', async () => {
       try {
-        await votingApp.createVote(accounts[1], startBlock, finalBlock, pct16(50))
+        await votingApp.createVote(accounts[1], startBlock, finalBlock)
       } catch (error) {
         return assertThrow(error)
       }
@@ -74,7 +74,7 @@ contract('VotingApp', accounts => {
       startBlock = currentBlock + 5
       finalBlock = currentBlock + 10
       await votingApp.mock_setBlockNumber(currentBlock)
-      await votingApp.createVote(vote.address, startBlock, finalBlock, pct16(50))
+      await votingApp.createVote(vote.address, startBlock, finalBlock)
     })
 
     it('has correct initial state', async () => {
