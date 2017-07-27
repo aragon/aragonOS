@@ -145,7 +145,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 	event DebugString(string msg, string msg2);
 	event DebugUint(string msg, uint msg2);
 	event DebugAddress(string msg, address msg2);
-	function recordDeposit(address sender, address token, uint256 amount, string ref) {
+	function recordDeposit(address sender, address token, uint256 amount, string ref) internal {
 		var (accountingApp,) = get(NEW_TRANSACTION_SIG);
         if (amount == 0 || accountingApp == 0) return;
 		DebugUint('recordDeposit amount', amount);
