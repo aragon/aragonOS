@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 
 // Could be converted into a library. Would it be worth it gas wise?

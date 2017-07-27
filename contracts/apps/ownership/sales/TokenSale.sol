@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "zeppelin/token/ERC20.sol";
 import "../../../organs/VaultOrgan.sol";

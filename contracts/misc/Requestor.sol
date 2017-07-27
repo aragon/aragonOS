@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 
 // Simulates web3 ability to do token.transfer.request() that returns the data needed

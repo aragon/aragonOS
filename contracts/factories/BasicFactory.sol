@@ -2,7 +2,7 @@
 This is an automatically generated file. Please edit BasicFactory.sol.tmpl or the generate_factory.js script
 */
 
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
