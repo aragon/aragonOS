@@ -7,7 +7,7 @@ pragma solidity ^0.4.11;
 contract Requestor {
     bytes data;
 
-    function getData() returns (bytes) {
+    function getData() internal returns (bytes) {
         bytes memory d = data;
         data = new bytes(0); // remove storage on get so it refunds some gas
         return d;

@@ -18,7 +18,7 @@ contract CodeHelper {
         }
     }
 
-    function contractSize(address _addr) constant returns (uint size) {
+    function contractSize(address _addr) internal constant returns (uint size) {
         assembly { size := extcodesize(_addr) }
     }
 }
