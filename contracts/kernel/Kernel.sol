@@ -29,6 +29,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 
     bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
     bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,address,int256,string)'));
 
     function Kernel(address _deployedMeta) {
         deployedMeta = _deployedMeta;
@@ -89,14 +90,15 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
         require(canPerformAction(sender, token, value, payload));
 
         vaultDeposit(token, value); // deposit tokens that come with the call in the vault
-		//AccountingApp(address(this)).newTransaction(0x111, 0x100, 100, 'Ref 123');
-        if (payload.length == 0) return; // Just receive the tokens
+		recordDeposit(sender, token, value, "new deposit"); // recored the token deposit
+        if (payload.length == 0) {
+			return; // Just receive the tokens
+		}
 
         bytes4 sig;
         assembly { sig := mload(add(payload, 0x20)) }
         var (target, isDelegate) = get(sig);
         uint32 len = RETURN_MEMORY_SIZE;
-
         require(target > 0);
 
         // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
@@ -139,9 +141,20 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
     function vaultDeposit(address token, uint256 amount) internal {
         var (vaultOrgan,) = get(DEPOSIT_SIG);
         if (amount == 0 || vaultOrgan == 0) return;
-
-        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount)); // deposit(address,uint256)
+        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount)); 
     }
+
+	event DebugString(string msg, string msg2);
+	event DebugUint(string msg, uint msg2);
+	event DebugAddress(string msg, address msg2);
+	function recordDeposit(address sender, address token, uint256 amount, string ref) {
+		var (accountingApp,) = get(NEW_TRANSACTION_SIG);
+        if (amount == 0 || accountingApp == 0) return;
+		DebugUint('recordDeposit amount', amount);
+		DebugAddress('recordDeposit accountingApp', accountingApp);
+		DebugString('recordDeposit', ref);
+		//assert(accountingApp.call(NEW_TRANSACTION_SIG, sender, token, amount, ref));  // newTransaction(address,address,int256,string)
+	}
 
     function getPermissionsOracle() constant returns (address) {
         return address(storageGet(sha3(0x01, 0x03)));

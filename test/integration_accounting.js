@@ -7,16 +7,19 @@ var VaultOrgan = artifacts.require('VaultOrgan')
 var MockedApp = artifacts.require('./mocks/MockedApp')
 var Application = artifacts.require('Application')
 var Kernel = artifacts.require('Kernel')
+var EtherToken = artifacts.require('EtherToken')
 
+const { getBalance } = require('./helpers/web3')
 const createDAO = () => DAO.new(Kernel.address)
 const { installOrgans  } = require('./helpers/installer')
-const { signatures } = require('./helpers/web3')
+const { signatures, sendTransaction } = require('./helpers/web3')
 
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('AccountingApp', accounts => {
   let dao, metadao, kernel = {}
+  let randomAddress = 0
 
   beforeEach(async () => {
     dao = await createDAO()
@@ -83,5 +86,18 @@ contract('AccountingApp', accounts => {
             assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
         })
     })
+
+    it('can record transaction from incoming deposits', async () => {
+
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
+        await dao_accountingApp.startNextAccountingPeriod()
+        await sendTransaction({value: 100, from: accounts[0], to: dao.address});
+
+
+        let l = await dao_accountingApp.getTransactionsLength.call();
+        console.log(l)
+        assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
+    })
+
   })
 })

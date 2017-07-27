@@ -64,6 +64,10 @@ contract AccountingApp is Application, Crontab {
 
     event Debug(string reason);
 
+    function () {
+        Debug('Fallback');
+    }
+
     function AccountingApp(address _dao) Application(_dao) {
     }
 
@@ -91,7 +95,11 @@ contract AccountingApp is Application, Crontab {
         return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
     }
 
-    function getAccountingPeriodLength() public constant returns (uint) {
+    function getAccountingPeriodsLength() public constant returns (uint) {
+        return accountingPeriods.length;
+    }
+
+    function getTransactionsLength() public constant returns (uint) {
         return transactions.length;
     }
 
@@ -127,6 +135,7 @@ contract AccountingApp is Application, Crontab {
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
+        Debug('inside!!');
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
