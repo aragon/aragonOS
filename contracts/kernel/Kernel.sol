@@ -139,7 +139,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
     function vaultDeposit(address token, uint256 amount) internal {
         var (vaultOrgan,) = get(DEPOSIT_SIG);
         if (amount == 0 || vaultOrgan == 0) return;
-        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount)); 
+        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount));
     }
 
 	event DebugString(string msg, string msg2);
@@ -151,6 +151,8 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 		DebugUint('recordDeposit amount', amount);
 		DebugAddress('recordDeposit accountingApp', addr);
 		DebugString('recordDeposit', ref);
+
+        Application(addr).setDAOMsg(sender, token, amount);
 		AccountingApp(addr).newTransaction(sender, token, int256(amount), ref);  // newTransaction(address,address,int256,string)
 	}
 

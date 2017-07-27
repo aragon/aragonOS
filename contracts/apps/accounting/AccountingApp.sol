@@ -121,7 +121,7 @@ contract AccountingApp is Application, Crontab {
         return (tu.state, tu.reason);
     }
 
-    // onlyDAO 
+    // onlyDAO
 
     function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) onlyDAO {
         defaultAccountingPeriodSettings.baseToken = baseToken;
@@ -136,6 +136,7 @@ contract AccountingApp is Application, Crontab {
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
         Debug('newTransaction');
+
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
@@ -149,6 +150,7 @@ contract AccountingApp is Application, Crontab {
         })) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
+
         updateTransaction(tid, TransactionState.New, "new");
     }
 
@@ -158,7 +160,7 @@ contract AccountingApp is Application, Crontab {
             transactionId: transactionId,
             state: state,
             reason: reason,
-            actor: msg.sender
+            actor: dao_msg.sender
         })) - 1;
         transactionUpdatesRelation[transactionId].push(tuid);
     }
