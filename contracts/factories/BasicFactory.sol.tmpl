@@ -111,14 +111,15 @@ contract BasicFactory {
     }
 
     {{#organs}}
+    // {{name}}
     {{#sigs}}
-    bytes4 constant o{{@../index}}_s{{@index}} = {{bytes}}; // {name}
+    bytes4 constant o{{@../index}}_s{{@index}} = {{bytes}}; // {{name}}
     {{/sigs}}
     {{/organs}}
-
     {{#apps}}
+    // {{name}}
     {{#sigs}}
-    bytes4 constant a{{@../index}}_s{{@index}} = {{bytes}}; // {name}
+    bytes4 constant a{{@../index}}_s{{@index}} = {{bytes}}; // {{name}}
     {{/sigs}}
     {{/apps}}
 }
