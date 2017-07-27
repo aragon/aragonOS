@@ -134,7 +134,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     ) constant returns (bool)
     {
         uint voteId = voteForAddress[_voteAddress];
-        require(voteId > 0);
+        if (voteId == 0) return false;
         Vote vote = votes[voteId];
         if (vote.state == VoteState.Debate || vote.totalQuorum == 0)
             return false;
