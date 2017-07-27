@@ -90,10 +90,8 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
         require(canPerformAction(sender, token, value, payload));
 
         vaultDeposit(token, value); // deposit tokens that come with the call in the vault
-		recordDeposit(sender, token, value, "new deposit"); // recored the token deposit
-        if (payload.length == 0) {
-			return; // Just receive the tokens
-		}
+        recordDeposit(sender, token, value, "new deposit"); // recored the token deposit
+        if (payload.length == 0) return; // Just receive the tokens
 
         bytes4 sig;
         assembly { sig := mload(add(payload, 0x20)) }

@@ -91,10 +91,12 @@ contract('AccountingApp', accounts => {
 
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
+        //await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
+        //let l = await dao_accountingApp.getTransactionsLength.call();
+        //assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
+
         await sendTransaction({value: 100, from: accounts[0], to: dao.address});
-
-
-        let l = await dao_accountingApp.getTransactionsLength.call();
+        l = await dao_accountingApp.getTransactionsLength.call();
         console.log(l)
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
     })

@@ -135,7 +135,7 @@ contract AccountingApp is Application, Crontab {
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
-        Debug('inside!!');
+        Debug('newTransaction');
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
