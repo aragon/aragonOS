@@ -146,12 +146,12 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 	event DebugUint(string msg, uint msg2);
 	event DebugAddress(string msg, address msg2);
 	function recordDeposit(address sender, address token, uint256 amount, string ref) internal {
-		var (accountingApp,) = get(NEW_TRANSACTION_SIG);
-        if (amount == 0 || accountingApp == 0) return;
+		var (addr,) = get(NEW_TRANSACTION_SIG);
+        if (amount == 0 || addr == 0) return;
 		DebugUint('recordDeposit amount', amount);
-		DebugAddress('recordDeposit accountingApp', accountingApp);
+		DebugAddress('recordDeposit accountingApp', addr);
 		DebugString('recordDeposit', ref);
-		//assert(accountingApp.call(NEW_TRANSACTION_SIG, sender, token, amount, ref));  // newTransaction(address,address,int256,string)
+		AccountingApp(addr).newTransaction(sender, token, int256(amount), ref);  // newTransaction(address,address,int256,string)
 	}
 
     function getPermissionsOracle() constant returns (address) {
