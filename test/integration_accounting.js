@@ -96,7 +96,7 @@ contract('AccountingApp', accounts => {
         //assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
 
         await sendTransaction({value: 100, from: accounts[0], to: dao.address});
-        l = await dao_accountingApp.getTransactionsLength.call();
+        let l = await dao_accountingApp.getTransactionsLength.call();
         console.log(l)
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
     })
