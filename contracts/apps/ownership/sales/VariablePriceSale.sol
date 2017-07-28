@@ -129,5 +129,8 @@ contract VariablePriceSale is TokenSale {
         _;
     }
 
-    function sell(address holder, uint x) internal { revert(); }
+    function sell(address _holder, uint _x) internal {
+        _holder; _x; // silence unused variables warning
+        revert();
+    }
 }

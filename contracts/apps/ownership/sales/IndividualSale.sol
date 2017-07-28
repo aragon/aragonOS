@@ -52,5 +52,8 @@ contract IndividualSale is TokenSale {
         closeSale();
     }
 
-    function sell(address holder, uint x) internal { revert(); }
+    function sell(address _holder, uint _x) internal {
+        _holder; _x; // silence unused variables warning
+        revert();
+    }
 }

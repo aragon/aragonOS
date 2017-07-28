@@ -41,6 +41,7 @@ contract TokenSale {
         bytes _data
     ) onlyToken returns (bool ok)
     {
+        _origin; _data; // silence unused variables warning
         buy(_sender, _value);
         return true;
     }
@@ -52,6 +53,7 @@ contract TokenSale {
         address _token,
         bytes _data
     ) {
+        _data; // silence unused variables warning
         assert(
             ERC20(_token)
             .transferFrom(

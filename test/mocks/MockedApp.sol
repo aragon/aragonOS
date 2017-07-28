@@ -16,6 +16,7 @@ contract MockedApp is Application {
   }
 
   function canHandlePayload(bytes p) constant returns (bool) {
+    p; // silence warning
     return true; // can handle all the payloads
   }
 }

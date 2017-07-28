@@ -18,7 +18,8 @@ contract MockedOrgan is IOrgan {
     return address(storageGet(sha3(0xbeaf)));
   }
 
-  function canHandlePayload(bytes payload) public returns (bool) {
+  function canHandlePayload(bytes _payload) public returns (bool) {
+    _payload; // silence warning
     return true;
   }
 
