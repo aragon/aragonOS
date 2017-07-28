@@ -8,20 +8,20 @@ contract IVaultOrganEvents {
 }
 
 contract IVaultOrgan is IVaultOrganEvents {
-    function deposit(address _token, uint256 _amount) payable;
+    function deposit(address _token, uint256 _amount) external payable;
     function getTokenBalance(address _token) constant returns (uint256);
 
-    function transfer(address _token, address _to, uint256 _amount);
-    function transferEther(address _to, uint256 _amount);
+    function transfer(address _token, address _to, uint256 _amount) external;
+    function transferEther(address _to, uint256 _amount) external;
 
-    function halt(uint256 _haltTime);
+    function halt(uint256 _haltTime) external;
     function getHaltTime() constant returns (uint256 started, uint256 ends);
 
-    function scapeHatch(address[] _tokens);
-    function setScapeHatch(address _scapeHatch);
+    function scapeHatch(address[] _tokens) external;
+    function setScapeHatch(address _scapeHatch) external;
     function getScapeHatch() constant returns (address);
 
-    function setTokenBlacklist(address _token, bool _blacklisted);
+    function setTokenBlacklist(address _token, bool _blacklisted) external;
     function isTokenBlacklisted(address _token) constant returns (bool);
-    function recover(address _token, address _to);
+    function recover(address _token, address _to) external;
 }
