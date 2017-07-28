@@ -15,7 +15,7 @@ contract Controlled {
 
     modifier onlyController {
         if (msg.sender != controller)
-            throw;
+            revert();
         _;
     }
 
@@ -133,7 +133,7 @@ contract MiniMeToken is ERC20, Controlled {
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _amount) returns (bool success) {
         if (!transfersEnabled)
-            throw;
+            revert();
         return doTransfer(msg.sender, _to, _amount);
     }
 
@@ -153,11 +153,11 @@ contract MiniMeToken is ERC20, Controlled {
         //  another open source smart contract or 0x0
         if (msg.sender != controller) {
             if (!transfersEnabled)
-                throw;
+                revert();
 
             // The standard ERC 20 transferFrom functionality
             if (allowed[_from][msg.sender] < _amount)
-                throw;
+                revert();
             allowed[_from][msg.sender] -= _amount;
         }
         return doTransfer(_from, _to, _amount);
@@ -179,19 +179,19 @@ contract MiniMeToken is ERC20, Controlled {
 
         // Do not allow transfer to 0x0 or the token contract itself
         if ((_to == 0) || (_to == address(this)))
-            throw;
+            revert();
 
         // If the amount being transfered is more than the balance of the
         //  account the transfer returns false
         var previousBalanceFrom = balanceOfAt(_from, block.number);
         if (previousBalanceFrom < _amount) {
-            throw;
+            revert();
         }
 
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
             if (!MiniMeController(controller).onTransfer(_from, _to, _amount))
-                throw;
+                revert();
         }
 
         // First update the balance array with the new value for the address
@@ -202,7 +202,7 @@ contract MiniMeToken is ERC20, Controlled {
         //  receiving the tokens
         var previousBalanceTo = balanceOfAt(_to, block.number);
         if (previousBalanceTo + _amount < previousBalanceTo)
-            throw; // Check for overflow
+            revert(); // Check for overflow
         updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 
         // An event to make the transfer easy to find on the blockchain
@@ -225,19 +225,19 @@ contract MiniMeToken is ERC20, Controlled {
     /// @return True if the approval was successful
     function approve(address _spender, uint256 _amount) returns (bool success) {
         if (!transfersEnabled)
-            throw;
+            revert();
 
         // To change the approve amount you first have to reduce the addresses´
         //  allowance to zero by calling `approve(_spender,0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
         if ((_amount != 0) && (allowed[msg.sender][_spender] != 0))
-            throw;
+            revert();
 
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
             if (!MiniMeController(controller).onApprove(msg.sender, _spender, _amount))
-                throw;
+                revert();
         }
 
         allowed[msg.sender][_spender] = _amount;
@@ -400,11 +400,11 @@ contract MiniMeToken is ERC20, Controlled {
     function generateTokens(address _owner, uint _amount) onlyController returns (bool) {
         uint curTotalSupply = getValueAt(totalSupplyHistory, block.number);
         if (curTotalSupply + _amount < curTotalSupply)
-            throw; // Check for overflow
+            revert(); // Check for overflow
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
         var previousBalanceTo = balanceOf(_owner);
         if (previousBalanceTo + _amount < previousBalanceTo)
-            throw; // Check for overflow
+            revert(); // Check for overflow
         updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
         Transfer(0, _owner, _amount);
         return true;
@@ -419,11 +419,11 @@ contract MiniMeToken is ERC20, Controlled {
     {
         uint curTotalSupply = getValueAt(totalSupplyHistory, block.number);
         if (curTotalSupply < _amount)
-            throw;
+            revert();
         updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
         var previousBalanceFrom = balanceOf(_owner);
         if (previousBalanceFrom < _amount)
-            throw;
+            revert();
         updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
         Transfer(_owner, 0, _amount);
         return true;
@@ -511,9 +511,9 @@ contract MiniMeToken is ERC20, Controlled {
     function ()  payable {
         if (isContract(controller)) {
             if (! MiniMeController(controller).proxyPayment.value(msg.value)(msg.sender))
-                throw;
+                revert();
         } else {
-            throw;
+            revert();
         }
     }
 

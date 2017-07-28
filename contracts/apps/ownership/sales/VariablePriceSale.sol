@@ -129,5 +129,5 @@ contract VariablePriceSale is TokenSale {
         _;
     }
 
-    function sell(address holder, uint x) internal { throw; }
+    function sell(address holder, uint x) internal { revert(); }
 }
