@@ -134,7 +134,7 @@ contract MiniMeIrrevocableVestedToken is MiniMeToken, SafeMath {
   }
 
   function tokenGrant(address _holder, uint _grantId) constant public returns (address granter, uint256 value, uint256 vested, uint64 start, uint64 cliff, uint64 vesting) {
-    TokenGrant grant = grants[_holder][_grantId];
+    TokenGrant storage grant = grants[_holder][_grantId];
 
     granter = grant.granter;
     value = grant.value;
@@ -145,7 +145,7 @@ contract MiniMeIrrevocableVestedToken is MiniMeToken, SafeMath {
     vested = vestedTokens(grant, uint64(now));
   }
 
-  function vestedTokens(TokenGrant grant, uint64 time) internal constant returns (uint256) {
+  function vestedTokens(TokenGrant storage grant, uint64 time) internal constant returns (uint256) {
     return calculateVestedTokens(
       grant.value,
       uint256(time),
@@ -199,7 +199,7 @@ contract MiniMeIrrevocableVestedToken is MiniMeToken, SafeMath {
     return vestedTokens;
   }
 
-  function nonVestedTokens(TokenGrant grant, uint64 time) internal constant returns (uint256) {
+  function nonVestedTokens(TokenGrant storage grant, uint64 time) internal constant returns (uint256) {
     // Of all the tokens of the grant, how many of them are not vested?
     // grantValue - vestedTokens
     return safeSub(grant.value, vestedTokens(grant, time));

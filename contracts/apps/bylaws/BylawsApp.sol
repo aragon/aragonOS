@@ -324,7 +324,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
     }
 
     function getVotingBylaw(uint256 bylawId) constant returns (uint256 supportPct, uint256 minQuorumPct, uint64 minDebateTime, uint64 minVotingTime) {
-        Bylaw bylaw = bylaws[bylawId];
+        Bylaw storage bylaw = bylaws[bylawId];
 
         supportPct = bylaw.voting.supportPct;
         minQuorumPct = bylaw.voting.minQuorumPct;
@@ -333,7 +333,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
     }
 
     function getCombinatorBylaw(uint256 bylawId) constant returns (uint combinatorType, uint leftBylawId, uint rightBylawId) {
-        Bylaw bylaw = bylaws[bylawId];
+        Bylaw storage bylaw = bylaws[bylawId];
 
         combinatorType = uint(bylaw.combinator.combinatorType);
         leftBylawId = bylaw.combinator.leftBylawId;

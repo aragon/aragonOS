@@ -483,11 +483,11 @@ contract MiniMeToken is ERC20, Controlled {
     {
         if ((checkpoints.length == 0) ||
         (checkpoints[checkpoints.length - 1].fromBlock < block.number)) {
-            Checkpoint newCheckPoint = checkpoints[checkpoints.length++];
+            Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
             newCheckPoint.fromBlock = uint128(block.number);
             newCheckPoint.value = uint128(_value);
         } else {
-            Checkpoint oldCheckPoint = checkpoints[checkpoints.length-1];
+            Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
             oldCheckPoint.value = uint128(_value);
         }
     }

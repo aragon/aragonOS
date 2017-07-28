@@ -62,7 +62,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
         require(isVoteCodeValid(_voteAddress));
 
-        Vote vote = votes[voteId];
+        Vote storage vote = votes[voteId];
         vote.voteCreator = dao_msg.sender;
         vote.voteAddress = _voteAddress;
         vote.voteCreatedBlock = getBlockNumber();
@@ -135,7 +135,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     {
         uint voteId = voteForAddress[_voteAddress];
         if (voteId == 0) return false;
-        Vote vote = votes[voteId];
+        Vote storage vote = votes[voteId];
         if (vote.state == VoteState.Debate || vote.totalQuorum == 0)
             return false;
 
@@ -185,7 +185,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     }
 
     function transitionStateIfChanged(uint voteId) {
-        Vote vote = votes[voteId];
+        Vote storage vote = votes[voteId];
 
         // Multiple state transitions can happen at once
         if (vote.state == VoteState.Debate && getBlockNumber() >= vote.voteStartsBlock) {

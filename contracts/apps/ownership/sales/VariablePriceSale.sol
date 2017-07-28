@@ -61,7 +61,7 @@ contract VariablePriceSale is TokenSale {
     }
 
     function getAcquiredTokens(uint _amount) constant returns (uint) {
-        SalePeriod period = periods[currentPeriod];
+        SalePeriod storage period = periods[currentPeriod];
 
         uint precision = 10 ** 3;  // given that exchangeRate is a uint, we need more precision for interpolating
 

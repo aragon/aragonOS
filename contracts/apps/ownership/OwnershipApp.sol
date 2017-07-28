@@ -136,7 +136,7 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     // @dev Updates whether an added token controller state has changed
     // can be called by anyone at any time
     function updateIsController(address tokenAddress) {
-        Token token = tokens[tokenIdForAddress[tokenAddress]];
+        Token storage token = tokens[tokenIdForAddress[tokenAddress]];
         token.isController = MiniMeToken(token.tokenAddress).controller() == dao;
     }
 
@@ -160,7 +160,7 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     }
 
     function getToken(uint tokenId) constant returns (address, uint128, uint128, bool) {
-        Token token = tokens[tokenId];
+        Token storage token = tokens[tokenId];
         return (token.tokenAddress, token.governanceRights, token.economicRights, token.isController);
     }
 
@@ -169,7 +169,7 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     }
 
     function getTokenSale(uint tokenSaleId) constant returns (address, address, bool, bool) {
-        TokenSale tokenSale = tokenSales[tokenSaleId];
+        TokenSale storage tokenSale = tokenSales[tokenSaleId];
         return (
             tokenSale.saleAddress,
             tokenSale.tokenAddress,
@@ -225,14 +225,17 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     }
 
     function proxyPayment(address _owner) payable returns (bool) {
+        _owner; // silence unused variable warning
         return false;
     }
 
     function onTransfer(address _from, address _to, uint _amount) returns (bool) {
+        _from;_to;_amount; // silence unused variable warning
         return true;
     }
 
     function onApprove(address _owner, address _spender, uint _amount) returns (bool) {
+        _owner;_spender;_amount; // silence unused variable warning
         return true;
     }
 
@@ -254,7 +257,7 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     modifier only_active_sale(address tokenAddress) {
         uint saleId = tokenSaleForAddress[getSender()];
         require(saleId > 0);
-        TokenSale sale = tokenSales[saleId];
+        TokenSale storage sale = tokenSales[saleId];
         require(!sale.closed && sale.tokenAddress == tokenAddress);
         _;
     }

@@ -73,6 +73,7 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     */
     function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
         // TODO: Check whether msg.sender token is trusted
+        _origin; // silence unused variable warning
         dispatch(_sender, msg.sender, _value, _data);
         return true;
     }
