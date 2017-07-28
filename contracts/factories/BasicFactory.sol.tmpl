@@ -83,6 +83,9 @@ contract BasicFactory {
         {{#if bylaw.voting}}
         uint bylaw_{{id}} = bylaws.setVotingBylaw(pct({{bylaw.voting.[0]}}), pct({{bylaw.voting.[1]}}), 1 days, 7 days, false);
         {{/if}}
+        {{#if bylaw.address}}
+        uint bylaw_{{id}} = bylaws.setAddressBylaw({{bylaw.address.[0]}}, false, false);
+        {{/if}}
         {{/bylaws}}
 
         {{#organs}}

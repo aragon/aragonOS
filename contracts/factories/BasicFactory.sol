@@ -169,6 +169,7 @@ contract BasicFactory {
         uint bylaw_1 = bylaws.setVotingBylaw(pct(80), pct(100), 1 days, 7 days, false);
         uint bylaw_2 = bylaws.setVotingBylaw(pct(75), pct(0), 1 days, 7 days, false);
         uint bylaw_3 = bylaws.setStatusBylaw(3, false, false);
+        uint bylaw_4 = bylaws.setAddressBylaw(0, false, false);
 
         dao_bylaws.linkBylaw(o0_s0, bylaw_2); // setPermissionsOracle(address)
         dao_bylaws.linkBylaw(o0_s1, bylaw_2); // removeOrgan(bytes4[])
@@ -177,6 +178,7 @@ contract BasicFactory {
         dao_bylaws.linkBylaw(o0_s4, bylaw_1); // ceaseToExist()
         dao_bylaws.linkBylaw(o0_s6, bylaw_2); // removeApp(bytes4[])
         dao_bylaws.linkBylaw(o0_s7, bylaw_2); // replaceKernel(address)
+        dao_bylaws.linkBylaw(o1_s5, bylaw_4); // deposit(address,uint256)
     }
 
     function pct(uint x) internal constant returns (uint) {
