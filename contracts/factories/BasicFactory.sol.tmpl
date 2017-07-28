@@ -77,25 +77,25 @@ contract BasicFactory {
 
     function installBylaws(BylawsApp bylaws, BylawsApp dao_bylaws) internal {
         {{#bylaws}}
-        {{#if status}}
-        uint bylaw_id_{{@index}} = bylaws.setStatusBylaw({{status.[0]}}, false, false);
+        {{#if bylaw.status}}
+        uint bylaw_{{id}} = bylaws.setStatusBylaw({{bylaw.status.[0]}}, false, false);
         {{/if}}
-        {{#if voting}}
-        uint bylaw_id_{{@index}} = bylaws.setVotingBylaw(pct({{voting.[0]}}), pct({{voting.[1]}}), 1 days, 7 days, false);
+        {{#if bylaw.voting}}
+        uint bylaw_{{id}} = bylaws.setVotingBylaw(pct({{bylaw.voting.[0]}}), pct({{bylaw.voting.[1]}}), 1 days, 7 days, false);
         {{/if}}
         {{/bylaws}}
 
         {{#organs}}
         {{#sigs}}
         {{#if bylaw}}
-        dao_bylaws.linkBylaw(o{{@../index}}_s{{@index}}, bylaw_id_{{bylaw}}); // {{name}}
+        dao_bylaws.linkBylaw(o{{@../index}}_s{{@index}}, bylaw_{{bylaw}}); // {{name}}
         {{/if}}
         {{/sigs}}
         {{/organs}}
         {{#apps}}
         {{#sigs}}
         {{#if bylaw}}
-        dao_bylaws.linkBylaw(a{{@../index}}_s{{@index}}, bylaw_id_{{bylaw}}); // {{name}}
+        dao_bylaws.linkBylaw(a{{@../index}}_s{{@index}}, bylaw_{{bylaw}}); // {{name}}
         {{/if}}
         {{/sigs}}
         {{/apps}}

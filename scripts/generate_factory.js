@@ -30,7 +30,7 @@ const flattenBylaws = x => {
         .forEach(x => bylaws[x.bylaw] = !bylaws[x.bylaw] ? [x.name] : bylaws[x.bylaw].concat([x.name]))
 
     return Object.keys(bylaws)
-        .map((k, i) => ({id: i, bylaw: parseBylaw(k), functions: bylaws[k] }))
+        .map((k, i) => ({id: i + 1, bylaw: parseBylaw(k), functions: bylaws[k] }))
 }
 
 const getBylaws = (f) => {
@@ -78,13 +78,14 @@ module.exports = (done) => {
             disclaimer: 'This is an automatically generated file. Please edit BasicFactory.sol.tmpl or the generate_factory.js script',
             apps: appData,
             organs: organData,
-            bylaws: bylaws.map(x => x.bylaw),
+            bylaws: bylaws,
         }
 
         const content = template(data)
         fs.writeFile(resultFile, content, err => {
             if (err) return console.log('Error', err)
             console.log('Saved', resultFile)
+            done()
         })
     })
 }

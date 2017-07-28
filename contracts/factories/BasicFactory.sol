@@ -2,7 +2,7 @@
 This is an automatically generated file. Please edit BasicFactory.sol.tmpl or the generate_factory.js script
 */
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
 
 import "../tokens/MiniMeIrrevocableVestedToken.sol";
 import "../dao/DAO.sol";
@@ -111,30 +111,29 @@ contract BasicFactory {
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedownershipapp = Application(_testrpc ? ownershipapp : forwarderFactory.createForwarder(ownershipapp));
         deployedownershipapp.setDAO(address(dao));
-        bytes4[] memory ownershipappSigs = new bytes4[](23);
+        bytes4[] memory ownershipappSigs = new bytes4[](22);
         ownershipappSigs[0] = a1_s0; // sale_closeSale()
         ownershipappSigs[1] = a1_s1; // getTokenSale(uint256)
-        ownershipappSigs[2] = a1_s2; // getData()
-        ownershipappSigs[3] = a1_s3; // createTokenSale(address,address,bool)
-        ownershipappSigs[4] = a1_s4; // sale_destroyTokens(address,address,uint256)
-        ownershipappSigs[5] = a1_s5; // issueTokens(address,uint256)
-        ownershipappSigs[6] = a1_s6; // onTransfer(address,address,uint256)
-        ownershipappSigs[7] = a1_s7; // removeToken(address)
-        ownershipappSigs[8] = a1_s8; // tokenSaleForAddress(address)
-        ownershipappSigs[9] = a1_s9; // getTokenAddress(uint256)
-        ownershipappSigs[10] = a1_s10; // getTokenCount()
-        ownershipappSigs[11] = a1_s11; // updateIsController(address)
-        ownershipappSigs[12] = a1_s12; // tokenIdForAddress(address)
-        ownershipappSigs[13] = a1_s13; // addToken(address,uint256,uint128,uint128)
-        ownershipappSigs[14] = a1_s14; // grantVestedTokens(address,address,uint256,uint64,uint64,uint64)
-        ownershipappSigs[15] = a1_s15; // sale_mintTokens(address,address,uint256)
-        ownershipappSigs[16] = a1_s16; // isHolder(address)
-        ownershipappSigs[17] = a1_s17; // getTokenSaleCount()
-        ownershipappSigs[18] = a1_s18; // onApprove(address,address,uint256)
-        ownershipappSigs[19] = a1_s19; // closeTokenSale(address)
-        ownershipappSigs[20] = a1_s20; // getToken(uint256)
-        ownershipappSigs[21] = a1_s21; // proxyPayment(address)
-        ownershipappSigs[22] = a1_s22; // grantTokens(address,address,uint256)
+        ownershipappSigs[2] = a1_s2; // createTokenSale(address,address,bool)
+        ownershipappSigs[3] = a1_s3; // sale_destroyTokens(address,address,uint256)
+        ownershipappSigs[4] = a1_s4; // issueTokens(address,uint256)
+        ownershipappSigs[5] = a1_s5; // onTransfer(address,address,uint256)
+        ownershipappSigs[6] = a1_s6; // removeToken(address)
+        ownershipappSigs[7] = a1_s7; // tokenSaleForAddress(address)
+        ownershipappSigs[8] = a1_s8; // getTokenAddress(uint256)
+        ownershipappSigs[9] = a1_s9; // getTokenCount()
+        ownershipappSigs[10] = a1_s10; // updateIsController(address)
+        ownershipappSigs[11] = a1_s11; // tokenIdForAddress(address)
+        ownershipappSigs[12] = a1_s12; // addToken(address,uint256,uint128,uint128)
+        ownershipappSigs[13] = a1_s13; // grantVestedTokens(address,address,uint256,uint64,uint64,uint64)
+        ownershipappSigs[14] = a1_s14; // sale_mintTokens(address,address,uint256)
+        ownershipappSigs[15] = a1_s15; // isHolder(address)
+        ownershipappSigs[16] = a1_s16; // getTokenSaleCount()
+        ownershipappSigs[17] = a1_s17; // onApprove(address,address,uint256)
+        ownershipappSigs[18] = a1_s18; // closeTokenSale(address)
+        ownershipappSigs[19] = a1_s19; // getToken(uint256)
+        ownershipappSigs[20] = a1_s20; // proxyPayment(address)
+        ownershipappSigs[21] = a1_s21; // grantTokens(address,address,uint256)
         dao.installApp(deployedownershipapp, ownershipappSigs);
 
         // Proxies are not working on testrpc, that's why for testing no proxy is created
@@ -148,7 +147,7 @@ contract BasicFactory {
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedvotingapp = Application(_testrpc ? votingapp : forwarderFactory.createForwarder(votingapp));
         deployedvotingapp.setDAO(address(dao));
-        bytes4[] memory votingappSigs = new bytes4[](13);
+        bytes4[] memory votingappSigs = new bytes4[](12);
         votingappSigs[0] = a3_s0; // voteNay(uint256)
         votingappSigs[1] = a3_s1; // getVoteStatus(uint256)
         votingappSigs[2] = a3_s2; // isVoteCodeValid(address)
@@ -161,23 +160,23 @@ contract BasicFactory {
         votingappSigs[9] = a3_s9; // isVoteApproved(address,uint256,uint256,uint64,uint64)
         votingappSigs[10] = a3_s10; // getStatusForVoteAddress(address)
         votingappSigs[11] = a3_s11; // voteYayAndClose(uint256)
-        votingappSigs[12] = a3_s12; // contractSize(address)
         dao.installApp(deployedvotingapp, votingappSigs);
 
         return deployedbylawsapp; // first app is bylaws
     }
 
     function installBylaws(BylawsApp bylaws, BylawsApp dao_bylaws) internal {
-        uint bylaw_id_0 = bylaws.setVotingBylaw(pct(80), pct(100), 1 days, 7 days, false);
-        uint bylaw_id_1 = bylaws.setVotingBylaw(pct(75), pct(0), 1 days, 7 days, false);
-        uint bylaw_id_2 = bylaws.setStatusBylaw(3, false, false);
+        uint bylaw_1 = bylaws.setVotingBylaw(pct(80), pct(100), 1 days, 7 days, false);
+        uint bylaw_2 = bylaws.setVotingBylaw(pct(75), pct(0), 1 days, 7 days, false);
+        uint bylaw_3 = bylaws.setStatusBylaw(3, false, false);
 
-        dao_bylaws.linkBylaw(o0_s0, bylaw_id_1); // setPermissionsOracle(address)
-        dao_bylaws.linkBylaw(o0_s1, bylaw_id_1); // removeOrgan(bytes4[])
-        dao_bylaws.linkBylaw(o0_s2, bylaw_id_1); // installOrgan(address,bytes4[])
-        dao_bylaws.linkBylaw(o0_s3, bylaw_id_2); // installApp(address,bytes4[])
-        dao_bylaws.linkBylaw(o0_s6, bylaw_id_1); // removeApp(bytes4[])
-        dao_bylaws.linkBylaw(o0_s7, bylaw_id_1); // replaceKernel(address)
+        dao_bylaws.linkBylaw(o0_s0, bylaw_2); // setPermissionsOracle(address)
+        dao_bylaws.linkBylaw(o0_s1, bylaw_2); // removeOrgan(bytes4[])
+        dao_bylaws.linkBylaw(o0_s2, bylaw_2); // installOrgan(address,bytes4[])
+        dao_bylaws.linkBylaw(o0_s3, bylaw_3); // installApp(address,bytes4[])
+        dao_bylaws.linkBylaw(o0_s4, bylaw_1); // ceaseToExist()
+        dao_bylaws.linkBylaw(o0_s6, bylaw_2); // removeApp(bytes4[])
+        dao_bylaws.linkBylaw(o0_s7, bylaw_2); // replaceKernel(address)
     }
 
     function pct(uint x) internal constant returns (uint) {
@@ -234,27 +233,26 @@ contract BasicFactory {
     // ownershipapp
     bytes4 constant a1_s0 = 0x10451468; // sale_closeSale()
     bytes4 constant a1_s1 = 0x1fbc147b; // getTokenSale(uint256)
-    bytes4 constant a1_s2 = 0x3bc5de30; // getData()
-    bytes4 constant a1_s3 = 0x3de7c5c5; // createTokenSale(address,address,bool)
-    bytes4 constant a1_s4 = 0x3eaacd90; // sale_destroyTokens(address,address,uint256)
-    bytes4 constant a1_s5 = 0x475a9fa9; // issueTokens(address,uint256)
-    bytes4 constant a1_s6 = 0x4a393149; // onTransfer(address,address,uint256)
-    bytes4 constant a1_s7 = 0x5fa7b584; // removeToken(address)
-    bytes4 constant a1_s8 = 0x611cdd8f; // tokenSaleForAddress(address)
-    bytes4 constant a1_s9 = 0x67ccdf38; // getTokenAddress(uint256)
-    bytes4 constant a1_s10 = 0x78a89567; // getTokenCount()
-    bytes4 constant a1_s11 = 0x897bc45d; // updateIsController(address)
-    bytes4 constant a1_s12 = 0x9075845d; // tokenIdForAddress(address)
-    bytes4 constant a1_s13 = 0xaef268fa; // addToken(address,uint256,uint128,uint128)
-    bytes4 constant a1_s14 = 0xd30def44; // grantVestedTokens(address,address,uint256,uint64,uint64,uint64)
-    bytes4 constant a1_s15 = 0xd49d6a0f; // sale_mintTokens(address,address,uint256)
-    bytes4 constant a1_s16 = 0xd4d7b19a; // isHolder(address)
-    bytes4 constant a1_s17 = 0xd985992f; // getTokenSaleCount()
-    bytes4 constant a1_s18 = 0xda682aeb; // onApprove(address,address,uint256)
-    bytes4 constant a1_s19 = 0xdbf5eb1c; // closeTokenSale(address)
-    bytes4 constant a1_s20 = 0xe4b50cb8; // getToken(uint256)
-    bytes4 constant a1_s21 = 0xf48c3054; // proxyPayment(address)
-    bytes4 constant a1_s22 = 0xf881a92f; // grantTokens(address,address,uint256)
+    bytes4 constant a1_s2 = 0x3de7c5c5; // createTokenSale(address,address,bool)
+    bytes4 constant a1_s3 = 0x3eaacd90; // sale_destroyTokens(address,address,uint256)
+    bytes4 constant a1_s4 = 0x475a9fa9; // issueTokens(address,uint256)
+    bytes4 constant a1_s5 = 0x4a393149; // onTransfer(address,address,uint256)
+    bytes4 constant a1_s6 = 0x5fa7b584; // removeToken(address)
+    bytes4 constant a1_s7 = 0x611cdd8f; // tokenSaleForAddress(address)
+    bytes4 constant a1_s8 = 0x67ccdf38; // getTokenAddress(uint256)
+    bytes4 constant a1_s9 = 0x78a89567; // getTokenCount()
+    bytes4 constant a1_s10 = 0x897bc45d; // updateIsController(address)
+    bytes4 constant a1_s11 = 0x9075845d; // tokenIdForAddress(address)
+    bytes4 constant a1_s12 = 0xaef268fa; // addToken(address,uint256,uint128,uint128)
+    bytes4 constant a1_s13 = 0xd30def44; // grantVestedTokens(address,address,uint256,uint64,uint64,uint64)
+    bytes4 constant a1_s14 = 0xd49d6a0f; // sale_mintTokens(address,address,uint256)
+    bytes4 constant a1_s15 = 0xd4d7b19a; // isHolder(address)
+    bytes4 constant a1_s16 = 0xd985992f; // getTokenSaleCount()
+    bytes4 constant a1_s17 = 0xda682aeb; // onApprove(address,address,uint256)
+    bytes4 constant a1_s18 = 0xdbf5eb1c; // closeTokenSale(address)
+    bytes4 constant a1_s19 = 0xe4b50cb8; // getToken(uint256)
+    bytes4 constant a1_s20 = 0xf48c3054; // proxyPayment(address)
+    bytes4 constant a1_s21 = 0xf881a92f; // grantTokens(address,address,uint256)
     // statusapp
     bytes4 constant a2_s0 = 0x6035fa06; // setEntityStatus(address,uint8)
     bytes4 constant a2_s1 = 0x6b87cdc4; // entityStatus(address)
@@ -271,5 +269,4 @@ contract BasicFactory {
     bytes4 constant a3_s9 = 0xad49224c; // isVoteApproved(address,uint256,uint256,uint64,uint64)
     bytes4 constant a3_s10 = 0xad5dd1f5; // getStatusForVoteAddress(address)
     bytes4 constant a3_s11 = 0xcf9883e2; // voteYayAndClose(uint256)
-    bytes4 constant a3_s12 = 0xeb67cee8; // contractSize(address)
 }
