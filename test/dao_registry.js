@@ -17,6 +17,8 @@ const createDAO = () => DAO.new(Kernel.address)
 
 const zerothAddress = '0x0000000000000000000000000000000000000000'
 const randomAddress = '0x0000000000000000000000000000000000001234'
+const updateAddress = '0x0000000000000000000000000000000000004321'
+
 
 contract('Registry', accounts => {
   let dao, metadao, kernel, mockedOrgan, vault = {}
@@ -57,6 +59,13 @@ contract('Registry', accounts => {
 
       assert.equal(addr, zerothAddress, 'removed organ should return 0 address')
     })
+
+    it('can be updated', async () => {
+      await metadao.updateOrgan(updateAddress, [randSig])
+      const [addr, isDelegate] = await kernel.get(randSig)
+
+      assert.equal(addr, updateAddress, 'removed organ should return 0 address')
+    })    
 
     it('throws when being removed as part of other sigs array', async () => {
       try {
@@ -105,6 +114,13 @@ contract('Registry', accounts => {
 
       assert.equal(addr, zerothAddress, 'removed app should return 0 address')
     })
+
+    it('can be updated', async () => {
+      await metadao.updateApp(updateAddress, [randSig])
+      const [addr, isDelegate] = await kernel.get(randSig)
+
+      assert.equal(addr, updateAddress, 'removed organ should return 0 address')
+    })      
 
     it('throws when being removed as part of other sigs array', async () => {
       try {

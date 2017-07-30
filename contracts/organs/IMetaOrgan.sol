@@ -10,7 +10,9 @@ contract IMetaOrgan is MetaEvents {
     function replaceKernel(address newKernel) public;
     function setPermissionsOracle(address newOracle) public;
     function installApp(address appAddress, bytes4[] sigs) public;
+    function removeApp(bytes4[] sigs) public;
+    function updateApp(address appAddress, bytes4[] sigs) public;
     function installOrgan(address organAddress, bytes4[] sigs) public;
     function removeOrgan(bytes4[] sigs) public;
-    function removeApp(bytes4[] sigs) public;
+    function updateOrgan(address organAddress, bytes4[] sigs) public;
 }

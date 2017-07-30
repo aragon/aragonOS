@@ -32,6 +32,15 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
         register(appAddress, sigs, false);
     }
 
+    function removeApp(bytes4[] sigs) public {
+        deregister(sigs, false);
+    }
+
+    function updateApp(address appAddress, bytes4[] sigs) public {
+        deregister(sigs, false);        
+        register(appAddress, sigs, false);
+    }
+
     // @param organAddress: address of the receiving contract for functions
     // @param sigs: should be ordered from 0x0 to 0xffffffff
     function installOrgan(address organAddress, bytes4[] sigs) public {
@@ -42,7 +51,9 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
         deregister(sigs, true);
     }
 
-    function removeApp(bytes4[] sigs) public {
-        deregister(sigs, false);
+    function updateOrgan(address organAddress, bytes4[] sigs) public {
+        deregister(sigs, true);        
+        register(organAddress, sigs, true);
     }
+
 }
