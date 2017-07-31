@@ -49,6 +49,26 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     }
 
     /**
+    * @notice Remove application, you will lose functionality in your org
+    * #bylaw voting:75,0
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function removeApp(bytes4[] sigs) external {
+        deregister(sigs, false);
+    }
+
+    /**
+    * @notice Updates application atomically
+    * #bylaw voting:75,0
+    * @param appAddress new address of the receiving contract for functions
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function updateApp(address appAddress, bytes4[] sigs) external {
+        deregister(sigs, false);
+        register(appAddress, sigs, false);
+    }
+
+    /**
     * @notice Install organ at address `address`
     * #bylaw voting:75,0
     * @param organAddress address of the receiving contract for functions
@@ -68,11 +88,13 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     }
 
     /**
-    * @notice Remove application, you will lose functionality in your org
+    * @notice Updates organ atomically
     * #bylaw voting:75,0
+    * @param organAddress address of the receiving contract for functions
     * @param sigs should be ordered from 0x0 to 0xffffffff
     */
-    function removeApp(bytes4[] sigs) external {
-        deregister(sigs, false);
+    function updateOrgan(address organAddress, bytes4[] sigs) external {
+        deregister(sigs, true);
+        register(organAddress, sigs, true);
     }
 }
