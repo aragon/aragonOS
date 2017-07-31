@@ -5,10 +5,10 @@ import "../dao/DAOStorage.sol";
 
 contract KernelRegistry is IKernelRegistry, DAOStorage {
     /**
-    @dev Get dispatching information about a given signature
-    @param _sig The first 4 bytes of the hash of the function signature in question
-    @return address Component of the DAO that dispatches the signature (0 if none)
-    @return bool Whether the action is dispatched with a delegate call (true = delegatecall (organ), false = call (app))
+    * @dev Get dispatching information about a given signature
+    * @param _sig The first 4 bytes of the hash of the function signature in question
+    * @return address Component of the DAO that dispatches the signature (0 if none)
+    * @return bool Whether the action is dispatched with a delegate call (true = delegatecall (organ), false = call (app))
     */
     function get(bytes4 _sig) constant returns (address, bool) {
         uint v = storageGet(storageKeyForSig(_sig));
@@ -17,10 +17,10 @@ contract KernelRegistry is IKernelRegistry, DAOStorage {
     }
 
     /**
-    @dev Register a set of function signatures to a given component address. Apps cannot overwrite existing signatures without deregistering first
-    @param _comp Address of the component that will handle the function signatures
-    @param _sigs The first 4 bytes of the hash of the function signatures being registered. Must be ordered (0x10 before 0x20 and so on)
-    @param _delegate Whether to register as delegate callable or not (true = organ, false = app)
+    * @dev Register a set of function signatures to a given component address. Apps cannot overwrite existing signatures without deregistering first
+    * @param _comp Address of the component that will handle the function signatures
+    * @param _sigs The first 4 bytes of the hash of the function signatures being registered. Must be ordered (0x10 before 0x20 and so on)
+    * @param _delegate Whether to register as delegate callable or not (true = organ, false = app)
     */
     function register(address _comp, bytes4[] _sigs, bool _delegate) internal {
         uint addDelegate = _delegate ? 2 ** 8 ** 20 : 0; // whether is delefare is stored as the 21st byte first bit
@@ -37,9 +37,9 @@ contract KernelRegistry is IKernelRegistry, DAOStorage {
     }
 
     /**
-    @dev Deegister a set of function signatures
-    @param _sigs The first 4 bytes of the hash of the function signatures being registered. Must be the same set of signatures that were registered all together
-    @param _delegate Whether signatures were registered as delegate or not
+    * @dev Deegister a set of function signatures
+    * @param _sigs The first 4 bytes of the hash of the function signatures being registered. Must be the same set of signatures that were registered all together
+    * @param _delegate Whether signatures were registered as delegate or not
     */
     function deregister(bytes4[] _sigs, bool _delegate) internal {
         bytes4 id = bytes4(sha3(_sigs));

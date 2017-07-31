@@ -124,7 +124,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
 
         require(target > 0);
 
-        // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
         if (isDelegate) {
             setDAOMsg(DAOMessage(_sender, _token, _value)); // save context so organs can access it
         } else {
