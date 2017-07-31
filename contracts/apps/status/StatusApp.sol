@@ -1,20 +1,26 @@
 pragma solidity ^0.4.11;
 
+/**
+* @author Jorge Izquierdo (Aragon)
+* @description StatusApp is a very basic app that keeps track of numeric status for entities
+*/
+
 import "../Application.sol";
 import "./IStatusApp.sol";
 
 contract StatusApp is IStatusApp, Application {
     mapping (address => uint) entityStatus;
 
-    event EntityStatusChanged(address entity, uint8 status);
-
     function StatusApp(address _dao)
                      Application(_dao) {}
-
-    function setEntityStatus(address entity, uint8 status) onlyDAO external
-    {
-        entityStatus[entity] = status;
-        EntityStatusChanged(entity, status);
+    /**
+    * @dev Assign status `_status` to `_entity`
+    * @param _entity Address of the entity being modified
+    * @param _status New status for entity
+    */
+    function setEntityStatus(address _entity, uint8 _status) onlyDAO external {
+        entityStatus[_entity] = _status;
+        EntityStatusChanged(_entity, _status);
     }
 
     function getEntityStatus(address entity) constant public returns (uint) {
