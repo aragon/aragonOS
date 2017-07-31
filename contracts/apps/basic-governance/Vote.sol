@@ -1,11 +1,9 @@
 pragma solidity ^0.4.13;
 
-
 contract IVote {
     function wasExecuted() constant public returns (bool);
     function execute();
 }
-
 
 contract Vote is IVote {
     address public dao;
