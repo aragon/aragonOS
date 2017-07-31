@@ -50,6 +50,7 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     }
 
     function init() internal {
+        assert(tokenSales.length == 0 && tokens.length == 0);
         tokenSales.length += 1;
         tokens.length += 1;
     }

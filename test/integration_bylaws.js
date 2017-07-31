@@ -42,6 +42,12 @@ contract('Bylaws', accounts => {
     assert.equal(await kernel.getPermissionsOracle(), installedBylaws.address, 'should have set permissions oracle')
   })
 
+  it('allows action if bylaw hasnt been specified', async () => {
+      await metadao.replaceKernel(randomAddress, { from: accounts[1] })
+
+      assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
+  })
+
   context('adding address bylaw', () => {
     beforeEach(async () => {
       await bylawsApp.setAddressBylaw(accounts[1], false, false)
