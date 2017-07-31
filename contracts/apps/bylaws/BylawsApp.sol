@@ -17,7 +17,7 @@ import "../Application.sol";
 
 import "../status/StatusApp.sol";
 import "../ownership/OwnershipApp.sol";
-import "../basic-governance/IVotingApp.sol"; // TODO: Change for generic voting iface
+import "../basic-governance/IVotingApp.sol";
 
 import "./BylawOracle.sol";
 import "./IBylawsApp.sol";
@@ -374,8 +374,8 @@ contract BylawsApp is IBylawsApp, Application {
 
     function getStatus(address entity) internal returns (uint8) {
         return uint8(
-            getStatusApp()
-            .entityStatus(entity)
+            getStatusOracle()
+            .getEntityStatus(entity)
         );
     }
 
@@ -391,8 +391,8 @@ contract BylawsApp is IBylawsApp, Application {
         return IVotingOracle(dao);
     }
 
-    function getStatusApp() internal returns (StatusApp) {
-        return StatusApp(dao);
+    function getStatusOracle() internal returns (IStatusOracle) {
+        return IStatusOracle(dao);
     }
 
     function getSig(bytes d) internal returns (bytes4 sig) {

@@ -1,10 +1,10 @@
 pragma solidity ^0.4.11;
 
 import "../Application.sol";
-
+import "./IStatusApp.sol";
 
 contract StatusApp is Application {
-    mapping (address => uint) public entityStatus;
+    mapping (address => uint) entityStatus;
 
     event EntityStatusChanged(address entity, uint8 status);
 
@@ -16,5 +16,9 @@ contract StatusApp is Application {
     {
         entityStatus[entity] = status;
         EntityStatusChanged(entity, status);
+    }
+
+    function getEntityStatus(address entity) constant public returns (uint) {
+        return entityStatus[entity];
     }
 }
