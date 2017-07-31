@@ -17,6 +17,7 @@ contract Application is IApplication {
     }
 
     function setDAO(address newDAO) onlyDAO {
+        if (newDAO == 0) return;
         dao = newDAO;
         init();
     }

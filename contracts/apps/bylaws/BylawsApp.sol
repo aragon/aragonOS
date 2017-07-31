@@ -54,6 +54,10 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
     function BylawsApp(address dao)
     Application(dao)
     {
+
+    }
+
+    function init() internal {
         newBylaw(); // so index is 1 for first legit bylaw
     }
 

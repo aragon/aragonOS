@@ -21,8 +21,8 @@
     "ethereumjs-abi": "^0.6.4",
     "ethereumjs-util": "^5.1.1",
     "keybase-eth": "^0.3.0",
-    "solium": "^0.5.3",
-    "truffle-config": "^1.0.0",
+    "solium": "^0.5.4",
+    "truffle-config": "^1.0.1",
     "truffle-expect": "0.0.3",
     "truffle-hdwallet-provider": "0.0.3"
   },

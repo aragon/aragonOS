@@ -47,6 +47,9 @@ contract OwnershipApp is Application, MiniMeController, Requestor {
     function OwnershipApp(address daoAddr)
     Application(daoAddr)
     {
+    }
+
+    function init() internal {
         tokenSales.length += 1;
         tokens.length += 1;
     }
