@@ -22,6 +22,8 @@ contract Application is IApplication {
         init();
     }
 
+    function init() internal {}
+
     function setDAOMsg(address sender, address token, uint value) onlyDAO {
         dao_msg.sender = sender;
         dao_msg.token = token;

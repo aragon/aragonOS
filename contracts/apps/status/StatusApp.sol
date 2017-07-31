@@ -9,10 +9,7 @@ contract StatusApp is Application {
     event EntityStatusChanged(address entity, uint8 status);
 
     function StatusApp(address _dao)
-                     Application(_dao)
-    {}
-
-    function init() internal {}
+                     Application(_dao) {}
 
     function setEntityStatus(address entity, uint8 status)
     onlyDAO public
