@@ -369,7 +369,7 @@ contract BylawsApp is IBylawsApp, Application {
     }
 
     function isTokenHolder(address entity) internal returns (bool) {
-        return getOwnershipApp().isHolder(entity);
+        return getTokenHolderOracle().isHolder(entity);
     }
 
     function getStatus(address entity) internal returns (uint8) {
@@ -383,8 +383,8 @@ contract BylawsApp is IBylawsApp, Application {
         return negate ? !result : result;
     }
 
-    function getOwnershipApp() internal returns (OwnershipApp) {
-        return OwnershipApp(dao);
+    function getTokenHolderOracle() internal returns (ITokenHolderOracle) {
+        return ITokenHolderOracle(dao);
     }
 
     function getVotingOracle() internal returns (IVotingOracle) {

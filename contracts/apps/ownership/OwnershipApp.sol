@@ -13,7 +13,12 @@ import "zeppelin/token/ERC20.sol";
 
 // At the moment OwnershipApp intercepts MiniMe hook events, if governance app
 // needs them, it has to have higher priority than ownership app
-contract OwnershipApp is Application, MiniMeController, Requestor {
+
+contract ITokenHolderOracle {
+    function isHolder(address _holder) constant returns (bool);
+}
+
+contract OwnershipApp is Application, ITokenHolderOracle, MiniMeController, Requestor {
     struct Token {
         address tokenAddress;
         uint128 governanceRights;

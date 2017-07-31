@@ -3,7 +3,7 @@ pragma solidity ^0.4.11;
 import "../Application.sol";
 import "./IStatusApp.sol";
 
-contract StatusApp is Application {
+contract StatusApp is IStatusApp, Application {
     mapping (address => uint) entityStatus;
 
     event EntityStatusChanged(address entity, uint8 status);
@@ -11,8 +11,7 @@ contract StatusApp is Application {
     function StatusApp(address _dao)
                      Application(_dao) {}
 
-    function setEntityStatus(address entity, uint8 status)
-    onlyDAO public
+    function setEntityStatus(address entity, uint8 status) onlyDAO external
     {
         entityStatus[entity] = status;
         EntityStatusChanged(entity, status);
