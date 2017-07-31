@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 
 // Could be converted into a library. Would it be worth it gas wise?
@@ -18,7 +18,7 @@ contract CodeHelper {
         }
     }
 
-    function contractSize(address _addr) constant returns (uint size) {
+    function contractSize(address _addr) internal constant returns (uint size) {
         assembly { size := extcodesize(_addr) }
     }
 }

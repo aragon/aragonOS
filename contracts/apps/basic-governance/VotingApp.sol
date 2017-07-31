@@ -1,4 +1,11 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
+
+/**
+* @author Jorge Izquierdo (Aragon)
+* @description VotingApp allows for very simple (binary votes) and light voting.
+* It depends on an OwnershipType interface that provides all tokens an organization has
+* and requires these tokens to be MiniMe to get token balances at a given block.
+*/
 
 import "../../tokens/MiniMeToken.sol";
 import "../../kernel/Kernel.sol";
@@ -6,26 +13,25 @@ import "../ownership/OwnershipApp.sol";
 import "../Application.sol";
 import "../../misc/CodeHelper.sol";
 
-import "./Vote.sol";
-
-
-contract IVotingApp {
-    event VoteCreated(uint voteId, address voteAddress);
-    event VoteCasted(uint indexed voteId, address voter, bool isYay, uint votes);
-    event VoteStateChanged(uint indexed voteId, uint oldState, uint newState);
-}
-
+import "./IVote.sol";
+import "./IVotingApp.sol";
 
 contract VotingApp is IVotingApp, Application, CodeHelper {
     function VotingApp(address daoAddr)
     Application(daoAddr)
     {
+        // init is automatically called by setDAO
+    }
+
+    function init() internal {
+        assert(votes.length == 0); // asserts init can only be called once
         votes.length++; // index 0 is empty
     }
 
-    // hash(bytecode) -> true/false either a particular address has approved voting code
+    // hash(bytecode) -> bool. Is the hash of some bytecode approved voting code?
     mapping (bytes32 => bool) public validVoteCode;
 
+    // states a certain vote goes through
     enum VoteState {
         Debate,
         Voting,
@@ -51,18 +57,24 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         mapping (address => uint) voted; // 1 for yay, 2 for nay
     }
 
-    uint constant PCT_BASE = 10 ** 18;
-    Vote[] votes;
-    mapping (address => uint) voteForAddress;
+    Vote[] votes;  // array for storage of all votes
+    mapping (address => uint) voteForAddress; // reverse index to quickly get the voteId for a vote address
 
-    function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock) onlyDAO {
+    /**
+    * @notice Create a new vote for `IVote(_voteAddress).data()`
+    * @param _voteAddress the address of the contract that will be executed on approval
+    * @param _voteStartsBlock block number in which voting can start (inclusive)
+    * @param _voteEndsBlock block number in which voting ended (non-inclusive, voting on this block number is not allowed)
+    */
+    function createVote(address _voteAddress, uint64 _voteStartsBlock, uint64 _voteEndsBlock) onlyDAO external {
         uint voteId = votes.length;
         votes.length++;
 
-        require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock);
-        require(isVoteCodeValid(_voteAddress));
+        require(getBlockNumber() <= _voteStartsBlock && _voteStartsBlock < _voteEndsBlock); // block number integrity
+        require(isVoteCodeValid(_voteAddress));     // check vote has allowed bytecode before creating it (it can change during voting)
+        require(voteForAddress[_voteAddress] == 0); // not allow 2 votings with the same address
 
-        Vote vote = votes[voteId];
+        Vote storage vote = votes[voteId];
         vote.voteCreator = dao_msg.sender;
         vote.voteAddress = _voteAddress;
         vote.voteCreatedBlock = getBlockNumber();
@@ -71,60 +83,84 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         voteForAddress[_voteAddress] = voteId;
 
         VoteCreated(voteId, _voteAddress);
-        transitionStateIfChanged(voteId);
+        transitionStateIfChanged(voteId); // vote can start in this block
     }
 
-    function voteYay(uint voteId) {
-        vote(voteId, true, getSender());
+    /**
+    * @notice Vote positively in voting with id `_voteId`
+    * @dev Function can be called directly without going through the DAO (save gas and bylaw is not useful for voting)
+    * @param _voteId id for vote
+    */
+    function voteYay(uint _voteId) public {
+        vote(_voteId, true, getSender());
     }
 
-    function voteYayAndClose(uint voteId) {
-        voteYay(voteId);
-        IVote(votes[voteId].voteAddress).execute();
-        transitionStateIfChanged(voteId);
+    /**
+    * @notice Vote positively in voting with id `_voteId` and execute the vote result (will fail if not approved)
+    * @dev Function can be called directly without going through the DAO (save gas and bylaw is not useful for voting)
+    * @param _voteId id for vote
+    */
+    function voteYayAndExecute(uint _voteId) external {
+        voteYay(_voteId);
+        IVote(votes[_voteId].voteAddress).execute();
+        transitionStateIfChanged(_voteId);
     }
 
-    function voteNay(uint voteId) {
-        vote(voteId, false, getSender());
+    /**
+    * @notice Vote negatively in voting with id `_voteId`
+    * @dev Function can be called directly without going through the DAO (save gas and bylaw is not useful for voting)
+    * @param _voteId id for vote
+    */
+    function voteNay(uint _voteId) external {
+        vote(_voteId, false, getSender());
     }
 
-    function vote(uint voteId, bool isYay, address voter)
-    transitions_state(voteId) only_state(voteId, VoteState.Voting)
-    internal
-    {
-        Vote storage vote = votes[voteId];
-        uint tokenLength = vote.governanceTokens.length;
+    /**
+    * @notice Make the hash `_codeHash` as `_valid ? 'valid' : 'invalid'` vote code
+    * @dev Only voting contracts with accepted code hashes will be allowed (solves voting reentrancy as only trusted vote code that is executed once should be allowed)
+    * @param _codeHash sha3 hash of the bytecode (stored in the blockchain, not the init_code)
+    * @param _valid whether to whitelist it the code or not
+    */
+    function setValidVoteCode(bytes32 _codeHash, bool _valid) onlyDAO external {
+        require(_codeHash > 0);
+        validVoteCode[_codeHash] = _valid;
+    }
 
-        uint totalStake = 0;
-        for (uint i = 0; i < tokenLength; i++) {
-            uint balance = MiniMeToken(vote.governanceTokens[i]).balanceOfAt(voter, vote.voteStartsBlock);
-            totalStake += balance * vote.votingWeights[i];
+    /**
+    * @notice Force a state update for vote id `_voteId`
+    * @dev Sometimes state transitions for votes have to be triggered from the outside (for closed and executed stages)
+    * @param _voteId id for vote checked
+    */
+    function transitionStateIfChanged(uint _voteId) public {
+        Vote storage vote = votes[_voteId];
+
+        // Multiple state transitions can happen at once
+        if (vote.state == VoteState.Debate && getBlockNumber() >= vote.voteStartsBlock) {
+            transitionToVotingState(vote);
+            VoteStateChanged(_voteId, uint(VoteState.Debate), uint(VoteState.Voting));
         }
 
-        if (vote.voted[voter] > 0) {  // already voted
-            bool votedYay = vote.voted[voter] == 1;
+        bool voteWasExecuted = IVote(votes[_voteId].voteAddress).wasExecuted();
 
-            if (votedYay)
-                vote.yays -= totalStake;
-            else
-                vote.nays -= totalStake;
+        if (vote.state == VoteState.Voting && (voteWasExecuted || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
+            vote.state = VoteState.Closed;
+            VoteStateChanged(_voteId, uint(VoteState.Voting), uint(VoteState.Closed));
         }
 
-        if (isYay)
-            vote.yays += totalStake;
-        else
-            vote.nays += totalStake;
-
-        vote.voted[voter] = isYay ? 1 : 2;
-
-        VoteCasted(
-            voteId,
-            voter,
-            isYay,
-            totalStake
-        );
+        if (vote.state == VoteState.Closed && voteWasExecuted) {
+            vote.state = VoteState.Executed;
+            VoteStateChanged(_voteId, uint(VoteState.Closed), uint(VoteState.Executed));
+        }
     }
 
+    /**
+    * @dev Function called from other components to check whether a vote is approved given certain parameters. All must pass.
+    * @param _voteAddress the address of the vote being checked
+    * @param _supportPct was voted positively by this percentage of voting quorum
+    * @param _minQuorumPct is the quorum at least this percentage
+    * @param _minDebateTime was there at least this many blocks between creation and voting starting
+    * @param _minVotingTime was there at least this many blocks between voting starting and closing
+    */
     function isVoteApproved(
         address _voteAddress,
         uint256 _supportPct,
@@ -134,16 +170,21 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
     ) constant returns (bool)
     {
         uint voteId = voteForAddress[_voteAddress];
-        require(voteId > 0);
-        Vote vote = votes[voteId];
-        if (vote.state == VoteState.Debate || vote.totalQuorum == 0)
+        if (voteId == 0)
             return false;
 
+        Vote storage vote = votes[voteId];
+
+        if (vote.state == VoteState.Debate || vote.totalQuorum == 0)
+            return false;
         if (vote.voteStartsBlock - vote.voteCreatedBlock < _minDebateTime)
             return false;
         if (vote.voteEndsBlock - vote.voteStartsBlock < _minVotingTime)
             return false;
+        if (!isVoteCodeValid(vote.voteAddress))
+            return false;
 
+        // After the vote has ended check whether min quorum was met and voting quorum approved it
         if (getBlockNumber() >= vote.voteEndsBlock) {
             uint256 quorum = vote.yays + vote.nays;
             uint256 yaysQuorumPct = vote.yays * PCT_BASE / quorum;
@@ -151,24 +192,22 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
 
             return yaysQuorumPct >= _supportPct && quorumPct >= _minQuorumPct;
         } else {
+            // Before the voting has ended, absolute support is needed
+            // (there is no way that the minSupport isn't met even if all remaining votes are negative)
             uint256 yaysTotalPct = vote.yays * PCT_BASE / vote.totalQuorum;
 
             return yaysTotalPct >= _supportPct;
         }
     }
 
-    function setValidVoteCode(bytes32 _codeHash, bool _valid) onlyDAO {
-        require(_codeHash > 0);
-        validVoteCode[_codeHash] = _valid;
-    }
-
-    function getStatusForVoteAddress(address addr) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
-        return getVoteStatus(voteForAddress[addr]);
-    }
-
-    function getVoteStatus(uint voteId) constant returns (VoteState state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
-        Vote storage vote = votes[voteId];
-        state = vote.state;
+    /**
+    * @dev Gets status for a certain vote
+    * @param _voteId id of the vote
+    * @return all voting status
+    */
+    function getVoteStatus(uint _voteId) constant returns (uint state, address voteCreator, address voteAddress, uint64 voteCreatedBlock, uint64 voteStartsBlock, uint64 voteEndsBlock, uint256 yays, uint256 nays, uint256 totalQuorum, bool validCode) {
+        Vote storage vote = votes[_voteId];
+        state = uint(vote.state);
         voteCreator = vote.voteCreator;
         voteAddress = vote.voteAddress;
         voteCreatedBlock = vote.voteCreatedBlock;
@@ -180,31 +219,56 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         validCode = isVoteCodeValid(vote.voteAddress);
     }
 
-    function getSender() internal returns (address) {
-        return msg.sender == dao ? dao_msg.sender : msg.sender;
+    /**
+    * @dev Getter for whether the contract at `_addr` is valid
+    * @param _addr contract address being checked
+    * @return bool whether it is valid or not
+    */
+    function isVoteCodeValid(address _addr) constant returns (bool) {
+        return validVoteCode[hashForCode(_addr)];
     }
 
-    function transitionStateIfChanged(uint voteId) {
-        Vote vote = votes[voteId];
+    /**
+    * @dev low level vote function. Gets the balances at the start block of the vote and adds votes according to weights
+    * @param _voteId id for vote
+    * @param _isYay whether to add a possitive or negative vote
+    * @param _voter address of voter
+    */
+    function vote(uint _voteId, bool _isYay, address _voter)
+    transitions_state(_voteId) only_state(_voteId, VoteState.Voting)
+    internal
+    {
+        Vote storage vote = votes[_voteId];
+        uint tokenLength = vote.governanceTokens.length;
 
-        // Multiple state transitions can happen at once
-        if (vote.state == VoteState.Debate && getBlockNumber() >= vote.voteStartsBlock) {
-            transitionToVotingState(vote);
-            VoteStateChanged(voteId, uint(VoteState.Debate), uint(VoteState.Voting));
+        uint totalStake = 0;
+        for (uint i = 0; i < tokenLength; i++) {
+            uint balance = MiniMeToken(vote.governanceTokens[i]).balanceOfAt(_voter, vote.voteStartsBlock);
+            totalStake += balance * vote.votingWeights[i];
         }
 
-        // when voting contract has selfdestructed is because of its successful
-        bool voteWasExecuted = IVote(votes[voteId].voteAddress).wasExecuted();
+        if (vote.voted[_voter] > 0) {  // already voted
+            bool votedYay = vote.voted[_voter] == 1;
 
-        if (vote.state == VoteState.Voting && (voteWasExecuted || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
-            vote.state = VoteState.Closed;
-            VoteStateChanged(voteId, uint(VoteState.Voting), uint(VoteState.Closed));
+            if (votedYay)
+                vote.yays -= totalStake;
+            else
+                vote.nays -= totalStake;
         }
 
-        if (vote.state == VoteState.Closed && voteWasExecuted) {
-            vote.state = VoteState.Executed;
-            VoteStateChanged(voteId, uint(VoteState.Closed), uint(VoteState.Executed));
-        }
+        if (_isYay)
+            vote.yays += totalStake;
+        else
+            vote.nays += totalStake;
+
+        vote.voted[_voter] = _isYay ? 1 : 2;
+
+        VoteCasted(
+            _voteId,
+            _voter,
+            _isYay,
+            totalStake
+        );
     }
 
     function transitionToVotingState(Vote storage vote) internal {
@@ -225,12 +289,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         assert(vote.votingWeights.length == vote.governanceTokens.length);
     }
 
-    function isVoteCodeValid(address _addr) constant returns (bool) {
-        return validVoteCode[hashForCode(_addr)];
-    }
-
     function getOwnershipApp() internal returns (OwnershipApp) {
-        // gets the app address that can respond to getToken
         return OwnershipApp(dao);
     }
 
@@ -249,4 +308,6 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         require(votes[voteId].state == state);
         _;
     }
+
+    uint constant PCT_BASE = 10 ** 18;
 }

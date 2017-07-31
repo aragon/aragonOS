@@ -53,7 +53,7 @@ contract VestedToken is StandardToken {
   }
 
   function revokeTokenGrant(address _holder, uint _grantId) {
-    TokenGrant grant = grants[_holder][_grantId];
+    TokenGrant storage grant = grants[_holder][_grantId];
 
     if (grant.granter != msg.sender) {
       throw;
@@ -75,7 +75,7 @@ contract VestedToken is StandardToken {
   }
 
   function tokenGrant(address _holder, uint _grantId) constant returns (address granter, uint256 value, uint256 vested, uint64 start, uint64 cliff, uint64 vesting) {
-    TokenGrant grant = grants[_holder][_grantId];
+    TokenGrant storage grant = grants[_holder][_grantId];
 
     granter = grant.granter;
     value = grant.value;
@@ -86,7 +86,7 @@ contract VestedToken is StandardToken {
     vested = vestedTokens(grant, uint64(now));
   }
 
-  function vestedTokens(TokenGrant grant, uint64 time) private constant returns (uint256) {
+  function vestedTokens(TokenGrant storage grant, uint64 time) private constant returns (uint256) {
     return calculateVestedTokens(
       grant.value,
       uint256(time),
@@ -119,7 +119,7 @@ contract VestedToken is StandardToken {
     vestedTokens = safeAdd(vestedTokens, safeDiv(safeMul(vestingTokens, safeSub(time, cliff)), safeSub(vesting, start)));
   }
 
-  function nonVestedTokens(TokenGrant grant, uint64 time) private constant returns (uint256) {
+  function nonVestedTokens(TokenGrant storage grant, uint64 time) private constant returns (uint256) {
     return safeSub(grant.value, vestedTokens(grant, time));
   }
 

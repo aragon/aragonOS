@@ -44,10 +44,4 @@ contract SafeMath {
   function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
   }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }

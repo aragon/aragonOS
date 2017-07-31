@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "./TokenSale.sol";
 
@@ -52,5 +52,8 @@ contract IndividualSale is TokenSale {
         closeSale();
     }
 
-    function sell(address holder, uint x) internal { throw; }
+    function sell(address _holder, uint _x) internal {
+        _holder; _x; // silence unused variables warning
+        revert();
+    }
 }
