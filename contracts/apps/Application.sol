@@ -18,6 +18,7 @@ contract Application is IApplication {
 
     function setDAO(address newDAO) onlyDAO {
         dao = newDAO;
+        init();
     }
 
     function setDAOMsg(address sender, address token, uint value) onlyDAO {

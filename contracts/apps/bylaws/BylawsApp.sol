@@ -8,7 +8,7 @@ import "../Application.sol";
 
 import "../status/StatusApp.sol";
 import "../ownership/OwnershipApp.sol";
-import "../basic-governance/VotingApp.sol"; // TODO: Change for generic voting iface
+import "../basic-governance/IVotingApp.sol"; // TODO: Change for generic voting iface
 
 
 contract IBylawsApp {
@@ -175,7 +175,7 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
     }
 
     function checkVoting(VotingBylaw votingBylaw, address voteAddress) internal returns (bool) {
-        return getVotingApp().isVoteApproved(
+        return getVotingOracle().isVoteApproved(
             voteAddress,
             votingBylaw.supportPct,
             votingBylaw.minQuorumPct,
@@ -344,8 +344,8 @@ contract BylawsApp is IBylawsApp, Application, IPermissionsOracle {
         return OwnershipApp(dao);
     }
 
-    function getVotingApp() internal returns (VotingApp) {
-        return VotingApp(dao);
+    function getVotingOracle() internal returns (IVotingOracle) {
+        return IVotingOracle(dao);
     }
 
     function getStatusApp() internal returns (StatusApp) {

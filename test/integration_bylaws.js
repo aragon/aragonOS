@@ -191,7 +191,7 @@ contract('Bylaws', accounts => {
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
       await votingApp.voteYay(1, { from: holder31 })
-      await votingApp.voteYayAndClose(1, { from: holder20 })
+      await votingApp.voteYayAndExecute(1, { from: holder20 })
 
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
     })
