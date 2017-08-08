@@ -2,7 +2,7 @@ const Handlebars = require('handlebars')
 const fs = require('fs')
 const path = require('path')
 const { signatures } = require('../test/helpers/web3')
-const inspector = require('../../../../../solidity-inspector')
+const inspector = require('solidity-inspector')
 
 const factoryTemplate = path.join(process.cwd(), '../contracts/factories/BasicFactory.sol.tmpl')
 const resultFile = path.join(process.cwd(), '../contracts/factories/BasicFactory.sol')
