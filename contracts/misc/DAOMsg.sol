@@ -8,7 +8,7 @@ contract DAOMsgEncoder {
      * @param _value Value of token transfered in call
      * @return bytes payload to be appended to calldata for a DAO call
      */
-    function calldataWithDAOMsg(bytes data, address _sender, address _token, uint _value) constant returns (bytes payload) {
+    function calldataWithDAOMsg(bytes data, address _sender, address _token, uint _value) internal constant returns (bytes payload) {
         payload = new bytes(data.length + 96);
         uint dataptr; uint payloadptr;
         assembly { dataptr := add(data, 0x20) payloadptr := add(payload, 0x20) }
@@ -75,7 +75,7 @@ contract DAOMsgReader {
             calldatacopy(add(data, 0x20), 0, size)
         }
 
-        // assert(padding >> 8 * 8 == 0); // assert package was correctly padded, first 24 bytes should be 0
+        assert(padding >> 8 * 8 == 0); // assert package was correctly padded, first 24 bytes should be 0
         return DAOMsg(sender, token, value, data);
     }
 }
