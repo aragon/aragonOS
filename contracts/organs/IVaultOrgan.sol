@@ -2,9 +2,9 @@ pragma solidity ^0.4.11;
 
 contract IVaultOrganEvents {
     event Deposit(address indexed token, address indexed sender, uint256 amount);
-    event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
-    event Recover(address indexed token, address indexed approvedBy, uint256 amount, address recipient);
-    event NewTokenDeposit(address token);
+    event Withdraw(address indexed token, address indexed approvedBy, uint256 amount, address indexed recipient);
+    event Recover(address indexed token, address indexed approvedBy, uint256 amount, address indexed recipient);
+    event NewTokenDeposit(address indexed token);
 }
 
 contract IVaultOrgan is IVaultOrganEvents {
