@@ -61,7 +61,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     * @notice Updates application atomically
     * #bylaw voting:75,0
     * @param appAddress new address of the receiving contract for functions
-    * @param sigs should be ordered from 0x0 to 0xffffffff
+    * @param sigs should be ordered from 0x0 to 0xffffffff
     */
     function updateApp(address appAddress, bytes4[] sigs) external {
         deregister(sigs, false);
@@ -69,7 +69,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     }
 
     /**
-    * @notice Install organ at address `address`
+    * @notice Install organ at address `organAddress`
     * #bylaw voting:75,0
     * @param organAddress address of the receiving contract for functions
     * @param sigs should be ordered from 0x0 to 0xffffffff
