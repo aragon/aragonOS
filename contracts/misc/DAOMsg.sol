@@ -3,17 +3,18 @@ pragma solidity ^0.4.13;
 contract DAOMsgEncoder {
     /**
      * @dev Package encoding: 0th to 24th byte are all 0s (padding so entire package is 32*3 bytes) 24 to 44 bytes sender, 44 to 64 token, 64 to 96 value
+     * @param _data Original calldata to append dao_msg packet
      * @param _sender Address of the sender of the DAO message (Encoded from byte 24th to 44th)
      * @param _token Address of the token used to send the message (Encoded from byte 44th to 64th)
      * @param _value Value of token transfered in call
      * @return bytes payload to be appended to calldata for a DAO call
      */
-    function calldataWithDAOMsg(bytes data, address _sender, address _token, uint _value) internal constant returns (bytes payload) {
-        payload = new bytes(data.length + 96);
+    function calldataWithDAOMsg(bytes _data, address _sender, address _token, uint _value) internal constant returns (bytes payload) {
+        payload = new bytes(_data.length + 96);
         uint dataptr; uint payloadptr;
-        assembly { dataptr := add(data, 0x20) payloadptr := add(payload, 0x20) }
-        memcpy(payloadptr, dataptr, data.length);
-        encodeDAOMsg(payloadptr + data.length, _sender, _token, _value);
+        assembly { dataptr := add(_data, 0x20) payloadptr := add(payload, 0x20) }
+        memcpy(payloadptr, dataptr, _data.length);
+        encodeDAOMsg(payloadptr + _data.length, _sender, _token, _value);
     }
 
     function encodeDAOMsg(uint payloadptr, address _sender, address _token, uint _value) internal {
