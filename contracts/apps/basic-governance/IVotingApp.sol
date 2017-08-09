@@ -5,7 +5,7 @@ contract IVotingOracle {
 }
 
 contract IVotingApp is IVotingOracle {
-    event VoteCreated(uint voteId, address voteAddress);
+    event VoteCreated(uint indexed voteId, address voteAddress);
     event VoteCasted(uint indexed voteId, address voter, bool isYay, uint votes);
     event VoteStateChanged(uint indexed voteId, uint oldState, uint newState);
 

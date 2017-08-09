@@ -20,5 +20,5 @@ contract ForwarderFactory {
         ForwarderDeployed(fwdContract, target);
     }
 
-    event ForwarderDeployed(address forwarderAddress, address targetContract);
+    event ForwarderDeployed(address forwarderAddress, address indexed targetContract);
 }

@@ -36,13 +36,6 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
     TokenSale[] tokenSales;
     mapping (address => uint) public tokenSaleForAddress;
 
-    event AddedToken(address tokenAddress, uint tokenId);
-    event RemovedToken(address tokenAddress);
-    event ChangedTokenId(address tokenAddress, uint oldTokenId, uint newTokenId);
-
-    event NewTokenSale(address saleAddress, uint saleId);
-    event TokenSaleClosed(address saleAddress, uint saleId);
-
     uint8 constant MAX_TOKENS = 20; // prevent OOGs when tokens are iterated
     uint constant HOLDER_THRESHOLD = 1; // if owns x tokens is considered holder
 
