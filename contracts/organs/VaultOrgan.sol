@@ -30,6 +30,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
     external
     payable
     {
+        require(msg.data.length == 4 + 3 * 32); // assure call doesn't have DAOmsg (cannot be called externally)
         if (_amount == 0)
             return;
         if (_token == 0 && msg.value == _amount)
