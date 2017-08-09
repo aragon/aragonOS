@@ -52,15 +52,17 @@ contract BasicFactory {
     }
 
     function installOrgans(MetaOrgan dao) internal {
-        bytes4[] memory metaorganSigs = new bytes4[](8);
+        bytes4[] memory metaorganSigs = new bytes4[](10);
         metaorganSigs[0] = o0_s0; // setPermissionsOracle(address)
         metaorganSigs[1] = o0_s1; // removeOrgan(bytes4[])
         metaorganSigs[2] = o0_s2; // installOrgan(address,bytes4[])
         metaorganSigs[3] = o0_s3; // installApp(address,bytes4[])
         metaorganSigs[4] = o0_s4; // ceaseToExist()
         metaorganSigs[5] = o0_s5; // get(bytes4)
-        metaorganSigs[6] = o0_s6; // removeApp(bytes4[])
-        metaorganSigs[7] = o0_s7; // replaceKernel(address)
+        metaorganSigs[6] = o0_s6; // updateOrgan(address,bytes4[])
+        metaorganSigs[7] = o0_s7; // removeApp(bytes4[])
+        metaorganSigs[8] = o0_s8; // replaceKernel(address)
+        metaorganSigs[9] = o0_s9; // updateApp(address,bytes4[])
         dao.installOrgan(metaorgan, metaorganSigs);
 
         bytes4[] memory vaultorganSigs = new bytes4[](15);
@@ -91,21 +93,20 @@ contract BasicFactory {
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedbylawsapp = Application(_testrpc ? bylawsapp : forwarderFactory.createForwarder(bylawsapp));
         deployedbylawsapp.setDAO(address(dao));
-        bytes4[] memory bylawsappSigs = new bytes4[](14);
+        bytes4[] memory bylawsappSigs = new bytes4[](13);
         bylawsappSigs[0] = a0_s0; // getStatusBylaw(uint256)
         bylawsappSigs[1] = a0_s1; // setCombinatorBylaw(uint256,uint256,uint256,bool)
         bylawsappSigs[2] = a0_s2; // linkBylaw(bytes4,uint256)
         bylawsappSigs[3] = a0_s3; // setStatusBylaw(uint8,bool,bool)
         bylawsappSigs[4] = a0_s4; // setVotingBylaw(uint256,uint256,uint64,uint64,bool)
         bylawsappSigs[5] = a0_s5; // getAddressBylaw(uint256)
-        bylawsappSigs[6] = a0_s6; // negateIfNeeded(bool,bool)
-        bylawsappSigs[7] = a0_s7; // getBylawType(uint256)
-        bylawsappSigs[8] = a0_s8; // getVotingBylaw(uint256)
-        bylawsappSigs[9] = a0_s9; // setAddressBylaw(address,bool,bool)
-        bylawsappSigs[10] = a0_s10; // canPerformAction(address,address,uint256,bytes)
-        bylawsappSigs[11] = a0_s11; // getBylawNot(uint256)
-        bylawsappSigs[12] = a0_s12; // getCombinatorBylaw(uint256)
-        bylawsappSigs[13] = a0_s13; // bylawEntrypoint(bytes4)
+        bylawsappSigs[6] = a0_s6; // getBylawType(uint256)
+        bylawsappSigs[7] = a0_s7; // getVotingBylaw(uint256)
+        bylawsappSigs[8] = a0_s8; // setAddressBylaw(address,bool,bool)
+        bylawsappSigs[9] = a0_s9; // canPerformAction(address,address,uint256,bytes)
+        bylawsappSigs[10] = a0_s10; // getBylawNot(uint256)
+        bylawsappSigs[11] = a0_s11; // getCombinatorBylaw(uint256)
+        bylawsappSigs[12] = a0_s12; // bylawEntrypoint(bytes4)
         dao.installApp(deployedbylawsapp, bylawsappSigs);
 
         // Proxies are not working on testrpc, that's why for testing no proxy is created
@@ -141,13 +142,13 @@ contract BasicFactory {
         deployedstatusapp.setDAO(address(dao));
         bytes4[] memory statusappSigs = new bytes4[](2);
         statusappSigs[0] = a2_s0; // setEntityStatus(address,uint8)
-        statusappSigs[1] = a2_s1; // entityStatus(address)
+        statusappSigs[1] = a2_s1; // getEntityStatus(address)
         dao.installApp(deployedstatusapp, statusappSigs);
 
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedvotingapp = Application(_testrpc ? votingapp : forwarderFactory.createForwarder(votingapp));
         deployedvotingapp.setDAO(address(dao));
-        bytes4[] memory votingappSigs = new bytes4[](12);
+        bytes4[] memory votingappSigs = new bytes4[](11);
         votingappSigs[0] = a3_s0; // voteNay(uint256)
         votingappSigs[1] = a3_s1; // getVoteStatus(uint256)
         votingappSigs[2] = a3_s2; // isVoteCodeValid(address)
@@ -158,8 +159,7 @@ contract BasicFactory {
         votingappSigs[7] = a3_s7; // setValidVoteCode(bytes32,bool)
         votingappSigs[8] = a3_s8; // voteYay(uint256)
         votingappSigs[9] = a3_s9; // isVoteApproved(address,uint256,uint256,uint64,uint64)
-        votingappSigs[10] = a3_s10; // getStatusForVoteAddress(address)
-        votingappSigs[11] = a3_s11; // voteYayAndClose(uint256)
+        votingappSigs[10] = a3_s10; // voteYayAndExecute(uint256)
         dao.installApp(deployedvotingapp, votingappSigs);
 
         return deployedbylawsapp; // first app is bylaws
@@ -176,8 +176,10 @@ contract BasicFactory {
         dao_bylaws.linkBylaw(o0_s2, bylaw_2); // installOrgan(address,bytes4[])
         dao_bylaws.linkBylaw(o0_s3, bylaw_3); // installApp(address,bytes4[])
         dao_bylaws.linkBylaw(o0_s4, bylaw_1); // ceaseToExist()
-        dao_bylaws.linkBylaw(o0_s6, bylaw_2); // removeApp(bytes4[])
-        dao_bylaws.linkBylaw(o0_s7, bylaw_2); // replaceKernel(address)
+        dao_bylaws.linkBylaw(o0_s6, bylaw_2); // updateOrgan(address,bytes4[])
+        dao_bylaws.linkBylaw(o0_s7, bylaw_2); // removeApp(bytes4[])
+        dao_bylaws.linkBylaw(o0_s8, bylaw_2); // replaceKernel(address)
+        dao_bylaws.linkBylaw(o0_s9, bylaw_2); // updateApp(address,bytes4[])
         dao_bylaws.linkBylaw(o1_s5, bylaw_4); // deposit(address,uint256)
     }
 
@@ -197,8 +199,10 @@ contract BasicFactory {
     bytes4 constant o0_s3 = 0x59a565d7; // installApp(address,bytes4[])
     bytes4 constant o0_s4 = 0x5bb95c74; // ceaseToExist()
     bytes4 constant o0_s5 = 0x62a2cf0c; // get(bytes4)
-    bytes4 constant o0_s6 = 0x869effe3; // removeApp(bytes4[])
-    bytes4 constant o0_s7 = 0xcebe30ac; // replaceKernel(address)
+    bytes4 constant o0_s6 = 0x78a54225; // updateOrgan(address,bytes4[])
+    bytes4 constant o0_s7 = 0x869effe3; // removeApp(bytes4[])
+    bytes4 constant o0_s8 = 0xcebe30ac; // replaceKernel(address)
+    bytes4 constant o0_s9 = 0xe6f79926; // updateApp(address,bytes4[])
     // vaultorgan
     bytes4 constant o1_s0 = 0x05b1137b; // transferEther(address,uint256)
     bytes4 constant o1_s1 = 0x1ff0769a; // setTokenBlacklist(address,bool)
@@ -224,14 +228,13 @@ contract BasicFactory {
     bytes4 constant a0_s3 = 0x39d2245b; // setStatusBylaw(uint8,bool,bool)
     bytes4 constant a0_s4 = 0x423c962c; // setVotingBylaw(uint256,uint256,uint64,uint64,bool)
     bytes4 constant a0_s5 = 0x50839d11; // getAddressBylaw(uint256)
-    bytes4 constant a0_s6 = 0x51102b4b; // negateIfNeeded(bool,bool)
-    bytes4 constant a0_s7 = 0x7ac41ef5; // getBylawType(uint256)
-    bytes4 constant a0_s8 = 0x7b0dfa35; // getVotingBylaw(uint256)
-    bytes4 constant a0_s9 = 0x81a08245; // setAddressBylaw(address,bool,bool)
-    bytes4 constant a0_s10 = 0xb18fe4f3; // canPerformAction(address,address,uint256,bytes)
-    bytes4 constant a0_s11 = 0xe289793e; // getBylawNot(uint256)
-    bytes4 constant a0_s12 = 0xe69308d2; // getCombinatorBylaw(uint256)
-    bytes4 constant a0_s13 = 0xea986c0a; // bylawEntrypoint(bytes4)
+    bytes4 constant a0_s6 = 0x7ac41ef5; // getBylawType(uint256)
+    bytes4 constant a0_s7 = 0x7b0dfa35; // getVotingBylaw(uint256)
+    bytes4 constant a0_s8 = 0x81a08245; // setAddressBylaw(address,bool,bool)
+    bytes4 constant a0_s9 = 0xb18fe4f3; // canPerformAction(address,address,uint256,bytes)
+    bytes4 constant a0_s10 = 0xe289793e; // getBylawNot(uint256)
+    bytes4 constant a0_s11 = 0xe69308d2; // getCombinatorBylaw(uint256)
+    bytes4 constant a0_s12 = 0xea986c0a; // bylawEntrypoint(bytes4)
     // ownershipapp
     bytes4 constant a1_s0 = 0x10451468; // sale_closeSale()
     bytes4 constant a1_s1 = 0x1fbc147b; // getTokenSale(uint256)
@@ -257,7 +260,7 @@ contract BasicFactory {
     bytes4 constant a1_s21 = 0xf881a92f; // grantTokens(address,address,uint256)
     // statusapp
     bytes4 constant a2_s0 = 0x6035fa06; // setEntityStatus(address,uint8)
-    bytes4 constant a2_s1 = 0x6b87cdc4; // entityStatus(address)
+    bytes4 constant a2_s1 = 0x7c35ae77; // getEntityStatus(address)
     // votingapp
     bytes4 constant a3_s0 = 0x014396f2; // voteNay(uint256)
     bytes4 constant a3_s1 = 0x0519bb83; // getVoteStatus(uint256)
@@ -269,6 +272,5 @@ contract BasicFactory {
     bytes4 constant a3_s7 = 0x64bfa2f6; // setValidVoteCode(bytes32,bool)
     bytes4 constant a3_s8 = 0x8f328d7a; // voteYay(uint256)
     bytes4 constant a3_s9 = 0xad49224c; // isVoteApproved(address,uint256,uint256,uint64,uint64)
-    bytes4 constant a3_s10 = 0xad5dd1f5; // getStatusForVoteAddress(address)
-    bytes4 constant a3_s11 = 0xcf9883e2; // voteYayAndClose(uint256)
+    bytes4 constant a3_s10 = 0xdb82d1e7; // voteYayAndExecute(uint256)
 }
