@@ -3,7 +3,7 @@ pragma solidity ^0.4.13;
 import "../../kernel/IPermissionsOracle.sol";
 
 contract IBylawsApp {
-    event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
+    event BylawChanged(bytes4 sig, uint bylawType, uint256 indexed bylawId, address changedBy);
 
     function linkBylaw(bytes4 _sig, uint _id) external;
 
