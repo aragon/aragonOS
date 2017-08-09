@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "prepublish": "truffle compile",
+    "generate:factory": "truffle exec scripts/generate_factory.js",
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
