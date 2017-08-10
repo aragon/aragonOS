@@ -29,7 +29,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 
     bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
     bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newTransaction(address,address,int256,string)'));
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newIncomingTransaction(address,address,uint256,string)'));
 
     function Kernel(address _deployedMeta) {
         deployedMeta = _deployedMeta;
@@ -153,7 +153,7 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
 		DebugString('recordDeposit', ref);
 
         Application(addr).setDAOMsg(sender, token, amount);
-		AccountingApp(addr).newTransaction(sender, token, int256(amount), ref);  // newTransaction(address,address,int256,string)
+		AccountingApp(addr).newIncomingTransaction(sender, token, amount, ref);  // newTransaction(address,address,int256,string)
 	}
 
     function getPermissionsOracle() constant returns (address) {

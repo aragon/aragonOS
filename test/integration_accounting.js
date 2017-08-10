@@ -13,15 +13,19 @@ const { getBalance } = require('./helpers/web3')
 const createDAO = () => DAO.new(Kernel.address)
 const { installOrgans  } = require('./helpers/installer')
 const { signatures, sendTransaction } = require('./helpers/web3')
-
+const timer = require('./helpers/timer')
 const zerothAddress = '0x'
 const randomAddress = '0x0000000000000000000000000000000000001234'
 
 contract('AccountingApp', accounts => {
-  let dao, metadao, kernel = {}
+  let dao, metadao, kernel, vault = {}
+
   let randomAddress = 0
+  let token = {}
 
   beforeEach(async () => {
+    vault = VaultOrgan.at(dao.address)
+    token = EtherToken.at(await vault.getEtherToken())
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     await installOrgans(metadao, [MetaOrgan])
@@ -47,7 +51,7 @@ contract('AccountingApp', accounts => {
     it('can create new transaction', async () => {
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123')
+        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionState.New
         let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
         assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
         let ts0 = await dao_accountingApp.getTransactionState(0)
@@ -58,7 +62,7 @@ contract('AccountingApp', accounts => {
     it('can update transaction', async () => {
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); //  new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
+        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionState.New
         await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
         let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
         assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
@@ -75,30 +79,43 @@ contract('AccountingApp', accounts => {
         t = await dao_accountingApp.startNextAccountingPeriod()
         ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
         assert.equal(ap_id, 0, "Should STILL be on the 1st (index 0) accounting period")
-        web3.currentProvider.sendAsync({
-            jsonrpc: "2.0",
-            method: "evm_increaseTime",
-            params: [86400],  // 86400 seconds in a day
-            id: new Date().getTime()
-        }, async (error, result) => {
-            t = await dao_accountingApp.startNextAccountingPeriod()
-            ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
-            assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
-        })
+        await timer(864000) // 8640 seconds in a day
+        t = await dao_accountingApp.startNextAccountingPeriod()
+        ap_id = await dao_accountingApp.getCurrentAccountingPeriodId()
+        assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
+
     })
 
     it('can record transaction from incoming deposits', async () => {
 
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        //await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123')
-        //let l = await dao_accountingApp.getTransactionsLength.call();
-        //assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
+        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionType.Deposit
+        let l = await dao_accountingApp.getTransactionsLength.call();
+        assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
 
         await sendTransaction({value: 100, from: accounts[0], to: dao.address, gas: 4e6 });
+        l = await dao_accountingApp.getTransactionsLength.call();
+        assert.equal(l.toNumber(), 2, 'Should have 2 transactions')
+    })
+
+
+    it('can send transactions after approval', async () => {
+
+        await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
+        await dao_accountingApp.startNextAccountingPeriod()
+        await sendTransaction({value: 100, from: accounts[0], to: dao.address, gas: 4e6 });
         let l = await dao_accountingApp.getTransactionsLength.call();
-        console.log(l)
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
+
+        await dao_accountingApp.newTransaction(accounts[1], '0x100', 100, 'Ref 123', 1) // 0 is TransactionType.Withdrawal
+        l = await dao_accountingApp.getTransactionsLength.call();
+        assert.equal(l.toNumber(), 2, 'Should have 2 transactions')
+
+        await dao_accountingApp.updateTransaction(1, 1, 'needs approval')
+        await dao_accountingApp.approveTransaction(1, 'this is valid')
+        let ti1 = await dao_accountingApp.getTransactionInfo.call(1)
+
     })
 
   })

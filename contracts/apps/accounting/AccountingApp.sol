@@ -2,6 +2,8 @@ pragma solidity ^0.4.11;
 
 import "../Application.sol";
 import "../../misc/Crontab.sol";
+import "../../organs/VaultOrgan.sol";
+
 
 
 contract AccountingApp is Application, Crontab {
@@ -25,14 +27,20 @@ contract AccountingApp is Application, Crontab {
     // The concept of sending tokens to or from the org
     struct Transaction {
         address token;
-        int amount;
+        uint amount;
         address baseToken;
-        int baseValue;
+        uint baseValue;
         address externalAddress;
         string reference;
         uint timestamp;
         uint accountingPeriodId;  // in which accounting period did this occur
+        TransactionType _type;
     }
+    enum TransactionType {
+        Deposit,
+        Withdrawal
+    }
+
 
     // The state a transaction update can be.
     // New states should be added to the end to maintain the
@@ -41,7 +49,9 @@ contract AccountingApp is Application, Crontab {
         New, // not needed?
         PendingApproval,
         Failed,
-        Succeeded
+        Succeeded,
+        Approved,
+        Denied
     }
 
     // The change in Transaciton state over time
@@ -105,12 +115,12 @@ contract AccountingApp is Application, Crontab {
 
     // This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    function getTransactionInfo(uint transactionId) constant returns (address, address, int, string) {
+    function getTransactionInfo(uint transactionId) constant returns (address, address, uint, string, TransactionType) {
         Transaction memory t = transactions[transactionId];
         uint tuid = transactionUpdatesRelation[transactionId].length - 1;
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
         TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
-        return (t.externalAddress, t.token, t.amount, t.reference);
+        return (t.externalAddress, t.token, t.amount, t.reference, t._type);
     }
 
     function getTransactionState(uint transactionId) constant returns (TransactionState, string) {
@@ -132,9 +142,13 @@ contract AccountingApp is Application, Crontab {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
+    function newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) onlyDAO {
+        newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
+    }
+
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    function newTransaction(address externalAddress, address token, int256 amount, string reference) onlyDAO {
+    function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) onlyDAO {
         Debug('newTransaction');
 
         uint tid = transactions.push(Transaction({
@@ -146,7 +160,8 @@ contract AccountingApp is Application, Crontab {
             externalAddress: externalAddress,
             reference: reference,
             timestamp: now,
-            accountingPeriodId: getCurrentAccountingPeriodId()
+            accountingPeriodId: getCurrentAccountingPeriodId(),
+            _type: _type
         })) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
@@ -165,12 +180,25 @@ contract AccountingApp is Application, Crontab {
         transactionUpdatesRelation[transactionId].push(tuid);
     }
 
+     function approveTransaction(uint transactionId, string reason) onlyDAO {
+        Transaction memory t = transactions[transactionId];
+        if (t._type == TransactionType.Withdrawal){
+            VaultOrgan(dao).transfer(t.token, t.externalAddress, t.amount);
+            setTransactionApproved(transactionId, reason);
+        }
+     }
+
+
     function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
 
     function setTransactionPendingApproval(uint transactionId, string reason) {
         updateTransaction(transactionId, TransactionState.PendingApproval, reason);
+    }
+
+    function setTransactionApproved(uint transactionId, string reason) {
+        updateTransaction(transactionId, TransactionState.Approved, reason);
     }
 
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
