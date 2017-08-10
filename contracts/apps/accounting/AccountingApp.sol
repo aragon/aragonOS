@@ -183,8 +183,8 @@ contract AccountingApp is Application, Crontab {
      function approveTransaction(uint transactionId, string reason) onlyDAO {
         Transaction memory t = transactions[transactionId];
         if (t._type == TransactionType.Withdrawal){
-            VaultOrgan(dao).transfer(t.token, t.externalAddress, t.amount);
             setTransactionApproved(transactionId, reason);
+            VaultOrgan(dao).transfer(t.token, t.externalAddress, t.amount);
         }
      }
 
@@ -198,7 +198,10 @@ contract AccountingApp is Application, Crontab {
     }
 
     function setTransactionApproved(uint transactionId, string reason) {
-        updateTransaction(transactionId, TransactionState.Approved, reason);
+        var (state, r) = getTransactionState(transactionId);
+        if(state == TransactionState.PendingApproval){
+            updateTransaction(transactionId, TransactionState.Approved, reason);
+        }
     }
 
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
