@@ -48,6 +48,15 @@ contract('Dispatcher', accounts => {
       assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
       assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
     })
+
+    it('allows value transfer without data payload', async () => {
+        const value = 101
+        await kernel.send(value, { gas: 5e6 }) // code coverage could be expensive gas wise
+
+        const etherToken = EtherToken.at(await vault.getEtherToken())
+        assert.equal(await etherToken.balanceOf(dao.address), value, 'transferred ether should be inside ETH token')
+        assert.equal(await vault.getTokenBalance(etherToken.address), value, 'DAO accounting should know token balance')
+    })
   })
 
   context('dispatches presigned transactions', () => {
