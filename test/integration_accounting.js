@@ -24,12 +24,13 @@ contract('AccountingApp', accounts => {
   let token = {}
 
   beforeEach(async () => {
-    vault = VaultOrgan.at(dao.address)
-    token = EtherToken.at(await vault.getEtherToken())
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
-    await installOrgans(metadao, [MetaOrgan])
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan])
     kernel = Kernel.at(dao.address)
+    vault = VaultOrgan.at(dao.address)
+    await vault.setupEtherToken()
+    token = EtherToken.at(await vault.getEtherToken())
   })
 
   context('installed app', () => {
@@ -108,12 +109,12 @@ contract('AccountingApp', accounts => {
         let l = await dao_accountingApp.getTransactionsLength.call();
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
 
-        await dao_accountingApp.newTransaction(accounts[1], '0x100', 100, 'Ref 123', 1) // 0 is TransactionType.Withdrawal
+        await dao_accountingApp.newTransaction(accounts[1], (await vault.getEtherToken()), 100, 'Ref 123', 1) // 0 is TransactionType.Withdrawal
         l = await dao_accountingApp.getTransactionsLength.call();
         assert.equal(l.toNumber(), 2, 'Should have 2 transactions')
 
         await dao_accountingApp.updateTransaction(1, 1, 'needs approval')
-        await dao_accountingApp.approveTransaction(1, 'this is valid')
+        // await dao_accountingApp.approveTransaction(1, 'this is valid')
         let ti1 = await dao_accountingApp.getTransactionInfo.call(1)
 
     })
