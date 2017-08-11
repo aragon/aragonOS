@@ -188,7 +188,6 @@ contract AccountingApp is Application, Crontab {
         }
      }
 
-
     function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
