@@ -131,6 +131,9 @@ contract BylawsApp is IBylawsApp, Application {
         bytes data
     ) constant returns (bool)
     {
+        if(!isTokenWhitelisted[token] || token != 0)
+           return false
+
         return canPerformAction(
             getSig(data),
             sender,
