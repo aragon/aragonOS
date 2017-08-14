@@ -10,6 +10,7 @@ var ActionsOrgan = artifacts.require('ActionsOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var Vote = artifacts.require('Vote')
 var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
+var Standart23Token = artifacts.require('mocks/Standard23Token')
 
 var Kernel = artifacts.require('Kernel')
 
@@ -47,6 +48,35 @@ contract('Bylaws', accounts => {
 
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
   })
+
+  context('adding token whitelist', () => {
+
+     var token, tokenAddress;
+
+     beforeEach(async () => {
+        token = await Standart23Token.new({from: accounts[3]});
+        tokenAddress = await token.address;
+     })
+
+     it('correctly sets an whitlisted token', async () => {
+       await bylawsApp.setTokenWhitelist(tokenAddress, true, {from: dao.address});
+       assert.isTrue(await bylawsApp.isTokenWhitelisted(tokenAddress));
+       await bylawsApp.setTokenWhitelist(tokenAddress, false, {from: dao.address});
+       assert.isFalse(await bylawsApp.isTokenWhitelisted(tokenAddress));
+     });
+
+     it('allows non list token deposit', async () => {
+        await token.transfer(dao.address, 10, {from: accounts[3]});
+        let balance = await token.balanceOf(dao.address)
+        assert.equal(balance.toNumber(), 10);
+     });
+
+     it('blocks non listed token exectuion', async () => {
+        //await token.transfer(dao.address, 10, 'executionData', {from: accounts[3]});
+     });
+
+     it('allows listed token execution', async () => {});
+ })
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
