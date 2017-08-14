@@ -1,13 +1,18 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "./IOrgan.sol";
+import "./IMetaOrgan.sol";
 import "../kernel/KernelRegistry.sol";
 
 // @dev MetaOrgan can modify all critical aspects of the DAO.
-contract MetaOrgan is IOrgan, KernelRegistry {
+contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     bytes32 constant PERMISSION_ORACLE_KEY = sha3(0x01, 0x03);
 
-    function ceaseToExist() public {
+    /**
+    * @notice Destruct organization for ever (non-recoverable)
+    * #bylaw voting:80,100
+    */
+    function ceaseToExist() external {
         // Check it is called in DAO context and not from the outside which would
         // delete the organ logic from the EVM
         address self = getSelf();
@@ -15,31 +20,81 @@ contract MetaOrgan is IOrgan, KernelRegistry {
         selfdestruct(0xdead);
     }
 
-    function replaceKernel(address newKernel) public {
+    /**
+    * @notice Change DAO Kernel to Kernel at address `address`
+    * #bylaw voting:75,0
+    */
+    function replaceKernel(address newKernel) external {
         setKernel(newKernel);
+        KernelReplaced(newKernel);
     }
 
-    function setPermissionsOracle(address newOracle) {
+    /**
+    * @notice Set `address` as permissions oracle
+    * #bylaw voting:75,0
+    */
+    function setPermissionsOracle(address newOracle) external {
         storageSet(PERMISSION_ORACLE_KEY, uint256(newOracle));
+        PermissionsOracleReplaced(newOracle);
     }
 
-    // @param appAddress: address of the receiving contract for functions
-    // @param sigs: should be ordered from 0x0 to 0xffffffff
-    function installApp(address appAddress, bytes4[] sigs) {
+    /**
+    * @notice Install application at address `address`
+    * #bylaw status:3
+    * @param appAddress address of the receiving contract for functions
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function installApp(address appAddress, bytes4[] sigs) external {
         register(appAddress, sigs, false);
     }
 
-    // @param organAddress: address of the receiving contract for functions
-    // @param sigs: should be ordered from 0x0 to 0xffffffff
-    function installOrgan(address organAddress, bytes4[] sigs) {
+    /**
+    * @notice Remove application, you will lose functionality in your org
+    * #bylaw voting:75,0
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function removeApp(bytes4[] sigs) external {
+        deregister(sigs, false);
+    }
+
+    /**
+    * @notice Updates application atomically
+    * #bylaw voting:75,0
+    * @param appAddress new address of the receiving contract for functions
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function updateApp(address appAddress, bytes4[] sigs) external {
+        deregister(sigs, false);
+        register(appAddress, sigs, false);
+    }
+
+    /**
+    * @notice Install organ at address `organAddress`
+    * #bylaw voting:75,0
+    * @param organAddress address of the receiving contract for functions
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function installOrgan(address organAddress, bytes4[] sigs) external {
         register(organAddress, sigs, true);
     }
 
-    function removeOrgan(bytes4[] sigs) {
+    /**
+    * @notice Remove organ, you will lose functionality in your org
+    * #bylaw voting:75,0
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function removeOrgan(bytes4[] sigs) external {
         deregister(sigs, true);
     }
 
-    function removeApp(bytes4[] sigs) {
-        deregister(sigs, false);
+    /**
+    * @notice Updates organ atomically
+    * #bylaw voting:75,0
+    * @param organAddress address of the receiving contract for functions
+    * @param sigs should be ordered from 0x0 to 0xffffffff
+    */
+    function updateOrgan(address organAddress, bytes4[] sigs) external {
+        deregister(sigs, true);
+        register(organAddress, sigs, true);
     }
 }

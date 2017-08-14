@@ -1,42 +1,39 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
+
+/**
+* @title DAO Kernel
+* @author Jorge Izquierdo (Aragon)
+* @description Kernel's purpose is to intercept different types of transactions that can
+* be made to the DAO, check if the action can be done and dispatch it.
+* The Kernel keeps a registry what organ or applications handles each action.
+*/
 
 import "./IKernel.sol";
 import "./KernelRegistry.sol";
+import "./IPermissionsOracle.sol";
 
 import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
 
-import "../dao/DAOStorage.sol";
+import "../organs/IOrgan.sol";
 import "../apps/Application.sol";
 import "../apps/accounting/AccountingApp.sol";
 
-// @dev Kernel's purpose is to intercept different types of transactions that can
-// be made to the DAO, and dispatch it using a uniform interface to the DAO organs.
-// The Kernel keeps a registry what organ lives at x priority.
+contract Kernel is IKernel, IOrgan, KernelRegistry {
+    /**
+    * @dev MetaOrgan instance keeps saved in its own context.
+    * @param _deployedMeta an instance of a MetaOrgan (used for setup)
+    */
 
-// Accepted transaction types:
-//   - Vanilla ether tx: transfering ETH with the value param of the tx and tx data.
-//   - Pre signed ether tx: providing the ECDSA signature of the payload.
-//     allows for preauthorizing a tx that could be sent by other msg.sender
-//   - Token tx: approveAndCall and EIP223 tokenFallback support
-
-contract PermissionsOracle {
-    function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool);
-}
-
-contract Kernel is IKernel, DAOStorage, KernelRegistry {
-    address public deployedMeta;
-
-    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
-    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
-    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newIncomingTransaction(address,address,uint256,string)'));
 
     function Kernel(address _deployedMeta) {
         deployedMeta = _deployedMeta;
     }
 
-    // @dev Installs 'installOrgan' function from MetaOrgan.
-    // @param _baseKernel an instance to the kernel to call.
+    /**
+    * @dev Registers 'installOrgan' function from MetaOrgan, all further organ installs can be performed with it
+    * @param _baseKernel an instance to the kernel to call and get the deployedMeta
+    */
     function setupOrgans(address _baseKernel) {
         var (a,) = get(INSTALL_ORGAN_SIG);
         require(a == 0); // assert this can only be called once in the DAO
@@ -45,126 +42,181 @@ contract Kernel is IKernel, DAOStorage, KernelRegistry {
         register(Kernel(_baseKernel).deployedMeta(), installOrganSig, true);
     }
 
-    // @dev Vanilla ETH transfers get intercepted in the fallback
+    /**
+    * @dev Vanilla ETH transfers get intercepted in the fallback
+    */
     function () payable public {
         dispatchEther(msg.sender, msg.value, msg.data);
     }
 
-    // @dev Dispatch a preauthorized ETH transaction
-    // @param data: Presigned transaction data to be executed
-    // @param nonce: Numeric identifier that allows for multiple tx with the same data to be executed.
-    // @param r: ECDSA signature r value
-    // @param s: ECDSA signature s value
-    // @param v: ECDSA signature v value
-    function preauthDispatch(bytes data, uint nonce, bytes32 r, bytes32 s, uint8 v) payable public {
-        bytes32 signingPayload = personalSignedPayload(data, nonce); // Calculate the hashed payload that was signed
+    /**
+    * @notice Send a transaction of behalf of the holder that signed it (data: `data`)
+    * @dev Dispatches a preauthorized ETH transaction
+    * @param _data Presigned transaction data to be executed
+    * @param _nonce Numeric identifier that allows for multiple tx with the same data to be executed.
+    * @param _r ECDSA signature r value
+    * @param _s ECDSA signature s value
+    * @param _v ECDSA signature v value
+    */
+    function preauthDispatch(bytes _data, uint _nonce, bytes32 _r, bytes32 _s, uint8 _v) payable public {
+        bytes32 signingPayload = personalSignedPayload(_data, _nonce); // Calculate the hashed payload that was signed
         require(!isUsedPayload(signingPayload));
         setUsedPayload(signingPayload);
 
-        address sender = ecrecover(signingPayload, v, r, s);
-        dispatchEther(sender, msg.value, data);
+        address signer = ecrecover(signingPayload, _v, _r, _s);
+        dispatchEther(signer, msg.value, _data);
     }
 
-    // ERC223 receiver compatible
+    /**
+    * @dev ERC223 receiver compatible
+    * @param _sender address that performed the token transfer (only trustable if token is trusted)
+    * @param _origin address from which the tokens came from (same as _sender unless transferFrom)
+    * @param _value amount of tokens being sent
+    * @param _data executable data alonside token transaction
+    */
     function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
+        // TODO: Check whether msg.sender token is trusted
+        _origin; // silence unused variable warning
         dispatch(_sender, msg.sender, _value, _data);
         return true;
     }
 
-    // ApproveAndCall compatible
+    /**
+    * @dev ApproveAndCall compatibility
+    * @param _sender address that performed the token transfer (only trustable if token is trusted)
+    * @param _value amount of tokens being sent
+    * @param _token token address (same as msg.sender)
+    * @param _data executable data alonside token transaction
+    */
     function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
+        // TODO: Check whether msg.sender token is trusted
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
         dispatch(_sender, _token, _value, _data);
     }
 
-    // @dev For ETH transactions this function wraps the ETH in a token and dispatches it
-    // @param sender: msg.sender of the transaction
-    // @param value: Transaction's sent ETH value
-    // @param data: Transaction data
-    function dispatchEther(address sender, uint256 value, bytes data) internal {
-        dispatch(sender, 0, value, data);
+    /**
+    * @dev For ETH transactions this function wraps the ETH in a token and dispatches it
+    * @param _sender address that performed the ether transfer
+    * @param _value amount of tokens being sent
+    * @param _data executable data alonside token transaction
+    */
+    function dispatchEther(address _sender, uint256 _value, bytes _data) internal {
+        // dispatched token address is 0, this is intercepted by the Vault
+        dispatch(_sender, 0, _value, _data);
     }
 
-    // @dev Sends the transaction to the dispatcher organ
-    function dispatch(address sender, address token, uint256 value, bytes payload) internal {
-        require(canPerformAction(sender, token, value, payload));
+    /**
+    * @dev Sends the transaction to the dispatcher organ
+    * @param _sender address that performed the token transfer
+    * @param _token token address
+    * @param _value amount of tokens being sent
+    * @param _payload executable data alonside token transaction
+    * @return - the underlying call returns (upto RETURN_MEMORY_SIZE memory)
+    */
+    function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
+        require(canPerformAction(_sender, _token, _value, _payload));
 
-        vaultDeposit(token, value); // deposit tokens that come with the call in the vault
-        recordDeposit(sender, token, value, "new deposit"); // recored the token deposit
-        if (payload.length == 0) return; // Just receive the tokens
+        vaultDeposit(_token, _value); // deposit tokens that come with the call in the vault
+        recordDeposit(_sender, _token, _value, "new deposit"); // recored the token deposit
+        if (_payload.length == 0) return; // Just receive the tokens
 
         bytes4 sig;
-        assembly { sig := mload(add(payload, 0x20)) }
+        assembly { sig := mload(add(_payload, 0x20)) }
         var (target, isDelegate) = get(sig);
         uint32 len = RETURN_MEMORY_SIZE;
         require(target > 0);
 
-        // TODO: Make it a switch statement when truffle migrates to solc 0.4.12
         if (isDelegate) {
-            setDAOMsg(DAOMessage(sender, token, value)); // save context so organs can access it
-            assembly {
-                let result := 0
-                result := delegatecall(sub(gas, 10000), target, add(payload, 0x20), mload(payload), 0, len)
-                jumpi(invalidJumpLabel, iszero(result))
-                return(0, len)
-            }
+            setDAOMsg(DAOMessage(_sender, _token, _value)); // save context so organs can access it
         } else {
-            Application(target).setDAOMsg(sender, token, value);
-            assembly {
-                let result := 0
-                result := call(sub(gas, 10000), target, 0, add(payload, 0x20), mload(payload), 0, len)
-                jumpi(invalidJumpLabel, iszero(result))
-                return(0, len)
-            }
+            Application(target).setDAOMsg(_sender, _token, _value);
+        }
+
+        assembly {
+            let result := 0
+            switch isDelegate
+            case 1 { result := delegatecall(sub(gas, 10000), target, add(_payload, 0x20), mload(_payload), 0, len) }
+            case 0 { result := call(sub(gas, 10000), target, 0, add(_payload, 0x20), mload(_payload), 0, len) }
+            switch result case 0 { invalid() }
+            return(0, len)
         }
     }
 
-    function canPerformAction(address sender, address token, uint256 value, bytes data) constant returns (bool) {
+    /**
+    * @dev Sends the transaction to the dispatcher organ
+    * @param _sender address that performed the token transfer
+    * @param _token token address
+    * @param _value amount of tokens being sent
+    * @param _data executable data alonside token transaction
+    * @return bool whether the action is allowed by permissions oracle
+    */
+    function canPerformAction(address _sender, address _token, uint256 _value, bytes _data) constant returns (bool) {
         address p = getPermissionsOracle();
-        return p == 0 ? true : PermissionsOracle(p).canPerformAction(sender, token, value, data);
+        return p == 0 || IPermissionsOracle(p).canPerformAction(_sender, _token, _value, _data);
     }
 
+    /**
+    * @dev Low level deposit of funds to the Vault Organ
+    * @param _token address of the token
+    * @param _amount amount of the token
+    */
+    function vaultDeposit(address _token, uint256 _amount) internal {
+        var (vaultOrgan,) = get(DEPOSIT_SIG);
+        if (_amount == 0 || vaultOrgan == 0) return;
+
+        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_token), _amount));
+    }
+
+    /**
+    * @dev Sets a preauth payload as used
+    * @param _payload hash of the action used
+    */
     function setUsedPayload(bytes32 _payload) internal {
         storageSet(getStorageKeyForPayload(_payload), 1);
     }
 
+    /**
+    * @dev Whether a given preauth payload was already used
+    * @param _payload hash of the action used
+    * @return bool was payload it was used before or not
+    */
     function isUsedPayload(bytes32 _payload) constant returns (bool) {
         return storageGet(getStorageKeyForPayload(_payload)) == 1;
+    }
+
+    /**
+    * @dev Compute payload to be signed in order to preauthorize a transaction
+    * @param _data transaction data to be executed
+    * @param _nonce identifier of the transaction to allow repeating actions without double-spends
+    * @return bytes32 hash to be signed
+    */
+    function personalSignedPayload(bytes _data, uint _nonce) constant public returns (bytes32) {
+        return keccak256(0x19, "Ethereum Signed Message:\n32", payload(_data, _nonce));
+    }
+
+	function recordDeposit(address sender, address token, uint256 amount, string ref) internal {
+		var (addr,) = get(NEW_TRANSACTION_SIG);
+        if (amount == 0 || addr == 0) return;
+
+        Application(addr).setDAOMsg(sender, token, amount);
+		AccountingApp(addr).newIncomingTransaction(sender, token, amount, ref);  // newTransaction(address,address,int256,string)
+	}
+
+    function payload(bytes _data, uint _nonce) constant public returns (bytes32) {
+        return keccak256(address(this), _data, _nonce);
     }
 
     function getStorageKeyForPayload(bytes32 _payload) constant internal returns (bytes32) {
         return sha3(0x01, 0x01, _payload);
     }
 
-    function vaultDeposit(address token, uint256 amount) internal {
-        var (vaultOrgan,) = get(DEPOSIT_SIG);
-        if (amount == 0 || vaultOrgan == 0) return;
-        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(token), amount));
-    }
-
-	event DebugString(string msg, string msg2);
-	event DebugUint(string msg, uint msg2);
-	event DebugAddress(string msg, address msg2);
-	function recordDeposit(address sender, address token, uint256 amount, string ref) internal {
-		var (addr,) = get(NEW_TRANSACTION_SIG);
-        if (amount == 0 || addr == 0) return;
-		DebugUint('recordDeposit amount', amount);
-		DebugAddress('recordDeposit accountingApp', addr);
-		DebugString('recordDeposit', ref);
-
-        Application(addr).setDAOMsg(sender, token, amount);
-		AccountingApp(addr).newIncomingTransaction(sender, token, amount, ref);  // newTransaction(address,address,int256,string)
-	}
-
     function getPermissionsOracle() constant returns (address) {
         return address(storageGet(sha3(0x01, 0x03)));
     }
 
-    function payload(bytes data, uint nonce) constant public returns (bytes32) {
-        return keccak256(address(this), data, nonce);
-    }
+    address public deployedMeta;
 
-    function personalSignedPayload(bytes data, uint nonce) constant public returns (bytes32) {
-        return keccak256(0x19, "Ethereum Signed Message:\n32", payload(data, nonce));
-    }
+    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
+    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newIncomingTransaction(address,address,uint256,string)'));
 }

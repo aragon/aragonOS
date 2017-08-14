@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "zeppelin/token/StandardToken.sol";
 
@@ -16,7 +16,7 @@ contract EtherToken is StandardToken {
     }
 
     function withdraw(uint256 amount, address recipient) {
-        performWithdrawAccounting(amount, recipient);
+        performWithdrawAccounting(amount);
 
         recipient.transfer(amount);
     }
@@ -24,7 +24,7 @@ contract EtherToken is StandardToken {
     // Withdraw without the oportunity of re-entrancy on the ETH transfer.
     // Credits to Jordi Baylina (https://gist.github.com/jbaylina/e8ac19b8e7478fd10cf0363ad1a5a4b3)
     function secureWithdraw(uint256 amount, address recipient) {
-        performWithdrawAccounting(amount, recipient);
+        performWithdrawAccounting(amount);
 
         assert(address(this).balance >= amount);
         address payContract;
@@ -42,7 +42,7 @@ contract EtherToken is StandardToken {
     }
 
     // Internal function with common logic executed in a withdraw
-    function performWithdrawAccounting(uint256 amount, address recipient) internal {
+    function performWithdrawAccounting(uint256 amount) internal {
         supply = safeSub(supply, amount);
         balances[msg.sender] = safeSub(balances[msg.sender], amount); // will throw if less than 0
 

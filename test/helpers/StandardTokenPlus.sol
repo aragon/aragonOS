@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "zeppelin/token/StandardToken.sol";
 
@@ -19,7 +19,7 @@ contract StandardTokenPlus is StandardToken {
   }
 
   function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
-   if (!approve(_spender, _amount)) throw;
+   require(approve(_spender, _amount));
 
    ApproveAndCallFallBack(_spender).receiveApproval(
        msg.sender,

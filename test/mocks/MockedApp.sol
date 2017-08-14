@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "../../contracts/apps/Application.sol";
 
@@ -16,6 +16,7 @@ contract MockedApp is Application {
   }
 
   function canHandlePayload(bytes p) constant returns (bool) {
+    p; // silence warning
     return true; // can handle all the payloads
   }
 }

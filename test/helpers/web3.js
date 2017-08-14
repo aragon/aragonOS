@@ -1,18 +1,22 @@
 // TODO: pls abstract promisification over web3
 
 module.exports = {
-  signatures(contract, exclude, web3) {
+  signatures(contract, exclude, web3, names = false) {
     const flatten = x => [].concat.apply([], x)
     const sig = f => `${f.name}(${f.inputs.map(x=>x.type).join(',')})`
 
     const excludedSigs = flatten(exclude.map(x => x.abi)).map(sig)
 
-    return contract.abi
+    let signatures = contract.abi
       .filter(x => x.type == 'function')
       .map(sig)
       .filter(s => excludedSigs.indexOf(s) < 0)
-      .map(s => web3.sha3(s).slice(0, 10))
-      .sort()
+
+     let bs = signatures.map(s => web3.sha3(s).slice(0, 10)).sort()
+     if (names)
+        return bs.map((b, i) => ({ name: signatures[i], bytes: b }))
+
+     return bs
   },
 
   getBalance(addr) {

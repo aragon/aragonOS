@@ -1,5 +1,11 @@
 pragma solidity ^0.4.11;
 
+/**
+* @author Jorge Izquierdo (Aragon)
+* @description OwnershipApp requires ActionsOrgan to be installed in DAO
+* At the moment OwnershipApp intercepts MiniMe hook events.
+*/
+
 import "../Application.sol";
 import "../../organs/ActionsOrgan.sol";
 import "../../misc/Requestor.sol";
@@ -7,12 +13,9 @@ import "../../tokens/MiniMeIrrevocableVestedToken.sol";
 
 import "zeppelin/token/ERC20.sol";
 
+import "./IOwnershipApp.sol";
 
-// OwnershipApp requires ActionsOrgan to be installed in DAO
-
-// At the moment OwnershipApp intercepts MiniMe hook events, if governance app
-// needs them, it has to have higher priority than ownership app
-contract OwnershipApp is Application, Controller, Requestor {
+contract OwnershipApp is Application, IOwnershipApp, Requestor {
     struct Token {
         address tokenAddress;
         uint128 governanceRights;
@@ -33,114 +36,61 @@ contract OwnershipApp is Application, Controller, Requestor {
     TokenSale[] tokenSales;
     mapping (address => uint) public tokenSaleForAddress;
 
-    event AddedToken(address tokenAddress, uint tokenId);
-    event RemovedToken(address tokenAddress);
-    event ChangedTokenId(address tokenAddress, uint oldTokenId, uint newTokenId);
-
-    event NewTokenSale(address saleAddress, uint saleId);
-    event TokenSaleClosed(address saleAddress, uint saleId);
-
     uint8 constant MAX_TOKENS = 20; // prevent OOGs when tokens are iterated
     uint constant HOLDER_THRESHOLD = 1; // if owns x tokens is considered holder
 
     function OwnershipApp(address daoAddr)
     Application(daoAddr)
     {
+    }
+
+    function init() internal {
+        assert(tokenSales.length == 0 && tokens.length == 0); // check init can only happen once
         tokenSales.length += 1;
         tokens.length += 1;
     }
 
+    /**
+    * @notice Add token at `_tokenAddress` as a governance token to the organization
+    * @dev If added token is not controlled by DAO, it will fail to issue tokens
+    * @param _tokenAddress Address for the minime token
+    * @param _issueAmount Tokens to be issued and assigned to the DAO
+    * @param _governanceRights Factor for governance rights for token
+    * @param _economicRights Factor for economic rights for token
+    */
     function addToken(
-        address tokenAddress,
-        uint256 issueAmount,
-        uint128 governanceRights,
-        uint128 economicRights
+        address _tokenAddress,
+        uint256 _issueAmount,
+        uint128 _governanceRights,
+        uint128 _economicRights
     )
     onlyDAO
+    external
     {
-        // Only add tokens the DAO is the controller of, so we can control it.
-        // If it is a wrap over another token, the Wrap implementation can remove some functionality.
-        require(MiniMeToken(tokenAddress).controller() == dao);
         uint newLength = tokens.push(
             Token(
-                tokenAddress,
-                governanceRights,
-                economicRights,
+                _tokenAddress,
+                _governanceRights,
+                _economicRights,
                 false
             )
         );
         uint256 tokenId = newLength - 1;
-        tokenIdForAddress[tokenAddress] = tokenId;
+        tokenIdForAddress[_tokenAddress] = tokenId;
 
-        updateIsController(tokenAddress);
-        AddedToken(tokenAddress, tokenId);
+        updateIsController(_tokenAddress);
+        AddedToken(_tokenAddress, tokenId);
 
-        if (issueAmount > 0)
-            issueTokens(tokenAddress, issueAmount);
+        if (_tokenAddress > 0)
+            issueTokens(_tokenAddress, _issueAmount);
     }
 
-    bytes4 constant CREATE_TOKEN_SALE_SIG = bytes4(sha3("createTokenSale(address,address,bool)"));
-    function createTokenSale(
-        address saleAddress,
-        address tokenAddress,
-        bool canDestroy
-    )
-    onlyDAO only_controlled(tokenAddress)
-    {
-        uint salesLength = tokenSales.push(
-            TokenSale(
-                saleAddress,
-                tokenAddress,
-                canDestroy,
-                false
-            )
-        );
-        uint saleId = salesLength - 1; // last item is newly added sale
-        tokenSaleForAddress[saleAddress] = saleId;
-
-        NewTokenSale(saleAddress, saleId);
-    }
-
-    bytes4 constant CLOSE_TOKEN_SALE_SIG = bytes4(sha3("closeTokenSale(address)"));
-    function closeTokenSale(address saleAddress) onlyDAO {
-        doCloseSale(saleAddress);
-    }
-
-    bytes4 constant SALE_MINT_SIG = bytes4(sha3("sale_mintTokens(address,address,uint256)"));
-    function sale_mintTokens(address tokenAddress, address recipient, uint amount) only_active_sale(tokenAddress) {
-        MiniMeToken(this).generateTokens(recipient, amount);
-        executeRequestorAction(tokenAddress);
-    }
-
-    bytes4 constant SALE_DESTROY_SIG = bytes4(sha3("sale_destroyTokens(address,address,uint256)"));
-    function sale_destroyTokens(address tokenAddress, address holder, uint amount) only_active_sale(tokenAddress) {
-        require(tokenSales[tokenSaleForAddress[getSender()]].canDestroy);
-        MiniMeToken(this).destroyTokens(holder, amount);
-        executeRequestorAction(tokenAddress);
-    }
-
-    bytes4 constant SALE_CLOSE_SIG = bytes4(sha3("sale_closeSale()"));
-    function sale_closeSale() {
-        doCloseSale(getSender());
-    }
-
-    function doCloseSale(address _saleAddress) internal {
-        uint saleId = tokenSaleForAddress[_saleAddress];
-        require(saleId > 0);
-        tokenSales[saleId].closed = true;
-
-        TokenSaleClosed(tokenSales[saleId].saleAddress, saleId);
-    }
-
-    // @dev Updates whether an added token controller state has changed
-    // can be called by anyone at any time
-    function updateIsController(address tokenAddress) {
-        Token token = tokens[tokenIdForAddress[tokenAddress]];
-        token.isController = MiniMeToken(token.tokenAddress).controller() == dao;
-    }
-
-    function removeToken(address tokenAddress) onlyDAO {
-        uint tokenId = tokenIdForAddress[tokenAddress];
+    /**
+    * @notice Remove token at `_tokenAddress` as a governance token to the organization
+    * @param _tokenAddress token address being removed
+    */
+    function removeToken(address _tokenAddress) onlyDAO external {
+        uint tokenId = tokenIdForAddress[_tokenAddress];
         require(tokenId > 0);
         if (tokens.length > 1) {
             tokens[tokenId] = tokens[tokens.length - 1];
@@ -151,7 +101,110 @@ contract OwnershipApp is Application, Controller, Requestor {
         tokenIdForAddress[tokens[tokens.length - 1].tokenAddress] = 0;
         tokens.length--;
 
-        RemovedToken(tokenAddress);
+        RemovedToken(_tokenAddress);
+    }
+
+    /**
+    * @notice Issue `_amount` of `_tokenAddress` tokens for the DAO
+    * @param _tokenAddress token address being issued
+    * @param _amount amount of tokens in the smallest unit
+    */
+    function issueTokens(address _tokenAddress, uint256 _amount) onlyDAO {
+        require(tokenIdForAddress[_tokenAddress] > 0);
+        // TODO: get rid of this MEGA HACK.
+        // Requestor should be an external contract, but having trouble because solidity
+        // doesn't like variable sized types for returns.
+        // If this contract needed to have another fallback it wouldn"t work.
+        MiniMeToken(this).generateTokens(dao, _amount);
+        executeRequestorAction(_tokenAddress);
+    }
+
+    /**
+    * @notice Assign `_amount` of `_tokenAddress` tokens to `_recipient`
+    * @param _tokenAddress token address being issued
+    * @param _recipient address receiving the tokens
+    * @param _amount amount of tokens in the smallest unit
+    */
+    function grantTokens(address _tokenAddress, address _recipient, uint256 _amount) onlyDAO external {
+        require(tokenIdForAddress[_tokenAddress] > 0);
+        MiniMeToken(this).transfer(_recipient, _amount);
+        executeRequestorAction(_tokenAddress);
+    }
+
+    /**
+    * @notice Assign `_amount` of `_tokenAddress` tokens to `_recipient` with a `_cliff` cliff and `_vesting` starting `_start`
+    * @param _tokenAddress token address being issued
+    * @param _recipient address receiving the tokens
+    * @param _amount amount of tokens in the smallest unit
+    * @param _start timestamp where vesting calculation starts (can be a past date)
+    * @param _cliff timestamp in which the proportional amount of tokens are unlocked for the first time
+    * @param _vesting timestamp in which all tokens are transferable
+    */
+    function grantVestedTokens(
+        address _tokenAddress,
+        address _recipient,
+        uint256 _amount,
+        uint64 _start,
+        uint64 _cliff,
+        uint64 _vesting
+    )
+    onlyDAO
+    external
+    {
+        require(tokenIdForAddress[_tokenAddress] > 0);
+        MiniMeIrrevocableVestedToken(this).grantVestedTokens(
+            _recipient,
+            _amount,
+            _start,
+            _cliff,
+            _vesting
+        );
+        executeRequestorAction(_tokenAddress);
+    }
+
+    /**
+    * @notice Create a token sale with sale contract at address `_saleAddress`
+    * @param _saleAddress contract that handles sale
+    * @param _tokenAddress address of the token being sold (must be controlled by DAO)
+    * @param _canDestroy whether the token sale has power to destroy holder's tokens
+    */
+    function createTokenSale(
+        address _saleAddress,
+        address _tokenAddress,
+        bool _canDestroy
+    )
+    onlyDAO only_controlled(_tokenAddress)
+    external
+    {
+        uint salesLength = tokenSales.push(
+            TokenSale(
+                _saleAddress,
+                _tokenAddress,
+                _canDestroy,
+                false
+            )
+        );
+        uint saleId = salesLength - 1; // last item is newly added sale
+        tokenSaleForAddress[_saleAddress] = saleId;
+
+        NewTokenSale(_saleAddress, saleId);
+    }
+
+    /**
+    * @notice Forces the close of token sale at address `_saleAddress`
+    * @param _saleAddress token sale being closed
+    */
+    function closeTokenSale(address _saleAddress) onlyDAO external {
+        doCloseSale(_saleAddress);
+    }
+
+    /**
+    * @dev Updates whether an added token controller state has changed
+    * can be called by anyone at any time to update its state
+    */
+    function updateIsController(address _tokenAddress) {
+        Token storage token = tokens[tokenIdForAddress[_tokenAddress]];
+        token.isController = MiniMeToken(token.tokenAddress).controller() == dao;
     }
 
     function getTokenCount() constant returns (uint) {
@@ -159,7 +212,7 @@ contract OwnershipApp is Application, Controller, Requestor {
     }
 
     function getToken(uint tokenId) constant returns (address, uint128, uint128, bool) {
-        Token token = tokens[tokenId];
+        Token storage token = tokens[tokenId];
         return (token.tokenAddress, token.governanceRights, token.economicRights, token.isController);
     }
 
@@ -168,7 +221,7 @@ contract OwnershipApp is Application, Controller, Requestor {
     }
 
     function getTokenSale(uint tokenSaleId) constant returns (address, address, bool, bool) {
-        TokenSale tokenSale = tokenSales[tokenSaleId];
+        TokenSale storage tokenSale = tokenSales[tokenSaleId];
         return (
             tokenSale.saleAddress,
             tokenSale.tokenAddress,
@@ -177,41 +230,28 @@ contract OwnershipApp is Application, Controller, Requestor {
         );
     }
 
-    function issueTokens(address tokenAddress, uint256 amount) onlyDAO {
-        require(tokenIdForAddress[tokenAddress] > 0);
-        // TODO: get rid of this MEGA HACK.
-        // Requestor should be an external contract, but having trouble because solidity
-        // doesn"t like variable sized types for returns.
-        // If this contract needed to have another fallback it wouldn"t work.
-        MiniMeToken(this).generateTokens(dao, amount);
-        executeRequestorAction(tokenAddress);
+    /**
+    * @dev Method called by sale to mint tokens
+    */
+    function sale_mintTokens(address _tokenAddress, address recipient, uint amount) only_active_sale(_tokenAddress) external {
+        MiniMeToken(this).generateTokens(recipient, amount);
+        executeRequestorAction(_tokenAddress);
     }
 
-    function grantTokens(address tokenAddress, address recipient, uint256 amount) onlyDAO {
-        require(tokenIdForAddress[tokenAddress] > 0);
-        MiniMeToken(this).transfer(recipient, amount);
-        executeRequestorAction(tokenAddress);
+    /**
+    * @dev Method called by sale to destroy tokens if allowed to
+    */
+    function sale_destroyTokens(address _tokenAddress, address holder, uint amount) only_active_sale(_tokenAddress) external {
+        require(tokenSales[tokenSaleForAddress[getSender()]].canDestroy);
+        MiniMeToken(this).destroyTokens(holder, amount);
+        executeRequestorAction(_tokenAddress);
     }
 
-    function grantVestedTokens(
-        address tokenAddress,
-        address recipient,
-        uint256 amount,
-        uint64 start,
-        uint64 cliff,
-        uint64 vesting
-    )
-    onlyDAO
-    {
-        require(tokenIdForAddress[tokenAddress] > 0);
-        MiniMeIrrevocableVestedToken(this).grantVestedTokens(
-            recipient,
-            amount,
-            start,
-            cliff,
-            vesting
-        );
-        executeRequestorAction(tokenAddress);
+    /**
+    * @dev Method called by sale to close itself
+    */
+    function sale_closeSale() external {
+        doCloseSale(getSender());
     }
 
     function executeRequestorAction(address to) internal {
@@ -224,14 +264,17 @@ contract OwnershipApp is Application, Controller, Requestor {
     }
 
     function proxyPayment(address _owner) payable returns (bool) {
+        _owner; // silence unused variable warning
         return false;
     }
 
     function onTransfer(address _from, address _to, uint _amount) returns (bool) {
+        _from; _to; _amount; // silence unused variable warning
         return true;
     }
 
     function onApprove(address _owner, address _spender, uint _amount) returns (bool) {
+        _owner; _spender; _amount; // silence unused variable warning
         return true;
     }
 
@@ -245,16 +288,25 @@ contract OwnershipApp is Application, Controller, Requestor {
         return false;
     }
 
-    modifier only_controlled(address tokenAddress) {
-        require(tokens[tokenIdForAddress[tokenAddress]].isController);
+    function doCloseSale(address _saleAddress) internal {
+        uint saleId = tokenSaleForAddress[_saleAddress];
+        require(saleId > 0);
+        require(!tokenSales[saleId].closed);
+        tokenSales[saleId].closed = true;
+
+        TokenSaleClosed(tokenSales[saleId].saleAddress, saleId);
+    }
+
+    modifier only_controlled(address _tokenAddress) {
+        require(tokens[tokenIdForAddress[_tokenAddress]].isController);
         _;
     }
 
-    modifier only_active_sale(address tokenAddress) {
+    modifier only_active_sale(address _tokenAddress) {
         uint saleId = tokenSaleForAddress[getSender()];
         require(saleId > 0);
-        TokenSale sale = tokenSales[saleId];
-        require(!sale.closed && sale.tokenAddress == tokenAddress);
+        TokenSale storage sale = tokenSales[saleId];
+        require(!sale.closed && sale.tokenAddress == _tokenAddress);
         _;
     }
 }

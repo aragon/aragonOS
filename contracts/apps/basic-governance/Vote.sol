@@ -1,11 +1,6 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
-
-contract IVote {
-    function wasExecuted() constant public returns (bool);
-    function execute();
-}
-
+import "./IVote.sol";
 
 contract Vote is IVote {
     address public dao;

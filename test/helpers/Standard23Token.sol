@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 import "zeppelin/token/StandardToken.sol";
 
@@ -22,17 +22,17 @@ contract Standard23Token is ERC23, StandardToken {
   function totalSupply() constant public returns (uint) {
     return supply;
   }
-  
+
   //function that is called when a user or another contract wants to transfer funds
   function transfer(address _to, uint _value, bytes _data) returns (bool success) {
     //filtering if the target is a contract with bytecode inside it
-    if (!super.transfer(_to, _value)) throw; // do a normal token transfer
+    require(super.transfer(_to, _value)); // do a normal token transfer
     if (isContract(_to)) return contractFallback(msg.sender, _to, _value, _data);
     return true;
   }
 
   function transferFrom(address _from, address _to, uint _value, bytes _data) returns (bool success) {
-    if (!super.transferFrom(_from, _to, _value)) throw; // do a normal token transfer
+    require(super.transferFrom(_from, _to, _value)); // do a normal token transfer
     if (isContract(_to)) return contractFallback(_from, _to, _value, _data);
     return true;
   }

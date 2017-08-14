@@ -26,12 +26,20 @@ run_coveralls() {
     npm run coveralls
 }
 
+run_coverage(){
+    cd /usr/src/app
+    npm run coverage
+}
+
 case "$1" in
     test)
         lint_test
     ;;
     coveralls)
         run_coveralls
+    ;;
+    coverage)
+        run_coverage
     ;;
     help)
         show_help
