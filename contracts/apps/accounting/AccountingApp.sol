@@ -193,7 +193,10 @@ contract AccountingApp is Application, Crontab {
     }
 
     function setTransactionPendingApproval(uint transactionId, string reason) {
-        updateTransaction(transactionId, TransactionState.PendingApproval, reason);
+        var (state, r) = getTransactionState(transactionId);
+        if(state == TransactionState.New){
+            updateTransaction(transactionId, TransactionState.PendingApproval, reason);
+        }
     }
 
     function setTransactionApproved(uint transactionId, string reason) {
@@ -204,7 +207,10 @@ contract AccountingApp is Application, Crontab {
     }
 
     function setTransactionFailed(uint transactionId, string reason) onlyDAO {
-        updateTransaction(transactionId, TransactionState.Failed, reason);
+        var (state, r) = getTransactionState(transactionId);
+        if(state == TransactionState.New){
+            updateTransaction(transactionId, TransactionState.Failed, reason);
+        }
     }
 
 
