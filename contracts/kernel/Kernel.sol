@@ -88,7 +88,7 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
         // TODO: Check whether msg.sender token is trusted
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
-        dispatch(_sender, _token, _value, _data);
+        dispatch(_token == msg.sender ? _sender : msg.sender, _token, _value, _token == msg.sender ? _data : new bytes(0));
     }
 
     /**
@@ -111,11 +111,12 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     * @return - the underlying call returns (upto RETURN_MEMORY_SIZE memory)
     */
     function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
-        require(canPerformAction(_sender, _token, _value, _payload));
 
         vaultDeposit(_token, _value); // deposit tokens that come with the call in the vault
 
         if (_payload.length == 0) return; // Just receive the tokens
+
+        require(canPerformAction(_sender, _token, _value, _payload));
 
         bytes4 sig;
         assembly { sig := mload(add(_payload, 0x20)) }
