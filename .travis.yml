@@ -5,7 +5,7 @@ python:
 services:
   - docker
 before_script:
-  - docker-compose build 2>/dev/null
+  - docker-compose build > /dev/null
 script:
   - docker-compose run core test
 after_script:
