@@ -4,6 +4,8 @@ python:
   - "3.4"
 services:
   - docker
+before_script:
+  - docker-compose build 2>/dev/null
 script:
   - docker-compose run core test
 after_script:
