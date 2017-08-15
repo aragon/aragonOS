@@ -12,7 +12,6 @@ contract IVaultOrgan is IVaultOrganEvents {
     function getTokenBalance(address _token) constant returns (uint256);
 
     function transfer(address _token, address _to, uint256 _amount) external;
-    function transferEther(address _to, uint256 _amount) external;
 
     function halt(uint256 _haltTime) external;
     function getHaltTime() constant returns (uint256 started, uint256 ends);
