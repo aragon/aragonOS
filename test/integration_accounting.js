@@ -52,7 +52,7 @@ contract('AccountingApp', accounts => {
     it('can create new transaction', async () => {
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionState.New
+        await dao_accountingApp.newIncomingTransaction('0x111', '0x100', 100, 'Ref 123')
         let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
         assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
         let ts0 = await dao_accountingApp.getTransactionState(0)
@@ -63,7 +63,7 @@ contract('AccountingApp', accounts => {
     it('can update transaction', async () => {
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); //  new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction('0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionState.New
+        await dao_accountingApp.newIncomingTransaction('0x111', '0x100', 100, 'Ref 123') 
         await dao_accountingApp.updateTransaction(0, 1, 'needs approval')
         let ti0 = await dao_accountingApp.getTransactionInfo.call(0)
         assert.equal(ti0[3], 'Ref 123', 'Should have matching reference number')
@@ -91,7 +91,7 @@ contract('AccountingApp', accounts => {
 
         await dao_accountingApp.setDefaultAccountingPeriodSettings('0x111', '0', '*', '*', '0', '*'); // new accounting period every sunday at midnight
         await dao_accountingApp.startNextAccountingPeriod()
-        await dao_accountingApp.newTransaction( '0x111', '0x100', 100, 'Ref 123', 0) // 0 is TransactionType.Deposit
+        await dao_accountingApp.newIncomingTransaction('0x111', '0x100', 100, 'Ref 123') 
         let l = await dao_accountingApp.getTransactionsLength.call();
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
 
@@ -110,13 +110,16 @@ contract('AccountingApp', accounts => {
         assert.equal(l.toNumber(), 1, 'Should have 1 transaction')
         let eth_token = await vault.getEtherToken()
         console.log(eth_token)
-        await dao_accountingApp.newTransaction(accounts[1], eth_token, 100, 'Ref 123', 1) // 0 is TransactionType.Withdrawal
+        await dao_accountingApp.newOutgoingTransaction(accounts[1], eth_token, 100, 'Ref 123', 1) // 0 is TransactionType.Withdrawal
         l = await dao_accountingApp.getTransactionsLength.call();
         assert.equal(l.toNumber(), 2, 'Should have 2 transactions')
+        await dao_accountingApp.approveTransaction(1, 'this is valid')
 
-        await dao_accountingApp.updateTransaction(1, 1, 'needs approval')
-        // await dao_accountingApp.approveTransaction(1, 'this is valid')
         let ti1 = await dao_accountingApp.getTransactionInfo.call(1)
+
+        const etherToken = EtherToken.at(await vault.getEtherToken())
+        assert.equal(await etherToken.balanceOf(dao.address), 100, 'transferred ether should be inside ETH token')
+
 
     })
 

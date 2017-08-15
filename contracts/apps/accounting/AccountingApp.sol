@@ -147,11 +147,16 @@ contract AccountingApp is Application, Crontab {
         newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
     }
 
+    function newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) onlyDAO {
+        uint transactionId = newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
+		setTransactionPendingApproval(transactionId, 'pending');
+    }
+
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) onlyDAO {
+    function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
         Debug('newTransaction');
-        ap = accountingPeriods[getCurrentAccountingPeriodId()];
+        AccountingPeriod ap = accountingPeriods[getCurrentAccountingPeriodId()];
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
@@ -168,11 +173,13 @@ contract AccountingApp is Application, Crontab {
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
 
         updateTransaction(tid, TransactionState.New, "new");
+		return tid;
     }
 
      function approveTransaction(uint transactionId, string reason) onlyDAO {
         Transaction memory t = transactions[transactionId];
-		require(t.state == TransactionState.PendingApproval);
+        var (state, r) = getTransactionState(transactionId);
+		require(state == TransactionState.PendingApproval);
         require(t._type == TransactionType.Withdrawal);
 		setTransactionApproved(transactionId, reason);
 		executeTransaction(transactionId);
@@ -180,7 +187,8 @@ contract AccountingApp is Application, Crontab {
 
 	function executeTransaction(uint transactionId) onlyDAO {
         Transaction memory t = transactions[transactionId];
-		require(t.state == TransactionState.Approved);
+        var (state, r) = getTransactionState(transactionId);
+		require(state == TransactionState.Approved);
 		bool succeeded = dao.call(TRANSFER_SIG, t.token, t.externalAddress, t.amount);
 		if(succeeded) {
 			setTransactionSucceeded(transactionId, 'succeed');
