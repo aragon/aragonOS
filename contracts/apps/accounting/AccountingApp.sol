@@ -73,6 +73,7 @@ contract AccountingApp is Application, Crontab {
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
     event Debug(string reason);
+	event WithdrawalFailed(uint transactionId);
 
     function () {
         Debug('Fallback');
@@ -150,12 +151,12 @@ contract AccountingApp is Application, Crontab {
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) onlyDAO {
         Debug('newTransaction');
-
+        ap = accountingPeriods[getCurrentAccountingPeriodId()];
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
             // TODO: get base token and exchange rate from oracle
-            baseToken: 0x10000000000001,
+            baseToken: ap.baseToken,
             baseValue: 1,
             externalAddress: externalAddress,
             reference: reference,
@@ -169,8 +170,37 @@ contract AccountingApp is Application, Crontab {
         updateTransaction(tid, TransactionState.New, "new");
     }
 
+     function approveTransaction(uint transactionId, string reason) onlyDAO {
+        Transaction memory t = transactions[transactionId];
+		require(t.state == TransactionState.PendingApproval);
+        require(t._type == TransactionType.Withdrawal);
+		setTransactionApproved(transactionId, reason);
+		executeTransaction(transactionId);
+     }
+
+	function executeTransaction(uint transactionId) onlyDAO {
+        Transaction memory t = transactions[transactionId];
+		require(t.state == TransactionState.Approved);
+		bool succeeded = dao.call(TRANSFER_SIG, t.token, t.externalAddress, t.amount);
+		if(succeeded) {
+			setTransactionSucceeded(transactionId, 'succeed');
+		} else {
+			WithdrawalFailed(transactionId);
+		}
+	}
+
+    function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
+        updateTransaction(transactionId, TransactionState.Succeeded, reason);
+    }
+
+    function setTransactionFailed(uint transactionId, string reason) onlyDAO {
+        var (state, r) = getTransactionState(transactionId);
+        require(state == TransactionState.New);
+		updateTransaction(transactionId, TransactionState.Failed, reason);
+    }
+
     // Create new transactionUpdate for the given transaction id
-    function updateTransaction(uint transactionId, TransactionState state, string reason) onlyDAO returns (uint) {
+    function updateTransaction(uint transactionId, TransactionState state, string reason) internal returns (uint) {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
             state: state,
@@ -180,38 +210,18 @@ contract AccountingApp is Application, Crontab {
         transactionUpdatesRelation[transactionId].push(tuid);
     }
 
-     function approveTransaction(uint transactionId, string reason) onlyDAO {
-        Transaction memory t = transactions[transactionId];
-        if (t._type == TransactionType.Withdrawal){
-            setTransactionApproved(transactionId, reason);
-            VaultOrgan(dao).transfer(t.token, t.externalAddress, t.amount);
-        }
-     }
-
-    function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
-        updateTransaction(transactionId, TransactionState.Succeeded, reason);
-    }
-
-    function setTransactionPendingApproval(uint transactionId, string reason) {
+    function setTransactionPendingApproval(uint transactionId, string reason) internal {
         var (state, r) = getTransactionState(transactionId);
-        if(state == TransactionState.New){
-            updateTransaction(transactionId, TransactionState.PendingApproval, reason);
-        }
+        require(state == TransactionState.New);
+		updateTransaction(transactionId, TransactionState.PendingApproval, reason);
     }
 
-    function setTransactionApproved(uint transactionId, string reason) {
+    function setTransactionApproved(uint transactionId, string reason) internal {
         var (state, r) = getTransactionState(transactionId);
-        if(state == TransactionState.PendingApproval){
-            updateTransaction(transactionId, TransactionState.Approved, reason);
-        }
+        require(state == TransactionState.PendingApproval);
+		updateTransaction(transactionId, TransactionState.Approved, reason);
     }
 
-    function setTransactionFailed(uint transactionId, string reason) onlyDAO {
-        var (state, r) = getTransactionState(transactionId);
-        if(state == TransactionState.New){
-            updateTransaction(transactionId, TransactionState.Failed, reason);
-        }
-    }
-
+	bytes4 constant TRANSFER_SIG = bytes4(sha3('transfer(address,address,uint256)'));
 
 }
