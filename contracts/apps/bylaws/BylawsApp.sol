@@ -113,8 +113,8 @@ contract BylawsApp is IBylawsApp, Application {
     onlyDAO
     public
     {
-      isTokenWhitelisted[token] = _whitelist;
-   }
+        isTokenWhitelisted[token] = _whitelist;
+    }
 
     /**
     * @dev Implements Permissions Oracle compatibility so it can be called from Kernel
@@ -131,8 +131,9 @@ contract BylawsApp is IBylawsApp, Application {
         bytes data
     ) constant returns (bool)
     {
-        if(!isTokenWhitelisted[token] || token != 0)
-           return false
+        if (!isTokenWhitelisted[token] && token != 0)
+            return false;
+
 
         return canPerformAction(
             getSig(data),

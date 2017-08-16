@@ -55,7 +55,15 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     * @param _s ECDSA signature s value
     * @param _v ECDSA signature v value
     */
-    function preauthDispatch(bytes _data, uint _nonce, bytes32 _r, bytes32 _s, uint8 _v) payable public {
+    function preauthDispatch
+        (bytes _data,
+        uint _nonce,
+        bytes32 _r,
+        bytes32 _s,
+        uint8 _v)
+         payable
+         public
+     {
         bytes32 signingPayload = personalSignedPayload(_data, _nonce); // Calculate the hashed payload that was signed
         require(!isUsedPayload(signingPayload));
         setUsedPayload(signingPayload);
@@ -71,7 +79,14 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     * @param _value amount of tokens being sent
     * @param _data executable data alonside token transaction
     */
-    function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
+    function tokenFallback
+        (address _sender,
+        address _origin,
+        uint256 _value,
+        bytes _data)
+          public
+          returns (bool ok)
+    {
         // TODO: Check whether msg.sender token is trusted
         _origin; // silence unused variable warning
         dispatch(_sender, msg.sender, _value, _data);
@@ -85,11 +100,17 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     * @param _token token address (same as msg.sender)
     * @param _data executable data alonside token transaction
     */
-    function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
+    function receiveApproval
+        (address _sender,
+        uint256 _value,
+        address _token,
+        bytes _data)
+          public
+      {
         // TODO: Check whether msg.sender token is trusted
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
         dispatch(_token == msg.sender ? _sender : msg.sender, _token, _value, _token == msg.sender ? _data : new bytes(0));
-    }
+      }
 
     /**
     * @dev For ETH transactions this function wraps the ETH in a token and dispatches it
@@ -114,7 +135,9 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
 
         vaultDeposit(_token, _value); // deposit tokens that come with the call in the vault
 
-        if (_payload.length == 0) return; // Just receive the tokens
+
+        if (isPayloadEmpty(_payload))
+          return; // Just receive the tokens
 
         require(canPerformAction(_sender, _token, _value, _payload));
 
@@ -149,7 +172,14 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     * @param _data executable data alonside token transaction
     * @return bool whether the action is allowed by permissions oracle
     */
-    function canPerformAction(address _sender, address _token, uint256 _value, bytes _data) constant returns (bool) {
+    function canPerformAction(
+        address _sender,
+        address _token,
+        uint256 _value,
+        bytes _data)
+      constant
+      returns (bool)
+      {
         address p = getPermissionsOracle();
         return p == 0 || IPermissionsOracle(p).canPerformAction(_sender, _token, _value, _data);
     }
@@ -161,7 +191,8 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     */
     function vaultDeposit(address _token, uint256 _amount) internal {
         var (vaultOrgan,) = get(DEPOSIT_SIG);
-        if (_amount == 0 || vaultOrgan == 0) return;
+        if (_amount == 0 || vaultOrgan == 0)
+          return;
 
         assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_token), _amount));
     }
@@ -205,8 +236,19 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
         return address(storageGet(sha3(0x01, 0x03)));
     }
 
-    address public deployedMeta;
+    function isPayloadEmpty(bytes payload) internal returns (bool) {
+        if (payload.length == 0)
+          return true;
 
-    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
-    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,uint256)'));
+        for (uint i = 0; i < 5; i++) {
+          if (payload[i] != 0x00) {
+            return false;
+          }
+        }
+        return true;
+    }
+
+    address public deployedMeta;
+    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3("installOrgan(address,bytes4[])"));
+    bytes4 constant DEPOSIT_SIG = bytes4(sha3("deposit(address,uint256)"));
 }

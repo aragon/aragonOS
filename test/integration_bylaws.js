@@ -9,8 +9,12 @@ var MiniMeToken = artifacts.require('MiniMeToken')
 var ActionsOrgan = artifacts.require('ActionsOrgan')
 var VaultOrgan = artifacts.require('VaultOrgan')
 var Vote = artifacts.require('Vote')
-var BylawOracleMock = artifacts.require('mocks/BylawOracleMock')
-var Standart23Token = artifacts.require('mocks/Standard23Token')
+var BylawOracleMock = artifacts.require('./mocks/BylawOracleMock')
+var MockedOrgan = artifacts.require('./mocks/MockedOrgan')
+var Standard23Token = artifacts.require('./helpers/Standard23Token')
+
+var IOrgan = artifacts.require('IOrgan')
+
 
 var Kernel = artifacts.require('Kernel')
 
@@ -24,16 +28,18 @@ const randomAddress = '0x0000000000000000000000000000000000001234'
 const changeKernelSig = '0xcebe30ac'
 
 contract('Bylaws', accounts => {
-  let dao, metadao, kernel, bylawsApp, installedBylaws = {}
+  let dao, metadao, kernel, bylawsApp, mockedOrgan, installedBylaws = {}
 
   beforeEach(async () => {
     dao = await createDAO()
     metadao = MetaOrgan.at(dao.address)
     kernel = Kernel.at(dao.address)
 
-    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan])
+    await installOrgans(metadao, [MetaOrgan, VaultOrgan, ActionsOrgan, MockedOrgan])
     const apps = await installApps(metadao, [BylawsApp])
     installedBylaws = apps[0]
+
+    mockedOrgan = MockedOrgan.at(dao.address)
 
     bylawsApp = BylawsApp.at(dao.address)
     await metadao.setPermissionsOracle(installedBylaws.address)
@@ -45,38 +51,62 @@ contract('Bylaws', accounts => {
 
   it('allows action if bylaw hasnt been specified', async () => {
       await metadao.replaceKernel(randomAddress, { from: accounts[1] })
-
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
   })
 
   context('adding token whitelist', () => {
 
      var token, tokenAddress;
+    const erc23transfer = (a, v, d, p) => {
+      return new Promise((resolve, reject) => {
+        token.contract.transfer['address,uint256,bytes'](a, v, d, p, (err) => {
+          if (err) return reject(err)
+          resolve()
+        })
+      })
+    }
 
      beforeEach(async () => {
-        token = await Standart23Token.new({from: accounts[3]});
+        token = await Standard23Token.new({from: accounts[3]});
         tokenAddress = await token.address;
      })
 
      it('correctly sets an whitlisted token', async () => {
-       await bylawsApp.setTokenWhitelist(tokenAddress, true, {from: dao.address});
-       assert.isTrue(await bylawsApp.isTokenWhitelisted(tokenAddress));
-       await bylawsApp.setTokenWhitelist(tokenAddress, false, {from: dao.address});
-       assert.isFalse(await bylawsApp.isTokenWhitelisted(tokenAddress));
+       await bylawsApp.setTokenWhitelist(tokenAddress, true, {from: accounts[1]});
+       assert.isTrue(await bylawsApp.isTokenWhitelisted(tokenAddress), 'Token should be whitlisted');
+       await bylawsApp.setTokenWhitelist(tokenAddress, false, {from: accounts[1]});
+       assert.isFalse(await bylawsApp.isTokenWhitelisted(tokenAddress), 'Token shouldn`t be whitlisted');
      });
 
-     it('allows non list token deposit', async () => {
-        await token.transfer(dao.address, 10, {from: accounts[3]});
-        let balance = await token.balanceOf(dao.address)
-        assert.equal(balance.toNumber(), 10);
+     it('allows non listed token deposit', async () => {
+         var balance;
+         await token.transfer(dao.address, 10, {from: accounts[3]});
+         balance = await token.balanceOf(dao.address)
+         assert.equal(balance.toNumber(), 10, 'The deposit should have been allowed ');
      });
 
      it('blocks non listed token exectuion', async () => {
-        //await token.transfer(dao.address, 10, 'executionData', {from: accounts[3]});
-     });
+        const data = mockedOrgan.mock_setNumber.request(5).params[0].data;
 
-     it('allows listed token execution', async () => {});
+        try {
+          await erc23transfer(dao.address, 10, data, { from: accounts[3], gas: 9e6 })
+        } catch (error) {
+          return assertThrow(error)
+        }
+        assert.fail('should have thrown before')
+      });
+
+     it('allows listed token execution', async () => {
+      await bylawsApp.setTokenWhitelist(tokenAddress, true, {from: accounts[1]});
+      const data = mockedOrgan.mock_setNumber.request(5).params[0].data
+
+      await erc23transfer(dao.address, 10, data, { from: accounts[3], gas: 9e6 })
+
+      assert.equal(await token.balanceOf(dao.address), 10, 'DAO should have token balance')
+      assert.equal(await mockedOrgan.mock_getNumber(), 5, 'should have dispatched method')
+     });
  })
+
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
