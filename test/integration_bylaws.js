@@ -398,8 +398,8 @@ contract('Bylaws', accounts => {
         assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
         const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 0, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
       })
 
       it('allows action if address is correct', async () => {
@@ -431,15 +431,16 @@ contract('Bylaws', accounts => {
     context('adding AND bylaw', () => {
       beforeEach(async () => {
         await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
-        await bylawsApp.linkBylaw(changeKernelSig, 3)
+        bylawId = await bylawsApp.setCombinatorBylaw.call(1, addressBylaw, oracleBylaw, false)
+        await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
       it('saved bylaw correctly', async () => {
-        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
-        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 1, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
       })
 
       it('allows action if both are true', async () => {
@@ -470,15 +471,17 @@ contract('Bylaws', accounts => {
     context('adding XOR bylaw', () => {
       beforeEach(async () => {
         await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
-        await bylawsApp.linkBylaw(changeKernelSig, 3)
+        bylawId = await bylawsApp.setCombinatorBylaw.call(2, addressBylaw, oracleBylaw, false)
+        await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
       it('saved bylaw correctly', async () => {
-        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
-        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 2, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')      })
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
+      })
 
       it('allows when only first allows', async () => {
         await oracle.changeAllow(false)

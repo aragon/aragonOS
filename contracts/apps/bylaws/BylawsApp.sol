@@ -217,6 +217,7 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.combinator.leftBylawId = _leftBylawId;
         bylaw.combinator.rightBylawId = _rightBylawId;
         bylaw.not = _not;
+        bylaw.exists = true;
 
         return id;
     }
