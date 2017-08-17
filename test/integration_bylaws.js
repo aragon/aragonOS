@@ -91,8 +91,9 @@ contract('Bylaws', accounts => {
     let oracle = {}
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
-      await bylawsApp.setAddressBylaw(oracle.address, true, false)
       bylawId = await bylawsApp.setAddressBylaw.call(oracle.address, true, false)
+      await bylawsApp.setAddressBylaw(oracle.address, true, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
@@ -122,8 +123,9 @@ contract('Bylaws', accounts => {
 
   context('adding negated address bylaw', () => {
     beforeEach(async () => {
-      await bylawsApp.setAddressBylaw(accounts[1], false, true)
       bylawId = await bylawsApp.setAddressBylaw.call(accounts[1], false, true)
+      await bylawsApp.setAddressBylaw(accounts[1], false, true)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
@@ -184,8 +186,9 @@ contract('Bylaws', accounts => {
     })
 
     it('normal vote flow', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
@@ -206,8 +209,9 @@ contract('Bylaws', accounts => {
     })
 
     it('vote prematurely decided flow with vote yay and execute', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
@@ -219,8 +223,9 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting hasnt been successful', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
@@ -238,8 +243,9 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting had no votes', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
@@ -253,8 +259,9 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting didnt get enough quorum', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(21), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
@@ -271,8 +278,9 @@ contract('Bylaws', accounts => {
     })
 
     it('throws when attempting to execute action twice', async () => {
-      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
       bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
+      await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
@@ -310,8 +318,9 @@ contract('Bylaws', accounts => {
       await ownershipApp.grantTokens(token.address, holder1, 10)
       await ownershipApp.grantTokens(token2.address, holder2, 1)
 
-      await bylawsApp.setStatusBylaw(0, true, false)
       bylawId = await bylawsApp.setStatusBylaw.call(0, true, false)
+      await bylawsApp.setStatusBylaw(0, true, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
@@ -355,8 +364,9 @@ contract('Bylaws', accounts => {
 
       await statusApp.setEntityStatus(authorized, authLevel)
       await statusApp.setEntityStatus(lowauth, authLevel - 1)
-      await bylawsApp.setStatusBylaw(authLevel, false, false)
       bylawId = await bylawsApp.setStatusBylaw.call(authLevel, false, false)
+      await bylawsApp.setStatusBylaw(authLevel, false, false)
+
       await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
@@ -390,17 +400,18 @@ contract('Bylaws', accounts => {
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
 
-      await bylawsApp.setAddressBylaw(allowedAddress, false, false)
-      await bylawsApp.setAddressBylaw(oracle.address, true, false)
-
       addressBylaw = await bylawsApp.setAddressBylaw.call(allowedAddress, false, false)
       oracleBylaw = await bylawsApp.setAddressBylaw.call(oracle.address, true, false)
+
+      await bylawsApp.setAddressBylaw(allowedAddress, false, false)
+      await bylawsApp.setAddressBylaw(oracle.address, true, false)
     })
 
     context('adding OR bylaw', () => {
       beforeEach(async () => {
-        await bylawsApp.setCombinatorBylaw(0, addressBylaw, oracleBylaw, false)
         bylawId = await bylawsApp.setCombinatorBylaw.call(0, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(0, addressBylaw, oracleBylaw, false)
+
         await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
@@ -440,8 +451,8 @@ contract('Bylaws', accounts => {
 
     context('adding AND bylaw', () => {
       beforeEach(async () => {
-        await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
         bylawId = await bylawsApp.setCombinatorBylaw.call(1, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
         await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
@@ -480,8 +491,9 @@ contract('Bylaws', accounts => {
 
     context('adding XOR bylaw', () => {
       beforeEach(async () => {
-        await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
         bylawId = await bylawsApp.setCombinatorBylaw.call(2, addressBylaw, oracleBylaw, false)
+        await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
+
         await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
