@@ -32,6 +32,17 @@ contract('Vault', accounts => {
     mockedOrgan = MockedOrgan.at(dao.address)
   })
 
+  it('throws when calling deposit() externally', async () => {
+      const token = await StandardTokenPlus.new()
+      await token.transfer(dao.address, 10)
+      try {
+        await vault.deposit(randomAddress, token.address, 10)
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+  })
+
   context('when receiving ether', () => {
     let token = {}
     beforeEach(async () => {

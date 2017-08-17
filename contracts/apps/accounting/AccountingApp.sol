@@ -213,7 +213,7 @@ contract AccountingApp is Application, Crontab {
             transactionId: transactionId,
             state: state,
             reason: reason,
-            actor: dao_msg.sender
+            actor: dao_msg().sender
         })) - 1;
         transactionUpdatesRelation[transactionId].push(tuid);
     }

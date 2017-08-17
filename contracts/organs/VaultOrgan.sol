@@ -20,16 +20,17 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
     uint constant MAX_HALT = 7 days; // can be prorrogated during halt
 
     /**
-    * @dev deposit is not reachable on purpose using normal dispatch route
+    * @dev deposit is not reachable on purpose using normal dispatch route (cannot use dao_msg())
     * #bylaw address:0
     * @param _token Address for the token being deposited in call
     * @param _amount Token units being deposited
     */
-    function deposit(address _token, uint256 _amount)
+    function deposit(address _sender, address _token, uint256 _amount)
     check_blacklist(_token)
     external
     payable
     {
+        require(msg.data.length == 4 + 3 * 32); // assure call doesn't have DAOmsg (cannot be called externally)
         if (_amount == 0)
             return;
         if (_token == 0 && msg.value == _amount)
@@ -53,7 +54,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
         assert(newBalance <= ERC20(token).balanceOf(this));
 
         setTokenBalance(token, newBalance);
-        Deposit(token, dao_msg().sender, _amount);
+        Deposit(token, _sender, _amount);
     }
 
     /**
