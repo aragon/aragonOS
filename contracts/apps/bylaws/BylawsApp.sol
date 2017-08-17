@@ -132,10 +132,14 @@ contract BylawsApp is IBylawsApp, Application {
         uint id = uint(sha3(msg.sig, _statusNeeded, _isTokenHolderStatus, _not));
         Bylaw storage bylaw = bylaws[id];
 
+        require(!bylaw.exists);
+
         bylaw.bylawType = _isTokenHolderStatus ? BylawType.TokenHolder : BylawType.Status;
         bylaw.status = _statusNeeded;
         bylaw.not = _not;
         bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -151,10 +155,14 @@ contract BylawsApp is IBylawsApp, Application {
         uint id = uint(sha3(msg.sig, _addr, _isOracle, _not));
         Bylaw storage bylaw = bylaws[id];
 
+        require(!bylaw.exists);
+
         bylaw.bylawType = _isOracle ? BylawType.Oracle : BylawType.Address;
         bylaw.addr = _addr;
         bylaw.not = _not;
         bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -178,6 +186,7 @@ contract BylawsApp is IBylawsApp, Application {
         uint id = uint(sha3(msg.sig, _supportPct, _minQuorumPct, _minDebateTime, _minVotingTime, _not));
         Bylaw storage bylaw = bylaws[id];
 
+        require(!bylaw.exists);
         require(_supportPct > 0 && _supportPct <= PCT_BASE); // dont allow weird cases
 
         bylaw.bylawType = BylawType.Voting;
@@ -187,6 +196,8 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.voting.minVotingTime = _minVotingTime;
         bylaw.not = _not;
         bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -210,6 +221,7 @@ contract BylawsApp is IBylawsApp, Application {
     {
         uint id = uint(sha3(msg.sig, _combinatorType, _leftBylawId, _rightBylawId, _not));
         Bylaw storage bylaw = bylaws[id];
+        require(!bylaw.exists);
         require(_leftBylawId != _rightBylawId && _rightBylawId > 0);
 
         bylaw.bylawType = BylawType.Combinator;
@@ -218,6 +230,8 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.combinator.rightBylawId = _rightBylawId;
         bylaw.not = _not;
         bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
