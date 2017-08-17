@@ -38,11 +38,11 @@ contract Standard23Token is ERC23, StandardToken {
   }
 
   function transfer(address _to, uint _value) returns (bool success) {
-    return transfer(_to, _value, new bytes(32));
+    return transfer(_to, _value, new bytes(0));
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    return transferFrom(_from, _to, _value, new bytes(32));
+    return transferFrom(_from, _to, _value, new bytes(0));
   }
 
   //function that is called when transaction target is a contract

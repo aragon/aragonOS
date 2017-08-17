@@ -136,7 +136,7 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
         vaultDeposit(_token, _value); // deposit tokens that come with the call in the vault
 
 
-        if (isPayloadEmpty(_payload))
+        if (_payload.length == 0)
           return; // Just receive the tokens
 
         require(canPerformAction(_sender, _token, _value, _payload));
@@ -234,18 +234,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
 
     function getPermissionsOracle() constant returns (address) {
         return address(storageGet(sha3(0x01, 0x03)));
-    }
-
-    function isPayloadEmpty(bytes payload) internal returns (bool) {
-        if (payload.length == 0)
-          return true;
-
-        for (uint i = 0; i < 5; i++) {
-          if (payload[i] != 0x00) {
-            return false;
-          }
-        }
-        return true;
     }
 
     address public deployedMeta;
