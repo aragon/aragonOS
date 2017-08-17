@@ -7,7 +7,7 @@ contract Application is IApplication {
     address public dao;
 
     modifier onlyDAO {
-        require(dao == 0 || msg.sender == dao);
+        require(msg.sender == dao);
         _;
     }
 
@@ -15,8 +15,12 @@ contract Application is IApplication {
         setDAO(newDAO);
     }
 
-    function setDAO(address newDAO) onlyDAO {
+    /**
+    * @dev setDAO can be called outside of constructor for allowing Forwarder contracts
+    */
+    function setDAO(address newDAO) {
         if (newDAO == 0) return;
+        require(dao == 0); // bypassing of all bylaws can happen if changing dao reference for app
         dao = newDAO;
         init();
     }
