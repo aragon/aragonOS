@@ -49,6 +49,16 @@ contract('Bylaws', accounts => {
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
   })
 
+  it('throws when reseting bylaw', async () => {
+      await bylawsApp.setAddressBylaw(accounts[1], false, false)
+      try {
+         await bylawsApp.setAddressBylaw(accounts[1], false, false)
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+  })
+
   context('adding address bylaw', () => {
     beforeEach(async () => {
       bylawId = await bylawsApp.setAddressBylaw.call(accounts[1], false, false)
