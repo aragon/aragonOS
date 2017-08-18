@@ -6,11 +6,10 @@ import "zeppelin/token/ERC20.sol";
 import "../kernel/Kernel.sol";
 
 contract Application is IApplication {
-    IOrgan.DAOMessage dao_msg;
     address public dao;
 
     modifier onlyDAO {
-        require(dao == 0 || msg.sender == dao);
+        require(msg.sender == dao);
         _;
     }
 
@@ -18,8 +17,12 @@ contract Application is IApplication {
         setDAO(newDAO);
     }
 
-    function setDAO(address newDAO) onlyDAO {
+    /**
+    * @dev setDAO can be called outside of constructor for allowing Forwarder contracts
+    */
+    function setDAO(address newDAO) {
         if (newDAO == 0) return;
+        require(dao == 0); // bypassing of all bylaws can happen if changing dao reference for app
         dao = newDAO;
         init();
     }
@@ -44,13 +47,7 @@ contract Application is IApplication {
 
     function init() internal {}
 
-    function setDAOMsg(address sender, address token, uint value) onlyDAO {
-        dao_msg.sender = sender;
-        dao_msg.token = token;
-        dao_msg.value = value;
-    }
-
     function getSender() internal returns (address) {
-        return msg.sender == dao ? dao_msg.sender : msg.sender;
+        return msg.sender == dao ? dao_msg().sender : msg.sender;
     }
 }

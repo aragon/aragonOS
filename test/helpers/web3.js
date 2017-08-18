@@ -1,7 +1,7 @@
 // TODO: pls abstract promisification over web3
 
 module.exports = {
-  signatures(contract, exclude, web3, names = false) {
+  signatures(contract, exclude, web3, names = false, excludeConstant = false) {
     const flatten = x => [].concat.apply([], x)
     const sig = f => `${f.name}(${f.inputs.map(x=>x.type).join(',')})`
 
@@ -9,6 +9,7 @@ module.exports = {
 
     let signatures = contract.abi
       .filter(x => x.type == 'function')
+      .filter(s => !excludeConstant || !s.constant)
       .map(sig)
       .filter(s => excludedSigs.indexOf(s) < 0)
 
