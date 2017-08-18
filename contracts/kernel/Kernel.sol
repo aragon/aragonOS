@@ -11,6 +11,7 @@ pragma solidity ^0.4.13;
 import "./IKernel.sol";
 import "./KernelRegistry.sol";
 import "./IPermissionsOracle.sol";
+import "../misc/DAOMsg.sol";
 
 import "../tokens/EtherToken.sol";
 import "zeppelin/token/ERC20.sol";
@@ -18,7 +19,7 @@ import "zeppelin/token/ERC20.sol";
 import "../organs/IOrgan.sol";
 import "../apps/Application.sol";
 
-contract Kernel is IKernel, IOrgan, KernelRegistry {
+contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     /**
     * @dev MetaOrgan instance keeps saved in its own context.
     * @param _deployedMeta an instance of a MetaOrgan (used for setup)
@@ -133,7 +134,7 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     */
     function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
 
-        vaultDeposit(_token, _value); // deposit tokens that come with the call in the vault
+        vaultDeposit(_sender, _token, _value); // deposit tokens that come with the call in the vault
 
 
         if (_payload.length == 0)
@@ -148,17 +149,14 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
 
         require(target > 0);
 
-        if (isDelegate) {
-            setDAOMsg(DAOMessage(_sender, _token, _value)); // save context so organs can access it
-        } else {
-            Application(target).setDAOMsg(_sender, _token, _value);
-        }
+        bytes memory payloadMsg = calldataWithDAOMsg(_payload, _sender, _token, _value);
 
         assembly {
             let result := 0
+
             switch isDelegate
-            case 1 { result := delegatecall(sub(gas, 10000), target, add(_payload, 0x20), mload(_payload), 0, len) }
-            case 0 { result := call(sub(gas, 10000), target, 0, add(_payload, 0x20), mload(_payload), 0, len) }
+            case 1 { result := delegatecall(sub(gas, 10000), target, add(payloadMsg, 0x20), mload(payloadMsg), 0, len) }
+            case 0 { result := call(sub(gas, 10000), target, 0, add(payloadMsg, 0x20), mload(payloadMsg), 0, len) }
             switch result case 0 { invalid() }
             return(0, len)
         }
@@ -186,15 +184,16 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
 
     /**
     * @dev Low level deposit of funds to the Vault Organ
+    * @param _sender address that performed the token transfer
     * @param _token address of the token
     * @param _amount amount of the token
     */
-    function vaultDeposit(address _token, uint256 _amount) internal {
+    function vaultDeposit(address _sender, address _token, uint256 _amount) internal {
         var (vaultOrgan,) = get(DEPOSIT_SIG);
         if (_amount == 0 || vaultOrgan == 0)
           return;
 
-        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_token), _amount));
+        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_sender), uint256(_token), _amount));
     }
 
     /**
@@ -237,6 +236,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry {
     }
 
     address public deployedMeta;
-    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3("installOrgan(address,bytes4[])"));
-    bytes4 constant DEPOSIT_SIG = bytes4(sha3("deposit(address,uint256)"));
+    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
+    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,address,uint256)'));
 }

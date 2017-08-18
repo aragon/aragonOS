@@ -75,7 +75,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         require(voteForAddress[_voteAddress] == 0); // not allow 2 votings with the same address
 
         Vote storage vote = votes[voteId];
-        vote.voteCreator = dao_msg.sender;
+        vote.voteCreator = dao_msg().sender;
         vote.voteAddress = _voteAddress;
         vote.voteCreatedBlock = getBlockNumber();
         vote.voteStartsBlock = _voteStartsBlock;

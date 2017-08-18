@@ -8,7 +8,7 @@ contract IVaultOrganEvents {
 }
 
 contract IVaultOrgan is IVaultOrganEvents {
-    function deposit(address _token, uint256 _amount) external payable;
+    function deposit(address _sender, address _token, uint256 _amount) external payable;
     function getTokenBalance(address _token) constant returns (uint256);
 
     function transfer(address _token, address _to, uint256 _amount) external;

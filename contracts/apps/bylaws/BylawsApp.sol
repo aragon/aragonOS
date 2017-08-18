@@ -30,6 +30,7 @@ contract BylawsApp is IBylawsApp, Application {
         BylawType bylawType;
 
         bool not; // reverse logic. makes bylaw pass if it was false
+        bool exists;
 
         // a bylaw can be one of these types
         uint8 status; // For status type
@@ -52,7 +53,7 @@ contract BylawsApp is IBylawsApp, Application {
         uint256 rightBylawId;
     }
 
-    Bylaw[] bylaws;
+    mapping (uint => Bylaw) bylaws;
     mapping (bytes4 => uint) public bylawEntrypoint;
 
     mapping (address => bool) public isTokenWhitelisted;
@@ -65,20 +66,14 @@ contract BylawsApp is IBylawsApp, Application {
     }
 
     function init() internal {
-        var (id, bylaw) = newBylaw(); // so index is 1 for first legit bylaw
-        assert(id == 0);
+        Bylaw storage bylaw = bylaws[0];
 
         // unassigned bylaws will use bylaw 0 as its own
         // by default allow calls from any non-zero address (aka every address)
+        // TODO: Setup sane default bylaw
         bylaw.bylawType = BylawType.Address;
         bylaw.addr = 0;
         bylaw.not = true;
-    }
-
-    function newBylaw() internal returns (uint id, Bylaw storage newBylaw) {
-        id = bylaws.length;
-        bylaws.length++;
-        newBylaw = bylaws[id];
     }
 
     /**
@@ -152,11 +147,17 @@ contract BylawsApp is IBylawsApp, Application {
     * @return uint bylaw id
     */
     function setStatusBylaw(uint8 _statusNeeded, bool _isTokenHolderStatus, bool _not) external returns (uint) {
-        var (id, bylaw) = newBylaw();
+        uint id = uint(sha3(msg.sig, _statusNeeded, _isTokenHolderStatus, _not));
+        Bylaw storage bylaw = bylaws[id];
+
+        require(!bylaw.exists);
 
         bylaw.bylawType = _isTokenHolderStatus ? BylawType.TokenHolder : BylawType.Status;
         bylaw.status = _statusNeeded;
         bylaw.not = _not;
+        bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -169,11 +170,17 @@ contract BylawsApp is IBylawsApp, Application {
     * @return uint bylaw id
     */
     function setAddressBylaw(address _addr, bool _isOracle, bool _not) external returns (uint) {
-        var (id, bylaw) = newBylaw();
+        uint id = uint(sha3(msg.sig, _addr, _isOracle, _not));
+        Bylaw storage bylaw = bylaws[id];
+
+        require(!bylaw.exists);
 
         bylaw.bylawType = _isOracle ? BylawType.Oracle : BylawType.Address;
         bylaw.addr = _addr;
         bylaw.not = _not;
+        bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -194,8 +201,10 @@ contract BylawsApp is IBylawsApp, Application {
         uint64 _minVotingTime,
         bool _not
     ) external returns (uint) {
-        var (id, bylaw) = newBylaw();
+        uint id = uint(sha3(msg.sig, _supportPct, _minQuorumPct, _minDebateTime, _minVotingTime, _not));
+        Bylaw storage bylaw = bylaws[id];
 
+        require(!bylaw.exists);
         require(_supportPct > 0 && _supportPct <= PCT_BASE); // dont allow weird cases
 
         bylaw.bylawType = BylawType.Voting;
@@ -204,6 +213,9 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.voting.minDebateTime = _minDebateTime;
         bylaw.voting.minVotingTime = _minVotingTime;
         bylaw.not = _not;
+        bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -225,7 +237,9 @@ contract BylawsApp is IBylawsApp, Application {
     existing_bylaw(_leftBylawId)
     external returns (uint)
     {
-        var (id, bylaw) = newBylaw();
+        uint id = uint(sha3(msg.sig, _combinatorType, _leftBylawId, _rightBylawId, _not));
+        Bylaw storage bylaw = bylaws[id];
+        require(!bylaw.exists);
         require(_leftBylawId != _rightBylawId && _rightBylawId > 0);
 
         bylaw.bylawType = BylawType.Combinator;
@@ -233,6 +247,9 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.combinator.leftBylawId = _leftBylawId;
         bylaw.combinator.rightBylawId = _rightBylawId;
         bylaw.not = _not;
+        bylaw.exists = true;
+
+        NewBylaw(id);
 
         return id;
     }
@@ -419,7 +436,7 @@ contract BylawsApp is IBylawsApp, Application {
 
     modifier existing_bylaw(uint bylawId) {
         require(bylawId > 0);
-        require(bylawId < bylaws.length);
+        require(bylaws[bylawId].exists);
         _;
     }
 }

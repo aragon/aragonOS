@@ -28,7 +28,9 @@ const randomAddress = '0x0000000000000000000000000000000000001234'
 const changeKernelSig = '0xcebe30ac'
 
 contract('Bylaws', accounts => {
+
   let dao, metadao, kernel, bylawsApp, mockedOrgan, installedBylaws = {}
+  let bylawId = ''
 
   beforeEach(async () => {
     dao = await createDAO()
@@ -107,16 +109,26 @@ contract('Bylaws', accounts => {
      });
  })
 
+  it('throws when reseting bylaw', async () => {
+      await bylawsApp.setAddressBylaw(accounts[1], false, false)
+      try {
+         await bylawsApp.setAddressBylaw(accounts[1], false, false)
+      } catch (error) {
+        return assertThrow(error)
+      }
+      assert.fail('should have thrown before')
+  })
 
   context('adding address bylaw', () => {
     beforeEach(async () => {
+      bylawId = await bylawsApp.setAddressBylaw.call(accounts[1], false, false)
       await bylawsApp.setAddressBylaw(accounts[1], false, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
     it('saved bylaw correctly', async () => {
-      assert.equal(await bylawsApp.getBylawType(1), 3, 'bylaw type should be correct')
-      assert.equal(await bylawsApp.getAddressBylaw(1), accounts[1], 'address should be correct')
+      assert.equal(await bylawsApp.getBylawType(bylawId), 3, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(bylawId), accounts[1], 'address should be correct')
     })
 
     it('allows action by specified address', async () => {
@@ -139,14 +151,16 @@ contract('Bylaws', accounts => {
     let oracle = {}
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
+      bylawId = await bylawsApp.setAddressBylaw.call(oracle.address, true, false)
       await bylawsApp.setAddressBylaw(oracle.address, true, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
     it('saved bylaw correctly', async () => {
-      assert.equal(await bylawsApp.getBylawType(1), 4, 'bylaw type should be correct')
-      assert.equal(await bylawsApp.getAddressBylaw(1), oracle.address, 'address should be correct')
-      assert.equal(await bylawsApp.getBylawNot(1), false, 'not should be correct')
+      assert.equal(await bylawsApp.getBylawType(bylawId), 4, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(bylawId), oracle.address, 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(bylawId), false, 'not should be correct')
     })
 
     it('allows action when oracle is enabled', async () => {
@@ -169,14 +183,16 @@ contract('Bylaws', accounts => {
 
   context('adding negated address bylaw', () => {
     beforeEach(async () => {
+      bylawId = await bylawsApp.setAddressBylaw.call(accounts[1], false, true)
       await bylawsApp.setAddressBylaw(accounts[1], false, true)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
     it('saved bylaw correctly', async () => {
-      assert.equal(await bylawsApp.getBylawType(1), 3, 'bylaw type should be correct')
-      assert.equal(await bylawsApp.getAddressBylaw(1), accounts[1], 'address should be correct')
-      assert.equal(await bylawsApp.getBylawNot(1), true, 'not should be correct')
+      assert.equal(await bylawsApp.getBylawType(bylawId), 3, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getAddressBylaw(bylawId), accounts[1], 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(bylawId), true, 'not should be correct')
     })
 
     it('allows action by any other than specified address', async () => {
@@ -230,8 +246,10 @@ contract('Bylaws', accounts => {
     })
 
     it('normal vote flow', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
@@ -242,8 +260,8 @@ contract('Bylaws', accounts => {
       assert.equal(await dao.getKernel(), randomAddress, 'Kernel should have been changed')
 
       // TODO: Figure out why we were getting weird values when called through DAO
-      assert.equal(await installedBylaws.getBylawType(1), 0, 'bylaw type should be correct')
-      const [s, q, d, v] = await installedBylaws.getVotingBylaw(1)
+      assert.equal(await installedBylaws.getBylawType(bylawId), 0, 'bylaw type should be correct')
+      const [s, q, d, v] = await installedBylaws.getVotingBylaw(bylawId)
       assert.equal(s.toNumber(), pct16(50).toNumber(), 'voting support should be correct')
       assert.equal(q.toNumber(), pct16(40).toNumber(), 'quorum should be correct')
       assert.equal(d, 5, 'voting debate should be correct')
@@ -251,8 +269,10 @@ contract('Bylaws', accounts => {
     })
 
     it('vote prematurely decided flow with vote yay and execute', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
@@ -263,8 +283,10 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting hasnt been successful', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteNay(1, { from: holder31 })
@@ -281,8 +303,10 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting had no votes', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(finalBlock)
 
@@ -295,8 +319,10 @@ contract('Bylaws', accounts => {
     })
 
     it('throws if voting didnt get enough quorum', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(21), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(21), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder20 })
@@ -312,8 +338,10 @@ contract('Bylaws', accounts => {
     })
 
     it('throws when attempting to execute action twice', async () => {
+      bylawId = await bylawsApp.setVotingBylaw.call(pct16(50), pct16(40), 5, 5, false)
       await bylawsApp.setVotingBylaw(pct16(50), pct16(40), 5, 5, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       await votingApp.createVote(vote.address, startBlock, finalBlock)
       await votingApp.mock_setBlockNumber(startBlock)
       await votingApp.voteYay(1, { from: holder31 })
@@ -350,14 +378,16 @@ contract('Bylaws', accounts => {
       await ownershipApp.grantTokens(token.address, holder1, 10)
       await ownershipApp.grantTokens(token2.address, holder2, 1)
 
+      bylawId = await bylawsApp.setStatusBylaw.call(0, true, false)
       await bylawsApp.setStatusBylaw(0, true, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
     it('saved bylaw correctly', async () => {
-      assert.equal(await bylawsApp.getBylawType(1), 2, 'bylaw type should be correct')
-      assert.equal(await bylawsApp.getStatusBylaw(1), 0, 'address should be correct')
-      assert.equal(await bylawsApp.getBylawNot(1), false, 'not should be correct')
+      assert.equal(await bylawsApp.getBylawType(bylawId), 2, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getStatusBylaw(bylawId), 0, 'address should be correct')
+      assert.equal(await bylawsApp.getBylawNot(bylawId), false, 'not should be correct')
     })
 
     it('allows action by holder 1', async () => {
@@ -394,13 +424,15 @@ contract('Bylaws', accounts => {
 
       await statusApp.setEntityStatus(authorized, authLevel)
       await statusApp.setEntityStatus(lowauth, authLevel - 1)
+      bylawId = await bylawsApp.setStatusBylaw.call(authLevel, false, false)
       await bylawsApp.setStatusBylaw(authLevel, false, false)
-      await bylawsApp.linkBylaw(changeKernelSig, 1)
+
+      await bylawsApp.linkBylaw(changeKernelSig, bylawId)
     })
 
     it('saved bylaw correctly', async () => {
-      assert.equal(await bylawsApp.getBylawType(1), 1, 'bylaw type should be correct')
-      assert.equal(await bylawsApp.getStatusBylaw(1), authLevel, 'status should be correct')
+      assert.equal(await bylawsApp.getBylawType(bylawId), 1, 'bylaw type should be correct')
+      assert.equal(await bylawsApp.getStatusBylaw(bylawId), authLevel, 'status should be correct')
     })
 
     it('allows action by entity with status', async () => {
@@ -422,28 +454,33 @@ contract('Bylaws', accounts => {
   context('adding combinable bylaws', () => {
     const allowedAddress = accounts[2]
     let oracle = {}
+    let addressBylaw = 1
+    let oracleBylaw = 2
+
     beforeEach(async () => {
       oracle = await BylawOracleMock.new()
+
+      addressBylaw = await bylawsApp.setAddressBylaw.call(allowedAddress, false, false)
+      oracleBylaw = await bylawsApp.setAddressBylaw.call(oracle.address, true, false)
 
       await bylawsApp.setAddressBylaw(allowedAddress, false, false)
       await bylawsApp.setAddressBylaw(oracle.address, true, false)
     })
 
-    const addressBylaw = 1
-    const oracleBylaw = 2
-
     context('adding OR bylaw', () => {
       beforeEach(async () => {
+        bylawId = await bylawsApp.setCombinatorBylaw.call(0, addressBylaw, oracleBylaw, false)
         await bylawsApp.setCombinatorBylaw(0, addressBylaw, oracleBylaw, false)
-        await bylawsApp.linkBylaw(changeKernelSig, 3)
+
+        await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
       it('saved bylaw correctly', async () => {
-        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
-        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 0, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
       })
 
       it('allows action if address is correct', async () => {
@@ -474,16 +511,17 @@ contract('Bylaws', accounts => {
 
     context('adding AND bylaw', () => {
       beforeEach(async () => {
+        bylawId = await bylawsApp.setCombinatorBylaw.call(1, addressBylaw, oracleBylaw, false)
         await bylawsApp.setCombinatorBylaw(1, addressBylaw, oracleBylaw, false)
-        await bylawsApp.linkBylaw(changeKernelSig, 3)
+        await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
       it('saved bylaw correctly', async () => {
-        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
-        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 1, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
       })
 
       it('allows action if both are true', async () => {
@@ -513,16 +551,19 @@ contract('Bylaws', accounts => {
 
     context('adding XOR bylaw', () => {
       beforeEach(async () => {
+        bylawId = await bylawsApp.setCombinatorBylaw.call(2, addressBylaw, oracleBylaw, false)
         await bylawsApp.setCombinatorBylaw(2, addressBylaw, oracleBylaw, false)
-        await bylawsApp.linkBylaw(changeKernelSig, 3)
+
+        await bylawsApp.linkBylaw(changeKernelSig, bylawId)
       })
 
       it('saved bylaw correctly', async () => {
-        assert.equal(await bylawsApp.getBylawType(3), 5, 'bylaw type should be correct')
-        const [t, l, r] = await bylawsApp.getCombinatorBylaw(3)
+        assert.equal(await bylawsApp.getBylawType(bylawId), 5, 'bylaw type should be correct')
+        const [t, l, r] = await bylawsApp.getCombinatorBylaw(bylawId)
         assert.equal(t, 2, 'comb type should be correct')
-        assert.equal(l, addressBylaw, 'comb type should be correct')
-        assert.equal(r, oracleBylaw, 'comb type should be correct')      })
+        assert.equal(l.toString(), addressBylaw.toString(), 'addr bylaw should be correct')
+        assert.equal(r.toString(), oracleBylaw.toString(), 'oracle bylaw should be correct')
+      })
 
       it('allows when only first allows', async () => {
         await oracle.changeAllow(false)
