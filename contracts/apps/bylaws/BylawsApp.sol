@@ -100,15 +100,13 @@ contract BylawsApp is IBylawsApp, Application {
     }
 
     /**
-    * @dev Change the whitelist status of a token
-    * @ param token address The token to whitelist
-    * @ _whitelist bool Desired status of token
+    * @notice Change the whitelist status of `_token` to `_whitelist`
+    * @dev DAO calls made straight from a token can only be trusted if the token is trusted (otherwise it could be use to impersonate senders)
+    * @param _token The token to change whitelist state
+    * @param _whitelist Desired status of token whitelist
     */
-    function setTokenWhitelist(address token, bool _whitelist)
-    onlyDAO
-    public
-    {
-        isTokenWhitelisted[token] = _whitelist;
+    function setTokenWhitelist(address _token, bool _whitelist) onlyDAO public {
+        isTokenWhitelisted[_token] = _whitelist;
     }
 
     /**

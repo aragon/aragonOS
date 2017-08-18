@@ -73,7 +73,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     * @param _data executable data alonside token transaction
     */
     function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
-        // TODO: Check whether msg.sender token is trusted
         _origin; // silence unused variable warning
         dispatch(_sender, msg.sender, _value, _data);
         return true;
@@ -87,8 +86,10 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     * @param _data executable data alonside token transaction
     */
     function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
-        // TODO: Check whether msg.sender token is trusted
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
+        // We can only trust the values sent for sender and data when the sender is the token (assures a trustless approveAndCall happened)
+        // This still allows to do an external approveAndCall for just depositing the tokens (w/o execution but w/ accounting)
+        // Ref: https://github.com/aragon/aragon-core/issues/72#issuecomment-321508691
         dispatch(_token == msg.sender ? _sender : msg.sender, _token, _value, _token == msg.sender ? _data : new bytes(0));
       }
 
