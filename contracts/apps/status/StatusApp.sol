@@ -13,6 +13,15 @@ contract StatusApp is IStatusApp, Application {
 
     function StatusApp(address _dao)
                      Application(_dao) {}
+
+    function appId() constant returns (string) {
+        return "status.aragonpm.eth";
+    }
+
+    function version() constant returns (string) {
+        return "1.0.0";
+    }
+
     /**
     * @dev Assign status `_status` to `_entity`
     * @param _entity Address of the entity being modified

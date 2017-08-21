@@ -76,6 +76,14 @@ contract BylawsApp is IBylawsApp, Application {
         bylaw.not = true;
     }
 
+    function appId() constant returns (string) {
+        return "bylaws.aragonpm.eth";
+    }
+
+    function version() constant returns (string) {
+        return "1.0.0";
+    }
+
     /**
     * @notice Set bylaw `_id` responsible for checking action `_sig`
     * @dev Links a signature entrypoint to a bylaw.
