@@ -73,7 +73,7 @@ contract('DAO msg', accounts => {
       let tester = {}
       beforeEach(async () => {
           await installApps(metadao, [DAOMsgApp])
-          tester = DAOMsgOrgan.at(dao.address)
+          tester = DAOMsgApp.at(dao.address)
       })
 
       context('', tests)
