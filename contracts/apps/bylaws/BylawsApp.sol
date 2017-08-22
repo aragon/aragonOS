@@ -56,6 +56,8 @@ contract BylawsApp is IBylawsApp, Application {
     mapping (uint => Bylaw) bylaws;
     mapping (bytes4 => uint) public bylawEntrypoint;
 
+    mapping (address => bool) public isTokenWhitelisted;
+
     uint constant PCT_BASE = 10 ** 18;
 
     function BylawsApp(address dao)
@@ -98,6 +100,16 @@ contract BylawsApp is IBylawsApp, Application {
     }
 
     /**
+    * @notice Change the whitelist status of `_token` to `_whitelist`
+    * @dev DAO calls made straight from a token can only be trusted if the token is trusted (otherwise it could be use to impersonate senders)
+    * @param _token The token to change whitelist state
+    * @param _whitelist Desired status of token whitelist
+    */
+    function setTokenWhitelist(address _token, bool _whitelist) onlyDAO public {
+        isTokenWhitelisted[_token] = _whitelist;
+    }
+
+    /**
     * @dev Implements Permissions Oracle compatibility so it can be called from Kernel
     * @param sender Sender of the action to the DAO
     * @param token Token from which the call originated (0 = ether call)
@@ -112,6 +124,10 @@ contract BylawsApp is IBylawsApp, Application {
         bytes data
     ) constant returns (bool)
     {
+        if (!isTokenWhitelisted[token] && token != 0)
+            return false;
+
+
         return canPerformAction(
             getSig(data),
             sender,

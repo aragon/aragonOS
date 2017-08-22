@@ -73,7 +73,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     * @param _data executable data alonside token transaction
     */
     function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
-        // TODO: Check whether msg.sender token is trusted
         _origin; // silence unused variable warning
         dispatch(_sender, msg.sender, _value, _data);
         return true;
@@ -87,10 +86,12 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     * @param _data executable data alonside token transaction
     */
     function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
-        // TODO: Check whether msg.sender token is trusted
         assert(ERC20(_token).transferFrom(_sender, address(this), _value));
-        dispatch(_sender, _token, _value, _data);
-    }
+        // We can only trust the values sent for sender and data when the sender is the token (assures a trustless approveAndCall happened)
+        // This still allows to do an external approveAndCall for just depositing the tokens (w/o execution but w/ accounting)
+        // Ref: https://github.com/aragon/aragon-core/issues/72#issuecomment-321508691
+        dispatch(_token == msg.sender ? _sender : msg.sender, _token, _value, _token == msg.sender ? _data : new bytes(0));
+      }
 
     /**
     * @dev For ETH transactions this function wraps the ETH in a token and dispatches it
@@ -112,11 +113,14 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     * @return - the underlying call returns (upto RETURN_MEMORY_SIZE memory)
     */
     function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
-        require(canPerformAction(_sender, _token, _value, _payload));
 
         vaultDeposit(_sender, _token, _value); // deposit tokens that come with the call in the vault
 
-        if (_payload.length == 0) return; // Just receive the tokens
+
+        if (_payload.length == 0)
+          return; // Just receive the tokens
+
+        require(canPerformAction(_sender, _token, _value, _payload));
 
         bytes4 sig;
         assembly { sig := mload(add(_payload, 0x20)) }
@@ -159,7 +163,8 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     */
     function vaultDeposit(address _sender, address _token, uint256 _amount) internal {
         var (vaultOrgan,) = get(DEPOSIT_SIG);
-        if (_amount == 0 || vaultOrgan == 0) return;
+        if (_amount == 0 || vaultOrgan == 0)
+          return;
 
         assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_sender), uint256(_token), _amount));
     }
@@ -204,7 +209,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     }
 
     address public deployedMeta;
-
     bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
     bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,address,uint256)'));
 }
