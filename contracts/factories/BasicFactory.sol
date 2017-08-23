@@ -13,7 +13,7 @@ import "../apps/bylaws/BylawsApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
-    event DeployedDAO(address dao);
+    event DeployDAO(address dao);
     address public kernel;
     ForwarderFactory public forwarderFactory;
     address public metaorgan;
@@ -48,7 +48,7 @@ contract BasicFactory {
         MetaOrgan(dao).setPermissionsOracle(bylawsApp);
         // TODO: set status for sender
 
-        DeployedDAO(dao);
+        DeployDAO(dao);
     }
 
     function installOrgans(MetaOrgan dao) internal {
@@ -71,9 +71,9 @@ contract BasicFactory {
         vaultorganSigs[2] = o1_s2; // setupEtherToken()
         vaultorganSigs[3] = o1_s3; // getTokenBalance(address)
         vaultorganSigs[4] = o1_s4; // getScapeHatch()
-        vaultorganSigs[5] = o1_s5; // deposit(address,uint256)
-        vaultorganSigs[6] = o1_s6; // recover(address,address)
-        vaultorganSigs[7] = o1_s7; // setEtherToken(address)
+        vaultorganSigs[5] = o1_s5; // recover(address,address)
+        vaultorganSigs[6] = o1_s6; // setEtherToken(address)
+        vaultorganSigs[7] = o1_s7; // deposit(address,address,uint256)
         vaultorganSigs[8] = o1_s8; // scapeHatch(address[])
         vaultorganSigs[9] = o1_s9; // getEtherToken()
         vaultorganSigs[10] = o1_s10; // getHaltTime()
@@ -93,7 +93,7 @@ contract BasicFactory {
         // Proxies are not working on testrpc, that's why for testing no proxy is created
         Application deployedbylawsapp = Application(_testrpc ? bylawsapp : forwarderFactory.createForwarder(bylawsapp));
         deployedbylawsapp.setDAO(address(dao));
-        bytes4[] memory bylawsappSigs = new bytes4[](13);
+        bytes4[] memory bylawsappSigs = new bytes4[](15);
         bylawsappSigs[0] = a0_s0; // getStatusBylaw(uint256)
         bylawsappSigs[1] = a0_s1; // setCombinatorBylaw(uint256,uint256,uint256,bool)
         bylawsappSigs[2] = a0_s2; // linkBylaw(bytes4,uint256)
@@ -104,9 +104,11 @@ contract BasicFactory {
         bylawsappSigs[7] = a0_s7; // getVotingBylaw(uint256)
         bylawsappSigs[8] = a0_s8; // setAddressBylaw(address,bool,bool)
         bylawsappSigs[9] = a0_s9; // canPerformAction(address,address,uint256,bytes)
-        bylawsappSigs[10] = a0_s10; // getBylawNot(uint256)
-        bylawsappSigs[11] = a0_s11; // getCombinatorBylaw(uint256)
-        bylawsappSigs[12] = a0_s12; // bylawEntrypoint(bytes4)
+        bylawsappSigs[10] = a0_s10; // isTokenWhitelisted(address)
+        bylawsappSigs[11] = a0_s11; // setTokenWhitelist(address,bool)
+        bylawsappSigs[12] = a0_s12; // getBylawNot(uint256)
+        bylawsappSigs[13] = a0_s13; // getCombinatorBylaw(uint256)
+        bylawsappSigs[14] = a0_s14; // bylawEntrypoint(bytes4)
         dao.installApp(deployedbylawsapp, bylawsappSigs);
 
         // Proxies are not working on testrpc, that's why for testing no proxy is created
@@ -180,7 +182,7 @@ contract BasicFactory {
         dao_bylaws.linkBylaw(o0_s7, bylaw_2); // removeApp(bytes4[])
         dao_bylaws.linkBylaw(o0_s8, bylaw_2); // replaceKernel(address)
         dao_bylaws.linkBylaw(o0_s9, bylaw_2); // updateApp(address,bytes4[])
-        dao_bylaws.linkBylaw(o1_s5, bylaw_4); // deposit(address,uint256)
+        dao_bylaws.linkBylaw(o1_s7, bylaw_4); // deposit(address,address,uint256)
     }
 
     function pct(uint x) internal constant returns (uint) {
@@ -209,9 +211,9 @@ contract BasicFactory {
     bytes4 constant o1_s2 = 0x21a342e8; // setupEtherToken()
     bytes4 constant o1_s3 = 0x3aecd0e3; // getTokenBalance(address)
     bytes4 constant o1_s4 = 0x4371677c; // getScapeHatch()
-    bytes4 constant o1_s5 = 0x47e7ef24; // deposit(address,uint256)
-    bytes4 constant o1_s6 = 0x648bf774; // recover(address,address)
-    bytes4 constant o1_s7 = 0x6ad419a8; // setEtherToken(address)
+    bytes4 constant o1_s5 = 0x648bf774; // recover(address,address)
+    bytes4 constant o1_s6 = 0x6ad419a8; // setEtherToken(address)
+    bytes4 constant o1_s7 = 0x8340f549; // deposit(address,address,uint256)
     bytes4 constant o1_s8 = 0x863ca8f0; // scapeHatch(address[])
     bytes4 constant o1_s9 = 0x877d08ee; // getEtherToken()
     bytes4 constant o1_s10 = 0xae2ae305; // getHaltTime()
@@ -232,9 +234,11 @@ contract BasicFactory {
     bytes4 constant a0_s7 = 0x7b0dfa35; // getVotingBylaw(uint256)
     bytes4 constant a0_s8 = 0x81a08245; // setAddressBylaw(address,bool,bool)
     bytes4 constant a0_s9 = 0xb18fe4f3; // canPerformAction(address,address,uint256,bytes)
-    bytes4 constant a0_s10 = 0xe289793e; // getBylawNot(uint256)
-    bytes4 constant a0_s11 = 0xe69308d2; // getCombinatorBylaw(uint256)
-    bytes4 constant a0_s12 = 0xea986c0a; // bylawEntrypoint(bytes4)
+    bytes4 constant a0_s10 = 0xb5af090f; // isTokenWhitelisted(address)
+    bytes4 constant a0_s11 = 0xc9bcc97e; // setTokenWhitelist(address,bool)
+    bytes4 constant a0_s12 = 0xe289793e; // getBylawNot(uint256)
+    bytes4 constant a0_s13 = 0xe69308d2; // getCombinatorBylaw(uint256)
+    bytes4 constant a0_s14 = 0xea986c0a; // bylawEntrypoint(bytes4)
     // ownershipapp
     bytes4 constant a1_s0 = 0x10451468; // sale_closeSale()
     bytes4 constant a1_s1 = 0x1fbc147b; // getTokenSale(uint256)
