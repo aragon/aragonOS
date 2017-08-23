@@ -5,7 +5,7 @@ contract IStatusOracle {
 }
 
 contract IStatusApp is IStatusOracle {
-    event EntityStatusChanged(address indexed entity, uint8 indexed status);
+    event ChangeEntityStatus(address indexed entity, uint8 indexed status);
 
     function setEntityStatus(address entity, uint8 status) external;
 }

@@ -20,7 +20,7 @@ contract StatusApp is IStatusApp, Application {
     */
     function setEntityStatus(address _entity, uint8 _status) onlyDAO external {
         entityStatus[_entity] = _status;
-        EntityStatusChanged(_entity, _status);
+        ChangeEntityStatus(_entity, _status);
     }
 
     function getEntityStatus(address entity) constant public returns (uint) {
