@@ -13,11 +13,11 @@ contract IOwnershipSale {
 }
 
 contract IOwnershipApp is ITokenHolderOracle, IOwnershipSale, MiniMeController {
-    event AddedToken(address indexed tokenAddress, uint indexed tokenId);
-    event RemovedToken(address indexed tokenAddress);
-    event ChangedTokenId(address indexed tokenAddress, uint indexed oldTokenId, uint indexed newTokenId);
-    event NewTokenSale(address indexed saleAddress, uint indexed saleId);
-    event TokenSaleClosed(address indexed saleAddress, uint indexed saleId);
+    event AddToken(address indexed tokenAddress, uint indexed tokenId);
+    event RemoveToken(address indexed tokenAddress);
+    event ChangeTokenId(address indexed tokenAddress, uint indexed oldTokenId, uint indexed newTokenId);
+    event CreateTokenSale(address indexed saleAddress, uint indexed saleId);
+    event CloseTokenSale(address indexed saleAddress, uint indexed saleId);
 
     function addToken(address tokenAddress, uint256 issueAmount, uint128 governanceRights, uint128 economicRights) external;
     function removeToken(address tokenAddress) external;

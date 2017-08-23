@@ -79,7 +79,7 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
         tokenIdForAddress[_tokenAddress] = tokenId;
 
         updateIsController(_tokenAddress);
-        AddedToken(_tokenAddress, tokenId);
+        AddToken(_tokenAddress, tokenId);
 
         if (_tokenAddress > 0)
             issueTokens(_tokenAddress, _issueAmount);
@@ -96,12 +96,12 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
             tokens[tokenId] = tokens[tokens.length - 1];
             tokenIdForAddress[tokens[tokenId].tokenAddress] = tokenId;
 
-            ChangedTokenId(tokens[tokenId].tokenAddress, tokens.length - 1, tokenId);
+            ChangeTokenId(tokens[tokenId].tokenAddress, tokens.length - 1, tokenId);
         }
         tokenIdForAddress[tokens[tokens.length - 1].tokenAddress] = 0;
         tokens.length--;
 
-        RemovedToken(_tokenAddress);
+        RemoveToken(_tokenAddress);
     }
 
     /**
@@ -187,7 +187,7 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
         uint saleId = salesLength - 1; // last item is newly added sale
         tokenSaleForAddress[_saleAddress] = saleId;
 
-        NewTokenSale(_saleAddress, saleId);
+        CreateTokenSale(_saleAddress, saleId);
     }
 
     /**
@@ -294,7 +294,7 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
         require(!tokenSales[saleId].closed);
         tokenSales[saleId].closed = true;
 
-        TokenSaleClosed(tokenSales[saleId].saleAddress, saleId);
+        CloseTokenSale(tokenSales[saleId].saleAddress, saleId);
     }
 
     modifier only_controlled(address _tokenAddress) {
