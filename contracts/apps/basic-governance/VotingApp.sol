@@ -82,7 +82,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         vote.voteEndsBlock = _voteEndsBlock;
         voteForAddress[_voteAddress] = voteId;
 
-        VoteCreated(voteId, _voteAddress);
+        NewVote(voteId, _voteAddress);
         transitionStateIfChanged(voteId); // vote can start in this block
     }
 
@@ -137,19 +137,19 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
         // Multiple state transitions can happen at once
         if (vote.state == VoteState.Debate && getBlockNumber() >= vote.voteStartsBlock) {
             transitionToVotingState(vote);
-            VoteStateChanged(_voteId, uint(VoteState.Debate), uint(VoteState.Voting));
+            ChangeVoteState(_voteId, uint(VoteState.Debate), uint(VoteState.Voting));
         }
 
         bool voteWasExecuted = IVote(votes[_voteId].voteAddress).wasExecuted();
 
         if (vote.state == VoteState.Voting && (voteWasExecuted || getBlockNumber() > vote.voteEndsBlock || vote.governanceTokens.length == 0 || vote.totalQuorum == 0)) {
             vote.state = VoteState.Closed;
-            VoteStateChanged(_voteId, uint(VoteState.Voting), uint(VoteState.Closed));
+            ChangeVoteState(_voteId, uint(VoteState.Voting), uint(VoteState.Closed));
         }
 
         if (vote.state == VoteState.Closed && voteWasExecuted) {
             vote.state = VoteState.Executed;
-            VoteStateChanged(_voteId, uint(VoteState.Closed), uint(VoteState.Executed));
+            ChangeVoteState(_voteId, uint(VoteState.Closed), uint(VoteState.Executed));
         }
     }
 
@@ -263,7 +263,7 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
 
         vote.voted[_voter] = _isYay ? 1 : 2;
 
-        VoteCasted(
+        CastVote(
             _voteId,
             _voter,
             _isYay,
