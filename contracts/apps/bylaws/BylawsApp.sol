@@ -91,7 +91,7 @@ contract BylawsApp is IBylawsApp, Application {
     {
         bylawEntrypoint[_sig] = _id;
 
-        BylawChanged(
+        ChangeBylaw(
             _sig,
             getBylawType(_id),
             _id,

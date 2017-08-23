@@ -13,7 +13,7 @@ import "../apps/bylaws/BylawsApp.sol";
 import "./ForwarderFactory.sol";
 
 contract BasicFactory {
-    event DeployedDAO(address dao);
+    event DeployDAO(address dao);
     address public kernel;
     ForwarderFactory public forwarderFactory;
     {{#organs}}
@@ -46,7 +46,7 @@ contract BasicFactory {
         MetaOrgan(dao).setPermissionsOracle(bylawsApp);
         // TODO: set status for sender
 
-        DeployedDAO(dao);
+        DeployDAO(dao);
     }
 
     function installOrgans(MetaOrgan dao) internal {

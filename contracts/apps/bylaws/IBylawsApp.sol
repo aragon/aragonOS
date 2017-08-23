@@ -4,7 +4,7 @@ import "../../kernel/IPermissionsOracle.sol";
 
 contract IBylawsApp {
     event NewBylaw(uint bylawId);
-    event BylawChanged(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
+    event ChangeBylaw(bytes4 sig, uint bylawType, uint256 bylawId, address changedBy);
 
     function linkBylaw(bytes4 _sig, uint _id) external;
 

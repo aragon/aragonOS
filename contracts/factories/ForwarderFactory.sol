@@ -17,8 +17,8 @@ contract ForwarderFactory {
             switch extcodesize(fwdContract) case 0 { invalid() }
         }
 
-        ForwarderDeployed(fwdContract, target);
+        DeployForwarder(fwdContract, target);
     }
 
-    event ForwarderDeployed(address forwarderAddress, address indexed targetContract);
+    event DeployForwarder(address forwarderAddress, address indexed targetContract);
 }
