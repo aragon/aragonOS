@@ -1,8 +1,8 @@
 pragma solidity ^0.4.11;
 
 contract IMetaOrganEvents {
-    event KernelReplaced(address newKernel);
-    event PermissionsOracleReplaced(address newPermissionsOracle);
+    event ReplaceKernel(address newKernel);
+    event ReplacePermissionsOracle(address newPermissionsOracle);
 }
 
 contract IMetaOrgan is IMetaOrganEvents {

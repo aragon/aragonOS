@@ -26,7 +26,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     */
     function replaceKernel(address newKernel) external {
         setKernel(newKernel);
-        KernelReplaced(newKernel);
+        ReplaceKernel(newKernel);
     }
 
     /**
@@ -35,7 +35,7 @@ contract MetaOrgan is IMetaOrgan, IOrgan, KernelRegistry {
     */
     function setPermissionsOracle(address newOracle) external {
         storageSet(PERMISSION_ORACLE_KEY, uint256(newOracle));
-        PermissionsOracleReplaced(newOracle);
+        ReplacePermissionsOracle(newOracle);
     }
 
     /**
