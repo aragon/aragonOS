@@ -132,9 +132,9 @@ contract AccountingApp is Application, Crontab {
         return (tu.state, tu.reason);
     }
 
-    // onlyDAO
+    // auth
 
-    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) onlyDAO {
+    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth {
         defaultAccountingPeriodSettings.baseToken = baseToken;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
         defaultAccountingPeriodSettings.ct_day = ct_day;
@@ -143,11 +143,11 @@ contract AccountingApp is Application, Crontab {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
-    function newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) onlyDAO {
+    function newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) auth {
         newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
     }
 
-    function newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) onlyDAO {
+    function newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) auth {
         uint transactionId = newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
 		setTransactionPendingApproval(transactionId, 'pending');
     }
@@ -176,7 +176,7 @@ contract AccountingApp is Application, Crontab {
 		return tid;
     }
 
-     function approveTransaction(uint transactionId, string reason) onlyDAO {
+     function approveTransaction(uint transactionId, string reason) auth {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
 		require(state == TransactionState.PendingApproval);
@@ -185,7 +185,7 @@ contract AccountingApp is Application, Crontab {
 		executeTransaction(transactionId);
      }
 
-	function executeTransaction(uint transactionId) onlyDAO {
+	function executeTransaction(uint transactionId) auth {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
 		require(state == TransactionState.Approved);
@@ -197,11 +197,11 @@ contract AccountingApp is Application, Crontab {
 		}
 	}
 
-    function setTransactionSucceeded(uint transactionId, string reason) onlyDAO {
+    function setTransactionSucceeded(uint transactionId, string reason) auth {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
 
-    function setTransactionFailed(uint transactionId, string reason) onlyDAO {
+    function setTransactionFailed(uint transactionId, string reason) auth {
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.New);
 		updateTransaction(transactionId, TransactionState.Failed, reason);
@@ -213,7 +213,7 @@ contract AccountingApp is Application, Crontab {
             transactionId: transactionId,
             state: state,
             reason: reason,
-            actor: dao_msg().sender
+            actor: msg.sender
         })) - 1;
         transactionUpdatesRelation[transactionId].push(tuid);
     }
