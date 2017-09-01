@@ -18,12 +18,15 @@ import "zeppelin/token/ERC20.sol";
 
 import "../organs/IOrgan.sol";
 import "../apps/Application.sol";
+import "../apps/accounting/AccountingApp.sol";
 
 contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     /**
     * @dev MetaOrgan instance keeps saved in its own context.
     * @param _deployedMeta an instance of a MetaOrgan (used for setup)
     */
+
+
     function Kernel(address _deployedMeta) {
         deployedMeta = _deployedMeta;
     }
@@ -114,6 +117,7 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     */
     function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
 
+        recordDeposit(_sender, _token, _value, "new deposit"); // recored the token deposit
         vaultDeposit(_sender, _token, _value); // deposit tokens that come with the call in the vault
 
 
@@ -126,7 +130,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
         assembly { sig := mload(add(_payload, 0x20)) }
         var (target, isDelegate) = get(sig);
         uint32 len = RETURN_MEMORY_SIZE;
-
         require(target > 0);
 
         bytes memory payloadMsg = calldataWithDAOMsg(_payload, _sender, _token, _value);
@@ -196,6 +199,13 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
         return keccak256(0x19, "Ethereum Signed Message:\n32", payload(_data, _nonce));
     }
 
+	function recordDeposit(address sender, address token, uint256 amount, string ref) internal {
+		var (addr,) = get(NEW_TRANSACTION_SIG);
+        if (amount == 0 || addr == 0) return;
+
+		AccountingApp(addr).newIncomingTransaction(sender, token, amount, ref);  // newTransaction(address,address,int256,string)
+	}
+
     function payload(bytes _data, uint _nonce) constant public returns (bytes32) {
         return keccak256(address(this), _data, _nonce);
     }
@@ -210,5 +220,6 @@ contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
 
     address public deployedMeta;
     bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
+    bytes4 constant NEW_TRANSACTION_SIG = bytes4(sha3('newIncomingTransaction(address,address,uint256,string)'));
     bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,address,uint256)'));
 }

@@ -8,6 +8,5 @@ services:
          - "3000:3000"
         volumes:
         - ./docker_home:/root/
-        - ./:/usr/src/app
-        - /usr/src/app/node_modules
-
+        - ./contracts:/usr/src/app/contracts
+        - ./test:/usr/src/app/test

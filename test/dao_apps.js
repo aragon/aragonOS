@@ -62,6 +62,7 @@ contract('Applications', accounts => {
       await mockApp.unprotectedDoStuff()
       assert.isTrue(await mockApp.didStuff(), 'should have done stuff')
     })
+
   })
 
 })

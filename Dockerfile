@@ -6,6 +6,7 @@ WORKDIR /usr/src/app
 
 
 COPY package.json /usr/src/app
+COPY npm-shrinkwrap.json /usr/src/app
 
 RUN npm install
 

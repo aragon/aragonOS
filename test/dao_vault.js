@@ -64,7 +64,7 @@ contract('Vault', accounts => {
     })
 
     it('can transfer ether', async () => {
-      await vault.transferEther(randomAddress, 6)
+      await vault.transfer(0, randomAddress, 6)
 
       assert.equal(await getBalance(randomAddress), 6, 'receiver should have correct ether balance')
       assert.equal(await token.balanceOf(dao.address), 4, 'DAO should have token balance')

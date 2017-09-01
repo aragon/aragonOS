@@ -68,6 +68,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
     only_not_halted
     external
     {
+        if (_token == 0) return transferEther(_to, _amount);
         doTransfer(_token, _to, _amount);
     }
 
@@ -81,14 +82,10 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
 
     /**
     * @dev Function called from other organs, applications or the outside to send ether
-    * @notice Low level transfer of ether from the DAOs Vault (should not be called directly in most cases)
     * @param _to Recipient of the ether
     * @param _amount wei amount being sent
     */
-    function transferEther(address _to, uint256 _amount)
-    only_not_halted
-    external
-    {
+    function transferEther(address _to, uint256 _amount) internal {
         address etherToken = getEtherToken();
         uint newBalance = performTokenTransferAccounting(etherToken, _amount, _to);
 
@@ -182,6 +179,7 @@ contract VaultOrgan is IVaultOrgan, SafeMath, IOrgan {
     * @param _newToken new ether token to be used
     */
     function setEtherToken(address _newToken) /*external*/ {
+        require(getEtherToken() == 0);
         storageSet(ETHER_TOKEN_SECONDARY_KEY, uint256(_newToken));
     }
 
