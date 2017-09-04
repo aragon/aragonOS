@@ -1,8 +1,8 @@
 pragma solidity 0.4.15;
 
-contract KernelProxy {
-    address public kernelImpl;
+import "./KernelStorage.sol";
 
+contract KernelProxy is KernelStorage {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
