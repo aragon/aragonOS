@@ -1,18 +1,20 @@
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 
+const getSig = x => web3.sha3(x).slice(0, 10)
+
 contract('Kernel ACL', accounts => {
-    let kernel = {}
+    let kernel, app = {}
 
     const permissionsRoot = accounts[0]
     const granted = accounts[1]
     const child = accounts[2]
 
-    const action = '0x12345678'
-    const app = accounts[8]
+    const action = getSig('upgradeKernel(address)')
 
     beforeEach(async () => {
         kernel = await Kernel.new()
+        app = kernel.address
         await kernel.initialize(permissionsRoot)
     })
 
@@ -22,6 +24,21 @@ contract('Kernel ACL', accounts => {
         })
     })
 
+    it('actions cannot be performed by default', async () => {
+        assert.isFalse(await kernel.canPerform(permissionsRoot, app, action))
+    })
+
+    it('protected actions fail if not allowed', async () => {
+        return assertInvalidOpcode(async () => {
+            await kernel.upgradeKernel(accounts[0])
+        })
+    })
+
+    it('create permission action can be performed by root by default', async () => {
+        const createPermissionAction = 'createPermission(address,address,bytes4,address)'
+        assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, getSig(createPermissionAction)))
+    })
+
     context('creating permission setting as parent', () => {
         beforeEach(async () => {
             await kernel.createPermission(granted, app, action, granted, { from: permissionsRoot })
@@ -29,6 +46,10 @@ contract('Kernel ACL', accounts => {
 
         it('can perform action', async () => {
             assert.isTrue(await kernel.canPerform(granted, app, action))
+        })
+
+        it('can execute action', async () => {
+            await kernel.upgradeKernel(accounts[0], { from: granted })
         })
 
         it('root cannot revoke permission', async () => {

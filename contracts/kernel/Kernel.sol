@@ -50,6 +50,10 @@ contract Kernel is KernelStorage, Initializable {
         appCode[_appId] = _code;
     }
 
+    function upgradeKernel(address _newKernel) auth external {
+        kernelImpl = _newKernel;
+    }
+
     function canPerform(address _entity, address _app, bytes4 _action) constant returns (bool) {
         return permissions[_entity][_app][_action].allowed;
     }
