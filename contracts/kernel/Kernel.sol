@@ -21,8 +21,8 @@ contract Kernel is KernelProxy, Initializable {
 
     function initialize(address _permissionsCreator) onlyInit {
         initialized();
-        bytes4 installPermissionAction = bytes4(sha3("installPermission(address,address,bytes4,address)"));
-        _installPermission(_permissionsCreator, address(this), installPermissionAction, _permissionsCreator);
+        bytes4 createPermissionAction = bytes4(sha3("createPermission(address,address,bytes4,address)"));
+        _createPermission(_permissionsCreator, address(this), createPermissionAction, _permissionsCreator);
     }
 
     function grantPermission(address _entity, address _app, bytes4 _action, address _parent) external {
@@ -40,15 +40,15 @@ contract Kernel is KernelProxy, Initializable {
         _setPermission(_entity, _app, _action, 0, false);
     }
 
-    function installPermission(address _entity, address _app, bytes4 _action, address _parent) auth external {
-        _installPermission(_entity, _app, _action, _parent);
+    function createPermission(address _entity, address _app, bytes4 _action, address _parent) auth external {
+        _createPermission(_entity, _app, _action, _parent);
     }
 
     function canPerform(address _entity, address _app, bytes4 _action) constant returns (bool) {
         return permissions[_entity][_app][_action].allowed;
     }
 
-    function _installPermission(address _entity, address _app, bytes4 _action, address _parent) internal {
+    function _createPermission(address _entity, address _app, bytes4 _action, address _parent) internal {
         require(permissionInstances[_app][_action] == 0);
         _setPermission(_entity, _app, _action, _parent, true);
     }
