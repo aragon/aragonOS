@@ -1,5 +1,6 @@
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
+const KernelProxy = artifacts.require('KernelProxy')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
@@ -13,7 +14,9 @@ contract('Kernel ACL', accounts => {
     const action = getSig('upgradeKernel(address)')
 
     beforeEach(async () => {
-        kernel = await Kernel.new()
+        const kernelImpl = await Kernel.new()
+        const kernelProxy = await KernelProxy.new(kernelImpl.address)
+        kernel = Kernel.at(kernelProxy.address)
         app = kernel.address
         await kernel.initialize(permissionsRoot)
     })

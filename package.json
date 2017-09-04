@@ -18,6 +18,7 @@
   "author": "Aragon",
   "license": "GPLv3",
   "dependencies": {
+    "eth-ens-namehash": "^2.0.0",
     "ethereumjs-abi": "^0.6.4",
     "ethereumjs-util": "^5.1.1",
     "solium": "^0.5.5",
