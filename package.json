@@ -4,12 +4,12 @@
   "description": "Core contracts for Aragon",
   "main": "index.js",
   "scripts": {
-    "prepublish": "truffle compile",
     "generate:factory": "truffle exec scripts/generate_factory.js",
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
-    "coveralls": "scripts/coveralls.sh"
+    "coveralls": "scripts/coveralls.sh",
+    "console": "node_modules/.bin/truffle console"
   },
   "files": [
     "index.js",
@@ -18,27 +18,26 @@
   "author": "Aragon",
   "license": "GPLv3",
   "dependencies": {
-    "babel-polyfill": "^6.23.0",
     "ethereumjs-abi": "^0.6.4",
     "ethereumjs-util": "^5.1.1",
-    "keybase-eth": "^0.3.0",
-    "solium": "^0.5.4",
-    "truffle-config": "^1.0.1",
+    "solium": "^0.5.5",
+    "truffle-config": "^1.0.2",
     "truffle-expect": "0.0.3",
     "truffle-hdwallet-provider": "0.0.3",
     "zeppelin-solidity": "^1.2.0"
   },
   "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "babel-helpers": "^6.24.1",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
-    "babel-register": "^6.23.0",
+    "babel-register": "^6.26.0",
     "coveralls": "^2.13.1",
-    "ethereumjs-testrpc": "^4.0.1",
-    "handlebars": "^4.0.10",
+    "ethereumjs-testrpc": "^4.1.1",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "^0.2.1",
-    "solidity-inspector": "^0.1.0",
-    "truffle": "^3.4.6"
+    "solidity-coverage": "^0.2.2",
+    "solidity-inspector": "^0.1.2",
+    "truffle": "^3.4.9"
   }
 }
