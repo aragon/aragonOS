@@ -15,8 +15,8 @@
     "index.js",
     "build/"
   ],
-  "author": "Jorge Izquierdo (Aragon)",
-  "license": "ISxC",
+  "author": "Aragon",
+  "license": "GPLv3",
   "dependencies": {
     "babel-polyfill": "^6.23.0",
     "ethereumjs-abi": "^0.6.4",
@@ -25,7 +25,8 @@
     "solium": "^0.5.4",
     "truffle-config": "^1.0.1",
     "truffle-expect": "0.0.3",
-    "truffle-hdwallet-provider": "0.0.3"
+    "truffle-hdwallet-provider": "0.0.3",
+    "zeppelin-solidity": "^1.2.0"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.18.0",

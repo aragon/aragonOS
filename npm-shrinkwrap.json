@@ -11027,6 +11027,14 @@
         "camelcase": "https://registry.npmjs.org/camelcase/-/camelcase-3.0.0.tgz",
         "lodash.assign": "https://registry.npmjs.org/lodash.assign/-/lodash.assign-4.2.0.tgz"
       }
+    },
+    "zeppelin-solidity": {
+      "version": "1.2.0",
+      "resolved": "https://registry.npmjs.org/zeppelin-solidity/-/zeppelin-solidity-1.2.0.tgz",
+      "integrity": "sha512-/XRL7XuMmERpFU3lJWxLWZ+BC7J5dLI1sCCPafMEcyQ7EL8j2DLpreH2z5E2xpvnNGnmIq9te1DPBUqHe66gCA==",
+      "requires": {
+        "truffle-hdwallet-provider": "0.0.3"
+      }
     }
   }
 }
