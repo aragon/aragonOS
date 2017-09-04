@@ -20,6 +20,8 @@ contract Kernel is KernelStorage, Initializable {
     mapping (bytes32 => address) appCode;
 
     event SetPermission(address indexed entity, address indexed app, bytes4 indexed action, address parent, bool allowed);
+    event UpgradeKernel(address indexed newKernel);
+    event SetAppCode(bytes32 indexed appId, address indexed newAppCode);
 
     function initialize(address _permissionsCreator) onlyInit {
         initialized();
@@ -48,10 +50,12 @@ contract Kernel is KernelStorage, Initializable {
 
     function setAppCode(bytes32 _appId, address _code) auth external {
         appCode[_appId] = _code;
+        SetAppCode(_appId, _code);
     }
 
     function upgradeKernel(address _newKernel) auth external {
         kernelImpl = _newKernel;
+        UpgradeKernel(_newKernel);
     }
 
     function canPerform(address _entity, address _app, bytes4 _action) constant returns (bool) {
