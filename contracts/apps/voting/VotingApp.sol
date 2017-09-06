@@ -26,7 +26,7 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         uint256 snapshotBlock;
         uint256 yea;
         uint256 nay;
-        uint256 totalSupply;
+        uint256 totalVoters;
         bytes executionScript;
         bool open;
         bool executed;
@@ -62,7 +62,7 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         voting.startDate = uint64(now);
         voting.open = true;
         voting.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
-        voting.totalSupply = token.totalSupplyAt(voting.snapshotBlock);
+        voting.totalVoters = token.totalSupplyAt(voting.snapshotBlock);
 
         StartVote(votingId);
 
@@ -92,16 +92,31 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         Voting storage voting = votings[_votingId];
 
         // Voting is already decided
-        if (voting.yea >= pct(voting.totalSupply, supportRequiredPct))
+        if (voting.yea >= pct(voting.totalVoters, supportRequiredPct))
             return true;
 
         uint256 totalVotes = voting.yea + voting.nay;
         if (uint64(now) >= voting.startDate + voteTime &&
             voting.yea >= pct(totalVotes, supportRequiredPct) &&
-            voting.yea >= pct(voting.totalSupply, minAcceptQuorumPct))
+            voting.yea >= pct(voting.totalVoters, minAcceptQuorumPct))
             return true;
 
         return false;
+    }
+
+    function getVoting(uint256 _votingId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
+        Voting storage voting = votings[_votingId];
+
+        open = voting.open;
+        executed = voting.executed;
+        creator = voting.creator;
+        startDate = voting.startDate;
+        snapshotBlock = voting.snapshotBlock;
+        yea = voting.yea;
+        nay = voting.nay;
+        totalVoters = voting.totalVoters;
+        scriptHash = sha3(voting.executionScript);
+        scriptActionsCount = getScriptActionsCount(voting.executionScript);
     }
 
     function _vote(uint256 _votingId, bool _supports, address _voter) internal {
