@@ -49,6 +49,14 @@ contract('Voting App', accounts => {
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
+    it('execution throws if any action on script throws', async () => {
+        let script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
+        script = script.slice(0, -2) // remove one byte from calldata for it to fail
+        return assertInvalidOpcode(async () => {
+            await app.newVoting(script, { from: holder50 })
+        })
+    })
+
     context('creating vote', () => {
         let voteId = {}
         let script = ''
@@ -59,7 +67,7 @@ contract('Voting App', accounts => {
             voteId = createdVoteId(await app.newVoting(script, { from: nonHolder }))
         })
 
-        it('created vote has correct state', async () => {
+        it('has correct state', async () => {
             const [isOpen, isExecuted, creator, startDate, snapshotBlock, y, n, totalVoters, scriptHash, scriptActionsCount] = await app.getVoting(voteId)
 
             assert.isTrue(isOpen, 'vote should be open')
@@ -73,6 +81,13 @@ contract('Voting App', accounts => {
             assert.equal(scriptActionsCount, 2)
         })
 
+        it('has correct script actions', async () => {
+            const [addr, calldata] = await app.getVotingScriptAction(voteId, 1)
+
+            assert.equal(addr, executionTarget.address, 'execution addr should match')
+            assert.equal(calldata, executionTarget.contract.execute.getData(), 'calldata should match')
+        })
+
         it('holder can vote', async () => {
             await app.vote(voteId, false, { from: holder31 })
             const state = await app.getVoting(voteId)
@@ -81,6 +96,7 @@ contract('Voting App', accounts => {
         })
 
         it('holder can modify vote', async () => {
+            await app.vote(voteId, true, { from: holder31 })
             await app.vote(voteId, false, { from: holder31 })
             await app.vote(voteId, true, { from: holder31 })
             const state = await app.getVoting(voteId)

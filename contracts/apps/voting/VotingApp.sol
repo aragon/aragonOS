@@ -118,6 +118,10 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         scriptActionsCount = getScriptActionsCount(voting.executionScript);
     }
 
+    function getVotingScriptAction(uint256 _votingId, uint256 _scriptAction) constant returns (address, bytes) {
+        return getScriptAction(votings[_votingId].executionScript, _scriptAction);
+    }
+
     function _vote(uint256 _votingId, bool _supports, address _voter) internal {
         Voting storage voting = votings[_votingId];
 
