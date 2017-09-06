@@ -66,6 +66,7 @@ contract EVMScriptRunner {
 
     function addressAt(bytes data, uint256 location) private returns (address result) {
         uint256 word = uint256At(data, location);
+
         assembly {
             result := div(and(word, 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000),
                           0x1000000000000000000000000)

@@ -39,6 +39,13 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
     event CastVote(uint256 indexed votingId, address indexed voter, bool supports);
     event ExecuteVote(uint256 indexed votingId);
 
+    /**
+    * @notice Initializes VotingApp (some parameters won't be modifiable after being set)
+    * @param _token MiniMeToken address that will be used as governance token
+    * @param _supportRequiredPct Percentage of voters that must support a voting for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _minAcceptQuorumPct Percetage of total voting power that must support a voting  for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
+    * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
+    */
     function initialize(MiniMeToken _token, uint256 _supportRequiredPct, uint256 _minAcceptQuorumPct, uint64 _voteTime) onlyInit {
         initialized();
 
@@ -53,8 +60,22 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         votings.length += 1;
     }
 
-    function newVoting(bytes _executionScript) auth {
-        uint256 votingId = votings.length++;
+    /**
+    * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`
+    * @param _minAcceptQuorumPct New acceptance quorum
+    */
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth external {
+        require(supportRequiredPct >= _minAcceptQuorumPct);
+        minAcceptQuorumPct = _minAcceptQuorumPct;
+    }
+
+    /**
+    * @notice Create new voting to execute `_executionScript`
+    * @param _executionScript EVM script to be executed on approval
+    * @return votingId id for newly created vote
+    */
+    function newVoting(bytes _executionScript) auth external returns (uint256 votingId) {
+        votingId = votings.length++;
         Voting storage voting = votings[votingId];
         voting.executionScript = _executionScript;
         voting.creator = msg.sender;
@@ -68,12 +89,20 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         if (canVote(votingId, msg.sender)) _vote(votingId, true, msg.sender);
     }
 
+    /**
+    * @notice Vote `_supports` in vote with id `_votingId`
+    * @param _votingId Id for vote
+    * @param _supports Whether voter supports the voting
+    */
     function vote(uint256 _votingId, bool _supports) external {
         require(canVote(_votingId, msg.sender));
-
         _vote(_votingId, _supports, msg.sender);
     }
 
+    /**
+    * @notice Execute the result of vote `_votingId`
+    * @param _votingId Id for vote
+    */
     function executeVote(uint256 _votingId) external {
         require(canExecute(_votingId));
         _executeVote(_votingId);
