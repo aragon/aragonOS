@@ -19,7 +19,7 @@ contract EVMScriptRunner {
         }
     }
 
-    function makeSingleScript(address to, bytes calldata) internal returns (bytes script) {
+    function makeSingleScript(address to, bytes calldata) constant returns (bytes script) {
         uint l = 20 + 32 + calldata.length;
 
         uint srcPointer; uint dstPointer;

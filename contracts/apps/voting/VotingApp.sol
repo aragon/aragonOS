@@ -30,7 +30,6 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         bytes executionScript;
         bool open;
         bool executed;
-
         mapping (address => VoterState) voters;
     }
 
