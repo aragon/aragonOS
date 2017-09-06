@@ -1,5 +1,6 @@
 pragma solidity 0.4.15;
 
+import "./EVMScriptRunner.sol";
 import "../App.sol";
 
 import "../../common/Initializable.sol";
@@ -7,7 +8,7 @@ import "../../common/MiniMeToken.sol";
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract VotingApp is App, Initializable {
+contract VotingApp is App, Initializable, EVMScriptRunner {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -34,10 +35,10 @@ contract VotingApp is App, Initializable {
     }
 
     Voting[] votings;
-    mapping (bytes32 => uint256) idByHash;
 
-    event StartVote(uint256 indexed votingId, bytes32 votingHash);
-    event CastVote(uint256 indexed votingId, bytes32 indexed votingHash, address indexed voter, bool supports);
+    event StartVote(uint256 indexed votingId);
+    event CastVote(uint256 indexed votingId, address indexed voter, bool supports);
+    event ExecuteVote(uint256 indexed votingId);
 
     function initialize(MiniMeToken _token, uint256 _supportRequiredPct, uint256 _minAcceptQuorumPct, uint64 _voteTime) onlyInit {
         initialized();
@@ -63,36 +64,28 @@ contract VotingApp is App, Initializable {
         voting.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         voting.totalSupply = token.totalSupplyAt(voting.snapshotBlock);
 
-        bytes32 h = votingHash(votingId);
-        idByHash[h] = votingId;
+        StartVote(votingId);
 
-        StartVote(votingId, h);
+        if (canVote(votingId, msg.sender)) _vote(votingId, true, msg.sender);
     }
 
-    function vote(bytes32 _votingHash, bool _supports) {
-        uint256 votingId = idByHash[_votingHash];
-        require(votingId > 0);
+    function vote(uint256 _votingId, bool _supports) external {
+        require(canVote(_votingId, msg.sender));
 
-        Voting storage voting = votings[votingId];
-        require(voting.open);
-        require(uint64(now) < voting.startDate + voteTime);
+        _vote(_votingId, _supports, msg.sender);
+    }
 
-        address voter = msg.sender;
+    function executeVote(uint256 _votingId) external {
+        require(canExecute(_votingId));
+        _executeVote(_votingId);
+    }
 
-        // this could re-enter, though we can asume the governance token is not maliciuous
-        uint256 voterStake = token.balanceOfAt(voter, voting.snapshotBlock);
-        VoterState state = voting.voters[voter];
+    function canVote(uint256 _votingId, address _voter) constant returns (bool) {
+        Voting storage voting = votings[_votingId];
 
-        // if voter had previously voted, decrease count
-        if (state == VoterState.Yea) voting.yea = voting.yea.sub(voterStake);
-        if (state == VoterState.Nay) voting.nay = voting.nay.sub(voterStake);
-
-        if (_supports) voting.yea = voting.yea.add(voterStake);
-        else           voting.nay = voting.nay.add(voterStake);
-
-        voting.voters[voter] = _supports ? VoterState.Yea : VoterState.Nay;
-
-        CastVote(votingId, _votingHash, voter, _supports);
+        return voting.open &&
+               uint64(now) < voting.startDate + voteTime &&
+               token.balanceOfAt(_voter, voting.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _votingId) constant returns (bool) {
@@ -111,12 +104,40 @@ contract VotingApp is App, Initializable {
         return false;
     }
 
-    function pct(uint256 x, uint p) internal returns (uint256) {
-        return x * p / PCT_BASE;
+    function _vote(uint256 _votingId, bool _supports, address _voter) internal {
+        Voting storage voting = votings[_votingId];
+
+        // this could re-enter, though we can asume the governance token is not maliciuous
+        uint256 voterStake = token.balanceOfAt(_voter, voting.snapshotBlock);
+        VoterState state = voting.voters[_voter];
+
+        // if voter had previously voted, decrease count
+        if (state == VoterState.Yea) voting.yea = voting.yea.sub(voterStake);
+        if (state == VoterState.Nay) voting.nay = voting.nay.sub(voterStake);
+
+        if (_supports) voting.yea = voting.yea.add(voterStake);
+        else           voting.nay = voting.nay.add(voterStake);
+
+        voting.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
+
+        CastVote(_votingId, _voter, _supports);
+
+        if (canExecute(_votingId)) _executeVote(_votingId);
     }
 
-    function votingHash(uint256 _votingId) constant returns (bytes32) {
+    function _executeVote(uint256 _votingId) internal {
         Voting storage voting = votings[_votingId];
-        return sha3(_votingId, voting.creator, voting.executionScript);
+        require(!voting.executed);
+
+        voting.executed = true;
+        voting.open = false;
+
+        runScript(voting.executionScript);
+
+        ExecuteVote(_votingId);
+    }
+
+    function pct(uint256 x, uint p) internal returns (uint256) {
+        return x * p / PCT_BASE;
     }
 }
