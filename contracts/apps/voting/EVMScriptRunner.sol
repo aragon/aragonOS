@@ -19,7 +19,7 @@ contract EVMScriptRunner {
         }
     }
 
-    function makeSingleScript(address to, bytes calldata) returns (bytes script) {
+    function makeSingleScript(address to, bytes calldata) internal returns (bytes script) {
         uint l = 20 + 32 + calldata.length;
 
         uint srcPointer; uint dstPointer;
@@ -35,10 +35,17 @@ contract EVMScriptRunner {
         memcpy(dstPointer, srcPointer, 32 + calldata.length);
     }
 
-    function getScriptAction(bytes script, uint256 i) constant returns (address, bytes) {
+    function getScriptActionsCount(bytes script) internal constant returns (uint256 i) {
         uint256 location = 0;
         while (location < script.length) {
-            uint256 calldataLength = uint256At(script, location + 0x14);
+            location += (0x14 + 0x20 + uint256At(script, location + 0x14));
+            i++;
+        }
+    }
+
+    function getScriptAction(bytes script, uint256 i) internal constant returns (address, bytes) {
+        uint256 location = 0;
+        while (location < script.length) {
             if (i == 0) {
                 bytes memory calldata;
                 uint256 calldataPtr = locationOf(script, location + 0x14);
@@ -46,18 +53,18 @@ contract EVMScriptRunner {
                 return (addressAt(script, location), calldata);
             }
 
-            location += (0x14 + 0x20 + calldataLength);
+            location += (0x14 + 0x20 + uint256At(script, location + 0x14));
             i--;
         }
     }
 
-    function uint256At(bytes data, uint256 location) internal returns (uint256 result) {
+    function uint256At(bytes data, uint256 location) private returns (uint256 result) {
         assembly {
             result := mload(add(data, add(0x20, location)))
         }
     }
 
-    function addressAt(bytes data, uint256 location) internal returns (address result) {
+    function addressAt(bytes data, uint256 location) private returns (address result) {
         uint256 word = uint256At(data, location);
         assembly {
             result := div(and(word, 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000),
@@ -65,12 +72,13 @@ contract EVMScriptRunner {
         }
     }
 
-    function locationOf(bytes data, uint256 location) internal returns (uint256 result) {
+    function locationOf(bytes data, uint256 location) private returns (uint256 result) {
         assembly {
             result := add(data, add(0x20, location))
         }
     }
 
+    // From https://github.com/Arachnid/solidity-stringutils
     function memcpy(uint dest, uint src, uint len) private {
         // Copy word-length chunks while possible
         for(; len >= 32; len -= 32) {
