@@ -119,6 +119,20 @@ contract('Token Manager', accounts => {
                     await tokenManager.revokeVesting(holder, 1)
                 })
             })
+
+            it('cannot have more than 50 vestings', async () => {
+                let i = 49 // already have 1
+                await tokenManager.issue(50)
+                while (i > 0) {
+                    await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                    i--
+                }
+                await timetravel(vesting)
+                await token.transfer(accounts[3], 1) // can transfer
+                return assertInvalidOpcode(async () => {
+                    await tokenManager.assignVested(holder, 1, now + start, now + cliff, now + vesting, false)
+                })
+            })
         })
     })
 
