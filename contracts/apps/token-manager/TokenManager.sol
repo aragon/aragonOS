@@ -7,7 +7,7 @@ import "../../common/MiniMeToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract TokenManagerApp is App, Initializable, TokenController {
+contract TokenManager is App, Initializable, TokenController {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -57,8 +57,8 @@ contract TokenManagerApp is App, Initializable, TokenController {
     }
 
     function unwrap(uint256 _amount) onlyWrapper external {
-        assert(token.transferFrom(msg.sender, address(this), _amount)); // so it checks transferability. doesnt need approval as we are controller
-        _burn(_amount);
+        require(transferrableBalance(msg.sender) >= _amount);
+        _burn(msg.sender, _amount);
         assert(wrappedToken.transfer(msg.sender, _amount));
     }
 
@@ -166,8 +166,8 @@ contract TokenManagerApp is App, Initializable, TokenController {
         assert(token.transfer(_receiver, _amount));
     }
 
-    function _burn(uint256 _amount) internal {
-        assert(token.destroyTokens(address(this), _amount));
+    function _burn(address _holder, uint256 _amount) internal {
+        assert(token.destroyTokens(_holder, _amount));
     }
 
     function _mint(address _receiver, uint256 _amount) internal {
@@ -181,6 +181,7 @@ contract TokenManagerApp is App, Initializable, TokenController {
     */
     function proxyPayment(address _owner) payable returns (bool) {
         revert();
+        _owner;
         return false;
     }
 
@@ -205,6 +206,7 @@ contract TokenManagerApp is App, Initializable, TokenController {
     * @return False if the controller does not authorize the approval
     */
     function onApprove(address _owner, address _spender, uint _amount) returns (bool) {
+        _owner; _spender; _amount;
         return true;
     }
 }
