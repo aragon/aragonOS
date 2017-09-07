@@ -57,7 +57,7 @@ contract TokenManager is App, Initializable, TokenController {
     }
 
     function unwrap(uint256 _amount) onlyWrapper external {
-        require(transferrableBalance(msg.sender) >= _amount);
+        require(transferrableBalance(msg.sender, now) >= _amount);
         _burn(msg.sender, _amount);
         assert(wrappedToken.transfer(msg.sender, _amount));
     }
@@ -97,13 +97,17 @@ contract TokenManager is App, Initializable, TokenController {
         return vestings[_holder].length;
     }
 
-    function transferrableBalance(address _holder) constant returns (uint256) {
+    function spendableBalanceOf(address _holder) constant returns (uint256) {
+        return transferrableBalance(_holder, now);
+    }
+
+    function transferrableBalance(address _holder, uint256 _time) constant returns (uint256) {
         uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
         for (uint256 i = 0; i < vs; i = i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = calculateNonVestedTokens(v.amount, uint64(now), v.start, v.cliff, v.vesting);
+            uint nonTransferable = calculateNonVestedTokens(v.amount, uint64(_time), v.start, v.cliff, v.vesting);
             totalNonTransferable = totalNonTransferable.add(nonTransferable);
         }
 
@@ -194,7 +198,7 @@ contract TokenManager is App, Initializable, TokenController {
     * @return False if the controller does not authorize the transfer
     */
     function onTransfer(address _from, address _to, uint _amount) returns (bool) {
-        return _from == address(this) || _to == address(this) || transferrableBalance(_from) >= _amount;
+        return _from == address(this) || _to == address(this) || transferrableBalance(_from, now) >= _amount;
     }
 
     /**
