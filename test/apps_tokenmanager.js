@@ -15,6 +15,26 @@ contract('Token Manager', accounts => {
         await token.changeController(tokenManager.address)
     })
 
+    context('for native tokens', () => {
+        const holder = accounts[1]
+
+        beforeEach(async () => {
+            await tokenManager.initialize(token.address, n)
+        })
+
+        it('can mint tokens', async () => {
+            await tokenManager.mint(holder, 100)
+
+            assert.equal(await token.balanceOf(holder), 100, 'should have minted tokens')
+        })
+
+        it('can issue tokens', async () => {
+            await tokenManager.issue(50)
+
+            assert.equal(await token.balanceOf(tokenManager.address), 50, 'token manager should have issued tokens')
+        })
+    })
+
     context('for wrapped tokens', () => {
         let wrappedToken = {}
 
@@ -75,7 +95,7 @@ contract('Token Manager', accounts => {
 
             it('cannot unwrap tokens with vesting', async () => {
                 await token.transfer(tokenManager.address, 100, { from: holder100 })
-                await tokenManager.assignVested(holder100, 100, 1e14, 1e14, 1e14, false)
+                await tokenManager.assignVested(holder100, 100, 1e11, 1e11, 1e11, false)
 
                 return assertInvalidOpcode(async () => {
                     await tokenManager.unwrap(100, { from: holder100 })

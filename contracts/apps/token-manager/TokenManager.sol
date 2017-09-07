@@ -93,12 +93,12 @@ contract TokenManager is App, Initializable, TokenController {
         assert(token.transferFrom(_holder, address(this), nonVested));
     }
 
-    function tokenGrantsCount(address _receiver) constant returns (uint256) {
-        return vestings[_receiver].length;
+    function tokenGrantsCount(address _holder) constant returns (uint256) {
+        return vestings[_holder].length;
     }
 
     function transferrableBalance(address _holder) constant returns (uint256) {
-        uint256 vs = vestings[_holder].length;
+        uint256 vs = tokenGrantsCount(_holder);
         uint256 totalNonTransferable = 0;
 
         for (uint256 i = 0; i < vs; i = i.add(1)) {
@@ -142,8 +142,8 @@ contract TokenManager is App, Initializable, TokenController {
         uint256 vesting) private constant returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting) return tokens;
-        if (time < cliff) return 0;
+        if (time >= vesting) return 0;
+        if (time < cliff) return tokens;
 
         // Interpolate all vested tokens.
         // As before cliff the shortcut returns 0, we can use just calculate a value
