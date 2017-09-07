@@ -112,7 +112,7 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
         Voting storage voting = votings[_votingId];
 
         return voting.open &&
-               uint64(now) < voting.startDate + voteTime &&
+               uint64(now) < (voting.startDate + voteTime) &&
                token.balanceOfAt(_voter, voting.snapshotBlock) > 0;
     }
 
@@ -124,7 +124,7 @@ contract VotingApp is App, Initializable, EVMScriptRunner {
             return true;
 
         uint256 totalVotes = voting.yea + voting.nay;
-        if (uint64(now) >= voting.startDate + voteTime &&
+        if (uint64(now) >= (voting.startDate + voteTime) &&
             voting.yea >= pct(totalVotes, supportRequiredPct) &&
             voting.yea >= pct(voting.totalVoters, minAcceptQuorumPct))
             return true;
