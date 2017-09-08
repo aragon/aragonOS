@@ -3,11 +3,13 @@ pragma solidity 0.4.15;
 import "../App.sol";
 
 import "../../common/MiniMeToken.sol";
+import "../../common/IForwarder.sol";
+import "../../common/EVMCallScript.sol";
 
 import "zeppelin-solidity/contracts/token/ERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract TokenManager is App, Initializable, TokenController {
+contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunner, IForwarder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -91,6 +93,20 @@ contract TokenManager is App, Initializable, TokenController {
         // transferFrom always works as controller
         // onTransfer hook always allows if transfering to token controller
         assert(token.transferFrom(_holder, address(this), nonVested));
+    }
+
+    /**
+    * @dev IForwarder interface conformance. Forwards any token holder action.
+    * @param _evmCallScript Start vote with script
+    */
+    function forward(bytes _evmCallScript) external {
+        require(canForward(msg.sender, _evmCallScript));
+        runScript(_evmCallScript);
+    }
+
+    function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
+        _evmCallScript;
+        return token.balanceOf(_sender) > 0;
     }
 
     function tokenGrantsCount(address _holder) constant returns (uint256) {

@@ -1,6 +1,8 @@
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const timetravel = require('./helpers/timer')
 const { getBlock, getBlockNumber } = require('./helpers/web3')
+const { encodeScript } = require('./helpers/evmScript')
+const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
@@ -46,6 +48,21 @@ contract('Token Manager', accounts => {
         it('cannot wrap tokens', async () => {
             return assertInvalidOpcode(async () => {
                 await tokenManager.wrap(100, { from: holder })
+            })
+        })
+
+        it('forwards actions only to token holders', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            await tokenManager.mint(holder, 100)
+
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            await tokenManager.forward(script, { from: holder })
+            assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
+
+            return assertInvalidOpcode(async () => {
+                await tokenManager.forward(script, { from: accounts[8] })
             })
         })
 
