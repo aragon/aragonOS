@@ -3,6 +3,7 @@ const sha3 = require('solidity-sha3').default
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const { getBlockNumber } = require('./helpers/web3')
 const timetravel = require('./helpers/timer')
+const { encodeScript } = require('./helpers/evmScript')
 
 const VotingApp = artifacts.require('VotingApp')
 const MiniMeToken = artifacts.require('MiniMeToken')
@@ -37,20 +38,22 @@ contract('Voting App', accounts => {
     })
 
     it('deciding voting is automatically executed', async () => {
-        const script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action])
         const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
         assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
     })
 
     it('execution scripts can execute multiple actions', async () => {
-        let script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
-        script = script + script.slice(2) + script.slice(2)
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action, action, action])
         const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
     it('execution throws if any action on script throws', async () => {
-        let script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        let script = encodeScript([action])
         script = script.slice(0, -2) // remove one byte from calldata for it to fail
         return assertInvalidOpcode(async () => {
             await app.newVoting(script, { from: holder50 })
@@ -62,8 +65,8 @@ contract('Voting App', accounts => {
         let script = ''
 
         beforeEach(async () => {
-            script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
-            script = script + script.slice(2)
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            script = encodeScript([action, action])
             voteId = createdVoteId(await app.newVoting(script, { from: nonHolder }))
         })
 

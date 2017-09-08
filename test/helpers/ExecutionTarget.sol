@@ -5,9 +5,12 @@ contract ExecutionTarget {
 
     function execute() {
         counter += 1;
+        Executed(counter);
     }
 
     function setCounter(uint x) {
         counter = x;
     }
+
+    event Executed(uint x);
 }
