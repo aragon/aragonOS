@@ -5,10 +5,11 @@ import "../App.sol";
 import "../../common/EVMCallScript.sol";
 import "../../common/Initializable.sol";
 import "../../common/MiniMeToken.sol";
+import "../../common/IForwarder.sol";
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder {
+contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
@@ -27,6 +28,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
+        string metadata;
         bytes executionScript;
         bool open;
         bool executed;
@@ -74,19 +76,9 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     * @param _executionScript EVM script to be executed on approval
     * @return votingId id for newly created vote
     */
-    function newVoting(bytes _executionScript) auth external returns (uint256 votingId) {
-        votingId = votings.length++;
-        Voting storage voting = votings[votingId];
-        voting.executionScript = _executionScript;
-        voting.creator = msg.sender;
-        voting.startDate = uint64(now);
-        voting.open = true;
-        voting.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
-        voting.totalVoters = token.totalSupplyAt(voting.snapshotBlock);
-
-        StartVote(votingId);
-
-        if (canVote(votingId, msg.sender)) _vote(votingId, true, msg.sender);
+    bytes4 constant NEW_VOTING_ACTION = bytes4(sha3('newVoting(bytes,string)'));
+    function newVoting(bytes _executionScript, string _metadata) auth external returns (uint256 votingId) {
+        return _newVoting(_executionScript, _metadata);
     }
 
     /**
@@ -106,6 +98,20 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     function executeVote(uint256 _votingId) external {
         require(canExecute(_votingId));
         _executeVote(_votingId);
+    }
+
+    /**
+    * @dev IForwarder interface conformance
+    * @param _evmCallScript Start vote with script
+    */
+    function forward(bytes _evmCallScript) external {
+        require(canForward(msg.sender, _evmCallScript));
+        _newVoting(_evmCallScript, "");
+    }
+
+    function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
+        _evmCallScript;
+        return canPerform(_sender, NEW_VOTING_ACTION);
     }
 
     function canVote(uint256 _votingId, address _voter) constant returns (bool) {
@@ -147,8 +153,28 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
         scriptActionsCount = getScriptActionsCount(voting.executionScript);
     }
 
+    function getVotingMetadata(uint256 _votingId) constant returns (string metadata) {
+        return votings[_votingId].metadata;
+    }
+
     function getVotingScriptAction(uint256 _votingId, uint256 _scriptAction) constant returns (address, bytes) {
         return getScriptAction(votings[_votingId].executionScript, _scriptAction);
+    }
+
+    function _newVoting(bytes _executionScript, string _metadata) internal returns (uint256 votingId) {
+        votingId = votings.length++;
+        Voting storage voting = votings[votingId];
+        voting.executionScript = _executionScript;
+        voting.creator = msg.sender;
+        voting.startDate = uint64(now);
+        voting.open = true;
+        voting.metadata = _metadata;
+        voting.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
+        voting.totalVoters = token.totalSupplyAt(voting.snapshotBlock);
+
+        StartVote(votingId);
+
+        if (canVote(votingId, msg.sender)) _vote(votingId, true, msg.sender);
     }
 
     function _vote(uint256 _votingId, bool _supports, address _voter) internal {

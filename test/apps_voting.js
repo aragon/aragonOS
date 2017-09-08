@@ -40,14 +40,14 @@ contract('Voting App', accounts => {
     it('deciding voting is automatically executed', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeScript([action])
-        const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
+        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
     })
 
     it('execution scripts can execute multiple actions', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeScript([action, action, action])
-        const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
+        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
@@ -56,8 +56,15 @@ contract('Voting App', accounts => {
         let script = encodeScript([action])
         script = script.slice(0, -2) // remove one byte from calldata for it to fail
         return assertInvalidOpcode(async () => {
-            await app.newVoting(script, { from: holder50 })
+            await app.newVoting(script, '', { from: holder50 })
         })
+    })
+
+    it('forwarding creates vote', async () => {
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action])
+        const votingId = createdVoteId(await app.forward(script, { from: holder50 }))
+        assert.equal(votingId, 1, 'voting should have been created')
     })
 
     context('creating vote', () => {
@@ -67,7 +74,7 @@ contract('Voting App', accounts => {
         beforeEach(async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             script = encodeScript([action, action])
-            voteId = createdVoteId(await app.newVoting(script, { from: nonHolder }))
+            voteId = createdVoteId(await app.newVoting(script, 'metadata', { from: nonHolder }))
         })
 
         it('has correct state', async () => {
@@ -82,6 +89,7 @@ contract('Voting App', accounts => {
             assert.equal(totalVoters, 100, 'total voters should be 100')
             assert.equal(scriptHash, sha3(script), 'script hash should be correct')
             assert.equal(scriptActionsCount, 2)
+            assert.equal(await app.getVotingMetadata(voteId), 'metadata', 'should have returned correct metadata')
         })
 
         it('has correct script actions', async () => {
