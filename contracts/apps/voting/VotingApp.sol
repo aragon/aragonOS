@@ -1,14 +1,14 @@
 pragma solidity 0.4.15;
 
-import "./EVMScriptRunner.sol";
 import "../App.sol";
 
+import "../../common/EVMCallScript.sol";
 import "../../common/Initializable.sol";
 import "../../common/MiniMeToken.sol";
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-contract VotingApp is App, Initializable, EVMScriptRunner {
+contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder {
     using SafeMath for uint256;
 
     MiniMeToken public token;
