@@ -51,6 +51,10 @@ contract('Voting App', accounts => {
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
+    it('execution script can be empty', async () => {
+        const votingId = createdVoteId(await app.newVoting(encodeScript([]), '', { from: holder50 }))
+    })
+
     it('execution throws if any action on script throws', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         let script = encodeScript([action])
