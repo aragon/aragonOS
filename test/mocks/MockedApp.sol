@@ -15,8 +15,11 @@ contract MockedApp is Application {
     didStuff = true;
   }
 
-  function canHandlePayload(bytes p) constant returns (bool) {
-    p; // silence warning
-    return true; // can handle all the payloads
+  function appId() constant returns (string) {
+      return "mock.aragonpm.eth";
+  }
+
+  function version() constant returns (string) {
+      return "1.0.0";
   }
 }

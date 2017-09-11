@@ -50,6 +50,14 @@ contract OwnershipApp is Application, IOwnershipApp, Requestor {
         tokens.length += 1;
     }
 
+    function appId() constant returns (string) {
+        return "ownership.aragonpm.eth";
+    }
+
+    function version() constant returns (string) {
+        return "1.0.0";
+    }
+
     /**
     * @notice Add token at `_tokenAddress` as a governance token to the organization
     * @dev If added token is not controlled by DAO, it will fail to issue tokens

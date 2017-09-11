@@ -17,17 +17,6 @@ import "./IVote.sol";
 import "./IVotingApp.sol";
 
 contract VotingApp is IVotingApp, Application, CodeHelper {
-    function VotingApp(address daoAddr)
-    Application(daoAddr)
-    {
-        // init is automatically called by setDAO
-    }
-
-    function init() internal {
-        assert(votes.length == 0); // asserts init can only be called once
-        votes.length++; // index 0 is empty
-    }
-
     // hash(bytecode) -> bool. Is the hash of some bytecode approved voting code?
     mapping (bytes32 => bool) public validVoteCode;
 
@@ -59,6 +48,25 @@ contract VotingApp is IVotingApp, Application, CodeHelper {
 
     Vote[] votes;  // array for storage of all votes
     mapping (address => uint) voteForAddress; // reverse index to quickly get the voteId for a vote address
+
+    function VotingApp(address daoAddr)
+    Application(daoAddr)
+    {
+        // init is automatically called by setDAO
+    }
+
+    function init() internal {
+        assert(votes.length == 0); // asserts init can only be called once
+        votes.length++; // index 0 is empty
+    }
+
+    function appId() constant returns (string) {
+        return "voting.aragonpm.eth";
+    }
+
+    function version() constant returns (string) {
+        return "1.0.0";
+    }
 
     /**
     * @notice Create a new vote for `IVote(_voteAddress).data()`

@@ -14,7 +14,15 @@ contract DAOMsgOrgan is IOrgan {
 
 contract DAOMsgApp is Application {
     function DAOMsgApp() Application(0) {}
-        
+
+    function appId() constant returns (string) {
+        return "mock.aragonpm.eth";
+    }
+
+    function version() constant returns (string) {
+        return "1.0.0";
+    }
+
     function assertDaoMsg(address sender, address token, uint256 value) payable {
         require(dao_msg().sender == sender);
         require(dao_msg().token == token);
