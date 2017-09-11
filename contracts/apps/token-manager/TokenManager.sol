@@ -36,6 +36,15 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         _;
     }
 
+    // Other token specific events can be watched on the token address directly (avoid duplication)
+    event NewVesting(address indexed receiver, uint256 vestingId, uint256 amount);
+    event RevokeVesting(address indexed receiver, uint256 vestingId);
+
+    /**
+    * @notice Initializes TokenManager (parameters won't be modifiable after being set)
+    * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
+    * @param _wrappedToken Address of the token being wrapped (can get 1:1 token exchanged for managed token)
+    */
     function initialize(MiniMeToken _token, ERC20 _wrappedToken) onlyInit {
         initialized();
 
@@ -45,29 +54,60 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         wrappedToken = _wrappedToken;
     }
 
+    /**
+    * @notice Mint `_amount` of tokens for `_receiver` (Can only be called on native token manager)
+    * @param _receiver The address receiving the tokens
+    * @param _amount Number of tokens minted
+    */
     function mint(address _receiver, uint256 _amount) auth onlyNative external {
         _mint(_receiver, _amount);
     }
 
+    /**
+    * @notice Mint `_amount` of tokens for the token manager (Can only be called on native token manager)
+    * @param _amount Number of tokens minted
+    */
     function issue(uint256 _amount) auth onlyNative external {
         _mint(address(this), _amount);
     }
 
+    /**
+    * @notice Exchange `_amount` of wrappedToken for tokens (Can only be called on wrapped token manager)
+    * @param _amount Number of tokens wrapped
+    */
     function wrap(uint256 _amount) onlyWrapper external {
         assert(wrappedToken.transferFrom(msg.sender, address(this), _amount));
         _mint(msg.sender, _amount);
     }
 
+    /**
+    * @notice Exchange `_amount` of tokens for the wrapped token (Can only be called on wrapped token manager)
+    * @param _amount Number of tokens unwrapped
+    */
     function unwrap(uint256 _amount) onlyWrapper external {
         require(transferrableBalance(msg.sender, now) >= _amount);
         _burn(msg.sender, _amount);
         assert(wrappedToken.transfer(msg.sender, _amount));
     }
 
+    /**
+    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings
+    * @param _receiver The address receiving the tokens
+    * @param _amount Number of tokens transfered
+    */
     function assign(address _receiver, uint256 _amount) auth external {
         _assign(_receiver, _amount);
     }
 
+    /**
+    * @notice Assign `_amount` of tokens for `_receiver` from Token Manager's holdings with a `_revokable` revokable vesting starting `_start`, cliff on `_cliff` (first portion of tokens transferable) and vesting on `_vesting` (all tokens transferable)
+    * @param _receiver The address receiving the tokens
+    * @param _amount Number of tokens transfered
+    * @param _start Date the vesting calculations start
+    * @param _cliff Date when the initial proportional amount of tokens are transferable
+    * @param _vesting Date when all tokens are transferable
+    * @param _revokable Whether the vesting can be revoked by the token manager
+    */
     function assignVested(address _receiver, uint256 _amount, uint64 _start, uint64 _cliff, uint64 _vesting, bool _revokable) auth external returns (uint256) {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
@@ -78,21 +118,30 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
         _assign(_receiver, _amount);
 
+        NewVesting(_receiver, vestingId, _amount);
+
         return vestingId;
     }
 
+    /**
+    * @notice Revoke vesting `_vestingId` from `_holder` returning unvested tokens to Token Manager
+    * @param _holder Address getting vesting revoked
+    * @param _vestingId Numeric id of the vesting
+    */
     function revokeVesting(address _holder, uint256 _vestingId) auth external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
         uint nonVested = calculateNonVestedTokens(v.amount, uint64(now), v.start, v.cliff, v.vesting);
 
-        // To make vestingIds  immutable over time, we just zero out the revoked vesting
+        // To make vestingIds immutable over time, we just zero out the revoked vesting
         delete vestings[_holder][_vestingId];
 
         // transferFrom always works as controller
         // onTransfer hook always allows if transfering to token controller
         assert(token.transferFrom(_holder, address(this), nonVested));
+
+        RevokeVesting(_holder, _vestingId);
     }
 
     /**
