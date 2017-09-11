@@ -15,8 +15,5 @@ contract MockedApp is Application {
     didStuff = true;
   }
 
-  function canHandlePayload(bytes p) constant returns (bool) {
-    p; // silence warning
-    return true; // can handle all the payloads
-  }
+  function stuckETH() payable {}
 }
