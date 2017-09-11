@@ -3,6 +3,7 @@ const sha3 = require('solidity-sha3').default
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const { getBlockNumber } = require('./helpers/web3')
 const timetravel = require('./helpers/timer')
+const { encodeScript } = require('./helpers/evmScript')
 
 const VotingApp = artifacts.require('VotingApp')
 const MiniMeToken = artifacts.require('MiniMeToken')
@@ -37,24 +38,37 @@ contract('Voting App', accounts => {
     })
 
     it('deciding voting is automatically executed', async () => {
-        const script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
-        const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action])
+        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
     })
 
     it('execution scripts can execute multiple actions', async () => {
-        let script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
-        script = script + script.slice(2) + script.slice(2)
-        const votingId = createdVoteId(await app.newVoting(script, { from: holder50 }))
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action, action, action])
+        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
+    it('execution script can be empty', async () => {
+        const votingId = createdVoteId(await app.newVoting(encodeScript([]), '', { from: holder50 }))
+    })
+
     it('execution throws if any action on script throws', async () => {
-        let script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        let script = encodeScript([action])
         script = script.slice(0, -2) // remove one byte from calldata for it to fail
         return assertInvalidOpcode(async () => {
-            await app.newVoting(script, { from: holder50 })
+            await app.newVoting(script, '', { from: holder50 })
         })
+    })
+
+    it('forwarding creates vote', async () => {
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action])
+        const votingId = createdVoteId(await app.forward(script, { from: holder50 }))
+        assert.equal(votingId, 1, 'voting should have been created')
     })
 
     context('creating vote', () => {
@@ -62,9 +76,9 @@ contract('Voting App', accounts => {
         let script = ''
 
         beforeEach(async () => {
-            script = await app.makeSingleScript(executionTarget.address, executionTarget.contract.execute.getData())
-            script = script + script.slice(2)
-            voteId = createdVoteId(await app.newVoting(script, { from: nonHolder }))
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            script = encodeScript([action, action])
+            voteId = createdVoteId(await app.newVoting(script, 'metadata', { from: nonHolder }))
         })
 
         it('has correct state', async () => {
@@ -79,6 +93,7 @@ contract('Voting App', accounts => {
             assert.equal(totalVoters, 100, 'total voters should be 100')
             assert.equal(scriptHash, sha3(script), 'script hash should be correct')
             assert.equal(scriptActionsCount, 2)
+            assert.equal(await app.getVotingMetadata(voteId), 'metadata', 'should have returned correct metadata')
         })
 
         it('has correct script actions', async () => {
