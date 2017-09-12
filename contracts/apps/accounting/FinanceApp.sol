@@ -1,13 +1,20 @@
 pragma solidity ^0.4.15;
 
-import "../../misc/Scheduled.sol";
 import "../App.sol";
+import "../../common/Initializable.sol";
+import "zeppelin-solidity/contracts/token/ERC20.sol";
+import "../vault/Vault.sol";
 
-contract AccountingApp is App, Scheduled {
+
+
+contract FinanceApp is App, Initializable {
+
+    Vault vault;
 
     struct AccountingPeriod {
-        address baseToken;
 
+        bytes2 ct_second;
+        bytes2 ct_minute;
         bytes2 ct_hour;
         bytes2 ct_day;
         bytes2 ct_month;
@@ -16,6 +23,9 @@ contract AccountingApp is App, Scheduled {
         uint startBlock;
         uint startTimestamp;
         uint endTimestamp;
+        ERC20[] budgetTokens;
+        uint[] budgetAmounts;
+
     }
 
     AccountingPeriod public defaultAccountingPeriodSettings;
@@ -25,8 +35,6 @@ contract AccountingApp is App, Scheduled {
     struct Transaction {
         address token;
         uint amount;
-        address baseToken;
-        uint baseValue;
         address externalAddress;
         string reference;
         uint timestamp;
@@ -69,27 +77,14 @@ contract AccountingApp is App, Scheduled {
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
     mapping (uint => uint[]) public transactionUpdatesRelation;
 
-    event Debug(string reason);
-	event WithdrawalFailed(uint transactionId);
+    event WithdrawalFailed(uint transactionId);
 
     function () {
-        Debug('Fallback');
     }
 
-    function AccountingApp() {
+    function FinanceApp() {
     }
 
-    function startNextAccountingPeriod() {
-        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now){
-            AccountingPeriod memory ap = defaultAccountingPeriodSettings;
-            ap.startTimestamp = now;
-            uint endTimestamp = next("0", "0", ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
-            ap.endTimestamp = endTimestamp;
-            // TODO: store endBlock of last accountingPeriod?
-            ap.startBlock = block.number;
-            accountingPeriods.push(ap);
-        }
-    }
 
     function getCurrentAccountingPeriodId() public constant returns (uint){
         // TODO: perhaps we should store the current accountingPeriod ID
@@ -98,9 +93,9 @@ contract AccountingApp is App, Scheduled {
         return accountingPeriods.length - 1;
     }
 
-    function getCurrentAccountingPeriod() public constant returns (address, bytes2, bytes2, bytes2, bytes2, bytes2){
+    function getCurrentAccountingPeriod() public constant returns (bytes2, bytes2, bytes2, bytes2, bytes2, bytes2, bytes2){
         AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
-        return (ap.baseToken, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
+        return (ap.ct_second, ap.ct_minute, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
     }
 
     function getAccountingPeriodsLength() public constant returns (uint) {
@@ -129,10 +124,51 @@ contract AccountingApp is App, Scheduled {
         return (tu.state, tu.reason);
     }
 
-    // auth
+    function startNextAccountingPeriod() internal {
+        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now){
+            AccountingPeriod memory ap = defaultAccountingPeriodSettings;
+            ap.startTimestamp = now;
+            uint endTimestamp = next(ap.ct_second, ap.ct_minute, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
+            ap.endTimestamp = endTimestamp;
+            // TODO: store endBlock of last accountingPeriod?
+            ap.startBlock = block.number;
+            accountingPeriods.push(ap);
+            vault.requestAllowances(ap.budgetTokens, ap.budgetAmounts);
+        }
+    }
 
-    function setDefaultAccountingPeriodSettings(address baseToken, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth {
-        defaultAccountingPeriodSettings.baseToken = baseToken;
+    function next() external {
+        startNextAccountingPeriod();
+    }
+
+    function initialize(address vaultAddress) onlyInit {
+        initialized();
+        vault = Vault(vaultAddress);
+    }
+
+    function _setBudgetToken(address _tokenAddress, uint amount) internal {
+        // We cannot just remove a token when the amount is 0 because then it will remain with the available allowance forever.
+        var defautAP = defaultAccountingPeriodSettings;
+        assert(defautAP.budgetTokens.length == defautAP.budgetAmounts.length);
+        for (uint i = 0; i < budgetTokens.length; i++) {
+            // this is an existing token and we can about the amount
+            if(address(budgetTokens) == _tokenAddress) {
+                budgetAmounts[i] = amount;
+                return; // early return
+            }
+        }
+        // This means this is a new token, amount and needs to be appended
+        budgetTokens.push(ERC20(_tokenAddress));
+        budgetAmounts.push(amount);
+    }
+
+    function setBudgetToken(address _tokenAddress, uint amount) auth external {
+        _setBudgetToken(tokenAddress, amount);
+    }
+
+    function setDefaultAccountingPeriodSettings(bytes2 ct_second, bytes2 ct_minute, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth {
+        defaultAccountingPeriodSettings.ct_hour = ct_second;
+        defaultAccountingPeriodSettings.ct_hour = ct_minute;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
         defaultAccountingPeriodSettings.ct_day = ct_day;
         defaultAccountingPeriodSettings.ct_month = ct_month;
@@ -146,20 +182,16 @@ contract AccountingApp is App, Scheduled {
 
     function newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) auth  {
         uint transactionId = newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
-		setTransactionPendingApproval(transactionId, 'pending');
+        setTransactionPendingApproval(transactionId, 'pending');
     }
 
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
     function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
-        Debug('newTransaction');
         AccountingPeriod ap = accountingPeriods[getCurrentAccountingPeriodId()];
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
-            // TODO: get base token and exchange rate from oracle
-            baseToken: ap.baseToken,
-            baseValue: 1,
             externalAddress: externalAddress,
             reference: reference,
             timestamp: now,
@@ -170,42 +202,42 @@ contract AccountingApp is App, Scheduled {
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
 
         updateTransaction(tid, TransactionState.New, "new");
-		return tid;
+        return tid;
     }
 
-     function approveTransaction(uint transactionId, string reason) auth  {
+    function approveTransaction(uint transactionId, string reason) auth  {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
-		require(state == TransactionState.PendingApproval);
+        require(state == TransactionState.PendingApproval);
         require(t._type == TransactionType.Withdrawal);
-		setTransactionApproved(transactionId, reason);
-		executeTransaction(transactionId);
-     }
+        setTransactionApproved(transactionId, reason);
+        executeTransaction(transactionId);
+    }
 
-	function executeTransaction(uint transactionId) auth  {
+    function executeTransaction(uint transactionId) auth  {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
-		require(state == TransactionState.Approved);
+        require(state == TransactionState.Approved);
         bool succeeded = t.token.call(TRANSFER_SIG, t.token, t.externalAddress, t.amount);
-		if(succeeded) {
-			setTransactionSucceeded(transactionId, 'succeed');
-		} else {
-			WithdrawalFailed(transactionId);
-		}
-	}
+        if(succeeded) {
+            setTransactionSucceeded(transactionId, 'succeed');
+        } else {
+            WithdrawalFailed(transactionId);
+        }
+    }
 
-    function setTransactionSucceeded(uint transactionId, string reason) auth  {
+    function setTransactionSucceeded(uint transactionId, string reason) internal   {
         updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
 
-    function setTransactionFailed(uint transactionId, string reason) auth  {
+    function setTransactionFailed(uint transactionId, string reason) internal  {
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.New);
-		updateTransaction(transactionId, TransactionState.Failed, reason);
+        updateTransaction(transactionId, TransactionState.Failed, reason);
     }
 
     // Create new transactionUpdate for the given transaction id
-    function updateTransaction(uint transactionId, TransactionState state, string reason) internal returns (uint) {
+    function updateTransaction(uint transactionId, TransactionState state, string reason) internal {
         uint tuid = transactionUpdates.push(TransactionUpdate({
             transactionId: transactionId,
             state: state,
@@ -218,13 +250,13 @@ contract AccountingApp is App, Scheduled {
     function setTransactionPendingApproval(uint transactionId, string reason) internal {
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.New);
-		updateTransaction(transactionId, TransactionState.PendingApproval, reason);
+        updateTransaction(transactionId, TransactionState.PendingApproval, reason);
     }
 
     function setTransactionApproved(uint transactionId, string reason) internal {
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.PendingApproval);
-		updateTransaction(transactionId, TransactionState.Approved, reason);
+        updateTransaction(transactionId, TransactionState.Approved, reason);
     }
     bytes4 constant TRANSFER_SIG = bytes4(sha3('transfer(address,address,uint256)'));
 
