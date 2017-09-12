@@ -4,17 +4,18 @@ import "../App.sol";
 import "../../common/Initializable.sol";
 import "zeppelin-solidity/contracts/token/ERC20.sol";
 import "../vault/Vault.sol";
+import "../../misc/Crontab.sol";
 
 
 
-contract FinanceApp is App, Initializable {
+contract FinanceApp is App, Initializable, Crontab {
 
     Vault vault;
 
     struct AccountingPeriod {
 
-        bytes2 ct_second;
-        bytes2 ct_minute;
+        bytes2 ct_sec;
+        bytes2 ct_min;
         bytes2 ct_hour;
         bytes2 ct_day;
         bytes2 ct_month;
@@ -41,10 +42,32 @@ contract FinanceApp is App, Initializable {
         uint accountingPeriodId;  // in which accounting period did this occur
         TransactionType _type;
     }
+
     enum TransactionType {
         Deposit,
         Withdrawal
     }
+
+    struct Payment {
+        ERC20 token;
+        uint amount;
+        address to;
+        uint repeat; // number of times this can be paid
+        uint timesCalled; //
+        uint startTimestamp; // Initial timestamp 
+        uint nextTimestamp; 
+        bool canceled; // override to cancel a payment
+        bytes2 ct_sec;
+        bytes2 ct_min;
+        bytes2 ct_hour;
+        bytes2 ct_day;
+        bytes2 ct_month;
+        bytes2 ct_weekday;
+        bytes2 ct_year;
+    }
+
+    Payment[] payments;
+
 
 
     // The state a transaction update can be.
@@ -86,6 +109,56 @@ contract FinanceApp is App, Initializable {
     }
 
 
+    event NewPayment(uint pid);
+    function newPayment(ERC20 token, uint amount, address to, uint repeat, uint startTimestamp, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth external {
+        uint pid = _newPayment(token, amount, to, startTimestamp);
+        NewPayment(pid);
+    }
+
+    function setPaymentSchedual(uint pid, uint repeat, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth external {
+        _setPaymentSchedual(pid, repeat, ct_sec, ct_min, ct_hour, ct_day, ct_month, ct_weekday, ct_year);
+    }
+
+    function _newPayment(ERC20 token, uint amount, address to, uint startTimestamp) internal returns (uint) {
+        Payment memory p = Payment( token, amount, to, 1, 0, startTimestamp, startTimestamp, false, "*", "*", "*", "*", "*", "*", "*");
+        payments.push(p);
+        uint pid = payments.length - 1;
+        return  pid;
+    }
+
+    event UpdatedPayment(uint pid);
+    function _setPaymentSchedual(uint pid, uint repeat, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) internal {
+        Payment memory p = payments[pid];
+        uint nextTimestamp = next(ct_sec, ct_min, ct_hour, ct_day, ct_month, ct_weekday, ct_year, p.startTimestamp);
+        p.repeat = repeat;
+        p.nextTimestamp = nextTimestamp;
+        p.ct_sec = ct_sec;
+        p.ct_min = ct_min;
+        p.ct_hour = ct_hour;
+        p.ct_day = ct_day;
+        p.ct_month = ct_month;
+        p.ct_weekday = ct_weekday;
+        p.ct_year = ct_year;
+        UpdatedPayment(pid);
+    }
+
+
+    function cancelPayment(uint pid, uint amount) auth external {
+        payments[pid].canceled = true;
+    }
+
+    function withdrawPayment(uint pid, uint amount) auth external {
+        Payment memory p = payments[pid];
+        if((p.to == msg.sender) 
+          && (p.timesCalled < p.repeat)
+          && (!p.canceled)
+          && (p.nextTimestamp < block.timestamp)) {
+            uint tid = _newOutgoingTransaction(p.to, p.token, p.amount, 'payment');
+            _approveTransaction(tid, "pre-approved payment");
+            p.nextTimestamp = next(p.ct_sec, p.ct_min, p.ct_hour, p.ct_day, p.ct_month, p.ct_weekday, p.ct_year, p.nextTimestamp);
+            p.timesCalled += 1;
+        }
+    }
     function getCurrentAccountingPeriodId() public constant returns (uint){
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
@@ -95,7 +168,7 @@ contract FinanceApp is App, Initializable {
 
     function getCurrentAccountingPeriod() public constant returns (bytes2, bytes2, bytes2, bytes2, bytes2, bytes2, bytes2){
         AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
-        return (ap.ct_second, ap.ct_minute, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
+        return (ap.ct_sec, ap.ct_min, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year);
     }
 
     function getAccountingPeriodsLength() public constant returns (uint) {
@@ -110,9 +183,9 @@ contract FinanceApp is App, Initializable {
     // This assumes that there is at least a single transaction update which is fine if newTransaction is used.
     function getTransactionInfo(uint transactionId) constant returns (address, address, uint, string, TransactionType) {
         Transaction memory t = transactions[transactionId];
-        uint tuid = transactionUpdatesRelation[transactionId].length - 1;
-        uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
-        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
+        //uint tuid = transactionUpdatesRelation[transactionId].length - 1;
+        //uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
+        //TransactionUpdate memory tu = transactionUpdates[lastTransactionUpdate];
         return (t.externalAddress, t.token, t.amount, t.reference, t._type);
     }
 
@@ -120,25 +193,38 @@ contract FinanceApp is App, Initializable {
         Transaction memory t = transactions[transactionId];
         uint tuid = transactionUpdatesRelation[transactionId].length - 1;
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
-        TransactionUpdate tu = transactionUpdates[lastTransactionUpdate];
+        TransactionUpdate memory tu = transactionUpdates[lastTransactionUpdate];
         return (tu.state, tu.reason);
     }
 
-    function startNextAccountingPeriod() internal {
+    function _startNextAccountingPeriod() internal {
         if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now){
             AccountingPeriod memory ap = defaultAccountingPeriodSettings;
             ap.startTimestamp = now;
-            uint endTimestamp = next(ap.ct_second, ap.ct_minute, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
+            uint endTimestamp = next(ap.ct_sec, ap.ct_min, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
             ap.endTimestamp = endTimestamp;
             // TODO: store endBlock of last accountingPeriod?
             ap.startBlock = block.number;
             accountingPeriods.push(ap);
-            vault.requestAllowances(ap.budgetTokens, ap.budgetAmounts);
+            //vault.requestAllowances(ap.budgetTokens, ap.budgetAmounts);
         }
     }
 
-    function next() external {
-        startNextAccountingPeriod();
+    function startNextAccountingPeriod() external auth {
+        _startNextAccountingPeriod();
+    }
+
+    function _deposit(address tokenAddress, uint amount, string reference) internal {
+        ERC20(tokenAddress).transferFrom(msg.sender, address(vault), amount);
+        _newIncomingTransaction(msg.sender, tokenAddress, amount, reference);
+    }
+
+    function deposit(address tokenAddress, uint amount, string reference) external auth {
+        _deposit(tokenAddress, amount, reference);
+    }
+
+    function deposit(address tokenAddress, uint amount) external auth {
+        _deposit(tokenAddress, amount, "new deposit");
     }
 
     function initialize(address vaultAddress) onlyInit {
@@ -146,29 +232,30 @@ contract FinanceApp is App, Initializable {
         vault = Vault(vaultAddress);
     }
 
-    function _setBudgetToken(address _tokenAddress, uint amount) internal {
+    function _setTokenBudget(address tokenAddress, uint amount) internal {
         // We cannot just remove a token when the amount is 0 because then it will remain with the available allowance forever.
-        var defautAP = defaultAccountingPeriodSettings;
-        assert(defautAP.budgetTokens.length == defautAP.budgetAmounts.length);
-        for (uint i = 0; i < budgetTokens.length; i++) {
+        // TODO: add cleanup function to removes tokens that had a 0 budget the past two accounting periods
+        var defaultAP = defaultAccountingPeriodSettings;
+        assert(defaultAP.budgetTokens.length == defaultAP.budgetAmounts.length);
+        for (uint i = 0; i < defaultAP.budgetTokens.length; i++) {
             // this is an existing token and we can about the amount
-            if(address(budgetTokens) == _tokenAddress) {
-                budgetAmounts[i] = amount;
+            if(address(defaultAP.budgetTokens[i]) == tokenAddress) {
+                defaultAP.budgetAmounts[i] = amount;
                 return; // early return
             }
         }
         // This means this is a new token, amount and needs to be appended
-        budgetTokens.push(ERC20(_tokenAddress));
-        budgetAmounts.push(amount);
+        defaultAP.budgetTokens.push(ERC20(tokenAddress));
+        defaultAP.budgetAmounts.push(amount);
     }
 
-    function setBudgetToken(address _tokenAddress, uint amount) auth external {
-        _setBudgetToken(tokenAddress, amount);
+    function setTokenBudget(address tokenAddress, uint amount) auth external {
+        _setTokenBudget(tokenAddress, amount);
     }
 
-    function setDefaultAccountingPeriodSettings(bytes2 ct_second, bytes2 ct_minute, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth {
-        defaultAccountingPeriodSettings.ct_hour = ct_second;
-        defaultAccountingPeriodSettings.ct_hour = ct_minute;
+    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year)  external auth {
+        defaultAccountingPeriodSettings.ct_hour = ct_sec;
+        defaultAccountingPeriodSettings.ct_hour = ct_min;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
         defaultAccountingPeriodSettings.ct_day = ct_day;
         defaultAccountingPeriodSettings.ct_month = ct_month;
@@ -176,19 +263,20 @@ contract FinanceApp is App, Initializable {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
-    function newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) auth  {
-        newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
+    function _newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) internal  {
+        _newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
     }
 
-    function newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) auth  {
-        uint transactionId = newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
+    function _newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) internal returns (uint){
+        uint transactionId = _newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
         setTransactionPendingApproval(transactionId, 'pending');
+        return transactionId;
     }
 
     // Create a new transaction and return the id of the new transaction.
     // externalAddress is where the transication is coming or going to.
-    function newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
-        AccountingPeriod ap = accountingPeriods[getCurrentAccountingPeriodId()];
+    function _newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
+        AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
         uint tid = transactions.push(Transaction({
             token: token,
             amount: amount,
@@ -205,20 +293,24 @@ contract FinanceApp is App, Initializable {
         return tid;
     }
 
-    function approveTransaction(uint transactionId, string reason) auth  {
+    function approveTransaction(uint transactionId, string reason) auth external {
+        _approveTransaction(transactionId, reason);
+    }
+
+    function _approveTransaction(uint transactionId, string reason) internal {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.PendingApproval);
         require(t._type == TransactionType.Withdrawal);
         setTransactionApproved(transactionId, reason);
-        executeTransaction(transactionId);
+        _executeTransaction(transactionId);
     }
 
-    function executeTransaction(uint transactionId) auth  {
+    function _executeTransaction(uint transactionId) internal  {
         Transaction memory t = transactions[transactionId];
         var (state, r) = getTransactionState(transactionId);
         require(state == TransactionState.Approved);
-        bool succeeded = t.token.call(TRANSFER_SIG, t.token, t.externalAddress, t.amount);
+        bool succeeded = ERC20(t.token).transfer(t.externalAddress, t.amount);
         if(succeeded) {
             setTransactionSucceeded(transactionId, 'succeed');
         } else {
