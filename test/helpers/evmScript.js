@@ -2,7 +2,7 @@ const abi = require('ethereumjs-abi')
 
 module.exports = {
     // Encodes an array of actions ({ to: address, calldata: bytes}) into the EVM script format
-    // Concatenates [ 14 bytes (address) ] + [ 4 bytes (uint32: calldata length) ] + [ calldataLength bytes (payload) ]
+    // Concatenates [ 20 bytes (address) ] + [ 4 bytes (uint32: calldata length) ] + [ calldataLength bytes (payload) ]
     encodeScript: actions => {
         return actions.reduce((script, { to, calldata }) => {
             const addr = abi.rawEncode(['address'], [to]).toString('hex')
