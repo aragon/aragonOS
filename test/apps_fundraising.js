@@ -11,10 +11,12 @@ contract('Fundraising', accounts => {
 
     const vault = accounts[8]
     const holder1000 = accounts[1]
+    const holder10 = accounts[2]
 
     beforeEach(async () => {
         raisedToken = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         await raisedToken.generateTokens(holder1000, 1000)
+        await raisedToken.generateTokens(holder10, 10)
 
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
@@ -43,6 +45,20 @@ contract('Fundraising', accounts => {
 
         await fundraising.newSale(n, raisedToken.address, 100, 150, minBuy, true, 1, [11], [1, 1])
         await raisedToken.approve(fundraising.address, 1, { from: holder1000 })
+
+        return assertInvalidOpcode(async () => {
+            await fundraising.buy(0, 1, { from: holder1000 })
+        })
+    })
+
+    it('only allow investor to invest in private sale', async () => {
+        await fundraising.newSale(holder10, raisedToken.address, 10000, 10000, 0, true, 1, [11], [2, 2])
+        await raisedToken.approve(fundraising.address, 1, { from: holder1000 })
+        await raisedToken.approve(fundraising.address, 1, { from: holder10 })
+
+        await fundraising.buy(0, 1, { from: holder10 })
+
+        assert.equal(await token.balanceOf(holder10), 2, 'investor should have received tokens')
 
         return assertInvalidOpcode(async () => {
             await fundraising.buy(0, 1, { from: holder1000 })
@@ -87,6 +103,18 @@ contract('Fundraising', accounts => {
 
         it('can force closing sale if authorized', async () => {
             await fundraising.forceCloseSale(0)
+        })
+
+        it('can close sale after all periods ended', async () => {
+            await fundraising.mock_setTimestamp(32)
+            await fundraising.closeSale(0)
+        })
+
+        it('fails when closing ongoing sale', async () => {
+            await fundraising.mock_setTimestamp(21)
+            return assertInvalidOpcode(async () => {
+                await fundraising.closeSale(0)
+            })
         })
     })
 })

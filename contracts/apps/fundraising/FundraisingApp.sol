@@ -100,7 +100,7 @@ contract FundraisingApp is App, Initializable {
     }
 
     // Just for ERC223 interfacing
-    function buy(uint256 _saleId) {}
+    function buy(uint256 _saleId) { _saleId; }
 
     function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) returns (bool ok) {
         _origin;
