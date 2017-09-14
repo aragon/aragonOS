@@ -9,7 +9,12 @@
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
-    "coveralls": "scripts/coveralls.sh"
+    "coveralls": "scripts/coveralls.sh",
+    "docs:init": "node_modules/.bin/doxity init",
+    "docs:compile": "node_modules/.bin/doxity compile",
+    "docs:develop": "node_modules/.bin/doxity develop",
+    "docs:publish": "node_modules/.bin/doxity publish",
+    "docs:build": "node_modules/.bin/doxity build"
   },
   "files": [
     "index.js",
