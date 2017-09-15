@@ -9,7 +9,12 @@
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
-    "coveralls": "scripts/coveralls.sh"
+    "coveralls": "scripts/coveralls.sh",
+    "docs:init": "node_modules/.bin/doxity init",
+    "docs:compile": "node_modules/.bin/doxity compile",
+    "docs:develop": "node_modules/.bin/doxity develop",
+    "docs:publish": "node_modules/.bin/doxity publish",
+    "docs:build": "node_modules/.bin/doxity build"
   },
   "files": [
     "index.js",
@@ -28,6 +33,7 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "devDependencies": {
+    "@digix/doxity": "^0.5.2",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",

@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700|Roboto+Mono');
+
+@import './responsive.css';
+
+body, h1, h2, h3, h4, h5, .ui.header, .ui.menu {
+  font-family: 'Roboto', sans-serif;
+}
+
+pre.wrap {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+code {
+  padding: 0 0.3em;
+}
+
+pre, code {
+  font-family: 'Roboto Mono', monospace;
+  border: 1px solid rgba(0,0,0,.05);
+  background:rgba(0,0,0,.01);
+  > code {
+    border: none;
+    background: none;
+  }
+}
+pre {
+  padding: 1em;
+}
+
+.vertical.menu {
+  .item {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    &.active{
+      overflow: visible;
+    }
+  }
+}
+
+.pusher {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.pusher > .container:not(.footer) {
+  flex: 1;
+}
+.pusher > .footer {
+  height: auto;
+  margin-top: 2em;
+}
+
+.header code.signature {
+  font-size: 0.6em;
+}
+
+.ui.method-input {
+  max-width: 6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  input {
+    background: rgba(255,255,255,.7);
+  }
+}

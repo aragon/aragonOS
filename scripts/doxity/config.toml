@@ -1,0 +1,6 @@
+linkPrefix = "aragon-core"
+author="Rudy Godoy"
+license="GNU GPL v3.0"
+name="Aragon core"
+version="beta"
+description="Core contracts for Aragon"

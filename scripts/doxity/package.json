@@ -1,0 +1,31 @@
+{
+  "name": "doxity-gatsby-starter-project",
+  "description": "Doxity Example Site",
+  "version": "1.0.0",
+  "author": "Chris Hitchcott <hitchcott@gmail.com>",
+  "dependencies": {
+    "@hitchcott/semantic-ui-react": "^0.61.1",
+    "highlight.js": "^9.7.0",
+    "highlightjs-solidity": "^1.0.5",
+    "react-document-title": "^2.0.1",
+    "react-markdown": "^2.4.2",
+    "sort-by": "^1.1.1",
+    "web3": "^0.17.0-beta"
+  },
+  "devDependencies": {
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-plugin-import": "^1.16.0",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-react": "^6.4.1",
+    "gatsby": "0.12.18"
+  },
+  "keywords": [
+    "gatsby"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "develop": "./node_modules/.bin/gatsby develop",
+    "build": "./node_modules/.bin/gatsby build --prefix-links"
+  }
+}
