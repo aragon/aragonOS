@@ -44,6 +44,10 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
         RemoveMember(_addr);
     }
 
+    function setOwnIdentity(string _name, bytes _contentURI) onlyMember {
+        _setIdentity(msg.sender, _name, _contentURI);
+    }
+
     function setIdentity(address _addr, string _name, bytes _contentURI) auth external {
         _setIdentity(_addr, _name, _contentURI);
     }
@@ -59,11 +63,11 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     }
 
     function isMember(address _addr) constant returns (bool) {
-        return members[_addr].isMember;
+        return isWhitelist && members[_addr].isMember;
     }
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
         _evmCallScript;
-        return isWhitelist == isMember(_sender);
+        return isMember(_sender);
     }
 }
