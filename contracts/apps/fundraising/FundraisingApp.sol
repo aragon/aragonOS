@@ -36,8 +36,8 @@ contract FundraisingApp is App, Initializable {
     }
 
     Sale[] public sales;
-    TokenManager tokenManager;
-    address vault;
+    TokenManager public tokenManager;
+    address public vault;
 
     uint256 constant MAX_PERIODS = 50;
     uint64 constant MAX_UINT64 = uint64(-1);
@@ -45,6 +45,10 @@ contract FundraisingApp is App, Initializable {
     event NewSale(uint256 indexed saleId);
     event CloseSale(uint256 indexed saleId);
 
+    /**
+    * @param _tokenManager Reference to the token manager that will mint tokens on sales (Requires mint permission!)
+    * @param _vault Address that will receive funds raised in sale
+    */
     function initialize(TokenManager _tokenManager, address _vault) onlyInit {
         initialized();
 
@@ -52,6 +56,18 @@ contract FundraisingApp is App, Initializable {
         vault = _vault;
     }
 
+    /**
+    * @notice Create token sale (TODO: Figure out how to explain better)
+    * @param _investor Address allowed to buy in the sale. If set to 0x00.., anyone can buy
+    * @param _raisedToken Address of the token being raised in the sale
+    * @param _maxRaised Maximum amount of tokens raised
+    * @param _maxSold Maximum amount of tokens that can be sold
+    * @param _minBuy Minimum amount of raisedTokens that can have to be payed in a sale
+    * @param _isInversePrice How pricing works. If inverse is set to true price will be used as a multiplicator, if set to false as a divisor
+    * @param _periodStartTime Initial timestamp when sale starts
+    * @param _periodEnds Array of timestamps when each period of the sale ends
+    * @param _prices Array of prices for sale. For each period two prices are provided (initial and finalPrice). If different, price is linearly interpolated.
+    */
     function newSale(
         address _investor,
         ERC20 _raisedToken,
@@ -90,36 +106,50 @@ contract FundraisingApp is App, Initializable {
         NewSale(saleId);
     }
 
+    /**
+    * @notice Buy in sale with id `_saleId` with `_payedTokens` tokens
+    * @param _saleId Sale numeric identifier
+    * @param _payedTokens Amount of tokens payed
+    */
     function buy(uint256 _saleId, uint256 _payedTokens) {
         ERC20 raisedToken = sales[_saleId].raisedToken;
 
+        // Buying is attempted before transfering tokens, but if transfer fails it will revert the entire tx
         uint256 returnTokens = _buy(_saleId, msg.sender, _payedTokens);
 
         // No need to return tokens as we never take them from sender's balance
         assert(raisedToken.transferFrom(msg.sender, vault, _payedTokens.sub(returnTokens)));
     }
 
-    // Just for ERC223 interfacing
-    function buy(uint256 _saleId) { _saleId; }
-
-    function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) returns (bool ok) {
-        _origin;
-
-        uint256 saleId = parseSaleId(_data);
-
-        ERC20 raisedToken = sales[saleId].raisedToken;
-        require(msg.sender == address(raisedToken));
-
-        uint256 returnTokens = _buy(saleId, _sender, _value);
-
-        assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
-        if (returnTokens > 0) assert(raisedToken.transfer(_sender, returnTokens));
-
-        return true;
+    /**
+    * @notice Force the close of sale with id `_saleId` (It will always succeed if sale is open)
+    * @param _saleId Sale numeric identifier
+    */
+    function forceCloseSale(uint256 _saleId) auth external {
+        _closeSale(_saleId);
     }
 
-    function parseSaleId(bytes data) constant returns (uint256 saleId) {
-        assembly { saleId := mload(add(data, 0x24)) } // read first parameter of buy function call
+    /**
+    * @notice Close finished sale
+    * @param _saleId Sale numeric identifier
+    */
+    function closeSale(uint256 _saleId) external {
+        Sale storage sale = sales[_saleId];
+        transitionSalePeriodIfNeeded(sale);
+
+        require(sale.periodStartTime == MAX_UINT64);
+        _closeSale(_saleId);
+    }
+
+    /**
+    * @param _saleId Sale numeric identifier
+    * @return price Current price
+    * @return isInversePrice Whether price affects with multiplication or division
+    * @return pricePrecision Factor by which price has been multiplied for precision
+    */
+    function getCurrentPrice(uint256 _saleId) constant returns (uint256 price, bool isInversePrice, uint256 pricePrecision) {
+        transitionSalePeriodIfNeeded(sales[_saleId]); // if done with 'sendTransaction' this function can modify state
+        return calculatePrice(_saleId);
     }
 
     function _buy(uint256 _saleId, address _buyer, uint256 _payedTokens) internal returns (uint256 returnTokens) {
@@ -149,27 +179,16 @@ contract FundraisingApp is App, Initializable {
         sale.soldAmount = sale.soldAmount.add(allowedBuy);
         sale.raisedAmount = sale.raisedAmount.add(finalAllowedAmount);
 
-        tokenManager.mint(_buyer, allowedBuy);
+        tokenManager.mint(_buyer, allowedBuy); // Do actual minting of tokens for buyer
 
         if (sale.soldAmount == sale.maxSold || sale.raisedAmount == sale.maxRaised)
             _closeSale(_saleId);
 
-        return _payedTokens.sub(finalAllowedAmount);
-    }
-
-    function forceCloseSale(uint256 _saleId) auth external {
-        _closeSale(_saleId);
-    }
-
-    function closeSale(uint256 _saleId) external {
-        Sale storage sale = sales[_saleId];
-        transitionSalePeriodIfNeeded(sale);
-
-        require(sale.periodStartTime == MAX_UINT64);
-        _closeSale(_saleId);
+        return _payedTokens.sub(finalAllowedAmount); // how many tokens must be returned to buyer as they weren't allowed in
     }
 
     function _closeSale(uint256 _saleId) internal {
+        require(!sales[_saleId].closed);
         sales[_saleId].closed = true;
         CloseSale(_saleId);
     }
@@ -183,7 +202,7 @@ contract FundraisingApp is App, Initializable {
         isInversePrice = sale.isInversePrice;
         price = period.initialPrice.mul(pricePrecision);
 
-        if (period.finalPrice != 0) { // interpolate
+        if (period.finalPrice != 0) { // interpolate price by period
             uint periodDelta = uint256(period.periodEnds).sub(uint256(sale.periodStartTime));
             uint periodState = getTimestamp().sub(uint256(sale.periodStartTime));
             if (period.finalPrice > period.initialPrice) {
@@ -194,11 +213,6 @@ contract FundraisingApp is App, Initializable {
                 price = price.sub(pricePrecision.mul(p2).mul(periodState).div(periodDelta));
             }
         }
-    }
-
-    function getCurrentPrice(uint256 _saleId) constant returns (uint256 price, bool isInversePrice, uint256 pricePrecision) {
-        transitionSalePeriodIfNeeded(sales[_saleId]);
-        return calculatePrice(_saleId);
     }
 
     function transitionSalePeriodIfNeeded(Sale storage sale) internal {
@@ -224,4 +238,30 @@ contract FundraisingApp is App, Initializable {
 
 
     function getTimestamp() internal constant returns (uint256) { return now; }
+
+    /*
+    // TODO: Decide on ERC223 support
+    // Just for ERC223 interfacing
+    function buy(uint256 _saleId) { _saleId; }
+
+    function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) returns (bool ok) {
+        _origin;
+
+        uint256 saleId = parseSaleId(_data);
+
+        ERC20 raisedToken = sales[saleId].raisedToken;
+        require(msg.sender == address(raisedToken));
+
+        uint256 returnTokens = _buy(saleId, _sender, _value);
+
+        assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
+        if (returnTokens > 0) assert(raisedToken.transfer(_sender, returnTokens));
+
+        return true;
+    }
+
+    function parseSaleId(bytes data) constant returns (uint256 saleId) {
+        assembly { saleId := mload(add(data, 0x24)) } // read first parameter of buy function call
+    }
+    */
 }
