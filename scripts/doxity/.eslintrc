@@ -1,0 +1,20 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "eslint-config-airbnb",
+  ],
+  "rules": {
+    "indent": [2, 2, {"SwitchCase": 1}],
+    "no-console": [0],
+    "func-names": [0],
+    "semi": [2, "never"],
+    "no-extra-semi": [2],
+    "react/prefer-stateless-function": [0],
+    "no-underscore-dangle": ["error", { "allow": ["_config"] }],
+    "arrow-body-style": [0],
+    "max-len": [0],
+  },
+  settings: {
+    import/core-modules: [ "config", "gatsby-helpers" ],
+  }
+}
