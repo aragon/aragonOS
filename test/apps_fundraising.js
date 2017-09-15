@@ -4,7 +4,7 @@ const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const FundraisingApp = artifacts.require('FundraisingAppMock')
 
-const n = '0x00'
+const n = '0x0000000000000000000000000000000000000000'
 
 contract('Fundraising', accounts => {
     let tokenManager, token, raisedToken, fundraising = {}
@@ -34,10 +34,16 @@ contract('Fundraising', accounts => {
 
         await fundraising.newSale(n, raisedToken.address, maxRaised, maxSold, 0, true, 1, [11], [2, 2])
         await raisedToken.approve(fundraising.address, 130, { from: holder1000 })
-        await fundraising.buy(0, 130, { from: holder1000 })
+
+        await fundraising.buy(0, 40, { from: holder1000 })
+        await fundraising.buy(0, 34, { from: holder1000 })
+        await fundraising.buy(0, 56, { from: holder1000 })
 
         assert.equal(await token.balanceOf(holder1000), 150, 'should have gotten max sold tokens')
         assert.equal(await raisedToken.balanceOf(holder1000), 925, 'should have non-spent tokens')
+
+        const [closed] = await fundraising.getSale(0)
+        assert.isTrue(closed, 'sale should be closed')
     })
 
     it('fails if buying less than min buy', async () => {
@@ -72,6 +78,40 @@ contract('Fundraising', accounts => {
             await raisedToken.approve(fundraising.address, 1000, { from: holder1000 })
         })
 
+        it('returns correct sale info', async () => {
+            const info = await fundraising.getSale(0)
+
+            const [closed, inv, rt, mr, ms, mb, inp, st, pc, cp] = info
+
+            assert.equal(closed, false, 'sale should not be closed')
+            assert.equal(inv, n, 'investor should be correct')
+            assert.equal(rt, raisedToken.address, 'raisedToken should be correct')
+            assert.equal(mr, 100, 'max raised should be correct')
+            assert.equal(ms, 30, 'max sold should be correct')
+            assert.equal(mb, 0, 'min buy should be correct')
+            assert.equal(st, 11, 'start time should be correct')
+            assert.equal(inp, false, 'inverse price should be correct')
+            assert.equal(pc, 2, 'periods count should be correct')
+            assert.equal(cp, 0, 'current periods should be correct')
+        })
+
+        it('returns correct period info', async () => {
+            await fundraising.mock_setTimestamp(35)
+
+            const [start1, end1, initial1, final1] = await fundraising.getPeriod(0, 0)
+            const [start2, end2, initial2, final2] = await fundraising.getPeriod(0, 1)
+
+            assert.equal(start1, 11, 'start time should be correct')
+            assert.equal(end1, 21, 'end time should be correct')
+            assert.equal(initial1, 5, 'price should be correct')
+            assert.equal(final1, 5, 'price should be correct')
+
+            assert.equal(start2, 21, 'start time should be correct')
+            assert.equal(end2, 31, 'end time should be correct')
+            assert.equal(initial2, 2, 'price should be correct')
+            assert.equal(final2, 2, 'price should be correct')
+        })
+
         it('fails if buying before sale starts', async () => {
             await fundraising.mock_setTimestamp(10)
             return assertInvalidOpcode(async () => {
@@ -88,6 +128,8 @@ contract('Fundraising', accounts => {
             assert.equal(await raisedToken.balanceOf(holder1000), 900, 'should have only debited max raised')
 
             assert.equal(await token.balanceOf(holder1000), 20, 'should received tokens')
+            const [closed] = await fundraising.getSale(0)
+            assert.isTrue(closed, 'sale should be closed')
         })
 
         it('can only buy up-to max sold', async () => {
@@ -99,15 +141,22 @@ contract('Fundraising', accounts => {
             assert.equal(await raisedToken.balanceOf(holder1000), 940, 'should have only debited max raised')
 
             assert.equal(await token.balanceOf(holder1000), 30, 'should received tokens')
+            const [closed] = await fundraising.getSale(0)
+            assert.isTrue(closed, 'sale should be closed')
         })
 
         it('can force closing sale if authorized', async () => {
             await fundraising.forceCloseSale(0)
+            const [closed] = await fundraising.getSale(0)
+            assert.isTrue(closed, 'sale should be closed')
         })
 
         it('can close sale after all periods ended', async () => {
             await fundraising.mock_setTimestamp(32)
             await fundraising.closeSale(0)
+
+            const [closed] = await fundraising.getSale(0)
+            assert.isTrue(closed, 'sale should be closed')
         })
 
         it('fails when closing ongoing sale', async () => {

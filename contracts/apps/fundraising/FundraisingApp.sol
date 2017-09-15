@@ -18,6 +18,8 @@ contract FundraisingApp is App, Initializable {
     }
 
     struct Sale {
+        bool closed;
+
         address investor; // if set to 0 is public sale
         ERC20 raisedToken;
 
@@ -26,18 +28,19 @@ contract FundraisingApp is App, Initializable {
         uint256 minBuy;
         bool isInversePrice;
 
+        uint64 saleStartTime;
         uint64 periodStartTime;
         SalePeriod[] periods;
         uint256 currentPeriod;
 
         uint256 raisedAmount;
         uint256 soldAmount;
-        bool closed;
     }
 
-    Sale[] public sales;
     TokenManager public tokenManager;
     address public vault;
+
+    Sale[] sales;
 
     uint256 constant MAX_PERIODS = 50;
     uint64 constant MAX_UINT64 = uint64(-1);
@@ -91,6 +94,8 @@ contract FundraisingApp is App, Initializable {
         sale.maxSold = _maxSold;
         sale.minBuy = _minBuy;
         sale.isInversePrice = _isInversePrice;
+
+        sale.saleStartTime = _periodStartTime;
         sale.periodStartTime = _periodStartTime;
 
         require(_periodEnds.length > 0 && _periodEnds.length <= MAX_PERIODS);
@@ -139,6 +144,33 @@ contract FundraisingApp is App, Initializable {
 
         require(sale.periodStartTime == MAX_UINT64);
         _closeSale(_saleId);
+    }
+
+    function getSale(uint256 _saleId) constant returns (bool closed, address investor, address raisedToken, uint256 maxRaised, uint256 maxSold, uint256 minBuy, bool isInversePrice, uint64 saleStartTime, uint256 periodsCount, uint256 currentPeriod, uint256 raisedAmount, uint256 soldAmount) {
+        Sale storage sale = sales[_saleId];
+
+        closed = sale.closed;
+        investor = sale.investor;
+        raisedToken = sale.raisedToken;
+        maxRaised = sale.maxRaised;
+        maxSold = sale.maxSold;
+        minBuy = sale.minBuy;
+        saleStartTime = sale.saleStartTime;
+        isInversePrice = sale.isInversePrice;
+        periodsCount = sale.periods.length;
+        currentPeriod = sale.currentPeriod;
+        raisedAmount = sale.raisedAmount;
+        soldAmount = sale.soldAmount;
+    }
+
+    function getPeriod(uint256 _saleId, uint256 _salePeriod) constant returns (uint64 periodStarts, uint64 periodEnds, uint256 initialPrice, uint256 finalPrice) {
+        Sale storage sale = sales[_saleId];
+        SalePeriod storage period = sale.periods[_salePeriod];
+
+        periodStarts = _salePeriod == 0 ? sale.saleStartTime : sale.periods[_salePeriod - 1].periodEnds;
+        periodEnds = period.periodEnds;
+        initialPrice = period.initialPrice;
+        finalPrice = period.finalPrice;
     }
 
     /**
