@@ -1,5 +1,5 @@
 const assertThrow = require('./helpers/assertThrow');
-var FinanceApp = artifacts.require('../contrats/app/accounting/FinanceApp')
+var FinanceApp = artifacts.require('../contrats/app/finance/FinanceApp')
 var Vault = artifacts.require('../contrats/apps/vault/Vault')
 const { getBalance } = require('./helpers/web3')
 const { signatures, sendTransaction } = require('./helpers/web3')
