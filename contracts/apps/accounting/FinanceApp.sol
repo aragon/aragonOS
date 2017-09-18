@@ -6,13 +6,11 @@ import "zeppelin-solidity/contracts/token/ERC20.sol";
 import "../vault/Vault.sol";
 import "../../misc/Crontab.sol";
 
-
 contract FinanceApp is App, Initializable, Crontab {
 
     Vault vault;
 
     struct AccountingPeriod {
-
         bytes2 ct_sec;
         bytes2 ct_min;
         bytes2 ct_hour;
@@ -26,9 +24,6 @@ contract FinanceApp is App, Initializable, Crontab {
         uint[] budgetAmounts;
 
     }
-
-    AccountingPeriod public defaultAccountingPeriodSettings;
-    AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
 
     // The concept of sending tokens to or from the org
     struct Transaction {
@@ -64,10 +59,6 @@ contract FinanceApp is App, Initializable, Crontab {
         bytes2 ct_year;
     }
 
-    Payment[] payments;
-
-
-
     // The state a transaction update can be.
     // New states should be added to the end to maintain the
     // order of the index when interfacing with web3.
@@ -87,6 +78,9 @@ contract FinanceApp is App, Initializable, Crontab {
         address actor; // who performed this update
     }
 
+    AccountingPeriod public defaultAccountingPeriodSettings;
+    AccountingPeriod[] public accountingPeriods; // Perhaps use a mapping?
+    Payment[] payments;
     Transaction[] public transactions;
     TransactionUpdate[] public transactionUpdates;
 
@@ -276,7 +270,14 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     * @dev Set ths settings for subsequent accounting periods
     */
-    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) external auth {
+    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, 
+                                                bytes2 ct_min, 
+                                                bytes2 ct_hour, 
+                                                bytes2 ct_day, 
+                                                bytes2 ct_month, 
+                                                bytes2 ct_weekday, 
+                                                bytes2 ct_year) external auth 
+    {
         defaultAccountingPeriodSettings.ct_hour = ct_sec;
         defaultAccountingPeriodSettings.ct_hour = ct_min;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
@@ -290,7 +291,7 @@ contract FinanceApp is App, Initializable, Crontab {
                                      address token, 
                                      uint256 amount, 
                                      string reference) internal 
-                                     {
+     {
         _newTransaction(
             externalAddress, 
             token, 
