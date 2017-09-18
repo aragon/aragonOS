@@ -20,7 +20,6 @@ contract FinanceApp is App, Initializable, Crontab {
         bytes2 ct_month;
         bytes2 ct_weekday;
         bytes2 ct_year;
-        uint startBlock;
         uint startTimestamp;
         uint endTimestamp;
         ERC20[] budgetTokens;
@@ -221,10 +220,8 @@ contract FinanceApp is App, Initializable, Crontab {
             ap.startTimestamp = now;
             uint endTimestamp = next(ap.ct_sec, ap.ct_min, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
             ap.endTimestamp = endTimestamp;
-            // TODO: store endBlock of last accountingPeriod?
-            ap.startBlock = block.number;
             accountingPeriods.push(ap);
-            //vault.requestAllowances(ap.budgetTokens, ap.budgetAmounts);
+            vault.requestAllowances(ap.budgetTokens, ap.budgetAmounts);
         }
     }
 
