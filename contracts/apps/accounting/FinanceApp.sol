@@ -169,11 +169,8 @@ contract FinanceApp is App, Initializable, Crontab {
     */
     function withdrawPayment(uint pid) auth external {
         Payment memory p = payments[pid];
-        if((p.to == msg.sender) 
-          && (p.timesCalled < p.repeat)
-          && (!p.canceled)
-          && (p.nextTimestamp < block.timestamp)) {
-            uint tid = _newOutgoingTransaction(p.to, p.token, p.amount, 'payment');
+        if ((p.to == msg.sender) && (p.timesCalled < p.repeat) && (!p.canceled) && (p.nextTimestamp < block.timestamp)) {
+            uint tid = _newOutgoingTransaction(p.to, p.token, p.amount, "payment");
             p.nextTimestamp = next(p.ct_sec, p.ct_min, p.ct_hour, p.ct_day, p.ct_month, p.ct_weekday, p.ct_year, p.nextTimestamp);
             p.timesCalled += 1;
         }
@@ -182,7 +179,7 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     @return Returns the current accounting period id
     */
-    function getCurrentAccountingPeriodId() public constant returns (uint){
+    function getCurrentAccountingPeriodId() public constant returns (uint) {
         // TODO: perhaps we should store the current accountingPeriod ID
         // separately and allow accounting periods to be generated in advance.
         // For now the current period is the most recent one
@@ -219,7 +216,7 @@ contract FinanceApp is App, Initializable, Crontab {
     @dev Internal function to start the next accounting period
     */
     function _startNextAccountingPeriod() internal {
-        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now){
+        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now) {
             AccountingPeriod memory ap = defaultAccountingPeriodSettings;
             ap.startTimestamp = now;
             uint endTimestamp = next(ap.ct_sec, ap.ct_min, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
@@ -240,7 +237,7 @@ contract FinanceApp is App, Initializable, Crontab {
 
     function _deposit(address tokenAddress, uint amount) internal {
         ERC20(tokenAddress).transferFrom(msg.sender, address(vault), amount);
-        _newIncomingTransaction(msg.sender, tokenAddress, amount, 'deposit');
+        _newIncomingTransaction(msg.sender, tokenAddress, amount, "deposit");
     }
 
     /**
@@ -282,7 +279,7 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     @dev Set ths settings for subsequent accounting periods
     */
-    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year)  external auth {
+    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) external auth {
         defaultAccountingPeriodSettings.ct_hour = ct_sec;
         defaultAccountingPeriodSettings.ct_hour = ct_min;
         defaultAccountingPeriodSettings.ct_hour = ct_hour;
@@ -295,7 +292,8 @@ contract FinanceApp is App, Initializable, Crontab {
     function _newIncomingTransaction(address externalAddress, 
                                      address token, 
                                      uint256 amount, 
-                                     string reference) internal  {
+                                     string reference) internal 
+                                     {
         _newTransaction(
             externalAddress, 
             token, 
@@ -305,10 +303,12 @@ contract FinanceApp is App, Initializable, Crontab {
         );
     }
 
-    function _newOutgoingTransaction(address externalAddress, 
-                                     address token, 
-                                     uint256 amount, 
-                                     string reference) internal returns (uint) {
+    function _newOutgoingTransaction(
+        address externalAddress, 
+        address token, 
+        uint256 amount, 
+        string reference) internal returns (uint) 
+        {
         uint tid = _newTransaction(
             externalAddress, 
             token, 
@@ -330,7 +330,12 @@ contract FinanceApp is App, Initializable, Crontab {
     @param _type 0 for deposit 1 for withdrawl
     @return uint of the new transaction id
     */
-    function _newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
+    function _newTransaction(address externalAddress, 
+                             address token, 
+                             uint256 amount, 
+                             string reference, 
+                             TransactionType _type) internal returns (uint) 
+         {
         _startNextAccountingPeriod();
         uint tid = transactions.push(
             Transaction({
@@ -359,7 +364,7 @@ contract FinanceApp is App, Initializable, Crontab {
         require(state == TransactionState.Approved);
         bool succeeded = ERC20(t.token).transferFrom(address(vault), t.externalAddress, t.amount);
         if (succeeded) {
-            _updateTransaction(transactionId, TransactionState.Succeeded);
+             _updateTransaction(transactionId, TransactionState.Succeeded);
         } else {
             _updateTransaction(transactionId, TransactionState.Failed);
         }
