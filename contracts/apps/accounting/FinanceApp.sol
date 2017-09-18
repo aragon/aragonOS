@@ -104,7 +104,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @param vaultAddress The vault app to use with this FinanceApp
+    * @param vaultAddress The vault app to use with this FinanceApp
     */
     function initialize(address vaultAddress) onlyInit {
         initialized();
@@ -113,11 +113,11 @@ contract FinanceApp is App, Initializable, Crontab {
 
     event NewPayment(uint pid);
     /**
-    @notice This will a create a new payment
-    @param token The token that will be paid
-    @param amount The amount to be paid 
-    @param repeat This is the number of times that the payment should be sent 1..n times
-    @param startTimestamp This is when the payments will begin
+    * @notice This will a create a new payment
+    * @param token The token that will be paid
+    * @param amount The amount to be paid 
+    * @param repeat This is the number of times that the payment should be sent 1..n times
+    * @param startTimestamp This is when the payments will begin
     */
     function newPayment(ERC20 token, uint amount, address to, uint repeat, uint startTimestamp, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth external {
         require(repeat > 0);
@@ -127,7 +127,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Internal newPament creation
+    * @dev Internal newPament creation
     */
     function _newPayment(ERC20 token, uint amount, address to, uint startTimestamp) internal returns (uint) {
         Payment memory p = Payment( token, amount, to, 1, 0, startTimestamp, startTimestamp, false, "*", "*", "*", "*", "*", "*", "*");
@@ -138,7 +138,7 @@ contract FinanceApp is App, Initializable, Crontab {
 
     event UpdatedPayment(uint pid);
     /**
-    @dev Set the schedual of payments
+    * @dev Set the schedual of payments
     */
     function _setPaymentSchedual(uint pid, uint repeat, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) internal {
         Payment memory p = payments[pid];
@@ -156,16 +156,16 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Cancels the payment with the provided id
-    @param pid The id of the payment to cancel
+    * @dev Cancels the payment with the provided id
+    * @param pid The id of the payment to cancel
     */
     function cancelPayment(uint pid) auth external {
         payments[pid].canceled = true;
     }
 
     /**
-    @dev Withdraw a payment if possible
-    @param pid The id of the payment to withdraw
+    * @dev Withdraw a payment if possible
+    * @param pid The id of the payment to withdraw
     */
     function withdrawPayment(uint pid) auth external {
         Payment memory p = payments[pid];
@@ -177,7 +177,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @return Returns the current accounting period id
+    * @return Returns the current accounting period id
     */
     function getCurrentAccountingPeriodId() public constant returns (uint) {
         // TODO: perhaps we should store the current accountingPeriod ID
@@ -187,9 +187,9 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.  This assumes that there is at least a single transaction update which is fine if newTransaction is used.
-    @param transactionId The id of the transaction 
-    @return The external addres, token address, amount, transaction type, and current transaction state
+    * @dev This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.  This assumes that there is at least a single transaction update which is fine if newTransaction is used.
+    * @param transactionId The id of the transaction 
+    * @return The external addres, token address, amount, transaction type, and current transaction state
     */
     function getTransactionInfo(uint transactionId) constant returns (address, address, uint, TransactionType, TransactionState) {
         Transaction memory t = transactions[transactionId];
@@ -200,9 +200,9 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Get the current state of a transaction
-    @param transactionId The id of the transaction 
-    @return Returns uint of the transactionstate
+    * @dev Get the current state of a transaction
+    * @param transactionId The id of the transaction 
+    * @return Returns uint of the transactionstate
     */
     function getTransactionState(uint transactionId) constant returns (TransactionState) {
         Transaction memory t = transactions[transactionId];
@@ -213,7 +213,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Internal function to start the next accounting period
+    * @dev Internal function to start the next accounting period
     */
     function _startNextAccountingPeriod() internal {
         if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now) {
@@ -229,7 +229,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev External authenticated function to start the next accounting period
+    * @dev External authenticated function to start the next accounting period
     */
     function startNextAccountingPeriod() external auth {
         _startNextAccountingPeriod();
@@ -241,9 +241,9 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev External function to deposit tokens
-    @param tokenAddress The address of the token to deposit
-    @param amount Amount to deposit
+    * @dev External function to deposit tokens
+    * @param tokenAddress The address of the token to deposit
+    * @param amount Amount to deposit
     */
 
     function deposit(address tokenAddress, uint amount) external auth {
@@ -268,16 +268,16 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Public authed function to set the budget of a token
-    @param tokenAddress The address of the token to adjust
-    @param amount Amount to budget
+    * @dev Public authed function to set the budget of a token
+    * @param tokenAddress The address of the token to adjust
+    * @param amount Amount to budget
     */
     function setTokenBudget(address tokenAddress, uint amount) auth external {
         _setTokenBudget(tokenAddress, amount);
     }
 
     /**
-    @dev Set ths settings for subsequent accounting periods
+    * @dev Set ths settings for subsequent accounting periods
     */
     function setDefaultAccountingPeriodSettings(bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) external auth {
         defaultAccountingPeriodSettings.ct_hour = ct_sec;
@@ -322,13 +322,13 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Create a new transaction and return the id of the new transaction.
-    @param externalAddress where the transication is coming or going to.
-    @param token Address of the token being transfered
-    @param amount Amount being transfered
-    @param reference custom string to describe the transaction
-    @param _type 0 for deposit 1 for withdrawl
-    @return uint of the new transaction id
+    * @dev Create a new transaction and return the id of the new transaction.
+    * @param externalAddress where the transication is coming or going to.
+    * @param token Address of the token being transfered
+    * @param amount Amount being transfered
+    * @param reference custom string to describe the transaction
+    * @param _type 0 for deposit 1 for withdrawl
+    * @return uint of the new transaction id
     */
     function _newTransaction(address externalAddress, 
                              address token, 
@@ -356,7 +356,7 @@ contract FinanceApp is App, Initializable, Crontab {
     }
 
     /**
-    @dev Function to actually transfer the tokens to external address
+    * @dev Function to actually transfer the tokens to external address
     */
     function _executeTransaction(uint transactionId) internal {
         Transaction memory t = transactions[transactionId];
