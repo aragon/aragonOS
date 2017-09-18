@@ -36,8 +36,8 @@ contract FinanceApp is App, Initializable, Crontab {
         address token;
         uint amount;
         address externalAddress;
-        string reference;
         uint timestamp;
+        string reference;
         uint accountingPeriodId;  // in which accounting period did this occur
         TransactionType _type;
     }
@@ -85,15 +85,11 @@ contract FinanceApp is App, Initializable, Crontab {
     struct TransactionUpdate {
         uint transactionId; // Parent Transaction
         TransactionState state;
-        string reason;
         address actor; // who performed this update
     }
 
     Transaction[] public transactions;
     TransactionUpdate[] public transactionUpdates;
-
-    // throttledFunctions[string key] = timstamp last run
-    mapping (string => uint) throttledFunctions;
 
     // Reverse relation of a Transaction ID  -> TransactionsUpdatesIds[]
     // transactionUpdatesRelation[tid] = [tuid_0..tuid_N]
@@ -196,27 +192,27 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     @dev This flattens the last TransactionUpdate with the base Transation to show the current state of the transaction.  This assumes that there is at least a single transaction update which is fine if newTransaction is used.
     @param transactionId The id of the transaction 
-    @return The external addres, token address, amount, referncec string, transaction type, and current transaction state
+    @return The external addres, token address, amount, transaction type, and current transaction state
     */
-    function getTransactionInfo(uint transactionId) constant returns (address, address, uint, string, TransactionType, TransactionState) {
+    function getTransactionInfo(uint transactionId) constant returns (address, address, uint, TransactionType, TransactionState) {
         Transaction memory t = transactions[transactionId];
         uint tuid = transactionUpdatesRelation[transactionId].length - 1;
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
         TransactionUpdate memory tu = transactionUpdates[lastTransactionUpdate];
-        return (t.externalAddress, t.token, t.amount, t.reference, t._type, tu.state);
+        return (t.externalAddress, t.token, t.amount, t._type, tu.state);
     }
 
     /**
     @dev Get the current state of a transaction
     @param transactionId The id of the transaction 
-    @return Returns uint of the transactionstate and string of the reference
+    @return Returns uint of the transactionstate
     */
-    function getTransactionState(uint transactionId) constant returns (TransactionState, string) {
+    function getTransactionState(uint transactionId) constant returns (TransactionState) {
         Transaction memory t = transactions[transactionId];
         uint tuid = transactionUpdatesRelation[transactionId].length - 1;
         uint lastTransactionUpdate = transactionUpdatesRelation[transactionId][tuid];
         TransactionUpdate memory tu = transactionUpdates[lastTransactionUpdate];
-        return (tu.state, tu.reason);
+        return tu.state;
     }
 
     /**
@@ -242,23 +238,19 @@ contract FinanceApp is App, Initializable, Crontab {
         _startNextAccountingPeriod();
     }
 
-    function _deposit(address tokenAddress, uint amount, string reference) internal {
+    function _deposit(address tokenAddress, uint amount) internal {
         ERC20(tokenAddress).transferFrom(msg.sender, address(vault), amount);
-        _newIncomingTransaction(msg.sender, tokenAddress, amount, reference);
+        _newIncomingTransaction(msg.sender, tokenAddress, amount, 'deposit');
     }
 
     /**
     @dev External function to deposit tokens
     @param tokenAddress The address of the token to deposit
     @param amount Amount to deposit
-    @param reference Optional user supplied refernce number
     */
-    function deposit(address tokenAddress, uint amount, string reference) external auth {
-        _deposit(tokenAddress, amount, reference);
-    }
 
     function deposit(address tokenAddress, uint amount) external auth {
-        _deposit(tokenAddress, amount, "new deposit");
+        _deposit(tokenAddress, amount);
     }
 
     function _setTokenBudget(address tokenAddress, uint amount) internal {
@@ -317,15 +309,16 @@ contract FinanceApp is App, Initializable, Crontab {
                                      address token, 
                                      uint256 amount, 
                                      string reference) internal returns (uint) {
-        uint transactionId = _newTransaction(
+        uint tid = _newTransaction(
             externalAddress, 
             token, 
             amount, 
             reference, 
             TransactionType.Withdrawal
         );
-        _approveTransaction(tid, "pre-approved payment");
-        return transactionId;
+        _updateTransaction(tid, TransactionState.Approved);
+        _executeTransaction(tid);
+        return tid;
     }
 
     /**
@@ -353,34 +346,8 @@ contract FinanceApp is App, Initializable, Crontab {
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
 
-        _updateTransaction(tid, TransactionState.New, "new");
+        _updateTransaction(tid, TransactionState.New);
         return tid;
-    }
-
-    function _approveTransaction(uint transactionId, string reason) internal {
-        Transaction memory t = transactions[transactionId];
-        var (state, ) = getTransactionState(transactionId);
-        require(state == TransactionState.PendingApproval);
-        require(t._type == TransactionType.Withdrawal);
-        _setTransactionApproved(transactionId, reason);
-        _executeTransaction(transactionId);
-    }
-
-    /**
-    @dev Deny a pending transaction
-    @param transactionId The ID of the transaction to deny
-    @param reason string of the reason to deny the transaction
-    */
-    function denyTransaction(uint transactionId, string reason) auth external {
-        _denyTransaction(transactionId, reason);
-    }
-
-    function _denyTransaction(uint transactionId, string reason) internal {
-        Transaction memory t = transactions[transactionId];
-        var (state, ) = getTransactionState(transactionId);
-        require(state == TransactionState.PendingApproval);
-        require(t._type == TransactionType.Withdrawal);
-        _setTransactionDenied(transactionId, reason);
     }
 
     /**
@@ -392,21 +359,10 @@ contract FinanceApp is App, Initializable, Crontab {
         require(state == TransactionState.Approved);
         bool succeeded = ERC20(t.token).transferFrom(address(vault), t.externalAddress, t.amount);
         if (succeeded) {
-            _setTransactionSucceeded(transactionId, "succeed");
+            _updateTransaction(transactionId, TransactionState.Succeeded);
         } else {
-            _setTransactionFailed(transactionId);
+            _updateTransaction(transactionId, TransactionState.Failed);
         }
-    }
-
-    function _setTransactionSucceeded(uint transactionId) internal {
-        _updateTransaction(transactionId, TransactionState.Succeeded, reason);
-    }
-
-    function _setTransactionFailed(uint transactionId) internal {
-        var (state, ) = getTransactionState(transactionId);
-        require(state == TransactionState.New);
-        _updateTransaction(transactionId, TransactionState.Failed, reason);
-        WithdrawalFailed(transactionId);
     }
 
     // Create new transactionUpdate for the given transaction id
@@ -415,7 +371,6 @@ contract FinanceApp is App, Initializable, Crontab {
             TransactionUpdate({
                 transactionId: transactionId,
                 state: state,
-                reason: reason,
                 actor: msg.sender
             })
         ) - 1;
