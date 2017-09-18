@@ -7,7 +7,6 @@ import "../vault/Vault.sol";
 import "../../misc/Crontab.sol";
 
 
-
 contract FinanceApp is App, Initializable, Crontab {
 
     Vault vault;
@@ -179,7 +178,6 @@ contract FinanceApp is App, Initializable, Crontab {
           && (!p.canceled)
           && (p.nextTimestamp < block.timestamp)) {
             uint tid = _newOutgoingTransaction(p.to, p.token, p.amount, 'payment');
-            _approveTransaction(tid, "pre-approved payment");
             p.nextTimestamp = next(p.ct_sec, p.ct_min, p.ct_hour, p.ct_day, p.ct_month, p.ct_weekday, p.ct_year, p.nextTimestamp);
             p.timesCalled += 1;
         }
@@ -302,13 +300,31 @@ contract FinanceApp is App, Initializable, Crontab {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
-    function _newIncomingTransaction(address externalAddress, address token, uint256 amount, string reference) internal  {
-        _newTransaction(externalAddress, token, amount, reference, TransactionType.Deposit);
+    function _newIncomingTransaction(address externalAddress, 
+                                     address token, 
+                                     uint256 amount, 
+                                     string reference) internal  {
+        _newTransaction(
+            externalAddress, 
+            token, 
+            amount, 
+            reference, 
+            TransactionType.Deposit
+        );
     }
 
-    function _newOutgoingTransaction(address externalAddress, address token, uint256 amount, string reference) internal returns (uint){
-        uint transactionId = _newTransaction(externalAddress, token, amount, reference, TransactionType.Withdrawal);
-        _setTransactionPendingApproval(transactionId, 'pending');
+    function _newOutgoingTransaction(address externalAddress, 
+                                     address token, 
+                                     uint256 amount, 
+                                     string reference) internal returns (uint) {
+        uint transactionId = _newTransaction(
+            externalAddress, 
+            token, 
+            amount, 
+            reference, 
+            TransactionType.Withdrawal
+        );
+        _approveTransaction(tid, "pre-approved payment");
         return transactionId;
     }
 
@@ -322,16 +338,18 @@ contract FinanceApp is App, Initializable, Crontab {
     @return uint of the new transaction id
     */
     function _newTransaction(address externalAddress, address token, uint256 amount, string reference, TransactionType _type) internal returns (uint) {
-        AccountingPeriod memory ap = accountingPeriods[getCurrentAccountingPeriodId()];
-        uint tid = transactions.push(Transaction({
-            token: token,
-            amount: amount,
-            externalAddress: externalAddress,
-            reference: reference,
-            timestamp: now,
-            accountingPeriodId: getCurrentAccountingPeriodId(),
-            _type: _type
-        })) - 1;
+        _startNextAccountingPeriod();
+        uint tid = transactions.push(
+            Transaction({
+                token: token,
+                amount: amount,
+                externalAddress: externalAddress,
+                reference: reference,
+                timestamp: now,
+                accountingPeriodId: getCurrentAccountingPeriodId(),
+                _type: _type
+            })
+        ) - 1;
         // All transactions must have at least one state.
         // To optimize, incoming transactions could go directly to "Suceeded" or "Failed".
 
@@ -339,18 +357,9 @@ contract FinanceApp is App, Initializable, Crontab {
         return tid;
     }
 
-    /**
-    @dev Approve a pending transaction
-    @param transactionId The ID of the transaction to approve
-    @param reason string of the reason to approve the transaction
-    */
-    function approveTransaction(uint transactionId, string reason) auth external {
-        _approveTransaction(transactionId, reason);
-    }
-
     function _approveTransaction(uint transactionId, string reason) internal {
         Transaction memory t = transactions[transactionId];
-        var (state, r) = getTransactionState(transactionId);
+        var (state, ) = getTransactionState(transactionId);
         require(state == TransactionState.PendingApproval);
         require(t._type == TransactionType.Withdrawal);
         _setTransactionApproved(transactionId, reason);
@@ -368,7 +377,7 @@ contract FinanceApp is App, Initializable, Crontab {
 
     function _denyTransaction(uint transactionId, string reason) internal {
         Transaction memory t = transactions[transactionId];
-        var (state, r) = getTransactionState(transactionId);
+        var (state, ) = getTransactionState(transactionId);
         require(state == TransactionState.PendingApproval);
         require(t._type == TransactionType.Withdrawal);
         _setTransactionDenied(transactionId, reason);
@@ -377,56 +386,39 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     @dev Function to actually transfer the tokens to external address
     */
-    function _executeTransaction(uint transactionId) internal  {
+    function _executeTransaction(uint transactionId) internal {
         Transaction memory t = transactions[transactionId];
-        var (state, r) = getTransactionState(transactionId);
+        var (state, ) = getTransactionState(transactionId);
         require(state == TransactionState.Approved);
-        bool succeeded = ERC20(t.token).transfer(t.externalAddress, t.amount);
-        if(succeeded) {
-            _setTransactionSucceeded(transactionId, 'succeed');
+        bool succeeded = ERC20(t.token).transferFrom(address(vault), t.externalAddress, t.amount);
+        if (succeeded) {
+            _setTransactionSucceeded(transactionId, "succeed");
         } else {
-            WithdrawalFailed(transactionId);
+            _setTransactionFailed(transactionId);
         }
     }
 
-    function _setTransactionSucceeded(uint transactionId, string reason) internal   {
+    function _setTransactionSucceeded(uint transactionId) internal {
         _updateTransaction(transactionId, TransactionState.Succeeded, reason);
     }
 
-    function _setTransactionFailed(uint transactionId, string reason) internal  {
-        var (state, r) = getTransactionState(transactionId);
+    function _setTransactionFailed(uint transactionId) internal {
+        var (state, ) = getTransactionState(transactionId);
         require(state == TransactionState.New);
         _updateTransaction(transactionId, TransactionState.Failed, reason);
+        WithdrawalFailed(transactionId);
     }
 
     // Create new transactionUpdate for the given transaction id
-    function _updateTransaction(uint transactionId, TransactionState state, string reason) internal {
-        uint tuid = transactionUpdates.push(TransactionUpdate({
-            transactionId: transactionId,
-            state: state,
-            reason: reason,
-            actor: msg.sender
-        })) - 1;
+    function _updateTransaction(uint transactionId, TransactionState state) internal {
+        uint tuid = transactionUpdates.push(
+            TransactionUpdate({
+                transactionId: transactionId,
+                state: state,
+                reason: reason,
+                actor: msg.sender
+            })
+        ) - 1;
         transactionUpdatesRelation[transactionId].push(tuid);
     }
-
-    function _setTransactionPendingApproval(uint transactionId, string reason) internal {
-        var (state, r) = getTransactionState(transactionId);
-        require(state == TransactionState.New);
-        _updateTransaction(transactionId, TransactionState.PendingApproval, reason);
-    }
-
-    function _setTransactionApproved(uint transactionId, string reason) internal {
-        var (state, r) = getTransactionState(transactionId);
-        require(state == TransactionState.PendingApproval);
-        _updateTransaction(transactionId, TransactionState.Approved, reason);
-    }
-
-    function _setTransactionDenied(uint transactionId, string reason) internal {
-        var (state, r) = getTransactionState(transactionId);
-        require(state == TransactionState.PendingApproval);
-        _updateTransaction(transactionId, TransactionState.Denied, reason);
-    }
-    bytes4 constant TRANSFER_SIG = bytes4(sha3('transfer(address,address,uint256)'));
-
 }
