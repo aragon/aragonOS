@@ -4,7 +4,6 @@
   "description": "Core contracts for Aragon",
   "main": "index.js",
   "scripts": {
-    "generate:factory": "truffle exec scripts/generate_factory.js",
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
