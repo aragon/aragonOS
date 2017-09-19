@@ -112,9 +112,27 @@ contract FinanceApp is App, Initializable, Crontab {
     * @param repeat This is the number of times that the payment should be sent 1..n times
     * @param startTimestamp This is when the payments will begin
     */
-    function newPayment(ERC20 token, uint amount, address to, uint repeat, uint startTimestamp, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) auth external {
+    function newPayment(
+        ERC20 token,
+        uint amount,
+        address to,
+        uint repeat,
+        uint startTimestamp,
+        bytes2 ct_sec,
+        bytes2 ct_min,
+        bytes2 ct_hour,
+        bytes2 ct_day,
+        bytes2 ct_month,
+        bytes2 ct_weekday,
+        bytes2 ct_year) auth external 
+    {
         require(repeat > 0);
-        uint pid = _newPayment(token, amount, to, startTimestamp);
+        uint pid = _newPayment(
+            token, 
+            amount, 
+            to, 
+            startTimestamp
+        );
         _setPaymentSchedual(pid, repeat, ct_sec, ct_min, ct_hour, ct_day, ct_month, ct_weekday, ct_year);
         NewPayment(pid);
     }
@@ -122,8 +140,13 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     * @dev Internal newPament creation
     */
-    function _newPayment(ERC20 token, uint amount, address to, uint startTimestamp) internal returns (uint) {
-        Payment memory p = Payment( token, amount, to, 1, 0, startTimestamp, startTimestamp, false, "*", "*", "*", "*", "*", "*", "*");
+    function _newPayment(
+        ERC20 token,
+        uint amount,
+        address to,
+        uint startTimestamp) internal returns (uint) 
+    {
+        Payment memory p = Payment(token, amount, to, 1, 0, startTimestamp, startTimestamp, false, "*", "*", "*", "*", "*", "*", "*");
         payments.push(p);
         uint pid = payments.length - 1;
         return  pid;
@@ -133,7 +156,17 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     * @dev Set the schedual of payments
     */
-    function _setPaymentSchedual(uint pid, uint repeat, bytes2 ct_sec, bytes2 ct_min, bytes2 ct_hour, bytes2 ct_day, bytes2 ct_month, bytes2 ct_weekday, bytes2 ct_year) internal {
+    function _setPaymentSchedual(
+        uint pid,
+        uint repeat,
+        bytes2 ct_sec,
+        bytes2 ct_min,
+        bytes2 ct_hour,
+        bytes2 ct_day,
+        bytes2 ct_month,
+        bytes2 ct_weekday,
+        bytes2 ct_year) internal 
+    {
         Payment memory p = payments[pid];
         uint nextTimestamp = next(ct_sec, ct_min, ct_hour, ct_day, ct_month, ct_weekday, ct_year, p.startTimestamp);
         p.repeat = repeat;
@@ -209,7 +242,7 @@ contract FinanceApp is App, Initializable, Crontab {
     * @dev Internal function to start the next accounting period
     */
     function _startNextAccountingPeriod() internal {
-        if(accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now) {
+        if (accountingPeriods.length == 0 || accountingPeriods[getCurrentAccountingPeriodId()].endTimestamp < now) {
             AccountingPeriod memory ap = defaultAccountingPeriodSettings;
             ap.startTimestamp = now;
             uint endTimestamp = next(ap.ct_sec, ap.ct_min, ap.ct_hour, ap.ct_day, ap.ct_month, ap.ct_weekday, ap.ct_year, now);
@@ -248,7 +281,7 @@ contract FinanceApp is App, Initializable, Crontab {
         assert(defaultAP.budgetTokens.length == defaultAP.budgetAmounts.length);
         for (uint i = 0; i < defaultAP.budgetTokens.length; i++) {
             // this is an existing token and we can about the amount
-            if(address(defaultAP.budgetTokens[i]) == tokenAddress) {
+            if (address(defaultAP.budgetTokens[i]) == tokenAddress) {
                 defaultAP.budgetAmounts[i] = amount;
                 return; // early return
             }
