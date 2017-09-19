@@ -48,7 +48,13 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     * @param _minAcceptQuorumPct Percetage of total voting power that must support a voting  for it to succeed (expressed as a 10^18 percetage, (eg 10^16 = 1%, 10^18 = 100%)
     * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
-    function initialize(MiniMeToken _token, uint256 _supportRequiredPct, uint256 _minAcceptQuorumPct, uint64 _voteTime) onlyInit {
+    function initialize(
+        MiniMeToken _token, 
+        uint256 _supportRequiredPct, 
+        uint256 _minAcceptQuorumPct, 
+        uint64 _voteTime
+    ) onlyInit
+    {
         initialized();
 
         require(_supportRequiredPct <= PCT_BASE);
@@ -76,7 +82,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     * @param _executionScript EVM script to be executed on approval
     * @return votingId id for newly created vote
     */
-    bytes4 constant NEW_VOTING_ACTION = bytes4(sha3('newVoting(bytes,string)'));
+    bytes4 constant NEW_VOTING_ACTION = bytes4(sha3("newVoting(bytes,string)"));
     function newVoting(bytes _executionScript, string _metadata) auth external returns (uint256 votingId) {
         return _newVoting(_executionScript, _metadata);
     }
@@ -117,9 +123,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     function canVote(uint256 _votingId, address _voter) constant returns (bool) {
         Voting storage voting = votings[_votingId];
 
-        return voting.open &&
-               uint64(now) < (voting.startDate + voteTime) &&
-               token.balanceOfAt(_voter, voting.snapshotBlock) > 0;
+        return voting.open && uint64(now) < (voting.startDate + voteTime) && token.balanceOfAt(_voter, voting.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _votingId) constant returns (bool) {
@@ -130,9 +134,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
             return true;
 
         uint256 totalVotes = voting.yea + voting.nay;
-        if (uint64(now) >= (voting.startDate + voteTime) &&
-            voting.yea >= pct(totalVotes, supportRequiredPct) &&
-            voting.yea >= pct(voting.totalVoters, minAcceptQuorumPct))
+        if (uint64(now) >= (voting.startDate + voteTime) && voting.yea >= pct(totalVotes, supportRequiredPct) && voting.yea >= pct(voting.totalVoters, minAcceptQuorumPct))
             return true;
 
         return false;
@@ -174,7 +176,8 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
 
         StartVote(votingId);
 
-        if (canVote(votingId, msg.sender)) _vote(votingId, true, msg.sender);
+        if (canVote(votingId, msg.sender))
+            _vote(votingId, true, msg.sender);
     }
 
     function _vote(uint256 _votingId, bool _supports, address _voter) internal {
@@ -185,17 +188,22 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
         VoterState state = voting.voters[_voter];
 
         // if voter had previously voted, decrease count
-        if (state == VoterState.Yea) voting.yea = voting.yea.sub(voterStake);
-        if (state == VoterState.Nay) voting.nay = voting.nay.sub(voterStake);
+        if (state == VoterState.Yea)
+            voting.yea = voting.yea.sub(voterStake);
+        if (state == VoterState.Nay)
+            voting.nay = voting.nay.sub(voterStake);
 
-        if (_supports) voting.yea = voting.yea.add(voterStake);
-        else           voting.nay = voting.nay.add(voterStake);
+        if (_supports)
+            voting.yea = voting.yea.add(voterStake);
+        else
+            voting.nay = voting.nay.add(voterStake);
 
         voting.voters[_voter] = _supports ? VoterState.Yea : VoterState.Nay;
 
         CastVote(_votingId, _voter, _supports);
 
-        if (canExecute(_votingId)) _executeVote(_votingId);
+        if (canExecute(_votingId))
+            _executeVote(_votingId);
     }
 
     function _executeVote(uint256 _votingId) internal {
