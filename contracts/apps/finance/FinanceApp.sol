@@ -2,13 +2,16 @@ pragma solidity ^0.4.15;
 
 import "../App.sol";
 import "../../common/Initializable.sol";
+import "../../common/EtherToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20.sol";
 import "../vault/Vault.sol";
 import "../../misc/Crontab.sol";
 
+
 contract FinanceApp is App, Initializable, Crontab {
 
     Vault vault;
+    EtherToken ethertoken;
 
     struct AccountingPeriod {
         bytes2 ct_sec;
@@ -90,18 +93,17 @@ contract FinanceApp is App, Initializable, Crontab {
 
     event WithdrawalFailed(uint transactionId);
 
-    function () {
-    }
-
-    function FinanceApp() {
+    function () payable {
+        _depositEther();
     }
 
     /**
     * @param vaultAddress The vault app to use with this FinanceApp
     */
-    function initialize(address vaultAddress) onlyInit {
+    function initialize(address vaultAddress, address etherTokenAddress) onlyInit {
         initialized();
         vault = Vault(vaultAddress);
+        ethertoken = EtherToken(etherTokenAddress);
     }
 
     event NewPayment(uint pid);
@@ -264,16 +266,27 @@ contract FinanceApp is App, Initializable, Crontab {
         _newIncomingTransaction(msg.sender, tokenAddress, amount, "deposit");
     }
 
+    function _depositEther() internal {
+        ethertoken.wrap.value(msg.value)();
+        ethertoken.transfer(address(vault), msg.value);
+        _newIncomingTransaction(msg.sender, ethertoken, msg.value, "deposit");
+    }
+
     /**
     * @dev External function to deposit tokens
     * @param tokenAddress The address of the token to deposit
     * @param amount Amount to deposit
     */
-
     function deposit(address tokenAddress, uint amount) external auth {
         _deposit(tokenAddress, amount);
     }
 
+    /**
+    * @dev External function to deposit ether, wrap it, and transfer it to the vault
+    */
+    function depositEther() external auth payable {
+        _depositEther();
+    }
     function _setTokenBudget(address tokenAddress, uint amount) internal {
         // We cannot just remove a token when the amount is 0 because then it will remain with the available allowance forever.
         // TODO: add cleanup function to removes tokens that had a 0 budget the past two accounting periods
@@ -303,13 +316,14 @@ contract FinanceApp is App, Initializable, Crontab {
     /**
     * @dev Set ths settings for subsequent accounting periods
     */
-    function setDefaultAccountingPeriodSettings(bytes2 ct_sec, 
-                                                bytes2 ct_min, 
-                                                bytes2 ct_hour, 
-                                                bytes2 ct_day, 
-                                                bytes2 ct_month, 
-                                                bytes2 ct_weekday, 
-                                                bytes2 ct_year) external auth 
+    function setDefaultAccountingPeriodSettings(
+        bytes2 ct_sec, 
+        bytes2 ct_min, 
+        bytes2 ct_hour, 
+        bytes2 ct_day, 
+        bytes2 ct_month, 
+        bytes2 ct_weekday, 
+        bytes2 ct_year) external auth 
     {
         defaultAccountingPeriodSettings.ct_hour = ct_sec;
         defaultAccountingPeriodSettings.ct_hour = ct_min;
@@ -320,10 +334,11 @@ contract FinanceApp is App, Initializable, Crontab {
         defaultAccountingPeriodSettings.ct_year = ct_year;
     }
 
-    function _newIncomingTransaction(address externalAddress, 
-                                     address token, 
-                                     uint256 amount, 
-                                     string reference) internal 
+    function _newIncomingTransaction(
+        address externalAddress, 
+        address token, 
+        uint256 amount, 
+        string reference) internal 
      {
         _newTransaction(
             externalAddress, 
@@ -393,7 +408,14 @@ contract FinanceApp is App, Initializable, Crontab {
         Transaction memory t = transactions[transactionId];
         var (state, ) = getTransactionState(transactionId);
         require(state == TransactionState.Approved);
-        bool succeeded = ERC20(t.token).transferFrom(address(vault), t.externalAddress, t.amount);
+        bool succeeded;
+        if (t.token == address(ethertoken)) {
+            ethertoken.secureWithdraw(t.amount, t.externalAddress);
+            // secureWithdraw will throw on failure, anything else is successs
+            succeeded = true;
+        } else {
+            succeeded = ERC20(t.token).transferFrom(address(vault), t.externalAddress, t.amount);
+        }
         if (succeeded) {
              _updateTransaction(transactionId, TransactionState.Succeeded);
         } else {
