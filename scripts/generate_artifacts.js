@@ -37,7 +37,7 @@ const processFile = name => {
 
         metadata.functions = functions.map(f => {
             const authMod = f.modifiers.filter(m => m.name == 'auth')[0]
-            const roleNeeded = authMod ? authMod.params[0] : undefined
+            const roleNeeded = authMod ? authMod.params[0] : null
             let params = Object.values(f.params)
             params.forEach(p => delete p.typeHint)
 
