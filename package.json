@@ -4,12 +4,12 @@
   "description": "Core contracts for Aragon",
   "main": "index.js",
   "scripts": {
-    "generate:factory": "truffle exec scripts/generate_factory.js",
     "test": "truffle test",
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
     "coveralls": "scripts/coveralls.sh",
-    "console": "node_modules/.bin/truffle console"
+    "console": "node_modules/.bin/truffle console",
+    "generate:artifacts-dev": "truffle migrate; truffle exec scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",
@@ -31,7 +31,7 @@
     "ethereumjs-util": "^5.1.1",
     "mocha-lcov-reporter": "^1.3.0",
     "solidity-coverage": "^0.2.3",
-    "solidity-inspector": "^0.2.1",
+    "solidity-inspector": "^0.2.3",
     "solidity-sha3": "^0.4.1",
     "solium": "^0.5.5",
     "truffle": "^3.4.9",
