@@ -9,7 +9,7 @@
     "coverage": "scripts/coverage.sh",
     "coveralls": "scripts/coveralls.sh",
     "console": "node_modules/.bin/truffle console",
-    "generate:artifacts-dev": "truffle migrate; truffle exec scripts/generate_artifacts.js"
+    "generate:artifacts-dev": "scripts/testrpc.sh; truffle migrate --network rpc; truffle exec --network rpc scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",

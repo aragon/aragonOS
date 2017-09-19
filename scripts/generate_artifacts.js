@@ -27,7 +27,7 @@ const analizeContract = (f) => {
 }
 
 const processFile = name => {
-    fs.readFile(path.join(metadataDir, name), 'utf8', (err, f) => {
+    fs.readFile(path.join(metadataDir, name), 'utf8', async (err, f) => {
         if (err) throw err
         const metadata = JSON.parse(f)
         const functions = analizeContract(metadata.path)
@@ -49,6 +49,13 @@ const processFile = name => {
 
         metadata.abi = contract.abi
         metadata.bytecode = contract.unlinked_binary
+
+        const instance = contract.at(contract.address)
+        const rolesBytes = await Promise.all(metadata.roles.map(r => instance[r.id]()))
+
+        rolesBytes.forEach((b, i) => {
+            metadata.roles[i].bytes = b
+        })
 
         if (!fs.existsSync(artifactsDir)){
             fs.mkdirSync(artifactsDir);
