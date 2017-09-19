@@ -1,5 +1,6 @@
 const assertThrow = require('./helpers/assertThrow');
 var FinanceApp = artifacts.require('../contrats/app/finance/FinanceApp')
+var EtherToken = artifacts.require('../contrats/common/EtherToken')
 var Vault = artifacts.require('../contrats/apps/vault/Vault')
 const { getBalance } = require('./helpers/web3')
 const { signatures, sendTransaction } = require('./helpers/web3')
@@ -17,11 +18,13 @@ contract('FinanceApp', accounts => {
   context('installed app', () => {
     let financeApp = {}
     let vault = {}
+    let ethertoken = {}
 
     beforeEach(async () => {
       financeApp = await FinanceApp.new()
       vault = await Vault.new()
-      await financeApp.initialize(vault.address)
+      ethertoken = await EtherToken.new()
+      await financeApp.initialize(vault.address, ethertoken.address)
     })
 
 
@@ -37,8 +40,6 @@ contract('FinanceApp', accounts => {
         t = await financeApp.startNextAccountingPeriod()
         ap_id = await financeApp.getCurrentAccountingPeriodId()
         assert.equal(ap_id, 1, "Should be on the 1 index (2nd) accounting period")
-
     })
-
   })
 })
