@@ -2,7 +2,9 @@ pragma solidity 0.4.15;
 
 import "../App.sol";
 
+import "../../common/TokenController.sol";
 import "../../common/MiniMeToken.sol";
+import "../../common/Initializable.sol";
 import "../../common/IForwarder.sol";
 import "../../common/EVMCallScript.sol";
 
@@ -14,6 +16,11 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     MiniMeToken public token;
     ERC20 public wrappedToken;
+
+    bytes32 constant public MINT_ROLE = bytes32(1);
+    bytes32 constant public ISSUE_ROLE = bytes32(2);
+    bytes32 constant public ASSIGN_ROLE = bytes32(3);
+    bytes32 constant public REVOKE_VESTING_ROLE = bytes32(4);
 
     uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
@@ -59,7 +66,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens minted
     */
-    function mint(address _receiver, uint256 _amount) auth onlyNative external {
+    function mint(address _receiver, uint256 _amount) auth(MINT_ROLE) onlyNative external {
         _mint(_receiver, _amount);
     }
 
@@ -67,7 +74,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @notice Mint `_amount` of tokens for the token manager (Can only be called on native token manager)
     * @param _amount Number of tokens minted
     */
-    function issue(uint256 _amount) auth onlyNative external {
+    function issue(uint256 _amount) auth(ISSUE_ROLE) onlyNative external {
         _mint(address(this), _amount);
     }
 
@@ -95,7 +102,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _receiver The address receiving the tokens
     * @param _amount Number of tokens transfered
     */
-    function assign(address _receiver, uint256 _amount) auth external {
+    function assign(address _receiver, uint256 _amount) auth(ASSIGN_ROLE) external {
         _assign(_receiver, _amount);
     }
 
@@ -108,7 +115,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _vesting Date when all tokens are transferable
     * @param _revokable Whether the vesting can be revoked by the token manager
     */
-    function assignVested(address _receiver, uint256 _amount, uint64 _start, uint64 _cliff, uint64 _vesting, bool _revokable) auth external returns (uint256) {
+    function assignVested(address _receiver, uint256 _amount, uint64 _start, uint64 _cliff, uint64 _vesting, bool _revokable) auth(ASSIGN_ROLE) external returns (uint256) {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
         require(_start <= _cliff && _cliff <= _vesting);
@@ -128,7 +135,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) auth external {
+    function revokeVesting(address _holder, uint256 _vestingId) auth(REVOKE_VESTING_ROLE) external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 

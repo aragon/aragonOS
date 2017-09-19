@@ -8,7 +8,7 @@ contract App is AppStorage {
         _;
     }
 
-    function canPerform(address _sender, bytes32 _role) returns (bool) {
+    function canPerform(address _sender, bytes32 _role) constant returns (bool) {
         return address(kernel) == 0 || kernel.canPerform(_sender, address(this), _role);
     }
 }
