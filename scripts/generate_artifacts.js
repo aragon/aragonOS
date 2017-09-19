@@ -38,8 +38,10 @@ const processFile = name => {
         metadata.functions = functions.map(f => {
             const authMod = f.modifiers.filter(m => m.name == 'auth')[0]
             const roleNeeded = authMod ? authMod.params[0] : undefined
+            let params = Object.values(f.params)
+            params.forEach(p => delete p.typeHint)
 
-            return { name: f.name, notice: f.notice, params: Object.values(f.params), roleNeeded }
+            return { name: f.name, notice: f.notice, params , roleNeeded }
         })
 
         metadata.deployedNetwork = contract.network_id
