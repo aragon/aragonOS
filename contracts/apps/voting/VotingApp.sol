@@ -7,7 +7,7 @@ import "../../common/Initializable.sol";
 import "../../common/MiniMeToken.sol";
 import "../../common/IForwarder.sol";
 
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../zeppelin/math/SafeMath.sol";
 
 contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder, IForwarder {
     using SafeMath for uint256;

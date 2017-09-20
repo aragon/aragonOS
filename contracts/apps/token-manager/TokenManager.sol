@@ -6,8 +6,8 @@ import "../../common/MiniMeToken.sol";
 import "../../common/IForwarder.sol";
 import "../../common/EVMCallScript.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../zeppelin/token/ERC20.sol";
+import "../../zeppelin/math/SafeMath.sol";
 
 contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunner, IForwarder {
     using SafeMath for uint256;
