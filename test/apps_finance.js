@@ -49,7 +49,7 @@ contract('Finance App', accounts => {
         await token1.approve(app.address, 5)
         await app.deposit(token1.address, 5)
 
-        const [periodId, amount, paymentId, token, entity, incoming] = await app.transactions(0)
+        const [periodId, amount, paymentId, token, entity, incoming] = await app.transactions(1)
 
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 5, 'amount should be correct')
