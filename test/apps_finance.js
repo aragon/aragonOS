@@ -45,6 +45,20 @@ contract('Finance App', accounts => {
         assert.equal(await token1.allowance(vault.address, app.address), 10, 'should have made budget allowance')
     })
 
+    it('records deposits', async () => {
+        await token1.approve(app.address, 5)
+        await app.deposit(token1.address, 5)
+
+        const [periodId, amount, paymentId, token, entity, incoming] = await app.transactions(0)
+
+        assert.equal(periodId, 0, 'period id should be correct')
+        assert.equal(amount, 5, 'amount should be correct')
+        assert.equal(paymentId, 0, 'payment id should be 0')
+        assert.equal(token, token1.address, 'token should be correct')
+        assert.equal(entity, accounts[0], 'entity should be correct')
+        assert.isTrue(incoming, 'tx should be incoming')
+    })
+
     context('setting budget', () => {
         const recipient = accounts[1]
         const time = 22
