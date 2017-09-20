@@ -16,6 +16,7 @@ contract('Finance App', accounts => {
 
         token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         await token1.generateTokens(vault.address, 100)
+        await token1.generateTokens(accounts[0], 10)
 
         token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         await token2.generateTokens(vault.address, 200)
@@ -44,7 +45,7 @@ contract('Finance App', accounts => {
         assert.equal(await token1.allowance(vault.address, app.address), 10, 'should have made budget allowance')
     })
 
-    context('configured app', () => {
+    context('setting budget', () => {
         const recipient = accounts[1]
         const time = 22
 
@@ -62,6 +63,17 @@ contract('Finance App', accounts => {
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
             assert.deepEqual(await app.nextPaymentTime(1), await app.MAX_UINT64(), 'payment should never be repeated')
+        })
+
+        it('can create recurring payments', async () => {
+            const amount = 10
+
+            await app.newPayment(token1.address, recipient, amount, time, 2, 10, '')
+            await app.mock_setTimestamp(time + 4)
+            await app.executePayment(1)
+
+            assert.equal(await token1.balanceOf(recipient), amount * 3, 'recipient should have received tokens')
+            assert.equal(await app.nextPaymentTime(1), time + 4 + 2, 'payment should be repeated again in 2')
         })
     })
 })
