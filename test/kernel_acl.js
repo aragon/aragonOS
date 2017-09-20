@@ -11,7 +11,7 @@ contract('Kernel ACL', accounts => {
     const granted = accounts[1]
     const child = accounts[2]
 
-    let role = ''
+    let role = null
 
     beforeEach(async () => {
         const kernelImpl = await Kernel.new()

@@ -40,10 +40,10 @@ contract Kernel is KernelStorage, Initializable {
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
     *      if a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform `_role` on `_app` (setting `_parent` as parent)
+    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_parent` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
-    * @param _role Function signature of the role (requires role to be protected with the `auth` modifier)
+    * @param _role Identifier for the group of actions in app given access to perform
     * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
     function createPermission(address _entity, address _app, bytes32 _role, address _parent) auth(PERMISSION_CREATOR_ROLE) external {
@@ -52,10 +52,10 @@ contract Kernel is KernelStorage, Initializable {
 
     /**
     * @dev Grants a permission if allowed. This requires `msg.sender` to have the permission and be its own parent
-    * @notice Grants `_entity` the ability to perform `_role` on `_app` (setting `_parent` as parent)
+    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app` (setting `_parent` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
-    * @param _role Function signature of the role (requires role to be protected with the `auth` modifier)
+    * @param _roleIdentifier for the group of actions in app given access to perform
     * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
     function grantPermission(address _entity, address _app, bytes32 _role, address _parent) external {
@@ -69,10 +69,10 @@ contract Kernel is KernelStorage, Initializable {
 
     /**
     * @dev Revokes permission if allowed. This requires `msg.sender` to be the parent of the permission
-    * @notice Revokes `_entity` the ability to perform `_role` on `_app`
+    * @notice Revokes `_entity` the ability to perform actions of role `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be revoked access
-    * @param _app Address of the app in which the role will no longer be allowed
-    * @param _role Function signature of the role being revoked access
+    * @param _app Address of the app in which the role is revoked
+    * @param _role Identifier for the group of actions in app given access to perform
     */
     function revokePermission(address _entity, address _app, bytes32 _role) external {
         require(permissions[_entity][_app][_role].parent == msg.sender);
@@ -105,7 +105,7 @@ contract Kernel is KernelStorage, Initializable {
     * @dev Function called by apps to check ACL on kernel
     * @param _entity Sender of the original call
     * @param _app Address of the app
-    * @param _role Function signature of the role checked
+    * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
     function canPerform(address _entity, address _app, bytes32 _role) constant returns (bool) {

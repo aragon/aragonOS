@@ -17,20 +17,22 @@ const contractName = p => path.basename(p).split('.')[0]
 const metadataDir = './metadata'
 const artifactsDir = './artifacts'
 
-const analizeContract = (f) => {
-    const filePath = path.join(process.cwd(), 'contracts', f)
+// Uses solidity-inspector to extract info about a contract file
+const analyzeContract = file => {
+    const filePath = path.join(process.cwd(), 'contracts', file)
     const functions = inspector.parseFile(filePath).toJSON().functions
 
     return Object.keys(functions)
-        .map(k => functions[k])
-        .filter(f => f.accessModifier != 'internal' && f.accessModifier != 'private')
+        .map(key => functions[key])
+        .filter(fn => fn.accessModifier != 'internal' && fn.accessModifier != 'private')
 }
 
-const processFile = name => {
-    fs.readFile(path.join(metadataDir, name), 'utf8', async (err, f) => {
+// Takes a metadata file and saves an artifact file
+const generateArtifacts = name => {
+    fs.readFile(path.join(metadataDir, name), 'utf8', async (err, fileContent) => {
         if (err) throw err
-        const metadata = JSON.parse(f)
-        const functions = analizeContract(metadata.path)
+        const metadata = JSON.parse(fileContent)
+        const functions = analyzeContract(metadata.path)
         const contract = getContract(contractName(name))
 
         delete metadata.path
@@ -72,7 +74,7 @@ const processFile = name => {
 module.exports = (done) => {
     fs.readdir(metadataDir, (err, files) => {
       files.forEach(file => {
-          processFile(file)
+          generateArtifacts(file)
       })
     })
 }
