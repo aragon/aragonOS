@@ -14,13 +14,15 @@ contract('Kernel apps', accounts => {
     beforeEach(async () => {
         kernel = await Kernel.new()
         await kernel.initialize(accounts[0])
-        await kernel.createPermission(accounts[0], kernel.address, getSig('setAppCode(bytes32,address)'), accounts[0])
+        const r = await kernel.APP_UPGRADER_ROLE()
+        await kernel.createPermission(accounts[0], kernel.address, r, accounts[0])
 
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
 
         const appProxy = await AppProxy.new(kernel.address, appId)
-        await kernel.createPermission(accounts[0], appProxy.address, getSig('setValue(uint256)'), accounts[0])
+        const r2 = await appCode1.ROLE()
+        await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
         app = AppStub.at(appProxy.address)
     })
 

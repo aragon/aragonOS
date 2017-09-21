@@ -10,7 +10,7 @@ contract Initializable {
     /**
     * @dev Function to be called by top level contract after initialization has finished.
     */
-    function initialized() onlyInit {
+    function initialized() internal onlyInit {
         initializationBlock = getBlockNumber();
     }
 
