@@ -202,14 +202,27 @@ contract FundraisingApp is App, Initializable {
         uint256 allowedAmount = Math.min256(_payedTokens, sale.maxRaised.sub(sale.raisedAmount));
 
         var (price,,pricePrecision) = calculatePrice(_saleId);
-        uint256 boughtTokens = sale.isInversePrice ? allowedAmount.mul(price).div(pricePrecision) : allowedAmount.mul(pricePrecision).div(price);
+
+        uint256 boughtTokens;
+        if (sale.isInversePrice) {
+            boughtTokens = allowedAmount.mul(price).div(pricePrecision);
+        } else {
+            boughtTokens = allowedAmount.mul(pricePrecision).div(price);
+        }
 
         // Only allow until max sold cap is hit
         uint256 allowedBuy = Math.min256(boughtTokens, sale.maxSold.sub(sale.soldAmount));
 
         // Calculate how much we need to refund for the tokens that weren't sold
         uint256 nonBoughtTokens = boughtTokens.sub(allowedBuy);
-        uint256 returnAmount = !sale.isInversePrice ? nonBoughtTokens.mul(price).div(pricePrecision) : nonBoughtTokens.mul(pricePrecision).div(price);
+        
+        uint256 returnAmount;
+        if (!sale.isInversePrice) {
+            returnAmount = nonBoughtTokens.mul(price).div(pricePrecision);
+        } else {
+            returnAmount = nonBoughtTokens.mul(pricePrecision).div(price);
+        }
+
         uint256 finalAllowedAmount = allowedAmount.sub(returnAmount);
 
         sale.soldAmount = sale.soldAmount.add(allowedBuy);
