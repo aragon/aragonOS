@@ -55,7 +55,7 @@ contract Kernel is KernelStorage, Initializable {
     * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app` (setting `_parent` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
-    * @param _roleIdentifier for the group of actions in app given access to perform
+    * @param _role Identifier for the group of actions in app given access to perform
     * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
     function grantPermission(address _entity, address _app, bytes32 _role, address _parent) external {
