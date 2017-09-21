@@ -7,7 +7,8 @@ contract AppSt {
 }
 
 contract AppStub is App, AppSt {
-    function setValue(uint i) auth {
+    bytes32 constant public ROLE = bytes32(1);
+    function setValue(uint i) auth(ROLE) {
         a = i;
     }
 
