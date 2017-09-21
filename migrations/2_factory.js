@@ -10,7 +10,8 @@ module.exports = (deployer, network) => {
   const apps = [
     'VotingApp',
     'Vault',
-    'TokenManager'
+    'TokenManager',
+    'FundraisingApp'
   ].map(getContract)
 
   deployer.deploy(Kernel)

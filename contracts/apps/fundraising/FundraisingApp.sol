@@ -1,6 +1,7 @@
 pragma solidity 0.4.15;
 
 import "../App.sol";
+import "../../common/Initializable.sol";
 
 import "../token-manager/TokenManager.sol";
 
@@ -10,6 +11,15 @@ import "zeppelin-solidity/contracts/math/Math.sol";
 
 contract FundraisingApp is App, Initializable {
     using SafeMath for uint256;
+
+    TokenManager public tokenManager;
+    address public vault;
+
+    uint256 constant MAX_PERIODS = 50;
+    uint64 constant MAX_UINT64 = uint64(-1);
+
+    bytes32 constant public CREATOR_ROLE = bytes32(1);
+    bytes32 constant public CLOSER_ROLE = bytes32(2);
 
     struct SalePeriod {
         uint64 periodEnds;
@@ -37,13 +47,7 @@ contract FundraisingApp is App, Initializable {
         uint256 soldAmount;
     }
 
-    TokenManager public tokenManager;
-    address public vault;
-
     Sale[] sales;
-
-    uint256 constant MAX_PERIODS = 50;
-    uint64 constant MAX_UINT64 = uint64(-1);
 
     event NewSale(uint256 indexed saleId);
     event CloseSale(uint256 indexed saleId);
@@ -81,7 +85,7 @@ contract FundraisingApp is App, Initializable {
         uint64 _periodStartTime,
         uint64[] _periodEnds,
         uint256[] _prices
-    ) auth external returns (uint256 saleId) {
+    ) auth(CREATOR_ROLE) external returns (uint256 saleId) {
         // Dont allow token multiplication sales
         require(address(_raisedToken) != 0 && _raisedToken != ERC20(tokenManager.token()));
 
@@ -130,7 +134,7 @@ contract FundraisingApp is App, Initializable {
     * @notice Force the close of sale with id `_saleId` (It will always succeed if sale is open)
     * @param _saleId Sale numeric identifier
     */
-    function forceCloseSale(uint256 _saleId) auth external {
+    function forceCloseSale(uint256 _saleId) auth(CLOSER_ROLE) external {
         _closeSale(_saleId);
     }
 

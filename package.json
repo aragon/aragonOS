@@ -10,7 +10,7 @@
     "coveralls": "scripts/coveralls.sh",
     "console": "node_modules/.bin/truffle console",
     "prepublish": "npm run generate:artifacts-dev",
-    "generate:artifacts-dev": "scripts/testrpc.sh; truffle migrate --network rpc; truffle exec --network rpc scripts/generate_artifacts.js"
+    "generate:artifacts-dev": "scripts/testrpc.sh; truffle migrate --all --network rpc; truffle exec --network rpc scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",
