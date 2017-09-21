@@ -1,6 +1,7 @@
 pragma solidity 0.4.15;
 
 import "../App.sol";
+import "../../common/Initializable.sol";
 
 import "../vault/Vault.sol";
 
@@ -9,6 +10,17 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract FinanceApp is App, Initializable {
     using SafeMath for uint256;
+
+    Vault vault;
+
+    uint64 constant public MAX_BUDGET_TOKENS = 25;
+    uint64 constant public MAX_PAYMENTS_PER_TX = 20;
+    uint64 constant public MAX_UINT64 = uint64(-1);
+
+    bytes32 constant public PAYMENT_CREATOR_ROLE = bytes32(1);
+    bytes32 constant public CHANGE_SETTINGS_ROLE = bytes32(2);
+    bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(3);
+    bytes32 constant public DISABLE_PAYMENT_ROLE = bytes32(4);
 
     struct Payment {
         ERC20 token;
@@ -53,16 +65,10 @@ contract FinanceApp is App, Initializable {
         uint256[] budgetAmounts;
     }
 
-    Vault vault;
-
     Payment[] public payments; // first index is 1
     Transaction[] public transactions; // first index is 1
     Period[] public periods; // first index is 0
     Settings settings;
-
-    uint64 constant public MAX_BUDGET_TOKENS = 25;
-    uint64 constant public MAX_PAYMENTS_PER_TX = 20;
-    uint64 constant public MAX_UINT64 = uint64(-1);
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount);
@@ -102,7 +108,7 @@ contract FinanceApp is App, Initializable {
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) auth transitionsPeriod external returns (uint256 paymentId) {
+    ) auth(PAYMENT_CREATOR_ROLE) transitionsPeriod external returns (uint256 paymentId) {
         paymentId = payments.length++;
 
         Payment storage payment = payments[paymentId];
@@ -121,11 +127,11 @@ contract FinanceApp is App, Initializable {
             _executePayment(paymentId);
     }
 
-    function setPeriodDuration(uint64 _duration) auth transitionsPeriod external {
+    function setPeriodDuration(uint64 _duration) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
         settings.periodDuration = _duration;
     }
 
-    function setBudget(ERC20 _token, uint256 _amount) auth transitionsPeriod external {
+    function setBudget(ERC20 _token, uint256 _amount) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
         bool budgetExisted = false;
         // If budget is already set, update value
         for (uint256 i = 0; i < settings.budgetTokens.length; i++) {
@@ -166,7 +172,7 @@ contract FinanceApp is App, Initializable {
         assert(settings.budgetAmounts.length == settings.budgetTokens.length);
     }
 
-    function executePayment(uint256 _paymentId) auth external {
+    function executePayment(uint256 _paymentId) auth(EXECUTE_PAYMENTS_ROLE) external {
         require(nextPaymentTime(_paymentId) <= getTimestamp());
 
         _executePayment(_paymentId);
@@ -179,7 +185,7 @@ contract FinanceApp is App, Initializable {
         _executePayment(_paymentId);
     }
 
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth external {
+    function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENT_ROLE) external {
         payments[_paymentId].disabled = _disabled;
     }
 

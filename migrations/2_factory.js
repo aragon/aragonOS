@@ -11,7 +11,8 @@ module.exports = (deployer, network) => {
     'VotingApp',
     'Vault',
     'TokenManager',
-    'FundraisingApp'
+    'FundraisingApp',
+    'FinanceApp',
   ].map(getContract)
 
   deployer.deploy(Kernel)

@@ -25,7 +25,7 @@ contract Vault is App {
         }
     }
 
-    function requestAllowance(ERC20 _token, uint256 _amount) auth {
+    function requestAllowance(ERC20 _token, uint256 _amount) auth(ALLOWANCE_REQUESTOR_ROLE) {
         address spender = msg.sender;
 
         // Some token implementations will throw when changing an allowance from non-zero to non-zero
