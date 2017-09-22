@@ -1,5 +1,5 @@
 {
-    "id": "fundraising.aragonpm.eth",
+    "appName": "fundraising.aragonpm.eth",
     "version": "1.0.0",
     "roles": [
         { "name": "Create fundraising", "id": "CREATOR_ROLE" },
