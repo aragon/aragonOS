@@ -16,11 +16,6 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     bytes32 constant public ADD_MEMBER_ROLE = bytes32(1);
     bytes32 constant public REMOVE_MEMBER_ROLE = bytes32(2);
 
-    modifier onlyMember {
-        require(isMember(msg.sender));
-        _;
-    }
-
     /**
     * @notice Initialize new `_ctx` group
     * @param _ctx Name for the group
@@ -55,7 +50,8 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @dev IForwarder interface conformance. Forwards actions to any group member.
     * @param _evmCallScript Script being forwarded
     */
-    function forward(bytes _evmCallScript) onlyMember external {
+    function forward(bytes _evmCallScript) external {
+        require(isMember(msg.sender));
         runScript(_evmCallScript);
     }
 
