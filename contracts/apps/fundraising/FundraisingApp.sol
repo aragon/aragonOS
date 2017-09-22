@@ -85,7 +85,8 @@ contract FundraisingApp is App, Initializable {
         uint64 _periodStartTime,
         uint64[] _periodEnds,
         uint256[] _prices
-    ) auth(CREATOR_ROLE) external returns (uint256 saleId) {
+    ) auth(CREATOR_ROLE) external returns (uint256 saleId)
+    {
         // Dont allow token multiplication sales
         require(address(_raisedToken) != 0 && _raisedToken != ERC20(tokenManager.token()));
 
@@ -215,7 +216,7 @@ contract FundraisingApp is App, Initializable {
 
         // Calculate how much we need to refund for the tokens that weren't sold
         uint256 nonBoughtTokens = boughtTokens.sub(allowedBuy);
-        
+
         uint256 returnAmount;
         if (!sale.isInversePrice) {
             returnAmount = nonBoughtTokens.mul(price).div(pricePrecision);
@@ -252,14 +253,16 @@ contract FundraisingApp is App, Initializable {
         price = period.initialPrice.mul(pricePrecision);
 
         if (period.finalPrice != 0) { // interpolate price by period
-            uint periodDelta = uint256(period.periodEnds).sub(uint256(sale.periodStartTime));
-            uint periodState = getTimestamp().sub(uint256(sale.periodStartTime));
+            uint256 periodDelta = uint256(period.periodEnds).sub(uint256(sale.periodStartTime));
+            uint256 periodState = getTimestamp().sub(uint256(sale.periodStartTime));
             if (period.finalPrice > period.initialPrice) {
-                uint p1 = period.finalPrice.sub(period.initialPrice);
-                price = price.add(pricePrecision.mul(p1).mul(periodState).div(periodDelta));
+                uint256 p1 = period.finalPrice.sub(period.initialPrice);
+                uint256 inc = pricePrecision.mul(p1).mul(periodState).div(periodDelta);
+                price = price.add(inc);
             } else {
-                uint p2 = period.initialPrice.sub(period.finalPrice);
-                price = price.sub(pricePrecision.mul(p2).mul(periodState).div(periodDelta));
+                uint256 p2 = period.initialPrice.sub(period.finalPrice);
+                uint256 dec = pricePrecision.mul(p2).mul(periodState).div(periodDelta);
+                price = price.sub(dec);
             }
         }
     }
