@@ -28,4 +28,9 @@ For more detail you can check the [contributing guide](https://github.com/aragon
 
 ### Run tests
 
-    $ docker-compose run core test
+```sh
+npm run test
+
+# Lint needs to pass as well
+npm run lint
+```
