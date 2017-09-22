@@ -6,11 +6,12 @@ notifications:
   email: false
 node_js:
   - '8'
+env:
+  - TASK=lint
+  - TASK=test
 before_script:
   - npm prune
-script:
-  - npm run lint
-  - npm run test
+script: "npm run $TASK"
 after_success:
   - npm run coverage
   - cat coverage/lcov.info | ./node_modules/.bin/coveralls
