@@ -153,7 +153,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     /**
     * @dev IForwarder interface conformance. Forwards any token holder action.
-    * @param _evmCallScript Start vote with script
+    * @param _evmCallScript script being executed
     */
     function forward(bytes _evmCallScript) external {
         require(canForward(msg.sender, _evmCallScript));

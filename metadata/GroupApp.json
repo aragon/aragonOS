@@ -1,0 +1,9 @@
+{
+    "id": "group.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Adding member role", "id": "ADD_MEMBER_ROLE" },
+        { "name": "Removing member role", "id": "REMOVE_MEMBER_ROLE" }
+    ],
+    "path": "apps/group/GroupApp.sol"
+}
