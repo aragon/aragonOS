@@ -10,13 +10,15 @@ contract DelegateProxy {
         assembly {
             switch extcodesize(_dst) case 0 { revert(0, 0) }
             let result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
-            switch result case 0 { revert(0, 0 } // revert instead of invalid() bc if the underlying call failed with invalid() it already wasted gas.
             let size := returndatasize
-            switch size case 0 { return(0, 0) }
 
             let ptr := mload(0x40)
             returndatacopy(ptr, 0, size)
-            return(ptr, size)
+
+            // revert instead of invalid() bc if the underlying call failed with invalid() it already wasted gas.
+            // if the call returned error data, forward it
+            switch result case 0 { revert(ptr, size) }
+            default { return(ptr, size) }
         }
     }
 }
