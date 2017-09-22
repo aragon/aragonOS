@@ -8,10 +8,9 @@ node_js:
   - '8'
 env:
   - TASK=lint
-  - TASK=test
+  - TASK=coverage
 before_script:
   - npm prune
 script: "npm run $TASK"
 after_success:
-  - npm run coverage
   - cat coverage/lcov.info | ./node_modules/.bin/coveralls
