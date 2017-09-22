@@ -13,9 +13,9 @@ show_help() {
 }
 
 lint_test() {
-    # TODO: add linter
     cd /usr/src/app
-    npm t
+    npm test
+    npm run lint
 }
 
 run_coveralls() {
