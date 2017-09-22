@@ -5,12 +5,13 @@ const getContract = (name) =>
   artifacts.require(name)
 
 module.exports = (deployer, network) => {
-  const isLive = ['kovan', 'ropsten'].indexOf(network) > -1
+  const isLive = ['mainnet', 'kovan', 'ropsten'].indexOf(network) > -1
 
   const apps = [
     'VotingApp',
     'Vault',
-    'TokenManager'
+    'TokenManager',
+    'FundraisingApp'
   ].map(getContract)
 
   deployer.deploy(Kernel)

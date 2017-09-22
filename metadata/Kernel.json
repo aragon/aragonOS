@@ -1,0 +1,10 @@
+{
+    "id": "kernel.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Permission creator", "id": "PERMISSION_CREATOR_ROLE" },
+        { "name": "App upgrader", "id": "APP_UPGRADER_ROLE" },
+        { "name": "Kernel upgrader", "id": "KERNEL_UPGRADER_ROLE" }
+    ],
+    "path": "kernel/Kernel.sol"
+}
