@@ -2,6 +2,10 @@
 #set -x
 set -e
 
+
+export PATH=$PATH:/usr/src/app/node_modules/.bin/
+
+
 # Define help message
 show_help() {
     echo """
