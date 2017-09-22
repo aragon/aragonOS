@@ -21,11 +21,6 @@ To make it easier for contributors to get up to speed, we provide a docker envir
 
 For more detail you can check the [contributing guide](https://github.com/aragon/aragon-core/wiki/How-to-contribute) on the wiki.
 
-### Requirements
-
- - [Docker](https://www.docker.com/get-docker)
- - [Docker Compose](https://docs.docker.com/compose/install/)
-
 ### Run tests
 
 ```sh
