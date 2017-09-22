@@ -1,0 +1,9 @@
+{
+    "appName": "vault.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Request allowances", "id": "ALLOWANCE_REQUESTOR_ROLE" },
+        { "name": "Direct transfers", "id": "TRANSFER_ROLE" }
+    ],
+    "path": "apps/vault/Vault.sol"
+}

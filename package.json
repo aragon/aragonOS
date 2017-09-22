@@ -8,23 +8,18 @@
     "lint": "solium --dir ./contracts",
     "coverage": "scripts/coverage.sh",
     "coveralls": "scripts/coveralls.sh",
-    "console": "node_modules/.bin/truffle console"
+    "console": "node_modules/.bin/truffle console",
+    "prepublish": "npm run generate:artifacts-dev",
+    "generate:artifacts-dev": "scripts/testrpc.sh; truffle migrate --all --network rpc; truffle exec --network rpc scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",
-    "build/"
+    "build/",
+    "artifacts/"
   ],
   "author": "Aragon",
   "license": "GPLv3",
   "devDependencies": {
-    "eth-ens-namehash": "^2.0.0",
-    "ethereumjs-abi": "^0.6.4",
-    "ethereumjs-util": "^5.1.1",
-    "solium": "^0.5.5",
-    "truffle-config": "^1.0.2",
-    "truffle-expect": "0.0.3",
-    "truffle-hdwallet-provider": "0.0.3",
-    "zeppelin-solidity": "^1.2.0",
     "babel-helpers": "^6.24.1",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
@@ -32,11 +27,19 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "coveralls": "^2.13.1",
-    "ethereumjs-testrpc": "^4.1.1",
+    "eth-ens-namehash": "^2.0.0",
+    "ethereumjs-abi": "^0.6.4",
+    "ethereumjs-testrpc": "^4.1.3",
+    "ethereumjs-util": "^5.1.1",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "^0.2.2",
-    "solidity-inspector": "^0.1.2",
+    "solidity-coverage": "^0.2.3",
+    "solidity-inspector": "^0.2.3",
     "solidity-sha3": "^0.4.1",
-    "truffle": "^3.4.9"
+    "solium": "^0.5.5",
+    "truffle": "^3.4.9",
+    "truffle-config": "^1.0.2",
+    "truffle-expect": "0.0.3",
+    "truffle-hdwallet-provider": "0.0.3",
+    "zeppelin-solidity": "^1.2.0"
   }
 }

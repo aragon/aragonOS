@@ -8,4 +8,5 @@ coverage/
 coverageEnv/
 coverage.json
 scTopics
-installed_contracts/
+functions.csv
+artifacts/

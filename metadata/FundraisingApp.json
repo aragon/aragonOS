@@ -1,0 +1,9 @@
+{
+    "appName": "fundraising.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Create fundraising", "id": "CREATOR_ROLE" },
+        { "name": "Close fundraising", "id": "CLOSER_ROLE" }
+    ],
+    "path": "apps/fundraising/FundraisingApp.sol"
+}
