@@ -7,8 +7,8 @@ import "../../common/IForwarder.sol";
 import "../../common/EVMCallScript.sol";
 
 contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
+    string name;
     mapping (address => bool) members;
-    string context;
 
     event AddMember(address indexed entity);
     event RemoveMember(address indexed entity);
@@ -17,13 +17,13 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     bytes32 constant public REMOVE_MEMBER_ROLE = bytes32(2);
 
     /**
-    * @notice Initialize new `_ctx` group
-    * @param _ctx Name for the group
+    * @notice Initialize new `_name` group
+    * @param _name Name for the group
     */
-    function initialize(string _ctx) onlyInit {
+    function initialize(string _name) onlyInit {
         initialized();
 
-        context = _ctx;
+        name = _name;
     }
 
     /**
@@ -64,7 +64,7 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
         return isMember(_sender);
     }
 
-    function getContext() constant returns (string) {
-        return context;
+    function getName() constant returns (string) {
+        return name;
     }
 }

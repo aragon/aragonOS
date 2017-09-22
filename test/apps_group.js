@@ -10,15 +10,15 @@ contract('Group app', accounts => {
     let app = {}
 
     const member = accounts[1]
-    const groupContext = 'Test Group'
+    const groupName = 'Test Group'
 
     beforeEach(async () => {
         app = await GroupApp.new()
-        await app.initialize(groupContext)
+        await app.initialize(groupName)
     })
 
     it('has correct name context', async () => {
-        assert.equal(await app.getContext(), groupContext, 'should have correct group context')
+        assert.equal(await app.getName(), groupName, 'should have correct group name')
     })
 
     it('fails when forwarding non-member', async () => {
