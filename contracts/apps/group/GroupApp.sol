@@ -7,9 +7,9 @@ import "../../common/EVMCallScript.sol";
 
 contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     mapping (address => bool) members;
+    string context;
 
     event AddMember(address indexed addr);
-    event UpdateIdentity(address indexed addr, string name);
     event RemoveMember(address indexed addr);
 
     modifier onlyMember {
@@ -46,5 +46,9 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
         _evmCallScript;
         return isMember(_sender);
+    }
+
+    function getContext() constant returns (string) {
+        return context;
     }
 }

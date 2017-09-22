@@ -3,8 +3,6 @@ pragma solidity 0.4.15;
 import "./AppStorage.sol";
 
 contract App is AppStorage {
-    string public context;
-
     modifier auth {
         require(canPerform(msg.sender, msg.sig));
         _;
