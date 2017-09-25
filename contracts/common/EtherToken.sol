@@ -19,6 +19,8 @@ contract EtherToken is ERC677Token {
     }
 
     function _wrap(address _beneficiary, uint256 _amount) internal {
+        require(_amount > 0);
+
         totalSupply = totalSupply.add(_amount);
         balances[_beneficiary] = balances[_beneficiary].add(_amount);
 
@@ -27,10 +29,12 @@ contract EtherToken is ERC677Token {
     }
 
     function unwrap() {
-        withdraw(balances[msg.sender], msg.sender);
+        withdraw(msg.sender, balances[msg.sender]);
     }
 
-    function withdraw(uint256 _amount, address _recipient) {
+    function withdraw(address _recipient, uint256 _amount) {
+        require(_amount > 0);
+
         totalSupply = totalSupply.sub(_amount);
         balances[msg.sender] = balances[msg.sender].sub(_amount); // fails if no balance
 
