@@ -9,6 +9,7 @@ const fs = require('fs')
 const path = require('path')
 const { signatures } = require('../test/helpers/web3')
 const inspector = require('solidity-inspector')
+const namehash = require('eth-ens-namehash').hash
 
 const getContract = x => artifacts.require(x)
 const flatten = x => [].concat.apply([], x)
@@ -43,8 +44,10 @@ const generateArtifacts = name => {
             let params = Object.values(f.params)
             params.forEach(p => delete p.typeHint)
 
-            return { name: f.name, notice: f.notice, params , roleNeeded }
+            return { name: f.name, notice: f.notice, params, roleNeeded }
         })
+
+        metadata.appId = namehash(metadata['appName'])
 
         metadata.deployedNetwork = contract.network_id
         metadata.deployedAddress = contract.address

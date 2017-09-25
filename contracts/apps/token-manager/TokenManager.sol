@@ -8,8 +8,8 @@ import "../../common/Initializable.sol";
 import "../../common/IForwarder.sol";
 import "../../common/EVMCallScript.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../zeppelin/token/ERC20.sol";
+import "../../zeppelin/math/SafeMath.sol";
 
 contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunner, IForwarder {
     using SafeMath for uint256;
@@ -115,12 +115,26 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _vesting Date when all tokens are transferable
     * @param _revokable Whether the vesting can be revoked by the token manager
     */
-    function assignVested(address _receiver, uint256 _amount, uint64 _start, uint64 _cliff, uint64 _vesting, bool _revokable) auth(ASSIGN_ROLE) external returns (uint256) {
+    function assignVested(
+        address _receiver,
+        uint256 _amount,
+        uint64 _start,
+        uint64 _cliff,
+        uint64 _vesting,
+        bool _revokable
+    ) auth(ASSIGN_ROLE) external returns (uint256)
+    {
         require(tokenGrantsCount(_receiver) < MAX_VESTINGS_PER_ADDRESS);
 
         require(_start <= _cliff && _cliff <= _vesting);
 
-        TokenVesting memory tokenVesting = TokenVesting(_amount, _start, _cliff, _vesting, _revokable);
+        TokenVesting memory tokenVesting = TokenVesting(
+            _amount, 
+            _start, 
+            _cliff, 
+            _vesting, 
+            _revokable
+        );
         uint256 vestingId = vestings[_receiver].push(tokenVesting) - 1;
 
         _assign(_receiver, _amount);
@@ -139,7 +153,13 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 
-        uint nonVested = calculateNonVestedTokens(v.amount, uint64(now), v.start, v.cliff, v.vesting);
+        uint nonVested = calculateNonVestedTokens(
+            v.amount, 
+            uint64(now), 
+            v.start, 
+            v.cliff, 
+            v.vesting
+        );
 
         // To make vestingIds immutable over time, we just zero out the revoked vesting
         delete vestings[_holder][_vestingId];
@@ -153,7 +173,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
     /**
     * @dev IForwarder interface conformance. Forwards any token holder action.
-    * @param _evmCallScript Start vote with script
+    * @param _evmCallScript script being executed
     */
     function forward(bytes _evmCallScript) external {
         require(canForward(msg.sender, _evmCallScript));
@@ -179,7 +199,13 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
 
         for (uint256 i = 0; i < vs; i = i.add(1)) {
             TokenVesting storage v = vestings[_holder][i];
-            uint nonTransferable = calculateNonVestedTokens(v.amount, uint64(_time), v.start, v.cliff, v.vesting);
+            uint nonTransferable = calculateNonVestedTokens(
+                v.amount,
+                uint64(_time), 
+                v.start, 
+                v.cliff, 
+                v.vesting
+            );
             totalNonTransferable = totalNonTransferable.add(nonTransferable);
         }
 
@@ -218,21 +244,29 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
         uint256 vesting) private constant returns (uint256)
     {
         // Shortcuts for before cliff and after vesting cases.
-        if (time >= vesting) return 0;
-        if (time < cliff) return tokens;
+        if (time >= vesting)
+            return 0;
+        
+        if (time < cliff)
+            return tokens;
 
         // Interpolate all vested tokens.
         // As before cliff the shortcut returns 0, we can use just calculate a value
         // in the vesting rect (as shown in above's figure)
 
         // vestedTokens = tokens * (time - start) / (vesting - start)
-        uint256 vestedTokens =
-            SafeMath.div(
-                SafeMath.mul(
-                    tokens,
-                    SafeMath.sub(time, start)
-                ),
-                SafeMath.sub(vesting, start)
+        uint256 vestedTokens = SafeMath.div(
+            SafeMath.mul(
+                tokens, 
+                SafeMath.sub(
+                    time, 
+                    start
+                )
+            ), 
+            SafeMath.sub(
+                vesting, 
+                start
+            )
         );
 
         return tokens - vestedTokens;
@@ -282,7 +316,9 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @return False if the controller does not authorize the approval
     */
     function onApprove(address _owner, address _spender, uint _amount) returns (bool) {
-        _owner; _spender; _amount;
+        _owner;
+        _spender;
+        _amount;
         return true;
     }
 }
