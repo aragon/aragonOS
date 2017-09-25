@@ -4,7 +4,6 @@ const EtherToken = artifacts.require('EtherToken')
 
 contract('EtherToken', accounts => {
   let token = {}
-  let randomAddress = 0
   const value = 1000
   const from = accounts[0]
   const withdrawAddr = '0x0000000000000000000000000000000000001234'
@@ -39,7 +38,7 @@ contract('EtherToken', accounts => {
 
   it('throws when withdrawing more than balance', async () => {
     return assertInvalidOpcode(async () => {
-        await token.withdraw(randomAddress, value + 1)
+        await token.withdraw(withdrawAddr, value + 1)
     })
   })
 })

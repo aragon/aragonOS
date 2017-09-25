@@ -2,13 +2,15 @@ pragma solidity 0.4.15;
 
 import "../App.sol";
 import "../../common/Initializable.sol";
+import "../../common/EtherToken.sol";
+import "../../common/erc677/ERC677Receiver.sol";
 
 import "../vault/Vault.sol";
 
 import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 
-contract FinanceApp is App, Initializable {
+contract FinanceApp is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
@@ -43,6 +45,7 @@ contract FinanceApp is App, Initializable {
         uint256 periodId;
         uint256 amount;
         uint256 paymentId;
+        string reference;
     }
 
     struct TokenStatement {
@@ -65,6 +68,7 @@ contract FinanceApp is App, Initializable {
     }
 
     Vault public vault;
+    EtherToken public etherToken;
 
     Payment[] payments; // first index is 1
     Transaction[] transactions; // first index is 1
@@ -90,14 +94,16 @@ contract FinanceApp is App, Initializable {
     /**
     * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
     * @param _vault Address of the vault Finance will rely on (non changeable)
+    * @param _etherToken Address of EtherToken for ether withdraws
     * @param _periodDuration Duration in seconds of each period
     */
-    function initialize(Vault _vault, uint64 _periodDuration) onlyInit {
+    function initialize(Vault _vault, EtherToken _etherToken, uint64 _periodDuration) onlyInit {
         initialized();
 
         require(_periodDuration > 1);
 
         vault = _vault;
+        etherToken = _etherToken;
 
         payments.length += 1;
         payments[0].disabled = true;
@@ -113,19 +119,35 @@ contract FinanceApp is App, Initializable {
     * @notice Send `_amount` `_token`
     * @param _token Address of deposited token
     * @param _amount Amount of tokens sent
+    * @param _reference Reason for payment
     */
-    function deposit(ERC20 _token, uint256 _amount) transitionsPeriod {
-        _recordTransaction(
-            true, // incoming transaction
+    function deposit(ERC20 _token, uint256 _amount, string _reference) transitionsPeriod {
+        _recordIncomingTransaction(
             _token,
             msg.sender,
             _amount,
-            0 // unrelated to any existing payment
+            _reference
         );
-
         require(_token.transferFrom(msg.sender, address(vault), _amount));
     }
 
+    /**
+    * @dev Deposit for ERC677 tokens
+    * @param from Address sending the tokens
+    * @param amount Amount of tokens sent
+    * @param data Data payload being executed (payment reference)
+    */
+    function tokenFallback(address from, uint256 amount, bytes data) transitionsPeriod returns (bool success) {
+        _recordIncomingTransaction(
+            msg.sender,
+            from,
+            amount,
+            string(data)
+        );
+        return true;
+    }
+
+    // TODO: Document me
     function newPayment(
         ERC20 _token,
         address _receiver,
@@ -271,7 +293,7 @@ contract FinanceApp is App, Initializable {
         createdBy = payment.createdBy;
     }
 
-    function getTransaction(uint256 _transactionId) constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date) {
+    function getTransaction(uint256 _transactionId) constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date, string reference) {
         Transaction storage transaction = transactions[_transactionId];
 
         token = transaction.token;
@@ -281,6 +303,7 @@ contract FinanceApp is App, Initializable {
         periodId = transaction.periodId;
         amount = transaction.amount;
         paymentId = transaction.paymentId;
+        reference = transaction.reference;
     }
 
     function getPeriod(uint256 _periodId) constant returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
@@ -368,18 +391,39 @@ contract FinanceApp is App, Initializable {
         uint256 _paymentId
         ) internal
     {
+        require(_getRemainingBudget(_token) >= _amount);
         _recordTransaction(
             false,
             _token,
             _receiver,
             _amount,
-            _paymentId
+            _paymentId,
+            ""
         );
 
-        TokenStatement storage tokenStatement = periods[currentPeriodId()].tokenStatement[_token];
-        require(tokenStatement.expenses <= settings.budgets[_token]); // check it didn't go over-budget
+        if (address(_token) != address(etherToken)) {
+            vault.transferTokens(_token, _receiver, _amount);
+        } else {
+            vault.transferTokens(_token, address(this), _amount); // transfer to finance app
+            etherToken.withdraw(_receiver, _amount); // withdraw ether to receiver
+        }
+    }
 
-        vault.transferTokens(_token, _receiver, _amount);
+    function _recordIncomingTransaction(
+        address _token,
+        address _sender,
+        uint256 _amount,
+        string _reference
+        ) internal
+    {
+        _recordTransaction(
+            true, // incoming transaction
+            ERC20(_token),
+            _sender,
+            _amount,
+            0, // unrelated to any existing payment
+            _reference
+        );
     }
 
     function _recordTransaction(
@@ -387,7 +431,8 @@ contract FinanceApp is App, Initializable {
         ERC20 _token,
         address _entity,
         uint256 _amount,
-        uint256 _paymentId
+        uint256 _paymentId,
+        string _reference
         ) internal
     {
         uint256 periodId = currentPeriodId();
@@ -407,6 +452,7 @@ contract FinanceApp is App, Initializable {
         transaction.token = _token;
         transaction.entity = _entity;
         transaction.date = uint64(getTimestamp());
+        transaction.reference = _reference;
 
         Period storage period = periods[periodId];
         if (period.firstTransactionId == 0)
