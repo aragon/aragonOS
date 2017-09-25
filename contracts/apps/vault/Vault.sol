@@ -46,7 +46,7 @@ contract Vault is App {
     * @param _receiver Address of the recipient of tokens
     * @param _amount Amount of tokens being transferred
     */
-    function transfer(ERC20 _token, address _receiver, uint256 _amount) auth(TRANSFER_ROLE) external {
+    function transferTokens(ERC20 _token, address _receiver, uint256 _amount) auth(TRANSFER_ROLE) external {
         assert(_token.transfer(_receiver, _amount));
         TokenTransfer(_token, _receiver, _amount);
     }

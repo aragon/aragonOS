@@ -5,8 +5,8 @@ import "../../common/Initializable.sol";
 
 import "../vault/Vault.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../zeppelin/token/ERC20.sol";
+import "../../zeppelin/math/SafeMath.sol";
 
 contract FinanceApp is App, Initializable {
     using SafeMath for uint256;
@@ -61,8 +61,7 @@ contract FinanceApp is App, Initializable {
 
     struct Settings {
         uint64 periodDuration;
-        ERC20[] budgetTokens;
-        uint256[] budgetAmounts;
+        mapping (address => uint256) budgets;
     }
 
     Payment[] public payments; // first index is 1
@@ -75,6 +74,18 @@ contract FinanceApp is App, Initializable {
     event NewPayment(uint256 indexed paymentId, address recipient, uint64 maxRepeats);
     event NewTransaction(uint256 transactionId, bool incoming, address indexed entity);
 
+    // Modifier used by all methods that impact accounting to make sure accounting period
+    // is changed before the operation if needed
+    modifier transitionsPeriod {
+        tryTransitionAccountingPeriod();
+        _;
+    }
+
+    /**
+    * @notice Initialize Finance app for `_vault` with duration `_periodDuration`
+    * @param _vault Address of the vault Finance will rely on (non changeable)
+    * @param _periodDuration Duration in seconds of each period
+    */
     function initialize(Vault _vault, uint64 _periodDuration) onlyInit {
         initialized();
 
@@ -86,12 +97,7 @@ contract FinanceApp is App, Initializable {
         transactions.length += 1;
 
         settings.periodDuration = _periodDuration;
-        _createPeriod(uint64(getTimestamp()));
-    }
-
-    modifier transitionsPeriod {
-        tryTransitionAccountingPeriod();
-        _;
+        _newPeriod(uint64(getTimestamp()));
     }
 
     function deposit(ERC20 _token, uint256 _amount) transitionsPeriod {
@@ -132,44 +138,8 @@ contract FinanceApp is App, Initializable {
     }
 
     function setBudget(ERC20 _token, uint256 _amount) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
-        bool budgetExisted = false;
-        // If budget is already set, update value
-        for (uint256 i = 0; i < settings.budgetTokens.length; i++) {
-            if (settings.budgetTokens[i] == _token) {
-                if (_amount > 0) {
-                    settings.budgetAmounts[i] = _amount;
-                } else {
-                    // if setting budget to 0, remove from lists
-                    uint256 lastItem = settings.budgetTokens.length - 1;
-                    if (i < lastItem) {
-                        settings.budgetTokens[i] = settings.budgetTokens[lastItem];
-                        settings.budgetAmounts[i] = settings.budgetAmounts[lastItem];
-                    }
-                    settings.budgetAmounts.length -= 1;
-                    settings.budgetTokens.length -= 1;
-                }
-                budgetExisted = true;
-                break;
-            }
-        }
-
-        if (!budgetExisted) {
-            // Add new token budget
-            require(settings.budgetTokens.length < MAX_BUDGET_TOKENS);
-            require(_amount > 0);
-            settings.budgetTokens.push(_token);
-            settings.budgetAmounts.push(_amount);
-        }
-
-        Period storage currentPeriod = periods[currentPeriodId()];
-        uint256 periodExpense = currentPeriod.tokenStatement[_token].expenses;
-        uint256 newBudget = periodExpense < _amount ? _amount.sub(periodExpense) : 0;
-
-        vault.requestAllowance(_token, newBudget);
-
+        settings.budgets[address(_token)] = _amount;
         SetBudget(_token, _amount);
-
-        assert(settings.budgetAmounts.length == settings.budgetTokens.length);
     }
 
     function executePayment(uint256 _paymentId) auth(EXECUTE_PAYMENTS_ROLE) external {
@@ -195,15 +165,13 @@ contract FinanceApp is App, Initializable {
         if (currentPeriod.firstTransactionId != 0)
             currentPeriod.lastTransactionId = transactions.length - 1;
 
-        Period storage newPeriod = _createPeriod(currentPeriod.endTime);
+        Period storage newPeriod = _newPeriod(currentPeriod.endTime);
 
         // In case multiple periods have to be transitioned at once
         if (getTimestamp() > newPeriod.endTime) {
             tryTransitionAccountingPeriod();
             return;
         }
-
-        vault.requestAllowances(settings.budgetTokens, settings.budgetAmounts);
     }
 
     // consts
@@ -216,14 +184,13 @@ contract FinanceApp is App, Initializable {
         return uint64(uint256(payment.initialPaymentTime).add(uint256(payment.repeats).mul(uint256(payment.interval))));
     }
 
-    function getSettings() constant returns (uint64 periodDuration, uint256 budgetLength) {
-        return (settings.periodDuration, settings.budgetTokens.length);
+    function getPeriodDuration() constant returns (uint64 periodDuration) {
+        return settings.periodDuration;
     }
 
-    function getBudget(uint256 _budgetId) transitionsPeriod constant returns (ERC20 token, uint256 budget, uint256 remainingBudget) {
-        token = ERC20(settings.budgetTokens[_budgetId]);
-        budget = settings.budgetAmounts[_budgetId];
-        remainingBudget = token.allowance(address(vault), address(this));
+    function getBudget(address _token) transitionsPeriod constant returns (uint256 budget, uint256 remainingBudget) {
+        budget = settings.budgets[_token];
+        remainingBudget = _getRemainingBudget(_token);
     }
 
     function currentPeriodId() constant returns (uint256) {
@@ -232,7 +199,7 @@ contract FinanceApp is App, Initializable {
 
     // internal fns
 
-    function _createPeriod(uint64 _startTime) internal returns (Period storage) {
+    function _newPeriod(uint64 _startTime) internal returns (Period storage) {
         uint256 newPeriodId = periods.length++;
 
         Period storage period = periods[newPeriodId];
@@ -261,8 +228,10 @@ contract FinanceApp is App, Initializable {
 
     function _makePaymentTransaction(ERC20 _token, address _receiver, uint256 _amount, uint256 _paymentId) internal {
         _recordTransaction(false, _token, _receiver, _amount, _paymentId);
+        TokenStatement storage tokenStatement = periods[currentPeriodId()].tokenStatement[_token];
+        require(tokenStatement.expenses <= settings.budgets[_token]); // check it didn't go over-budget
 
-        require(_token.transferFrom(address(vault), _receiver, _amount));
+        vault.transferTokens(_token, _receiver, _amount);
     }
 
     function _recordTransaction(bool _incoming, ERC20 _token, address _entity, uint256 _amount, uint256 _paymentId) internal {
@@ -290,8 +259,13 @@ contract FinanceApp is App, Initializable {
     }
 
     function _canMakePayment(ERC20 _token, uint256 _amount) internal returns (bool) {
-        return _token.allowance(address(vault), address(this)) >= _amount &&
+        return _getRemainingBudget(_token) >= _amount &&
             _token.balanceOf(address(vault)) >= _amount;
+    }
+
+    function _getRemainingBudget(address _token) internal constant returns (uint256) {
+        uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
+        return settings.budgets[_token].sub(spent);
     }
 
     function getTimestamp() internal constant returns (uint256) { return now; }

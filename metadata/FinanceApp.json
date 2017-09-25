@@ -1,5 +1,5 @@
 {
-    "id": "finance.aragonpm.eth",
+    "appName": "finance.aragonpm.eth",
     "version": "1.0.0",
     "roles": [
         { "name": "Create new payments role", "id": "PAYMENT_CREATOR_ROLE" },
