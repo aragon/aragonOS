@@ -5,9 +5,9 @@ import "../../common/Initializable.sol";
 
 import "../token-manager/TokenManager.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "zeppelin-solidity/contracts/math/Math.sol";
+import "../../zeppelin/token/ERC20.sol";
+import "../../zeppelin/math/SafeMath.sol";
+import "../../zeppelin/math/Math.sol";
 
 contract FundraisingApp is App, Initializable {
     using SafeMath for uint256;
