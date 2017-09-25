@@ -11,7 +11,6 @@ contract('Finance App', accounts => {
 
     const n = '0x00'
     const periodDuration = 100
-    const maxUint = 0
     const withdrawAddr = '0x0000000000000000000000000000000000001234'
 
     beforeEach(async () => {
@@ -19,11 +18,11 @@ contract('Finance App', accounts => {
 
         etherToken = await EtherToken.new()
 
-        token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
+        token1 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token1.generateTokens(vault.address, 100)
         await token1.generateTokens(accounts[0], 10)
 
-        token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
+        token2 = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true) // dummy parameters for minime
         await token2.generateTokens(vault.address, 200)
 
         await etherToken.wrap({ value: 500 })
@@ -114,6 +113,7 @@ contract('Finance App', accounts => {
 
         it('records payment', async () => {
             const amount = 10
+            // repeats up to 10 times every 2 seconds
             await app.newPayment(token1.address, recipient, amount, time, 2, 10, 'ref')
 
             const [token, receiver, am, initialTime, interval, maxRepeats, ref, disabled, repeats, createdBy] = await app.getPayment(1)
@@ -133,6 +133,7 @@ contract('Finance App', accounts => {
         it('can create single payment', async () => {
             const amount = 10
 
+            // interval 0, repeat 1 (single payment)
             await app.newPayment(token1.address, recipient, amount, time, 0, 1, '')
 
             assert.equal(await token1.balanceOf(recipient), amount, 'recipient should have received tokens')
@@ -141,6 +142,7 @@ contract('Finance App', accounts => {
         it('can create recurring payment', async () => {
             const amount = 10
 
+            // repeats up to 10 times every 2 seconds
             await app.newPayment(token1.address, recipient, amount, time, 2, 10, '')
             await app.mock_setTimestamp(time + 4)
             await app.executePayment(1)
@@ -152,6 +154,7 @@ contract('Finance App', accounts => {
         it('can create recurring ether payment', async () => {
             const amount = 10
 
+            // repeats up to 10 times every 2 seconds
             await app.newPayment(etherToken.address, withdrawAddr, amount, time, 2, 10, '')
             await app.mock_setTimestamp(time + 4)
             await app.executePayment(1)
@@ -168,11 +171,13 @@ contract('Finance App', accounts => {
 
         context('multitransaction period', async () => {
             beforeEach(async () => {
-                await app.newPayment(token1.address, recipient, 10, time, 1, 1, '') // will spend 10
+                // single payment
+                await app.newPayment(token1.address, recipient, 10, time, 0, 1, '') // will spend 10
+                // repeats up to 2 times every 1 seconds
                 await app.newPayment(token2.address, recipient, 5, time + 1, 1, 2, '') // will spend 10
                 await app.mock_setTimestamp(time + 4)
 
-                await app.executePayment(1)
+                await app.executePayment(1) // first create payment doesn't get an id because it is simple immediate tx
 
                 await token1.approve(app.address, 5)
                 await app.deposit(token1.address, 5, '')
@@ -295,11 +300,13 @@ contract('Finance App', accounts => {
         }
 
         it('emits payment failure event when out of budget', async () => {
+            // repeats up to 4 times every 1 seconds
             const receipt = await app.newPayment(token1.address, recipient, 51, time, 1, 4, '')
             assertPaymentFailure(receipt)
         })
 
         it('emits payment failure event when out of balance', async () => {
+            // repeats up to 3 times every 100 seconds
             await app.newPayment(token1.address, recipient, 40, time, 100, 3, '')
             await app.mock_setTimestamp(time + 100)
             await app.executePayment(1)
