@@ -2,7 +2,7 @@ pragma solidity 0.4.15;
 
 import "../App.sol";
 
-import "zeppelin-solidity/contracts/token/ERC20.sol";
+import "../../zeppelin/token/ERC20.sol";
 
 contract Vault is App {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);

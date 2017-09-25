@@ -2,7 +2,7 @@ pragma solidity 0.4.15;
 
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../zeppelin/math/SafeMath.sol";
 
 contract Kernel is KernelStorage, Initializable {
     using SafeMath for uint256;
