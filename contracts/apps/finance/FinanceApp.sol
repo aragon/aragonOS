@@ -11,8 +11,6 @@ import "../../zeppelin/math/SafeMath.sol";
 contract FinanceApp is App, Initializable {
     using SafeMath for uint256;
 
-    Vault vault;
-
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
@@ -22,27 +20,29 @@ contract FinanceApp is App, Initializable {
     bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(3);
     bytes32 constant public DISABLE_PAYMENT_ROLE = bytes32(4);
 
+    // order optimized for storage
     struct Payment {
         ERC20 token;
         address receiver;
+        address createdBy;
+        bool disabled;
         uint64 initialPaymentTime;
         uint64 interval;
         uint64 maxRepeats;
         uint64 repeats;
         uint256 amount;
-        bool disabled;
         string reference;
-        address createdBy;
     }
 
+    // order optimized for storage
     struct Transaction {
-        uint256 periodId;
-        uint256 amount;
-        uint256 paymentId;
         ERC20 token;
         address entity;
         bool isIncoming;
         uint64 date;
+        uint256 periodId;
+        uint256 amount;
+        uint256 paymentId;
     }
 
     struct TokenStatement {
@@ -64,15 +64,17 @@ contract FinanceApp is App, Initializable {
         mapping (address => uint256) budgets;
     }
 
-    Payment[] public payments; // first index is 1
-    Transaction[] public transactions; // first index is 1
-    Period[] public periods; // first index is 0
+    Vault public vault;
+
+    Payment[] payments; // first index is 1
+    Transaction[] transactions; // first index is 1
+    Period[] periods; // first index is 0
     Settings settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
     event SetBudget(address indexed token, uint256 amount);
-    event NewPayment(uint256 indexed paymentId, address recipient, uint64 maxRepeats);
-    event NewTransaction(uint256 transactionId, bool incoming, address indexed entity);
+    event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
+    event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity);
     event ChangePaymentState(uint256 indexed paymentId, bool disabled);
     event ChangePeriodDuration(uint64 newDuration);
     event PaymentFailure(uint256 paymentId);
@@ -92,6 +94,8 @@ contract FinanceApp is App, Initializable {
     */
     function initialize(Vault _vault, uint64 _periodDuration) onlyInit {
         initialized();
+
+        require(_periodDuration > 1);
 
         vault = _vault;
 
@@ -166,11 +170,12 @@ contract FinanceApp is App, Initializable {
 
     /**
     * @notice Change period duration to `_duration`. Will be effective for next accounting period.
-    * @param _duration Duration in seconds for accounting periods
+    * @param _periodDuration Duration in seconds for accounting periods
     */
-    function setPeriodDuration(uint64 _duration) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
-        settings.periodDuration = _duration;
-        ChangePeriodDuration(_duration);
+    function setPeriodDuration(uint64 _periodDuration) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
+        require(_periodDuration > 1);
+        settings.periodDuration = _periodDuration;
+        ChangePeriodDuration(_periodDuration);
     }
 
     /**
@@ -213,7 +218,7 @@ contract FinanceApp is App, Initializable {
     */
     function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENT_ROLE) external {
         payments[_paymentId].disabled = _disabled;
-        ChangePaymentState(_paymentId, disabled);
+        ChangePaymentState(_paymentId, _disabled);
     }
 
     /**
@@ -236,7 +241,7 @@ contract FinanceApp is App, Initializable {
         if (currentPeriod.firstTransactionId != 0)
             currentPeriod.lastTransactionId = transactions.length - 1;
 
-        Period storage newPeriod = _newPeriod(currentPeriod.endTime);
+        Period storage newPeriod = _newPeriod(currentPeriod.endTime + 1);
 
         // In case multiple periods have to be transitioned at once
         if (getTimestamp() > newPeriod.endTime) {
@@ -250,6 +255,50 @@ contract FinanceApp is App, Initializable {
     }
 
     // consts
+
+    function getPayment(uint256 _paymentId) constant returns (ERC20 token, address receiver, uint256 amount, uint64 initialPaymentTime, uint64 interval, uint64 maxRepeats, string reference, bool disabled, uint256 repeats, address createdBy) {
+        Payment storage payment = payments[_paymentId];
+
+        token = payment.token;
+        receiver = payment.receiver;
+        amount = payment.amount;
+        initialPaymentTime = payment.initialPaymentTime;
+        interval = payment.interval;
+        maxRepeats = payment.maxRepeats;
+        repeats = payment.repeats;
+        disabled = payment.disabled;
+        reference = payment.reference;
+        createdBy = payment.createdBy;
+    }
+
+    function getTransaction(uint256 _transactionId) constant returns (uint256 periodId, uint256 amount, uint256 paymentId, ERC20 token, address entity, bool isIncoming, uint64 date) {
+        Transaction storage transaction = transactions[_transactionId];
+
+        token = transaction.token;
+        entity = transaction.entity;
+        isIncoming = transaction.isIncoming;
+        date = transaction.date;
+        periodId = transaction.periodId;
+        amount = transaction.amount;
+        paymentId = transaction.paymentId;
+    }
+
+    function getPeriod(uint256 _periodId) constant returns (bool isCurrent, uint64 startTime, uint64 endTime, uint256 firstTransactionId, uint256 lastTransactionId) {
+        Period storage period = periods[_periodId];
+
+        isCurrent = currentPeriodId() == _periodId;
+
+        startTime = period.startTime;
+        endTime = period.endTime;
+        firstTransactionId = period.firstTransactionId;
+        lastTransactionId = period.lastTransactionId;
+    }
+
+    function getPeriodTokenStatement(uint256 _periodId, address _token) constant returns (uint256 expenses, uint256 income) {
+        TokenStatement storage tokenStatement = periods[_periodId].tokenStatement[_token];
+        return (tokenStatement.expenses, tokenStatement.income);
+    }
+
     function nextPaymentTime(uint256 _paymentId) constant returns (uint64) {
         Payment memory payment = payments[_paymentId];
 
@@ -282,7 +331,7 @@ contract FinanceApp is App, Initializable {
 
         Period storage period = periods[newPeriodId];
         period.startTime = _startTime;
-        period.endTime = _startTime + settings.periodDuration;
+        period.endTime = _startTime + settings.periodDuration - 1;
 
         NewPeriod(newPeriodId, period.startTime, period.endTime);
 
@@ -357,6 +406,7 @@ contract FinanceApp is App, Initializable {
         transaction.isIncoming = _incoming;
         transaction.token = _token;
         transaction.entity = _entity;
+        transaction.date = uint64(getTimestamp());
 
         Period storage period = periods[periodId];
         if (period.firstTransactionId == 0)
