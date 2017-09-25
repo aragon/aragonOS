@@ -1,6 +1,6 @@
 var glob = require('glob')
 var path = require('path')
-var basePath = './build/contracts'
+var basePath = './artifacts'
 
 module.exports = glob.sync(
   path.resolve(__dirname, basePath, '*.json')

@@ -1,4 +1,4 @@
-# Aragon Core <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Build Status](https://travis-ci.org/aragon/aragon-core.svg?branch=master)](https://travis-ci.org/aragon/aragon-core)[![Coverage Status](https://coveralls.io/repos/github/aragon/aragon-core/badge.svg?branch=master)](https://coveralls.io/github/aragon/aragon-core?branch=master)
+# Aragon Core <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragon-core/dev.svg?style=flat-square)](https://travis-ci.org/aragon/aragon-core) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragon-core/dev.svg?style=flat-square)](https://coveralls.io/github/aragon/aragon-core?branch=dev)
 
 #### 🚨 Everything in this repo is highly experimental software.
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
@@ -21,11 +21,11 @@ To make it easier for contributors to get up to speed, we provide a docker envir
 
 For more detail you can check the [contributing guide](https://github.com/aragon/aragon-core/wiki/How-to-contribute) on the wiki.
 
-### Requirements
-
- - [Docker](https://www.docker.com/get-docker)
- - [Docker Compose](https://docs.docker.com/compose/install/)
-
 ### Run tests
 
-    $ docker-compose run core test
+```sh
+npm run test
+
+# Lint needs to pass as well
+npm run lint
+```

@@ -13,7 +13,8 @@ contract EVMCallScriptRunner {
             assembly {
                 ok := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
             }
-            if (ok == 0) revert();
+            if (ok == 0)
+                revert();
 
             location += (0x14 + 0x04 + calldataLength);
         }
@@ -78,22 +79,22 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
     }
 
     // From https://github.com/Arachnid/solidity-stringutils
-   function memcpy(uint dest, uint src, uint len) private {
-       // Copy word-length chunks while possible
-       for(; len >= 32; len -= 32) {
-           assembly {
-               mstore(dest, mload(src))
-           }
-           dest += 32;
-           src += 32;
-       }
+    function memcpy(uint dest, uint src, uint len) private {
+        // Copy word-length chunks while possible
+        for (; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
 
-       // Copy remaining bytes
-       uint mask = 256 ** (32 - len) - 1;
-       assembly {
-           let srcpart := and(mload(src), not(mask))
-           let destpart := and(mload(dest), mask)
-           mstore(dest, or(destpart, srcpart))
-       }
-   }
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
+    }
 }
