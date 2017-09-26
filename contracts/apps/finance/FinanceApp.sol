@@ -16,6 +16,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
     uint64 constant public MAX_PERIOD_TRANSITIONS_PER_TX = 10;
     uint64 constant public MAX_UINT64 = uint64(-1);
+    uint256 constant public MAX_UINT = uint256(-1);
 
     bytes32 constant public PAYMENT_CREATOR_ROLE = bytes32(1);
     bytes32 constant public CHANGE_SETTINGS_ROLE = bytes32(2);
@@ -65,6 +66,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     struct Settings {
         uint64 periodDuration;
         mapping (address => uint256) budgets;
+        mapping (address => bool) hasBudget;
     }
 
     Vault public vault;
@@ -76,7 +78,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     Settings settings;
 
     event NewPeriod(uint256 indexed periodId, uint64 periodStarts, uint64 periodEnds);
-    event SetBudget(address indexed token, uint256 amount);
+    event SetBudget(address indexed token, uint256 amount, bool hasBudget);
     event NewPayment(uint256 indexed paymentId, address indexed recipient, uint64 maxRepeats);
     event NewTransaction(uint256 indexed transactionId, bool incoming, address indexed entity);
     event ChangePaymentState(uint256 indexed paymentId, bool disabled);
@@ -159,7 +161,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     ) auth(PAYMENT_CREATOR_ROLE) transitionsPeriod external returns (uint256 paymentId)
     {
 
-        require(settings.budgets[_token] > 0); // Token must have been added to budget
+        require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
 
         // Avoid saving payment data for 1 time immediate payments
         if (_initialPaymentTime <= getTimestamp() && _maxRepeats == 1) {
@@ -202,12 +204,24 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
 
     /**
     * @notice Set budget for `_token` to `_amount`. Effective to current accounting period.
-    * @param _token Address of token
+    * @param _token Address for token
     * @param _amount New budget amount
     */
     function setBudget(ERC20 _token, uint256 _amount) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
-        settings.budgets[address(_token)] = _amount;
-        SetBudget(_token, _amount);
+        settings.budgets[_token] = _amount;
+        if (!settings.hasBudget[_token]) {
+            settings.hasBudget[_token] = true;
+        }
+        SetBudget(_token, _amount, true);
+    }
+
+    /**
+    * @notice Remove budget for `_token`. Will be able to spend entire balance.
+    * @param _token Address for token
+    */
+    function removeBudget(ERC20 _token) auth(CHANGE_SETTINGS_ROLE) transitionsPeriod external {
+        settings.hasBudget[_token] = false;
+        SetBudget(_token, 0, false);
     }
 
     /**
@@ -338,8 +352,9 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
         return settings.periodDuration;
     }
 
-    function getBudget(address _token) transitionsPeriod constant returns (uint256 budget, uint256 remainingBudget) {
+    function getBudget(address _token) transitionsPeriod constant returns (uint256 budget, bool hasBudget, uint256 remainingBudget) {
         budget = settings.budgets[_token];
+        hasBudget = settings.hasBudget[_token];
         remainingBudget = _getRemainingBudget(_token);
     }
 
@@ -466,6 +481,8 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     }
 
     function _getRemainingBudget(address _token) internal constant returns (uint256) {
+        if (!settings.hasBudget[_token]) return MAX_UINT;
+
         uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
         return settings.budgets[_token].sub(spent);
     }
