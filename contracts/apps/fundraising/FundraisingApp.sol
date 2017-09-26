@@ -2,6 +2,7 @@ pragma solidity 0.4.15;
 
 import "../App.sol";
 import "../../common/Initializable.sol";
+import "../../common/erc677/ERC677Receiver.sol";
 
 import "../token-manager/TokenManager.sol";
 
@@ -9,11 +10,8 @@ import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 import "../../zeppelin/math/Math.sol";
 
-contract FundraisingApp is App, Initializable {
+contract FundraisingApp is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
-
-    TokenManager public tokenManager;
-    address public vault;
 
     uint256 constant MAX_PERIODS = 50;
     uint64 constant MAX_UINT64 = uint64(-1);
@@ -46,6 +44,9 @@ contract FundraisingApp is App, Initializable {
         uint256 raisedAmount;
         uint256 soldAmount;
     }
+
+    TokenManager public tokenManager;
+    address public vault;
 
     Sale[] sales;
 
@@ -117,11 +118,12 @@ contract FundraisingApp is App, Initializable {
     }
 
     /**
+    * @dev ERC20 approve and then call buy in support
     * @notice Buy in sale with id `_saleId` with `_payedTokens` tokens
     * @param _saleId Sale numeric identifier
-    * @param _payedTokens Amount of tokens payed
+    * @param _payedTokens Amount of tokens payed (must have a preauthorized allowance)
     */
-    function buy(uint256 _saleId, uint256 _payedTokens) {
+    function transferAndBuy(uint256 _saleId, uint256 _payedTokens) external {
         ERC20 raisedToken = sales[_saleId].raisedToken;
 
         // Buying is attempted before transfering tokens, but if transfer fails it will revert the entire tx
@@ -129,6 +131,34 @@ contract FundraisingApp is App, Initializable {
 
         // No need to return tokens as we never take them from sender's balance
         assert(raisedToken.transferFrom(msg.sender, vault, _payedTokens.sub(returnTokens)));
+    }
+
+    /**
+    * @dev ERC677 buy in support. Data must be equivalent to a buy(uint256) call
+    */
+    function tokenFallback(address _sender, uint256 _value, bytes _data) external returns (bool ok) {
+        var (sig, saleId) = parseBuyData(_data);
+        require(sig == bytes4(sha3("buyWithToken(uint256)"))); // TODO: Replace for .request with solc 0.4.17
+
+        ERC20 raisedToken = sales[saleId].raisedToken;
+        require(msg.sender == address(raisedToken));
+
+        uint256 returnTokens = _buy(saleId, _sender, _value);
+
+        assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
+        if (returnTokens > 0) assert(raisedToken.transfer(_sender, returnTokens));
+
+        return true;
+    }
+
+    /**
+    * @dev Dummy function for ERC677 entrypoint. Call is handled on token fallback but must have this function's format
+    * @notice Buy in sale with id `_saleId`
+    * @param _saleId Sale numeric identifier
+    */
+    function buyWithToken(uint256 _saleId) external {
+        _saleId;
+        revert();
     }
 
     /**
@@ -288,32 +318,12 @@ contract FundraisingApp is App, Initializable {
             sale.currentPeriod = newCurrentPeriod;
     }
 
+    function parseBuyData(bytes data) internal constant returns (bytes4 sig, uint256 saleId) {
+        assembly {
+            sig := mload(add(data, 0x20))
+            saleId := mload(add(data, 0x24)) // read first parameter of buy function call
+        }
+    }
 
     function getTimestamp() internal constant returns (uint256) { return now; }
-
-    /*
-    // TODO: Decide on ERC223 support
-    // Just for ERC223 interfacing
-    function buy(uint256 _saleId) { _saleId; }
-
-    function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) returns (bool ok) {
-        _origin;
-
-        uint256 saleId = parseSaleId(_data);
-
-        ERC20 raisedToken = sales[saleId].raisedToken;
-        require(msg.sender == address(raisedToken));
-
-        uint256 returnTokens = _buy(saleId, _sender, _value);
-
-        assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
-        if (returnTokens > 0) assert(raisedToken.transfer(_sender, returnTokens));
-
-        return true;
-    }
-
-    function parseSaleId(bytes data) constant returns (uint256 saleId) {
-        assembly { saleId := mload(add(data, 0x24)) } // read first parameter of buy function call
-    }
-    */
 }
