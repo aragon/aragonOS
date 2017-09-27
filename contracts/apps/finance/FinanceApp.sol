@@ -481,7 +481,8 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     }
 
     function _getRemainingBudget(address _token) internal constant returns (uint256) {
-        if (!settings.hasBudget[_token]) return MAX_UINT;
+        if (!settings.hasBudget[_token])
+            return MAX_UINT;
 
         uint256 spent = periods[currentPeriodId()].tokenStatement[_token].expenses;
         return settings.budgets[_token].sub(spent);
