@@ -22,7 +22,7 @@ contract('Token Manager', accounts => {
         const holder = accounts[1]
 
         beforeEach(async () => {
-            await tokenManager.initialize(token.address, n)
+            await tokenManager.initializeNative(token.address)
         })
 
         it('can mint tokens', async () => {
@@ -162,7 +162,7 @@ contract('Token Manager', accounts => {
             wrappedToken = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
             await wrappedToken.generateTokens(holder100, 100)
 
-            await tokenManager.initialize(token.address, wrappedToken.address)
+            await tokenManager.initializeWrapper(token.address, wrappedToken.address)
         })
 
         it('cannot wrap more than allowance', async () => {
