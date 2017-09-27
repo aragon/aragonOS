@@ -6,7 +6,7 @@ More complex sale types can be implemented as 3rd party applications.
 
 ### Dependencies and permissions
 
-- `Token Manager`: On initialization it requires a reference to a `Token Manager` instance. One fundraising app instance is only able to 'sell' the underlying token managed by its `Token Manager`. **The fundraising app must be granted permissions to mint tokens on the Token Manager**.
+- `Token Manager`: On initialization it requires a reference to a `Token Manager` instance. One fundraising app instance is only able to 'sell' the underlying token managed by its `Token Manager`. **The fundraising app must be granted permissions to mint tokens on the Token Manager**. The Token Manager must have been initialized in `Native mode` so it can arbitrarily mint new tokens (See [Token Manager spec](./token-manager.md).
 
 - `Vault`: A reference to a `vault` is also required on initialization. However, there is no direct interaction with the vault, it is just used as the address where sale proceeds are deposited (vanilla ERC20 transfers).
 

@@ -14,10 +14,16 @@ Token Manager can handle two modes or use-cases. The mode is set on initializati
 
 ### Initialization
 
-There are two different initializers depending on the mode.
+There are two different initializers depending on the mode. 
+
+###### initializeNative(address token)
 
 - Token: The token being managed. The Token Manager should have already been set as the `controller` for the token.
-- Wrapped token: Address of the token that will be. `_wrapped`
+
+###### initializeWrapped(address wrapperToken, address wrappedToken)
+
+- Wrapper token: Same as token above.
+- Wrapped token: Address of the token that will be wrapped
 
 
 ### Mode specific functionality
@@ -54,9 +60,40 @@ Will fail if sender doesn't own that many tokens.
 
 Transfers tokens from Token Manager balance to `receiver`. Token Manager can own tokens as a result of an `issue` operation on native mode or just because the Token Manager received a normal token transfer.
 
-###### `assignVested(address receiver, uint256 amount, { Vesting settings })`
+###### `assignVested(address receiver, uint256 amount, { Vesting parameters })`
 
-Performs an assign but attaches rules on when the receiver can transfer her tokens. 
+Performs an assign but attaches rules on when the receiver can transfer her tokens. Next section goes in depth into how vesting works. 
 
+###### `revokeVesting(address holder, uint256 vestingId)`
+
+Revokes a vesting from a holder (if vesting is revokable).
 
 ### Vesting
+
+Assigning tokens with vesting performs a normal ERC20 token transfer operation but then the holder will only be able to perform transfers according to a vesting calendar.
+
+MiniMe tokens perform a check with their controller before doing a token transfer. This hook is used by the Token Manager to check whether a holder can transfer the desired tokens.
+
+By making the holders the direct owners of the tokens, they are able to use tokens for actions that check the token balance such as voting, while at the same time being able to lock transferability of them.
+
+#### Vesting parameters
+
+- Start: timestamp in seconds that marks the beginning of the vesting schedule (can be a past or future date).
+- Cliff: timestamp for the first moment in which any assigned tokens can be transferred. The amount of tokens that gets unlocked in the cliff is directly proportional to the overall vesting schedule.
+- Vesting: timestamp for the moment all tokens assigned are transferable.
+- Revokable: whether the Token Manager can revoke a token grant in the middle of the vesting. When that happens, tokens that are not vested yet are transferred back to the Token Manager.
+
+#### Calculating transferable tokens
+
+A token holder can have multiple vestings at the same time. For checking whether an amount of tokens can be transferred, the contract will check for all the vestings a holder has how many tokens can be transferred at that moment (note that some of the tokens may have been assigned without vesting). 
+
+For every vesting, the amount:
+
+- From start to cliff, 0 tokens are transferable.
+- From cliff to vesting, the amount of transferable tokens is interpolated using this formula: `transferable = tokens * (now - start) / (vesting - start)`
+- After vesting, all tokens are transferrable.
+
+
+#### Limitations
+
+- In order to avoid an attack in which too many token vestings are added to a holder to cause an out of gas, the amount of token vestings a holder is limited to 50.
