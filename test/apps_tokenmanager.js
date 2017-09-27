@@ -15,13 +15,19 @@ contract('Token Manager', accounts => {
     beforeEach(async () => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
-        await token.changeController(tokenManager.address)
+    })
+
+    it('fails when initializing without setting controller', async () => {
+        return assertInvalidOpcode(async () => {
+            await tokenManager.initializeNative(token.address)
+        })
     })
 
     context('for native tokens', () => {
         const holder = accounts[1]
 
         beforeEach(async () => {
+            await token.changeController(tokenManager.address)
             await tokenManager.initializeNative(token.address)
         })
 
@@ -162,6 +168,7 @@ contract('Token Manager', accounts => {
             wrappedToken = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
             await wrappedToken.generateTokens(holder100, 100)
 
+            await token.changeController(tokenManager.address)
             await tokenManager.initializeWrapper(token.address, wrappedToken.address)
         })
 
