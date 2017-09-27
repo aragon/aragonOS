@@ -1,4 +1,3 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const Vault = artifacts.require('Vault')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
@@ -11,8 +10,7 @@ contract('Vault app', accounts => {
       vault = await Vault.new()
       token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true);
 
-      await token.generateTokens(vault.address, 20)
-
+      await token.generateTokens(vault.address, 20);
   })
 
   it('can request allowance', async () => {
