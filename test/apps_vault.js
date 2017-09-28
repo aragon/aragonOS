@@ -36,7 +36,7 @@ contract('Vault app', accounts => {
   })
 
   it('can transfer tokens', async () => {
-    await vault.transfer(token.address, accounts[2], 10, {from: accounts[1]});
+    await vault.transferTokens(token.address, accounts[2], 10, {from: accounts[1]});
 
     assert.equal(await token.balanceOf(vault.address), 10, 'should have trasfered')
     assert.equal(await token.balanceOf(accounts[2]), 10, 'should have trasnfered')
@@ -44,7 +44,7 @@ contract('Vault app', accounts => {
 
   it('throws when transfering more then owned', async() => {
     return assertInvalidOpcode(async () => {
-        await vault.transfer(token.address, accounts[2], 50);
+        await vault.transferTokens(token.address, accounts[2], 50);
     })
   })
 
