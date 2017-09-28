@@ -72,6 +72,14 @@ contract('Token Manager', accounts => {
             })
         })
 
+        it('fails when assigning invalid vesting schedule', async () => {
+            return assertInvalidOpcode(async () => {
+                const tokens = 10
+                // vesting < cliff
+                await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
+            })
+        })
+
         context('assigning vested tokens', () => {
             let now = 0
 
