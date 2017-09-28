@@ -31,7 +31,7 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _entity Entity being added to the group
     */
     function addMember(address _entity) auth(ADD_MEMBER_ROLE) external {
-        require(!isMember(_entity));
+        require(!isGroupMember(_entity));
         members[_entity] = true;
         AddMember(_entity);
     }
@@ -41,7 +41,7 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _entity Entity being removed from the group
     */
     function removeMember(address _entity) auth(REMOVE_MEMBER_ROLE) external {
-        require(isMember(_entity));
+        require(isGroupMember(_entity));
         members[_entity] = false;
         RemoveMember(_entity);
     }
@@ -51,17 +51,17 @@ contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
     * @param _evmCallScript Script being forwarded
     */
     function forward(bytes _evmCallScript) external {
-        require(isMember(msg.sender));
+        require(isGroupMember(msg.sender));
         runScript(_evmCallScript);
     }
 
-    function isMember(address _entity) constant returns (bool) {
+    function isGroupMember(address _entity) constant returns (bool) {
         return members[_entity];
     }
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
         _evmCallScript;
-        return isMember(_sender);
+        return isGroupMember(_sender);
     }
 
     function getName() constant returns (string) {
