@@ -33,7 +33,7 @@ contract('Group app', accounts => {
         })
 
         it('has been added', async () => {
-            assert.isTrue(await app.isMember(member), 'member should have been added')
+            assert.isTrue(await app.isGroupMember(member), 'member should have been added')
         })
 
         it('fails if adding again', async () => {
@@ -44,7 +44,7 @@ contract('Group app', accounts => {
 
         it('can be removed', async () => {
             await app.removeMember(member)
-            assert.isFalse(await app.isMember(member), 'member should have been removed')
+            assert.isFalse(await app.isGroupMember(member), 'member should have been removed')
         })
 
         it('is allowed to forward', async () => {
