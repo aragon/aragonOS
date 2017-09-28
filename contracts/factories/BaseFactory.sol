@@ -25,6 +25,13 @@ contract BaseFactory {
 
     event DAODeploy(address dao, address token);
 
+    /**
+    * @param _kernelRef Reference to deployed kernel
+    * @param _appIds Application ids, order: [VotingApp, TokenManager, GroupApp, FundraisingApp, Vault, FinanceApp]
+    * @param _appCode Reference app code for apps. Same order as appIds
+    * @param _etherToken Deployed ether token to be used in deployed DAOs
+    * @param _minimeFactory Generic minime factory for organization token clones
+    */
     function BaseFactory(address _kernelRef, bytes32[6] _appIds, address[6] _appCode, EtherToken _etherToken, address _minimeFactory) {
         kernelRef = _kernelRef;
         appIds = _appIds;
@@ -33,6 +40,11 @@ contract BaseFactory {
         minimeFactory = _minimeFactory;
     }
 
+    /**
+    * @notice Deploy Aragon organization
+    * @param _tokenName name for organization token
+    * @param _tokenSymbol symbol for organization token
+    */
     function deploy(string _tokenName, string _tokenSymbol) {
         uint8 tokenDecimals = 1;
         string memory initialGroupName = "Founders";
@@ -58,9 +70,26 @@ contract BaseFactory {
         fundraising.initialize(tokenManager, address(vault));
         finance.initialize(vault, etherToken, 30 days);
 
-        _removeFactoryPermissions(kernel);
-
         DAODeploy(address(kernel), address(token));
+    }
+
+    function _deployKernel() internal returns (Kernel kernel) {
+        kernel = Kernel(new KernelProxy(kernelRef));
+        kernel.initialize(address(this)); // allows factory to create all permissions
+    }
+
+    function _deployToken(string _tokenName, string _tokenSymbol, uint8 _tokenDecimals) internal returns (MiniMeToken token) {
+        // deploy token without parent (not cloned)
+        token = new MiniMeToken(minimeFactory, address(0), 0, _tokenName, _tokenDecimals, _tokenSymbol, true);
+        token.generateTokens(msg.sender, 10 ** uint256(_tokenDecimals)); // give 1 token to creator
+    }
+
+    function _setAppCode(Kernel _kernel) internal {
+        _kernel.createPermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE(), address(this));
+        for (uint i = 0; i < appIds.length; i++) {
+            _kernel.setAppCode(appIds[i], appCode[i]);
+        }
+        _kernel.revokePermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE());
     }
 
     function _setDefaultPermissions(Kernel _kernel, address[6] _apps) internal {
@@ -125,25 +154,18 @@ contract BaseFactory {
         _kernel.createPermission(address(founderGroup), address(finance), finance.EXECUTE_PAYMENTS_ROLE(), address(founderGroup));
         // Voting can change finance setings
         _kernel.createPermission(address(voting), address(finance), finance.CHANGE_SETTINGS_ROLE(), address(voting));
-    }
 
-    function _deployKernel() internal returns (Kernel kernel) {
-        kernel = Kernel(new KernelProxy(kernelRef));
-        kernel.initialize(address(this)); // allows factory to create all permissions
-    }
+        // KERNEL
 
-    function _deployToken(string _tokenName, string _tokenSymbol, uint8 _tokenDecimals) internal returns (MiniMeToken token) {
-        // deploy token without parent (not cloned)
-        token = new MiniMeToken(minimeFactory, address(0), 0, _tokenName, _tokenDecimals, _tokenSymbol, true);
-        token.generateTokens(msg.sender, 10 ** uint256(_tokenDecimals)); // give 1 token to creator
-    }
+        // Voting can upgrade kernel
+        _kernel.createPermission(address(voting), address(_kernel), _kernel.KERNEL_UPGRADER_ROLE(), address(voting));
+        // Voting can upgrade apps
+        _kernel.createPermission(address(voting), address(_kernel), _kernel.APP_UPGRADER_ROLE(), address(voting));
 
-    function _setAppCode(Kernel _kernel) internal {
-        _kernel.createPermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE(), address(this));
-        for (uint i = 0; i < appIds.length; i++) {
-            _kernel.setAppCode(appIds[i], appCode[i]);
-        }
-        _kernel.revokePermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE());
+        // Grant permission to founder group to create new permissions (voting can change this)
+        _kernel.grantPermission(address(founderGroup), address(_kernel), _kernel.PERMISSION_CREATOR_ROLE(), address(voting));
+        // Removes factory permission to create new permissions
+        _kernel.revokePermission(address(this), address(_kernel), _kernel.PERMISSION_CREATOR_ROLE());
     }
 
     function _deployApps(Kernel _kernel) internal returns (address[6] memory apps) {
@@ -166,9 +188,5 @@ contract BaseFactory {
         _token.changeController(address(_tokenManager));
 
         _tokenManager.initializeNative(_token);
-    }
-
-    function _removeFactoryPermissions(Kernel _kernel) internal {
-        _kernel.revokePermission(address(this), address(_kernel), _kernel.PERMISSION_CREATOR_ROLE());
     }
 }

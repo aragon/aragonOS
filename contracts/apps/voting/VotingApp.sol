@@ -52,9 +52,9 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
-        MiniMeToken _token, 
-        uint256 _supportRequiredPct, 
-        uint256 _minAcceptQuorumPct, 
+        MiniMeToken _token,
+        uint256 _supportRequiredPct,
+        uint256 _minAcceptQuorumPct,
         uint64 _voteTime
     ) onlyInit
     {
