@@ -37,7 +37,7 @@ module.exports = {
     kovan: {
       network_id: 42,
       provider: kovanProvider,
-      gas: 4.6e6,
+      gas: 6.9e6,
     },
     /*
     kovan2: {
