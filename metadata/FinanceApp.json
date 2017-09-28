@@ -1,0 +1,11 @@
+{
+    "appName": "finance.aragonpm.eth",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Create new payments role", "id": "PAYMENT_CREATOR_ROLE" },
+        { "name": "Change budgets and period duration role", "id": "CHANGE_SETTINGS_ROLE" },
+        { "name": "Execute payments role", "id": "EXECUTE_PAYMENTS_ROLE" },
+        { "name": "Disable payments role", "id": "DISABLE_PAYMENT_ROLE" }
+    ],
+    "path": "apps/finance/FinanceApp.sol"
+}
