@@ -48,11 +48,23 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     event RevokeVesting(address indexed receiver, uint256 vestingId);
 
     /**
-    * @notice Initializes TokenManager (parameters won't be modifiable after being set)
+    * @notice Initializes TokenManager in native mode (parameters won't be modifiable after being set)
+    * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
+    */
+    function initializeNative(MiniMeToken _token) onlyInit {
+        _initialize(_token, ERC20(0));
+    }
+
+    /**
+    * @notice Initializes TokenManager in wrapper mode (parameters won't be modifiable after being set)
     * @param _token MiniMeToken address for the managed token (token manager must be the token controller)
     * @param _wrappedToken Address of the token being wrapped (can get 1:1 token exchanged for managed token)
     */
-    function initialize(MiniMeToken _token, ERC20 _wrappedToken) onlyInit {
+    function initializeWrapper(MiniMeToken _token, ERC20 _wrappedToken) onlyInit {
+        _initialize(_token, _wrappedToken);
+    }
+
+    function _initialize(MiniMeToken _token, ERC20 _wrappedToken) internal {
         initialized();
 
         require(_token.controller() == address(this));

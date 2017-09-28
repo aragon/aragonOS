@@ -15,14 +15,20 @@ contract('Token Manager', accounts => {
     beforeEach(async () => {
         token = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
         tokenManager = await TokenManager.new()
-        await token.changeController(tokenManager.address)
+    })
+
+    it('fails when initializing without setting controller', async () => {
+        return assertInvalidOpcode(async () => {
+            await tokenManager.initializeNative(token.address)
+        })
     })
 
     context('for native tokens', () => {
         const holder = accounts[1]
 
         beforeEach(async () => {
-            await tokenManager.initialize(token.address, n)
+            await token.changeController(tokenManager.address)
+            await tokenManager.initializeNative(token.address)
         })
 
         it('can mint tokens', async () => {
@@ -63,6 +69,14 @@ contract('Token Manager', accounts => {
 
             return assertInvalidOpcode(async () => {
                 await tokenManager.forward(script, { from: accounts[8] })
+            })
+        })
+
+        it('fails when assigning invalid vesting schedule', async () => {
+            return assertInvalidOpcode(async () => {
+                const tokens = 10
+                // vesting < cliff
+                await tokenManager.assignVested(holder, tokens, 10, 20, 10, true)
             })
         })
 
@@ -162,7 +176,8 @@ contract('Token Manager', accounts => {
             wrappedToken = await MiniMeToken.new(n, n, 0, 'n', 0, 'n', true)
             await wrappedToken.generateTokens(holder100, 100)
 
-            await tokenManager.initialize(token.address, wrappedToken.address)
+            await token.changeController(tokenManager.address)
+            await tokenManager.initializeWrapper(token.address, wrappedToken.address)
         })
 
         it('cannot wrap more than allowance', async () => {
