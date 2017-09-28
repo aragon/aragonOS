@@ -45,6 +45,7 @@ module.exports = (deployer, network) => {
         console.log('Deploying Factory')
 
         const appAddresses = appContracts.map(contract => contract.address)
+
         return deployer.deploy(BaseFactory, Kernel.address, appIds, appAddresses, EtherToken.address, MiniMeTokenFactory.address)
     })
     .then(() => BaseFactory.deployed())

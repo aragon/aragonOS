@@ -13,7 +13,7 @@ if (!process.env.SOLIDITY_COVERAGE){
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
-  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.aragon.one')
+  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
 }
 
 module.exports = {
