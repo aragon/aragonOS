@@ -17,7 +17,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     uint256 public minAcceptQuorumPct;
     uint64 public voteTime;
 
-    uint256 constant PCT_BASE = 10 ** 18;
+    uint256 constant public PCT_BASE = 10 ** 18;
 
     bytes32 constant public VOTE_CREATOR_ROLE = bytes32(1);
     bytes32 constant public QUORUM_MODIFIER_ROLE = bytes32(2);
