@@ -93,7 +93,12 @@ For every vesting, the amount:
 - From cliff to vesting, the amount of transferable tokens is interpolated using this formula: `transferable = tokens * (now - start) / (vesting - start)`
 - After vesting, all tokens are transferrable.
 
+### Forwarder
 
-#### Limitations
+Token Manager allows holders of its underlying token to execute external actions by identifying themselves as token holders. This can be used for allowing token holders to perform a particular action in the DAO (e.g create a vote) without the ACL having to know anything about tokens.
+
+For this, Token Manager conforms to the AragonOS Forwarder interface and forwards calls to holders that own at least one token.
+
+### Limitations
 
 - In order to avoid an attack in which too many token vestings are added to a holder to cause an out of gas, the amount of token vestings a holder is limited to 50.
