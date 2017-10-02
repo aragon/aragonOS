@@ -57,7 +57,11 @@ Two methods are allowed for buying in sales:
 Requires the sender to have already created an ERC20 allowance equal or greater than `payedTokens` (could actually be less in the scenario some tokens are not allowed for cap reasons).
 
 ###### ERC677: `buyTokens(uint256 saleId)`
-Requires the sender to make a `transferAndCall()` as in the ERC677 standard, setting the fundraising app as receiver and adding the correct data payload.
+Requires the sender to make a `transferAndCall()` as in the [ERC677 standard](https://github.com/ethereum/EIPs/issues/677) (still evolving and being discussed), setting the fundraising app as receiver and adding the correct data payload.
+
+Raising ether can be done by setting the raised token to an EtherToken (ideally the one used by the [Finance app](./finance.md)). Given that aragon-core's EtherToken implementation conforms to ERC677, buying with ether can be done by wrapping the ether using `etherToken.wrap()` and then doing a `transferAndCall(...)` or using the shortcut `wrapAndCall(...)` which performs both actions.
+
+Please note that this section is subject to change as the [ERC677 discussion](https://github.com/ethereum/EIPs/issues/677) evolves.
 
 #### Buy
 
