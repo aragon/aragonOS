@@ -60,8 +60,6 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
-        console.log('da balance', await etherToken.balanceOf(token1.address))
-
         // vault has 100 token1 initially
         assert.equal(await token1.balanceOf(vault.address), 100 + 5, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
