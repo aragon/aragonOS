@@ -140,16 +140,27 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     * @param data Data payload being executed (payment reference)
     */
     function tokenFallback(address from, uint256 amount, bytes data) transitionsPeriod returns (bool success) {
+        ERC20 token = ERC20(msg.sender);
         _recordIncomingTransaction(
-            msg.sender,
+            token,
             from,
             amount,
             string(data)
         );
+        require(token.transfer(address(vault), amount));
         return true;
     }
 
-    // TODO: Document me
+    /**
+    * @notice New payment
+    * @param _token Address of token for payment
+    * @param _receiver Address that will receive payment.
+    * @param _amount units of token that are payed every time the payment is due.
+    * @param _initialPaymentTime timestamp for when the first payment is done.
+    * @param _interval number of seconds that need to pass between payment transactions.
+    * @param _maxRepeats maximum instances a payment can be executed.
+    * @param _reference string detailing payment reason
+    */
     function newPayment(
         ERC20 _token,
         address _receiver,
