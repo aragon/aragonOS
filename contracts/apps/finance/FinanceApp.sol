@@ -139,7 +139,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     * @param amount Amount of tokens sent
     * @param data Data payload being executed (payment reference)
     */
-    function tokenFallback(address from, uint256 amount, bytes data) transitionsPeriod returns (bool success) {
+    function tokenFallback(address from, uint256 amount, bytes data) transitionsPeriod external returns (bool success) {
         ERC20 token = ERC20(msg.sender);
         _recordIncomingTransaction(
             token,
