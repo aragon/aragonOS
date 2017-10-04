@@ -146,7 +146,8 @@ contract FundraisingApp is App, Initializable, ERC677Receiver {
         uint256 returnTokens = _buy(saleId, _sender, _value);
 
         assert(raisedToken.transfer(vault, _value.sub(returnTokens)));
-        if (returnTokens > 0) assert(raisedToken.transfer(_sender, returnTokens));
+        if (returnTokens > 0)
+            assert(raisedToken.transfer(_sender, returnTokens));
 
         return true;
     }
