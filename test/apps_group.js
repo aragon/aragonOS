@@ -27,6 +27,12 @@ contract('Group app', accounts => {
         })
     })
 
+    it('fails when removing non-member', async () => {
+        return assertInvalidOpcode(async () => {
+            await app.removeMember('0x00')
+        })
+    })
+
     context('adding group member', () => {
         beforeEach(async () => {
             await app.addMember(member)
@@ -41,13 +47,21 @@ contract('Group app', accounts => {
                 await app.addMember(member)
             })
         })
+        
+        it('can forward', async () => {
+            const executionTarget = await ExecutionTarget.new()
+            const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+            const script = encodeScript([action])
+
+            assert.isTrue(await app.canForward(member, script), 'member should be able to forward')
+        })
 
         it('can be removed', async () => {
             await app.removeMember(member)
             assert.isFalse(await app.isGroupMember(member), 'member should have been removed')
         })
 
-        it('is allowed to forward', async () => {
+        it('forwards transactions', async () => {
             const executionTarget = await ExecutionTarget.new()
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeScript([action])

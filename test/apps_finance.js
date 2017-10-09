@@ -60,6 +60,8 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
+        // vault has 100 token1 initially
+        assert.equal(await token1.balanceOf(vault.address), 100 + 5, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 5, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
@@ -75,6 +77,8 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
+        // vault has 400 ether tokens initially
+        assert.equal(await etherToken.balanceOf(vault.address), 400 + 50, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 50, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
@@ -90,6 +94,8 @@ contract('Finance App', accounts => {
 
         const [periodId, amount, paymentId, token, entity, incoming, date, ref] = await app.getTransaction(1)
 
+        // vault has 400 ether tokens initially
+        assert.equal(await etherToken.balanceOf(vault.address), 400 + 100, 'deposited tokens must be in vault')
         assert.equal(periodId, 0, 'period id should be correct')
         assert.equal(amount, 100, 'amount should be correct')
         assert.equal(paymentId, 0, 'payment id should be 0')
