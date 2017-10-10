@@ -14,11 +14,16 @@ import "../apps/finance/FinanceApp.sol";
 
 import "../common/MiniMeToken.sol";
 
+import "@aragon/apm-contracts/contracts/AbstractENS.sol";
+import "@aragon/apm-contracts/contracts/Repo.sol";
+import "@aragon/apm-contracts/contracts/RepoRegistry.sol";
+
 contract BaseFactory {
+    AbstractENS ens;
+
     address public kernelRef;
 
     bytes32[6] public appIds;
-    address[6] public appCode;
 
     EtherToken public etherToken;
     address minimeFactory;
@@ -26,16 +31,16 @@ contract BaseFactory {
     event DAODeploy(address dao, address token);
 
     /**
+    * @param _ens Address of the Ethreum Name Service
     * @param _kernelRef Reference to deployed kernel
     * @param _appIds Application ids, order: [VotingApp, TokenManager, GroupApp, FundraisingApp, Vault, FinanceApp]
-    * @param _appCode Reference app code for apps. Same order as appIds
     * @param _etherToken Deployed ether token to be used in deployed DAOs
     * @param _minimeFactory Generic minime factory for organization token clones
     */
-    function BaseFactory(address _kernelRef, bytes32[6] _appIds, address[6] _appCode, EtherToken _etherToken, address _minimeFactory) {
+    function BaseFactory(AbstractENS _ens, address _kernelRef, bytes32[6] _appIds, EtherToken _etherToken, address _minimeFactory) {
+        ens = _ens;
         kernelRef = _kernelRef;
         appIds = _appIds;
-        appCode = _appCode;
         etherToken = _etherToken;
         minimeFactory = _minimeFactory;
     }
@@ -87,7 +92,8 @@ contract BaseFactory {
     function _setAppCode(Kernel _kernel) internal {
         _kernel.createPermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE(), address(this));
         for (uint i = 0; i < appIds.length; i++) {
-            _kernel.setAppCode(appIds[i], appCode[i]);
+            bytes32 appId = appIds[i];
+            _kernel.setAppCode(appId, getAppCodeFromAPM(appId));
         }
         _kernel.revokePermission(address(this), address(_kernel), _kernel.APP_UPGRADER_ROLE());
     }
@@ -168,6 +174,12 @@ contract BaseFactory {
         _kernel.revokePermission(address(this), address(_kernel), _kernel.PERMISSION_CREATOR_ROLE());
     }
 
+    function getAppCodeFromAPM(bytes32 _appId) constant returns (address) {
+        address repoAddr = AddrResolver(ens.resolver(_appId)).addr(_appId);
+        var (,appCode,) = Repo(repoAddr).getLatest();
+        return appCode;
+    }
+
     function _deployApps(Kernel _kernel) internal returns (address[6] memory apps) {
         for (uint i = 0; i < apps.length; i++) {
             apps[i] = new AppProxy(_kernel, appIds[i]);
@@ -181,7 +193,6 @@ contract BaseFactory {
         uint256 minimumAcceptanceQuorum = percentageBase / 5 + 1; // 20% + 1 vote
 
         _voting.initialize(_token, supportNeeded, minimumAcceptanceQuorum, 7 days);
-
     }
 
     function _setupTokenManager(TokenManager _tokenManager, MiniMeToken _token) internal {

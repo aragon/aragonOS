@@ -4,26 +4,37 @@ const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const BaseFactory = artifacts.require('BaseFactory')
 const EtherToken = artifacts.require('EtherToken')
+const RepoRegistry = artifacts.require('RepoRegistry')
+const ENS = artifacts.require('AbstractENS')
+
+
+const ensArtifacts = require('@aragon/apm-contracts/build/contracts/ENS')
 
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 
 const getContract = (name) =>
   artifacts.require(name)
 
-module.exports = (deployer, network) => {
+const getNetworkId = () => {
+    return new Promise((resolve, reject) => {
+       web3.version.getNetwork((err, res) => {
+        if (err || !res) return reject(err)
+        resolve(res)
+      })
+    })
+}
+
+module.exports = async (deployer, network) => {
+  const apmName = 'aragonpm.test'
+  let ensAddress = '0x'
+
   const isLive = ['mainnet', 'kovan', 'ropsten'].indexOf(network) > -1
 
-  const apps = [
-    { name: 'VotingApp', appId: 'voting.aragonpm.eth' },
-    { name: 'TokenManager', appId: 'token-manager.aragonpm.eth' },
-    { name: 'GroupApp', appId: 'group.aragonpm.eth' },
-    { name: 'FundraisingApp', appId: 'fundraising.aragonpm.eth' },
-    { name: 'Vault', appId: 'vault.aragonpm.eth' },
-    { name: 'FinanceApp', appId: 'finance.aragonpm.eth' },
-  ]
+  const apps = ['VotingApp', 'TokenManager', 'GroupApp', 'FundraisingApp', 'Vault', 'FinanceApp']
+  const appMetadata = apps.map(app => require(`../metadata/${app}`))
 
-  const appContracts = apps.map(app => app.name).map(getContract)
-  const appIds = apps.map(app => app.appId).map(namehash)
+  const appContracts = apps.map(getContract)
+  const appIds = appMetadata.map(metadata => metadata.appName).map(namehash)
 
   deployer.deploy(Kernel)
     .then(() => {
@@ -32,21 +43,36 @@ module.exports = (deployer, network) => {
             return promise.then(() => deployer.deploy(contract))
         }, Promise.resolve())
     })
-    .then(() => {
+    .then(() => getNetworkId())
+    .then(networkId => {
       console.log('Apps')
       console.log('----------------------------------------------------------------')
       appContracts.map((app) => {
         console.log(app.contract_name, app.address)
       })
+
+      if (!ensArtifacts.networks[networkId])
+        throw new Error('Please run migrations on apm-contracts on this network')
+
+      ensAddress = ensArtifacts.networks[networkId].address
+      return ENS.at(ensAddress).resolver.call(namehash(apmName))
+    }).then(registryAddress => {
+        console.log('ENS address:', ensAddress)
+        console.log('APM address:', registryAddress)
+        const apm = RepoRegistry.at(registryAddress)
+
+        return appContracts.reduce((promise, contract, i) => {
+          const packageName = appMetadata[i].appName.split('.').shift()
+          const version = appMetadata[i].version.split('.').map(x => parseInt(x))
+
+          return promise.then(() => apm.newRepoWithVersion(packageName, version, contract.address, 'ipfs:'))
+        }, Promise.resolve())
     })
     .then(() => deployer.deploy(MiniMeTokenFactory))
     .then(() => deployer.deploy(EtherToken))
     .then(() => {
         console.log('Deploying Factory')
-
-        const appAddresses = appContracts.map(contract => contract.address)
-
-        return deployer.deploy(BaseFactory, Kernel.address, appIds, appAddresses, EtherToken.address, MiniMeTokenFactory.address)
+        return deployer.deploy(BaseFactory, ensAddress, Kernel.address, appIds, EtherToken.address, MiniMeTokenFactory.address)
     })
     .then(() => BaseFactory.deployed())
     .then(factory => {
