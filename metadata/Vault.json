@@ -1,5 +1,5 @@
 {
-    "appName": "vault.aragonpm.eth",
+    "appName": "vault.aragonpm.test",
     "version": "1.0.0",
     "roles": [
         { "name": "Request allowances", "id": "ALLOWANCE_REQUESTOR_ROLE" },

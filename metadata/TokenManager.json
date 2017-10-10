@@ -1,5 +1,5 @@
 {
-    "appName": "token-manager.aragonpm.eth",
+    "appName": "token-manager.aragonpm.test",
     "version": "1.0.0",
     "roles": [
         { "name": "Token mint role", "id": "MINT_ROLE" },
