@@ -1,5 +1,5 @@
 {
-    "appName": "group.aragonpm.eth",
+    "appName": "group.aragonpm.test",
     "version": "1.0.0",
     "roles": [
         { "name": "Adding member role", "id": "ADD_MEMBER_ROLE" },

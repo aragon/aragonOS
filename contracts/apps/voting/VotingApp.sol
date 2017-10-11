@@ -17,7 +17,7 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     uint256 public minAcceptQuorumPct;
     uint64 public voteTime;
 
-    uint256 constant PCT_BASE = 10 ** 18;
+    uint256 constant public PCT_BASE = 10 ** 18;
 
     bytes32 constant public VOTE_CREATOR_ROLE = bytes32(1);
     bytes32 constant public QUORUM_MODIFIER_ROLE = bytes32(2);
@@ -52,9 +52,9 @@ contract VotingApp is App, Initializable, EVMCallScriptRunner, EVMCallScriptDeco
     * @param _voteTime Seconds that a voting will be open for token holders to vote (unless it is impossible for the fate of the vote to change)
     */
     function initialize(
-        MiniMeToken _token, 
-        uint256 _supportRequiredPct, 
-        uint256 _minAcceptQuorumPct, 
+        MiniMeToken _token,
+        uint256 _supportRequiredPct,
+        uint256 _minAcceptQuorumPct,
         uint64 _voteTime
     ) onlyInit
     {
