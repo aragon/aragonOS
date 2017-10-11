@@ -1,5 +1,5 @@
 {
-    "appName": "voting.aragonpm.eth",
+    "appName": "voting.aragonpm.test",
     "version": "1.0.0",
     "roles": [
         { "name": "Votes creator", "id": "VOTE_CREATOR_ROLE" },

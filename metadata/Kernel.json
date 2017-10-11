@@ -1,5 +1,5 @@
 {
-    "appName": "kernel.aragonpm.eth",
+    "appName": "kernel.aragonpm.test",
     "version": "1.0.0",
     "roles": [
         { "name": "Permission creator", "id": "PERMISSION_CREATOR_ROLE" },

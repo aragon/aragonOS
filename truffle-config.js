@@ -13,7 +13,7 @@ if (!process.env.SOLIDITY_COVERAGE){
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
-  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.aragon.one')
+  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
 }
 
 module.exports = {
@@ -27,7 +27,7 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 4.7e6,
+      gas: 7e6,
     },
     ropsten: {
       network_id: 3,
@@ -37,22 +37,7 @@ module.exports = {
     kovan: {
       network_id: 42,
       provider: kovanProvider,
-      gas: 4.6e6,
-    },
-    /*
-    kovan2: {
-      network_id: 42,
-      host: 'localhost',
-      port: 8545,
-      gas: 4e6,
-      from: '0x0031edb4846bab2ededd7f724e58c50762a45cb2',
-    },ha
-    */
-    development46: {
-      network_id: 15,
-      host: 'localhost',
-      port: 8546,
-      gas: 1e8,
+      gas: 6.9e6,
     },
     coverage: {
       host: "localhost",
