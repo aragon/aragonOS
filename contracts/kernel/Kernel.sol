@@ -12,9 +12,9 @@ contract Kernel is KernelStorage, Initializable {
         bool allowed;
     }
 
-    bytes32 constant public PERMISSION_CREATOR_ROLE = bytes32(1);
-    bytes32 constant public APP_UPGRADER_ROLE = bytes32(2);
-    bytes32 constant public KERNEL_UPGRADER_ROLE = bytes32(3);
+    bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
+    bytes32 constant public UPGRADE_APPS_ROLE = bytes32(2);
+    bytes32 constant public UPGRADE_KERNEL_ROLE = bytes32(3);
 
     // whether a certain entity has a permission
     mapping (address => mapping (address => mapping (bytes32 => Permission))) permissions;
@@ -38,7 +38,7 @@ contract Kernel is KernelStorage, Initializable {
         _createPermission(
             _permissionsCreator, 
             address(this), 
-            PERMISSION_CREATOR_ROLE, 
+            CREATE_PERMISSIONS_ROLE, 
             _permissionsCreator
         );
     }
@@ -57,7 +57,7 @@ contract Kernel is KernelStorage, Initializable {
         address _app, 
         bytes32 _role, 
         address _parent
-    ) auth(PERMISSION_CREATOR_ROLE) external 
+    ) auth(CREATE_PERMISSIONS_ROLE) external 
     {
         _createPermission(
             _entity, 
@@ -121,7 +121,7 @@ contract Kernel is KernelStorage, Initializable {
     * @param _appId Namehash of the app name
     * @param _code Implementation for app
     */
-    function setAppCode(bytes32 _appId, address _code) auth(APP_UPGRADER_ROLE) external {
+    function setAppCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
         appCode[_appId] = _code;
         SetAppCode(_appId, _code);
     }
@@ -131,7 +131,7 @@ contract Kernel is KernelStorage, Initializable {
     * @notice Upgrade kernel to new implementation at address `_newKernel` (CRITICAL!)
     * @param _newKernel Address for new kernel code
     */
-    function upgradeKernel(address _newKernel) auth(KERNEL_UPGRADER_ROLE) external {
+    function upgradeKernel(address _newKernel) auth(UPGRADE_KERNEL_ROLE) external {
         kernelImpl = _newKernel;
         UpgradeKernel(_newKernel);
     }

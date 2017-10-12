@@ -4,7 +4,7 @@ const { getBlock, getBlockNumber } = require('./helpers/web3')
 const { encodeScript } = require('./helpers/evmScript')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
-const GroupApp = artifacts.require('GroupApp')
+const Group = artifacts.require('Group')
 
 contract('Group app', accounts => {
     let app = {}
@@ -13,7 +13,7 @@ contract('Group app', accounts => {
     const groupName = 'Test Group'
 
     beforeEach(async () => {
-        app = await GroupApp.new()
+        app = await Group.new()
         await app.initialize(groupName)
     })
 

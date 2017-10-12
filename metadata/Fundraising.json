@@ -1,0 +1,9 @@
+{
+    "appName": "fundraising.aragonpm.test",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Create token sales", "id": "CREATE_SALES_ROLE" },
+        { "name": "Close token sales at any time", "id": "CLOSE_SALES_ROLE" }
+    ],
+    "path": "apps/fundraising/Fundraising.sol"
+}

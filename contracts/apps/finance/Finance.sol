@@ -10,7 +10,7 @@ import "../vault/Vault.sol";
 import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 
-contract FinanceApp is App, Initializable, ERC677Receiver {
+contract Finance is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
@@ -18,10 +18,10 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     uint64 constant public MAX_UINT64 = uint64(-1);
     uint256 constant public MAX_UINT = uint256(-1);
 
-    bytes32 constant public PAYMENT_CREATOR_ROLE = bytes32(1);
+    bytes32 constant public CREATE_PAYMENTS_ROLE = bytes32(1);
     bytes32 constant public CHANGE_SETTINGS_ROLE = bytes32(2);
     bytes32 constant public EXECUTE_PAYMENTS_ROLE = bytes32(3);
-    bytes32 constant public DISABLE_PAYMENT_ROLE = bytes32(4);
+    bytes32 constant public DISABLE_PAYMENTS_ROLE = bytes32(4);
 
     // order optimized for storage
     struct Payment {
@@ -169,7 +169,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
         uint64 _interval,
         uint64 _maxRepeats,
         string _reference
-    ) auth(PAYMENT_CREATOR_ROLE) transitionsPeriod external returns (uint256 paymentId)
+    ) auth(CREATE_PAYMENTS_ROLE) transitionsPeriod external returns (uint256 paymentId)
     {
 
         require(settings.budgets[_token] > 0 || !settings.hasBudget[_token]); // Token must have been added to budget
@@ -263,7 +263,7 @@ contract FinanceApp is App, Initializable, ERC677Receiver {
     * @param _paymentId Identifier for payment
     * @param _disabled Whether it will be disabled or enabled
     */
-    function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENT_ROLE) external {
+    function setPaymentDisabled(uint256 _paymentId, bool _disabled) auth(DISABLE_PAYMENTS_ROLE) external {
         payments[_paymentId].disabled = _disabled;
         ChangePaymentState(_paymentId, _disabled);
     }

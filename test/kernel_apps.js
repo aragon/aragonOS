@@ -14,7 +14,7 @@ contract('Kernel apps', accounts => {
     beforeEach(async () => {
         kernel = await Kernel.new()
         await kernel.initialize(accounts[0])
-        const r = await kernel.APP_UPGRADER_ROLE()
+        const r = await kernel.UPGRADE_APPS_ROLE()
         await kernel.createPermission(accounts[0], kernel.address, r, accounts[0])
 
         appCode1 = await AppStub.new()

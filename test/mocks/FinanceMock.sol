@@ -1,8 +1,8 @@
 pragma solidity 0.4.15;
 
-import "../../contracts/apps/finance/FinanceApp.sol";
+import "../../contracts/apps/finance/Finance.sol";
 
-contract FinanceAppMock is FinanceApp {
+contract FinanceMock is Finance {
     uint _mockTime = now;
 
     function getTimestamp() internal constant returns (uint256) { return _mockTime; }

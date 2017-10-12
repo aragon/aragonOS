@@ -30,7 +30,7 @@ module.exports = async (deployer, network) => {
 
   const isLive = ['mainnet', 'kovan', 'ropsten'].indexOf(network) > -1
 
-  const apps = ['VotingApp', 'TokenManager', 'GroupApp', 'FundraisingApp', 'Vault', 'FinanceApp']
+  const apps = ['Voting', 'TokenManager', 'Group', 'Fundraising', 'Vault', 'Finance']
   const appMetadata = apps.map(app => require(`../metadata/${app}`))
 
   const appContracts = apps.map(getContract)
@@ -62,7 +62,11 @@ module.exports = async (deployer, network) => {
         const apm = RepoRegistry.at(registryAddress)
 
         return appContracts.reduce((promise, contract, i) => {
-          const packageName = appMetadata[i].appName.split('.').shift()
+          const appName = appMetadata[i].appName
+          if (appName.indexOf(apmName) < 0)
+            throw new Error("Attempting to publish app to different repository")
+
+          const packageName = appName.split('.').shift()
           const version = appMetadata[i].version.split('.').map(x => parseInt(x))
 
           return promise.then(() => apm.newRepoWithVersion(packageName, version, contract.address, 'ipfs:'))

@@ -10,14 +10,14 @@ import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 import "../../zeppelin/math/Math.sol";
 
-contract FundraisingApp is App, Initializable, ERC677Receiver {
+contract Fundraising is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
     uint256 constant MAX_PERIODS = 50;
     uint64 constant MAX_UINT64 = uint64(-1);
 
-    bytes32 constant public CREATOR_ROLE = bytes32(1);
-    bytes32 constant public CLOSER_ROLE = bytes32(2);
+    bytes32 constant public CREATE_SALES_ROLE = bytes32(1);
+    bytes32 constant public CLOSE_SALES_ROLE = bytes32(2);
 
     struct SalePeriod {
         uint64 periodEnds;
@@ -86,7 +86,7 @@ contract FundraisingApp is App, Initializable, ERC677Receiver {
         uint64 _periodStartTime,
         uint64[] _periodEnds,
         uint256[] _prices
-    ) auth(CREATOR_ROLE) external returns (uint256 saleId)
+    ) auth(CREATE_SALES_ROLE) external returns (uint256 saleId)
     {
         // Dont allow token multiplication sales
         require(address(_raisedToken) != 0 && _raisedToken != ERC20(tokenManager.token()));
@@ -166,7 +166,7 @@ contract FundraisingApp is App, Initializable, ERC677Receiver {
     * @notice Force the close of sale with id `_saleId` (It will always succeed if sale is open)
     * @param _saleId Sale numeric identifier
     */
-    function forceCloseSale(uint256 _saleId) auth(CLOSER_ROLE) external {
+    function forceCloseSale(uint256 _saleId) auth(CLOSE_SALES_ROLE) external {
         _closeSale(_saleId);
     }
 
