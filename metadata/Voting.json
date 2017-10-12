@@ -5,5 +5,5 @@
         { "name": "Votes creator", "id": "VOTE_CREATOR_ROLE" },
         { "name": "Quorum modifier", "id": "QUORUM_MODIFIER_ROLE" }
     ],
-    "path": "apps/voting/VotingApp.sol"
+    "path": "apps/voting/Voting.sol"
 }

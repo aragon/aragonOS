@@ -30,7 +30,7 @@ module.exports = async (deployer, network) => {
 
   const isLive = ['mainnet', 'kovan', 'ropsten'].indexOf(network) > -1
 
-  const apps = ['VotingApp', 'TokenManager', 'GroupApp', 'FundraisingApp', 'Vault', 'FinanceApp']
+  const apps = ['Voting', 'TokenManager', 'Group', 'Fundraising', 'Vault', 'Finance']
   const appMetadata = apps.map(app => require(`../metadata/${app}`))
 
   const appContracts = apps.map(getContract)

@@ -5,7 +5,7 @@ const { getBlockNumber } = require('./helpers/web3')
 const timetravel = require('./helpers/timer')
 const { encodeScript } = require('./helpers/evmScript')
 
-const VotingApp = artifacts.require('VotingApp')
+const Voting = artifacts.require('Voting')
 const MiniMeToken = artifacts.require('MiniMeToken')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -31,7 +31,7 @@ contract('Voting App', accounts => {
         await token.generateTokens(holder31, 31)
         await token.generateTokens(holder50, 50)
 
-        app = await VotingApp.new()
+        app = await Voting.new()
         await app.initialize(token.address, pct16(50), pct16(20), votingTime)
 
         executionTarget = await ExecutionTarget.new()
@@ -40,19 +40,19 @@ contract('Voting App', accounts => {
     it('deciding voting is automatically executed', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeScript([action])
-        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
+        const votingId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 1, 'should have received execution call')
     })
 
     it('execution scripts can execute multiple actions', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeScript([action, action, action])
-        const votingId = createdVoteId(await app.newVoting(script, '', { from: holder50 }))
+        const votingId = createdVoteId(await app.newVote(script, '', { from: holder50 }))
         assert.equal(await executionTarget.counter(), 3, 'should have executed multiple times')
     })
 
     it('execution script can be empty', async () => {
-        const votingId = createdVoteId(await app.newVoting(encodeScript([]), '', { from: holder50 }))
+        const votingId = createdVoteId(await app.newVote(encodeScript([]), '', { from: holder50 }))
     })
 
     it('execution throws if any action on script throws', async () => {
@@ -60,7 +60,7 @@ contract('Voting App', accounts => {
         let script = encodeScript([action])
         script = script.slice(0, -2) // remove one byte from calldata for it to fail
         return assertInvalidOpcode(async () => {
-            await app.newVoting(script, '', { from: holder50 })
+            await app.newVote(script, '', { from: holder50 })
         })
     })
 
@@ -78,7 +78,7 @@ contract('Voting App', accounts => {
         beforeEach(async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             script = encodeScript([action, action])
-            voteId = createdVoteId(await app.newVoting(script, 'metadata', { from: nonHolder }))
+            voteId = createdVoteId(await app.newVote(script, 'metadata', { from: nonHolder }))
         })
 
         it('has correct state', async () => {

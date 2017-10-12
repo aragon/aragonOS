@@ -2,7 +2,7 @@ const { assertInvalidOpcode } = require('./helpers/assertThrow')
 
 const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const FundraisingApp = artifacts.require('FundraisingAppMock')
+const Fundraising = artifacts.require('FundraisingMock')
 const EtherToken = artifacts.require('EtherToken')
 
 const zeroAddress = '0x0000000000000000000000000000000000000000'
@@ -24,7 +24,7 @@ contract('Fundraising', accounts => {
         await token.changeController(tokenManager.address)
         await tokenManager.initializeNative(token.address)
 
-        fundraising = await FundraisingApp.new()
+        fundraising = await Fundraising.new()
         await fundraising.initialize(tokenManager.address, vault)
         await fundraising.mock_setTimestamp(5)
     })

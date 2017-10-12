@@ -2,7 +2,7 @@ const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
 
 const Vault = artifacts.require('Vault')
-const FinanceApp = artifacts.require('FinanceAppMock')
+const Finance = artifacts.require('FinanceMock')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const EtherToken = artifacts.require('EtherToken')
 
@@ -28,7 +28,7 @@ contract('Finance App', accounts => {
         await etherToken.wrap({ value: 500 })
         await etherToken.transfer(vault.address, 400)
 
-        app = await FinanceApp.new()
+        app = await Finance.new()
         await app.mock_setTimestamp(1)
 
         await app.initialize(vault.address, etherToken.address, periodDuration)

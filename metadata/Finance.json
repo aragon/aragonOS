@@ -1,5 +1,5 @@
 {
-    "appName": "finance.aragonpm.test",
+    "appName": "finance.aragonpm.eth",
     "version": "1.0.0",
     "roles": [
         { "name": "Create new payments role", "id": "PAYMENT_CREATOR_ROLE" },
@@ -7,5 +7,5 @@
         { "name": "Execute payments role", "id": "EXECUTE_PAYMENTS_ROLE" },
         { "name": "Disable payments role", "id": "DISABLE_PAYMENT_ROLE" }
     ],
-    "path": "apps/finance/FinanceApp.sol"
+    "path": "apps/finance/Finance.sol"
 }

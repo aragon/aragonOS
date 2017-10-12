@@ -5,12 +5,12 @@ import "../kernel/Kernel.sol";
 
 import "../apps/AppProxy.sol";
 
-import "../apps/voting/VotingApp.sol";
+import "../apps/voting/Voting.sol";
 import "../apps/token-manager/TokenManager.sol";
-import "../apps/group/GroupApp.sol";
-import "../apps/fundraising/FundraisingApp.sol";
+import "../apps/group/Group.sol";
+import "../apps/fundraising/Fundraising.sol";
 import "../apps/vault/Vault.sol";
-import "../apps/finance/FinanceApp.sol";
+import "../apps/finance/Finance.sol";
 
 import "../common/MiniMeToken.sol";
 
@@ -33,7 +33,7 @@ contract BaseFactory {
     /**
     * @param _ens Address of the Ethreum Name Service
     * @param _kernelRef Reference to deployed kernel
-    * @param _appIds Application ids, order: [VotingApp, TokenManager, GroupApp, FundraisingApp, Vault, FinanceApp]
+    * @param _appIds Application ids, order: [Voting, TokenManager, Group, Fundraising, Vault, Finance]
     * @param _etherToken Deployed ether token to be used in deployed DAOs
     * @param _minimeFactory Generic minime factory for organization token clones
     */
@@ -60,12 +60,12 @@ contract BaseFactory {
         _setAppCode(kernel);
         address[6] memory apps = _deployApps(kernel);
 
-        VotingApp voting = VotingApp(apps[0]);
+        Voting voting = Voting(apps[0]);
         TokenManager tokenManager = TokenManager(apps[1]);
-        GroupApp group = GroupApp(apps[2]);
-        FundraisingApp fundraising = FundraisingApp(apps[3]);
+        Group group = Group(apps[2]);
+        Fundraising fundraising = Fundraising(apps[3]);
         Vault vault = Vault(apps[4]);
-        FinanceApp finance = FinanceApp(apps[5]);
+        Finance finance = Finance(apps[5]);
 
         _setDefaultPermissions(kernel, apps);
 
@@ -99,12 +99,12 @@ contract BaseFactory {
     }
 
     function _setDefaultPermissions(Kernel _kernel, address[6] _apps) internal {
-        VotingApp voting = VotingApp(_apps[0]);
+        Voting voting = Voting(_apps[0]);
         TokenManager tokenManager = TokenManager(_apps[1]);
-        GroupApp founderGroup = GroupApp(_apps[2]);
-        FundraisingApp fundraising = FundraisingApp(_apps[3]);
+        Group founderGroup = Group(_apps[2]);
+        Fundraising fundraising = Fundraising(_apps[3]);
         Vault vault = Vault(_apps[4]);
-        FinanceApp finance = FinanceApp(_apps[5]);
+        Finance finance = Finance(_apps[5]);
 
         // VOTING
 
@@ -186,7 +186,7 @@ contract BaseFactory {
         }
     }
 
-    function _setupVoting(VotingApp _voting, MiniMeToken _token) internal {
+    function _setupVoting(Voting _voting, MiniMeToken _token) internal {
         uint256 percentageBase = _voting.PCT_BASE();
 
         uint256 supportNeeded = percentageBase / 2 + 1; // 50% + 1 vote

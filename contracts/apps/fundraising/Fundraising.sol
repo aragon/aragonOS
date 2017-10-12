@@ -10,7 +10,7 @@ import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 import "../../zeppelin/math/Math.sol";
 
-contract FundraisingApp is App, Initializable, ERC677Receiver {
+contract Fundraising is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
     uint256 constant MAX_PERIODS = 50;

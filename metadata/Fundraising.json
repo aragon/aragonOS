@@ -5,5 +5,5 @@
         { "name": "Create fundraising", "id": "CREATOR_ROLE" },
         { "name": "Close fundraising", "id": "CLOSER_ROLE" }
     ],
-    "path": "apps/fundraising/FundraisingApp.sol"
+    "path": "apps/fundraising/Fundraising.sol"
 }

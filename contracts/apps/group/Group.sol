@@ -6,7 +6,7 @@ import "../../common/Initializable.sol";
 import "../../common/IForwarder.sol";
 import "../../common/EVMCallScript.sol";
 
-contract GroupApp is App, Initializable, IForwarder, EVMCallScriptRunner {
+contract Group is App, Initializable, IForwarder, EVMCallScriptRunner {
     string name;
     mapping (address => bool) members;
 

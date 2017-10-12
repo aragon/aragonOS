@@ -10,7 +10,7 @@ import "../vault/Vault.sol";
 import "../../zeppelin/token/ERC20.sol";
 import "../../zeppelin/math/SafeMath.sol";
 
-contract FinanceApp is App, Initializable, ERC677Receiver {
+contract Finance is App, Initializable, ERC677Receiver {
     using SafeMath for uint256;
 
     uint64 constant public MAX_PAYMENTS_PER_TX = 20;
