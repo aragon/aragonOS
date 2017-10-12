@@ -19,7 +19,7 @@ contract('Kernel ACL', accounts => {
         kernel = Kernel.at(kernelProxy.address)
         app = kernel.address
         await kernel.initialize(permissionsRoot)
-        role = await kernel.KERNEL_UPGRADER_ROLE()
+        role = await kernel.UPGRADE_KERNEL_ROLE()
     })
 
     it('throws on reinitialization', async () => {
@@ -39,7 +39,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('create permission action can be performed by root by default', async () => {
-        const createPermissionRole = await kernel.PERMISSION_CREATOR_ROLE()
+        const createPermissionRole = await kernel.CREATE_PERMISSIONS_ROLE()
         assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, createPermissionRole))
     })
 

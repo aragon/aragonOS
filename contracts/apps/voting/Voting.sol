@@ -19,8 +19,8 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     uint256 constant public PCT_BASE = 10 ** 18;
 
-    bytes32 constant public VOTE_CREATOR_ROLE = bytes32(1);
-    bytes32 constant public QUORUM_MODIFIER_ROLE = bytes32(2);
+    bytes32 constant public CREATE_VOTES_ROLE = bytes32(1);
+    bytes32 constant public MODIFY_QUORUM_ROLE = bytes32(2);
 
     enum VoterState { Absent, Yea, Nay }
 
@@ -75,7 +75,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     * @notice Change minimum acceptance quorum to `_minAcceptQuorumPct`
     * @param _minAcceptQuorumPct New acceptance quorum
     */
-    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth(QUORUM_MODIFIER_ROLE) external {
+    function changeMinAcceptQuorumPct(uint256 _minAcceptQuorumPct) auth(MODIFY_QUORUM_ROLE) external {
         require(supportRequiredPct >= _minAcceptQuorumPct);
         minAcceptQuorumPct = _minAcceptQuorumPct;
     }
@@ -85,7 +85,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     * @param _executionScript EVM script to be executed on approval
     * @return voteId id for newly created vote
     */
-    function newVote(bytes _executionScript, string _metadata) auth(VOTE_CREATOR_ROLE) external returns (uint256 voteId) {
+    function newVote(bytes _executionScript, string _metadata) auth(CREATE_VOTES_ROLE) external returns (uint256 voteId) {
         return _newVote(_executionScript, _metadata);
     }
 
@@ -119,7 +119,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     function canForward(address _sender, bytes _evmCallScript) constant returns (bool) {
         _evmCallScript;
-        return canPerform(_sender, VOTE_CREATOR_ROLE);
+        return canPerform(_sender, CREATE_VOTES_ROLE);
     }
 
     function canVote(uint256 _voteId, address _voter) constant returns (bool) {

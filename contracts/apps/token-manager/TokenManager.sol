@@ -20,7 +20,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     bytes32 constant public MINT_ROLE = bytes32(1);
     bytes32 constant public ISSUE_ROLE = bytes32(2);
     bytes32 constant public ASSIGN_ROLE = bytes32(3);
-    bytes32 constant public REVOKE_VESTING_ROLE = bytes32(4);
+    bytes32 constant public REVOKE_VESTINGS_ROLE = bytes32(4);
 
     uint256 constant MAX_VESTINGS_PER_ADDRESS = 50;
     struct TokenVesting {
@@ -161,7 +161,7 @@ contract TokenManager is App, Initializable, TokenController, EVMCallScriptRunne
     * @param _holder Address getting vesting revoked
     * @param _vestingId Numeric id of the vesting
     */
-    function revokeVesting(address _holder, uint256 _vestingId) auth(REVOKE_VESTING_ROLE) external {
+    function revokeVesting(address _holder, uint256 _vestingId) auth(REVOKE_VESTINGS_ROLE) external {
         TokenVesting storage v = vestings[_holder][_vestingId];
         require(v.revokable);
 

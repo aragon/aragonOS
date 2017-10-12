@@ -2,10 +2,10 @@
     "appName": "token-manager.aragonpm.test",
     "version": "1.0.0",
     "roles": [
-        { "name": "Token mint role", "id": "MINT_ROLE" },
-        { "name": "Issue tokens role", "id": "ISSUE_ROLE" },
-        { "name": "Assign tokens role", "id": "ASSIGN_ROLE" },
-        { "name": "Revoke vesting role", "id": "REVOKE_VESTING_ROLE" }
+        { "name": "Mint tokens", "id": "MINT_ROLE" },
+        { "name": "Issue tokens", "id": "ISSUE_ROLE" },
+        { "name": "Assign tokens", "id": "ASSIGN_ROLE" },
+        { "name": "Revoke vesting", "id": "REVOKE_VESTINGS_ROLE" }
     ],
     "path": "apps/token-manager/TokenManager.sol"
 }

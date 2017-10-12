@@ -8,7 +8,7 @@ contract Vault is App {
     event SetAllowance(address indexed token, address indexed spender, uint256 amount);
     event TokenTransfer(address indexed token, address indexed receiver, uint256 amount);
 
-    bytes32 constant public ALLOWANCE_REQUESTOR_ROLE = bytes32(1);
+    bytes32 constant public REQUEST_ALLOWANCES_ROLE = bytes32(1);
     bytes32 constant public TRANSFER_ROLE = bytes32(2);
 
     /**
@@ -17,7 +17,7 @@ contract Vault is App {
     * @param _tokens Array of token addresses
     * @param _amounts Array of token amounts
     */
-    function requestAllowances(ERC20[] _tokens, uint256[] _amounts) auth(ALLOWANCE_REQUESTOR_ROLE) external {
+    function requestAllowances(ERC20[] _tokens, uint256[] _amounts) auth(REQUEST_ALLOWANCES_ROLE) external {
         require(_tokens.length == _amounts.length);
 
         for (uint i = 0; i < _tokens.length; i++) {
@@ -25,7 +25,7 @@ contract Vault is App {
         }
     }
 
-    function requestAllowance(ERC20 _token, uint256 _amount) auth(ALLOWANCE_REQUESTOR_ROLE) {
+    function requestAllowance(ERC20 _token, uint256 _amount) auth(REQUEST_ALLOWANCES_ROLE) {
         address spender = msg.sender;
 
         // Some token implementations will throw when changing an allowance from non-zero to non-zero
