@@ -142,7 +142,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         return false;
     }
 
-    function getVoting(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
         open = vote.open;
@@ -157,11 +157,11 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
-    function getVotingMetadata(uint256 _voteId) constant returns (string metadata) {
+    function getVoteMetadata(uint256 _voteId) constant returns (string metadata) {
         return votes[_voteId].metadata;
     }
 
-    function getVotingScriptAction(uint256 _voteId, uint256 _scriptAction) constant returns (address, bytes) {
+    function getVoteScriptAction(uint256 _voteId, uint256 _scriptAction) constant returns (address, bytes) {
         return getScriptAction(votes[_voteId].executionScript, _scriptAction);
     }
 
