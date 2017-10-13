@@ -1,8 +1,9 @@
 pragma solidity 0.4.15;
 
 import "./KernelStorage.sol";
+import "../common/DelegateProxy.sol";
 
-contract KernelProxy is KernelStorage {
+contract KernelProxy is KernelStorage, DelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
@@ -17,13 +18,6 @@ contract KernelProxy is KernelStorage {
     * @return Any bytes32 value the implementation returns
     */
     function () payable public {
-        uint32 len = 64;
-        address target = kernelImpl;
-        assembly {
-            calldatacopy(0x0, 0x0, calldatasize)
-            let result := delegatecall(sub(gas, 10000), target, 0x0, calldatasize, 0, len)
-            switch result case 0 { invalid() }
-            return (0, len)
-        }
+        delegatedFwd(kernelImpl, msg.data);
     }
 }
