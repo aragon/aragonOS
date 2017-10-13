@@ -28,6 +28,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         address creator;
         uint64 startDate;
         uint256 snapshotBlock;
+        uint256 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
@@ -136,13 +137,15 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
             return true;
 
         uint256 totalVotes = vote.yea + vote.nay;
-        if (uint64(now) >= (vote.startDate + voteTime) && vote.yea >= pct(totalVotes, supportRequiredPct) && vote.yea >= pct(vote.totalVoters, minAcceptQuorumPct))
-            return true;
 
-        return false;
+        bool voteEnded = uint64(now) >= (vote.startDate + voteTime);
+        bool hasSupport = vote.yea >= pct(totalVotes, supportRequiredPct);
+        bool hasMinQuorum = vote.yea >= pct(vote.totalVoters, vote.minAcceptQuorumPct);
+
+        return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
         open = vote.open;
@@ -150,6 +153,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         creator = vote.creator;
         startDate = vote.startDate;
         snapshotBlock = vote.snapshotBlock;
+        minAcceptQuorum = vote.minAcceptQuorumPct;
         yea = vote.yea;
         nay = vote.nay;
         totalVoters = vote.totalVoters;
@@ -175,6 +179,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
+        vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
         StartVote(voteId);
 
