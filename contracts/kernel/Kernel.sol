@@ -138,14 +138,29 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
+    * @dev Get permission status
+    * @param _entity Entity address checked
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @return allowed boolean indicating whether entity has permissions over role
+    * @return parent address of the entity which can revoke the permission
+    */
+    function getPermission(address _entity, address _app, bytes32 _role) constant public returns (bool allowed, address parent) {
+        Permission memory permission = permissions[_entity][_app][_role];
+
+        return (permission.allowed, permission.parent);
+    }
+
+    /**
     * @dev Function called by apps to check ACL on kernel
     * @param _entity Sender of the original call
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function canPerform(address _entity, address _app, bytes32 _role) constant returns (bool) {
-        return permissions[_entity][_app][_role].allowed;
+    function canPerform(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+        var (isAllowed,) = getPermission(_entity, _app, _role);
+        return isAllowed;
     }
 
     /**
@@ -153,7 +168,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _appId Identifier for app
     * @return address for app code
     */
-    function getAppCode(bytes32 _appId) constant returns (address) {
+    function getAppCode(bytes32 _appId) constant public returns (address) {
         return appCode[_appId];
     }
 
