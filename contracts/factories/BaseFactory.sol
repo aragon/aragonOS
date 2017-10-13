@@ -16,7 +16,7 @@ import "../common/MiniMeToken.sol";
 
 import "@aragon/apm-contracts/contracts/AbstractENS.sol";
 import "@aragon/apm-contracts/contracts/Repo.sol";
-import "@aragon/apm-contracts/contracts/RepoRegistry.sol";
+import { RepoRegistry, AddrResolver } from "@aragon/apm-contracts/contracts/RepoRegistry.sol";
 
 contract BaseFactory {
     AbstractENS ens;
