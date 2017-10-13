@@ -1,3 +1,4 @@
 node_modules
 contracts/zeppelin
 contracts/factories/BaseFactory.sol
+contracts/kernel/IKernel.sol

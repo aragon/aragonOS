@@ -17,7 +17,7 @@ contract KernelProxy is KernelStorage {
     * @return Any bytes32 value the implementation returns
     */
     function () payable public {
-        uint32 len = 32; // only 1 return (can be increased if needed)
+        uint32 len = 64;
         address target = kernelImpl;
         assembly {
             calldatacopy(0x0, 0x0, calldatasize)

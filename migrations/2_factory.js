@@ -35,7 +35,7 @@ module.exports = async (deployer, network) => {
 
   const appContracts = apps.map(getContract)
   const appIds = appMetadata.map(metadata => metadata.appName).map(namehash)
-
+  return
   deployer.deploy(Kernel)
     .then(() => {
         // Deploy contracts serially to avoid nonce duplication issue
