@@ -3,7 +3,7 @@ pragma solidity 0.4.15;
 import "./AppStorage.sol";
 
 contract AppProxy is AppStorage {
-    function AppProxy(Kernel _kernel, bytes32 _appId) {
+    function AppProxy(IKernel _kernel, bytes32 _appId) {
         kernel = _kernel;
         appId = _appId;
     }
