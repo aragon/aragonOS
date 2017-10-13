@@ -20,7 +20,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     // whether a certain entity has a permission
     mapping (address => mapping (address => mapping (bytes32 => Permission))) permissions;
     // how many entities have been given a certain permission
-    mapping (address => mapping (bytes32 => uint256)) public permissionInstances;
+    mapping (address => mapping (bytes32 => uint256)) permissionInstances;
     // appId -> implementation
     mapping (bytes32 => address) appCode;
 
@@ -152,6 +152,15 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @return number of current permission instances (entities that can perform role actions on app)
+    */
+    function getPermissionInstances(address _app, bytes32 _role) constant public returns (uint256) {
+        return permissionInstances[_app][_role];
+    }
+
+    /**
     * @dev Function called by apps to check ACL on kernel
     * @param _entity Sender of the original call
     * @param _app Address of the app
@@ -183,7 +192,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     ) internal
     {
         // only allow permission creation when there is no instance of the permission
-        require(permissionInstances[_app][_role] == 0);
+        require(getPermissionInstances(_app, _role) == 0);
         _setPermission(
             _entity,
             _app,

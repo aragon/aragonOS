@@ -48,6 +48,19 @@ contract('Kernel ACL', accounts => {
             await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
         })
 
+        it('returns created permission', async () => {
+            const [allowed, parent] = await kernel.getPermission(granted, app, role)
+
+            assert.isTrue(allowed, 'entity should be allowed to perform role actions')
+            assert.equal(parent, granted, 'permission parent should be correct')
+        })
+
+        it('returns permission instances', async () => {
+            const instances = await kernel.getPermissionInstances(app, role)
+
+            assert.equal(instances, 1, 'should have 1 permission instance')
+        })
+
         it('can perform action', async () => {
             assert.isTrue(await kernel.canPerform(granted, app, role))
         })
