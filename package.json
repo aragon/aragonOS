@@ -1,23 +1,31 @@
 {
-  "name": "aragon-core",
+  "name": "@aragon/core",
   "version": "1.0.0",
   "description": "Core contracts for Aragon",
   "main": "index.js",
   "scripts": {
-    "generate:factory": "truffle exec scripts/generate_factory.js",
-    "test": "truffle test",
+    "test": "npm run testrpc:dev && truffle test --network rpc",
     "lint": "solium --dir ./contracts",
-    "coverage": "scripts/coverage.sh",
-    "coveralls": "scripts/coveralls.sh",
-    "console": "node_modules/.bin/truffle console"
+    "coverage": "npm run testrpc:coverage && npm run migrate:coverage:apm-contracts && node_modules/.bin/solidity-coverage",
+    "console": "node_modules/.bin/truffle console",
+    "prepublish": "npm run generate:artifacts-dev",
+    "testrpc:dev": "scripts/testrpc.sh",
+    "testrpc:coverage": "SOLIDITY_COVERAGE=true scripts/testrpc.sh",
+    "migrate:dev": "npm run testrpc:dev && npm run migrate:dev:apm-contracts && npm run migrate:dev:contracts",
+    "migrate:dev:apm-contracts": "cd node_modules/@aragon/apm-contracts; NO_BABEL=true truffle migrate --all --network rpc",
+    "migrate:dev:contracts": "truffle migrate --all --network rpc;",
+    "migrate:coverage:apm-contracts": "cd node_modules/@aragon/apm-contracts; NO_BABEL=true truffle migrate --all --network coverage",
+    "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",
-    "build/"
+    "build/",
+    "artifacts/"
   ],
   "author": "Aragon",
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "devDependencies": {
+    "@aragon/apm-contracts": "^1.0.5",
     "eth-ens-namehash": "^2.0.0",
     "ethereumjs-abi": "^0.6.4",
     "ethereumjs-util": "^5.1.1",
@@ -25,7 +33,6 @@
     "truffle-config": "^1.0.2",
     "truffle-expect": "0.0.3",
     "truffle-hdwallet-provider": "0.0.3",
-    "zeppelin-solidity": "^1.2.0",
     "babel-helpers": "^6.24.1",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
@@ -33,10 +40,10 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "coveralls": "^2.13.1",
-    "ethereumjs-testrpc": "^4.1.1",
+    "ethereumjs-testrpc": "^4.1.3",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "^0.2.2",
-    "solidity-inspector": "^0.1.2",
+    "solidity-coverage": "^0.2.3",
+    "solidity-inspector": "^0.2.3",
     "solidity-sha3": "^0.4.1",
     "truffle": "^3.4.9"
   }

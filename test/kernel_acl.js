@@ -11,7 +11,7 @@ contract('Kernel ACL', accounts => {
     const granted = accounts[1]
     const child = accounts[2]
 
-    const action = getSig('upgradeKernel(address)')
+    let role = null
 
     beforeEach(async () => {
         const kernelImpl = await Kernel.new()
@@ -19,6 +19,7 @@ contract('Kernel ACL', accounts => {
         kernel = Kernel.at(kernelProxy.address)
         app = kernel.address
         await kernel.initialize(permissionsRoot)
+        role = await kernel.UPGRADE_KERNEL_ROLE()
     })
 
     it('throws on reinitialization', async () => {
@@ -28,7 +29,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('actions cannot be performed by default', async () => {
-        assert.isFalse(await kernel.canPerform(permissionsRoot, app, action))
+        assert.isFalse(await kernel.canPerform(permissionsRoot, app, role))
     })
 
     it('protected actions fail if not allowed', async () => {
@@ -38,17 +39,17 @@ contract('Kernel ACL', accounts => {
     })
 
     it('create permission action can be performed by root by default', async () => {
-        const createPermissionAction = 'createPermission(address,address,bytes4,address)'
-        assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, getSig(createPermissionAction)))
+        const createPermissionRole = await kernel.CREATE_PERMISSIONS_ROLE()
+        assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, createPermissionRole))
     })
 
     context('creating permission setting as parent', () => {
         beforeEach(async () => {
-            await kernel.createPermission(granted, app, action, granted, { from: permissionsRoot })
+            await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
         })
 
         it('can perform action', async () => {
-            assert.isTrue(await kernel.canPerform(granted, app, action))
+            assert.isTrue(await kernel.canPerform(granted, app, role))
         })
 
         it('can execute action', async () => {
@@ -57,60 +58,60 @@ contract('Kernel ACL', accounts => {
 
         it('root cannot revoke permission', async () => {
             return assertInvalidOpcode(async () => {
-                await kernel.revokePermission(granted, app, action, { from: permissionsRoot })
+                await kernel.revokePermission(granted, app, role, { from: permissionsRoot })
             })
         })
 
         it('root cannot re-create permission', async () => {
             return assertInvalidOpcode(async () => {
-                await kernel.createPermission(granted, app, action, granted, { from: permissionsRoot })
+                await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
             })
         })
 
         it('root cannot grant permission', async () => {
             return assertInvalidOpcode(async () => {
-                await kernel.grantPermission(granted, app, action, granted, { from: permissionsRoot })
+                await kernel.grantPermission(granted, app, role, granted, { from: permissionsRoot })
             })
         })
 
         context('self-revokes permission', () => {
             beforeEach(async () => {
-                await kernel.revokePermission(granted, app, action, { from: granted })
+                await kernel.revokePermission(granted, app, role, { from: granted })
             })
 
             it('can no longer perform action', async () => {
-                assert.isFalse(await kernel.canPerform(granted, app, action))
+                assert.isFalse(await kernel.canPerform(granted, app, role))
             })
 
             it('permissions root can re-create', async () => {
-                await kernel.createPermission(granted, app, action, granted, { from: permissionsRoot })
-                assert.isTrue(await kernel.canPerform(granted, app, action))
+                await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                assert.isTrue(await kernel.canPerform(granted, app, role))
             })
         })
 
         context('re-grants to child', () => {
             beforeEach(async () => {
-                await kernel.grantPermission(child, app, action, granted, { from: granted })
+                await kernel.grantPermission(child, app, role, granted, { from: granted })
             })
 
             it('child entity can perform action', async () => {
-                assert.isTrue(await kernel.canPerform(child, app, action))
+                assert.isTrue(await kernel.canPerform(child, app, role))
             })
 
             it('child cannot re-grant permission', async () => {
                 return assertInvalidOpcode(async () => {
-                    await kernel.grantPermission(accounts[7], app, action, child, { from: child })
+                    await kernel.grantPermission(accounts[7], app, role, child, { from: child })
                 })
             })
 
             it('parent can revoke permission', async () => {
-                await kernel.revokePermission(child, app, action, { from: granted })
-                assert.isFalse(await kernel.canPerform(child, app, action))
+                await kernel.revokePermission(child, app, role, { from: granted })
+                assert.isFalse(await kernel.canPerform(child, app, role))
             })
 
             it('cannot be reset to change parent', async () => {
                 return assertInvalidOpcode(async () => {
-                    await kernel.grantPermission(child, app, action, accounts[7], { from: granted })
+                    await kernel.grantPermission(child, app, role, accounts[7], { from: granted })
                 })
             })
         })

@@ -1,0 +1,10 @@
+{
+    "appName": "kernel.aragonpm.test",
+    "version": "1.0.0",
+    "roles": [
+        { "name": "Create new permissions", "id": "CREATE_PERMISSIONS_ROLE" },
+        { "name": "Upgrade apps", "id": "UPGRADE_APPS_ROLE" },
+        { "name": "Upgrade kernel", "id": "UPGRADE_KERNEL_ROLE" }
+    ],
+    "path": "kernel/Kernel.sol"
+}

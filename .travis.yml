@@ -1,10 +1,16 @@
-language: python
-sudo: required
-python:
-  - "3.4"
-services:
-  - docker
-script:
-  - docker-compose run core test
-after_script:
-  - docker-compose run core coveralls
+language: node_js
+cache:
+  directories:
+    - node_modules
+notifications:
+  email: false
+node_js:
+  - '8'
+env:
+  - TASK=lint
+  - TASK=coverage
+before_script:
+  - npm prune
+script: "npm run $TASK"
+after_success:
+  - cat coverage/lcov.info | ./node_modules/.bin/coveralls
