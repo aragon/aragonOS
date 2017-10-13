@@ -34,7 +34,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         uint256 totalVoters;
         string metadata;
         bytes executionScript;
-        bool open;
         bool executed;
         mapping (address => VoterState) voters;
     }
@@ -126,11 +125,14 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     function canVote(uint256 _voteId, address _voter) constant returns (bool) {
         Vote storage vote = votes[_voteId];
 
-        return vote.open && uint64(now) < (vote.startDate + voteTime) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
+        return _isVoteOpen(vote) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _voteId) constant returns (bool) {
         Vote storage vote = votes[_voteId];
+
+        if (vote.executed)
+            return false;
 
         // Voting is already decided
         if (vote.yea >= pct(vote.totalVoters, supportRequiredPct))
@@ -138,7 +140,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
         uint256 totalVotes = vote.yea + vote.nay;
 
-        bool voteEnded = uint64(now) >= (vote.startDate + voteTime);
+        bool voteEnded = !_isVoteOpen(vote);
         bool hasSupport = vote.yea >= pct(totalVotes, supportRequiredPct);
         bool hasMinQuorum = vote.yea >= pct(vote.totalVoters, vote.minAcceptQuorumPct);
 
@@ -148,7 +150,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
-        open = vote.open;
+        open = _isVoteOpen(vote);
         executed = vote.executed;
         creator = vote.creator;
         startDate = vote.startDate;
@@ -175,7 +177,6 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         vote.executionScript = _executionScript;
         vote.creator = msg.sender;
         vote.startDate = uint64(now);
-        vote.open = true;
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
@@ -215,14 +216,16 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     function _executeVote(uint256 _voteId) internal {
         Vote storage vote = votes[_voteId];
-        require(!vote.executed);
 
         vote.executed = true;
-        vote.open = false;
 
         runScript(vote.executionScript);
 
         ExecuteVote(_voteId);
+    }
+
+    function _isVoteOpen(Vote storage vote) internal returns (bool) {
+        return uint64(now) < (vote.startDate + voteTime) && !vote.executed;
     }
 
     function pct(uint256 x, uint p) internal returns (uint256) {
