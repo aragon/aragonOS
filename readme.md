@@ -4,29 +4,34 @@
 #### 🚨 Everything in this repo is highly experimental software.
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
 
-#### 🦋 We are using [CommitETH](http://commiteth.com) to reward open source contributions outside the Aragon Core team.
-All issues tagged with **[bounty](https://github.com/aragon/aragon-core/labels/bounty)** are eligible for a bounty on a succesfully merged Pull Request that solves the issue. Even if the bounty says 0 ETH, if it has the **bounty** label, it is higher than 0 ETH (until we automate it, we may take a bit to fund the bounties manually).
-
-Open source is awesome, but it is also hard work that needs to be rewarded to ensure top quality work, and that everyone in the world gets a fair chance to do it.
-
-#### 👋 We are tagging tasks that are [beginner friendly](https://github.com/aragon/aragon-core/labels/beginner-friendly) so you can get started contributing to Aragon Core.
+#### 👋 We are tagging tasks that are [good first issues](https://github.com/aragon/aragon-core/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) so you can get started contributing to Aragon Core.
 Don't be shy to contribute even the smallest tweak. Everyone will be specially nice and helpful to beginners to help you get started!
 
 ## Documentation
 
-Visit the [wiki](https://github.com/aragon/aragon-core/wiki) for in depth documentation on the [architecture](https://github.com/aragon/aragon-core/wiki/Architecture) and different parts of the system.
+Visit the [Aragon wiki](https://wiki.aragon.one/documentation/dev/aragon-core_home/) for in depth documentation on the [architecture](https://wiki.aragon.one/documentation/AragonOS_document/#1-kernel-and-the-access-control-list) and different parts of the system.
 
-## Contributing
-
-To make it easier for contributors to get up to speed, we provide a docker environment that provides all the requirements to build and test Aragon Core.
-
-For more detail you can check the [contributing guide](https://github.com/aragon/aragon-core/wiki/How-to-contribute) on the wiki.
-
-### Run tests
+## Installing aragon-core
 
 ```sh
-npm run test
+npm install
+npm test
 
 # Lint needs to pass as well
 npm run lint
 ```
+
+## Deployment
+
+Running `npm run migrate:dev` performs:
+
+- If no process is listening at port 8545, a testrpc node is started.
+- Deploys an instance of the [Aragon Package Manager](https://github.com/aragon/apm-contracts)
+- Deploys an instance of the Kernel and the 6 default apps.
+- Creates an `aragonpm` repo for every app.
+- Deploys `BaseFactory` with a reference to the deployed ENS where aragonpm packages can be found.
+- Executes `BaseFactory.deploy()` which creates a test organization.
+
+## Contributing
+
+For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/documentation/dev/aragon-core_how_to_contribute/) on the wiki.
