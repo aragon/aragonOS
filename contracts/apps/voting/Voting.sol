@@ -145,7 +145,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
         open = vote.open;
@@ -157,7 +157,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         yea = vote.yea;
         nay = vote.nay;
         totalVoters = vote.totalVoters;
-        scriptHash = sha3(vote.executionScript);
+        script = vote.executionScript;
         scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
