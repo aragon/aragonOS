@@ -52,6 +52,7 @@ contract Fundraising is App, Initializable, ERC677Receiver {
 
     event NewSale(uint256 indexed saleId);
     event CloseSale(uint256 indexed saleId);
+    event BuyTokens(uint256 indexed saleId, address indexed buyer, uint256 tokensPayed, uint256 tokensBought);
 
     /**
     * @param _tokenManager Reference to the token manager that will mint tokens on sales (Requires mint permission!)
@@ -261,10 +262,17 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         sale.soldAmount = sale.soldAmount.add(allowedBuy);
         sale.raisedAmount = sale.raisedAmount.add(finalAllowedAmount);
 
-        tokenManager.mint(_buyer, allowedBuy); // Do actual minting of tokens for buyer
-
         if (sale.soldAmount == sale.maxSold || sale.raisedAmount == sale.maxRaised)
             _closeSale(_saleId);
+
+        tokenManager.mint(_buyer, allowedBuy); // Do actual minting of tokens for buyer
+
+        BuyTokens(
+            _saleId,
+            _buyer,
+            finalAllowedAmount,
+            allowedBuy
+        );
 
         return _payedTokens.sub(finalAllowedAmount); // how many tokens must be returned to buyer as they weren't allowed in
     }
