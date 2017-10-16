@@ -60,6 +60,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     {
         initialized();
 
+        require(_supportRequiredPct > 1);
         require(_supportRequiredPct <= PCT_BASE);
         require(_supportRequiredPct >= _minAcceptQuorumPct);
 
@@ -135,14 +136,14 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
             return false;
 
         // Voting is already decided
-        if (vote.yea >= pct(vote.totalVoters, supportRequiredPct))
+        if (_isValuePct(vote.yea, vote.totalVoters, supportRequiredPct))
             return true;
 
         uint256 totalVotes = vote.yea + vote.nay;
 
         bool voteEnded = !_isVoteOpen(vote);
-        bool hasSupport = vote.yea >= pct(totalVotes, supportRequiredPct);
-        bool hasMinQuorum = vote.yea >= pct(vote.totalVoters, vote.minAcceptQuorumPct);
+        bool hasSupport = _isValuePct(vote.yea, totalVotes, supportRequiredPct);
+        bool hasMinQuorum = _isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct);
 
         return voteEnded && hasSupport && hasMinQuorum;
     }
@@ -228,7 +229,17 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         return uint64(now) < (vote.startDate + voteTime) && !vote.executed;
     }
 
-    function pct(uint256 x, uint p) internal returns (uint256) {
-        return x * p / PCT_BASE;
+    /**
+    * @dev Calculates whether `_value` is at least a percent `_pct` over `_total`
+    */
+    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal returns (bool) {
+        if (_value == 0 && _total > 0)
+            return false;
+
+        uint256 m = _total * _pct;
+        uint256 v = m / PCT_BASE;
+
+        // If division is exact, allow same value, otherwise require value to be greater
+        return m % PCT_BASE == 0 ? _value >= v : _value > v;
     }
 }
