@@ -105,13 +105,14 @@ contract Fundraising is App, Initializable, ERC677Receiver {
         sale.periodStartTime = _periodStartTime;
 
         require(_periodEnds.length > 0 && _periodEnds.length <= MAX_PERIODS);
-        require(_periodStartTime < _periodEnds[0]);
         require(_periodEnds.length * 2 == _prices.length);
 
         for (uint i = 0; i < _periodEnds.length; i++) {
+            uint256 periodStarted = i == 0 ? sale.saleStartTime : sale.periods[i - 1].periodEnds;
+            require(_periodEnds[i] > periodStarted); // periods must last at least 1 second
+            require(_prices[2 * i] > 0 && _prices[2 * i + 1] > 0); // price being 0 could break future calculations
+
             sale.periods.push(SalePeriod(_periodEnds[i], _prices[2 * i], _prices[2 * i + 1]));
-            if (i > 0)
-               require(sale.periods[i - 1].periodEnds < sale.periods[i].periodEnds);
         }
 
         NewSale(saleId);

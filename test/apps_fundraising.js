@@ -29,6 +29,45 @@ contract('Fundraising', accounts => {
         await fundraising.mock_setTimestamp(5)
     })
 
+    it('fails if any price is 0', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, 0, true, 1, [11], [0, 2])
+        })
+    })
+
+    it('fails if period times overlap', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, raisedToken.address, 100, 150, 0, true, 11, [11], [2, 2])
+        })
+    })
+
+    it('fails if any raised token is sold token', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [11], [2, 2])
+        })
+    })
+
+    it('fails if no periods are provided', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [], [])
+        })
+    })
+
+    it('fails if too many periods are provided', async () => {
+        const maxPeriods = 51
+        const periodsEndTime = [...Array(maxPeriods).keys()].map(x => 11 + x)
+        const periodPrices = [...Array(maxPeriods * 2).keys()]
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, periodsEndTime, periodPrices)
+        })
+    })
+
+    it('fails if on periods/prices argument number mismatch', async () => {
+        return assertInvalidOpcode(async () => {
+            await fundraising.newSale(zeroAddress, token.address, 100, 150, 0, true, 1, [11], [10])
+        })
+    })
+
     it('max raised and max sold are both hit', async () => {
         const maxRaised = 100
         const maxSold = 150
