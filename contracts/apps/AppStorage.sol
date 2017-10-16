@@ -1,8 +1,8 @@
 pragma solidity 0.4.15;
 
-import "../kernel/Kernel.sol";
+import "../kernel/IKernel.sol";
 
 contract AppStorage {
-    Kernel public kernel;
+    IKernel public kernel;
     bytes32 public appId;
 }

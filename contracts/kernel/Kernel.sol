@@ -1,10 +1,11 @@
 pragma solidity 0.4.15;
 
+import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
 import "../zeppelin/math/SafeMath.sol";
 
-contract Kernel is KernelStorage, Initializable {
+contract Kernel is IKernel, KernelStorage, Initializable {
     using SafeMath for uint256;
 
     struct Permission {
@@ -19,7 +20,7 @@ contract Kernel is KernelStorage, Initializable {
     // whether a certain entity has a permission
     mapping (address => mapping (address => mapping (bytes32 => Permission))) permissions;
     // how many entities have been given a certain permission
-    mapping (address => mapping (bytes32 => uint256)) public permissionInstances;
+    mapping (address => mapping (bytes32 => uint256)) permissionInstances;
     // appId -> implementation
     mapping (bytes32 => address) appCode;
 
@@ -34,11 +35,11 @@ contract Kernel is KernelStorage, Initializable {
     */
     function initialize(address _permissionsCreator) onlyInit {
         initialized();
-        
+
         _createPermission(
-            _permissionsCreator, 
-            address(this), 
-            CREATE_PERMISSIONS_ROLE, 
+            _permissionsCreator,
+            address(this),
+            CREATE_PERMISSIONS_ROLE,
             _permissionsCreator
         );
     }
@@ -53,16 +54,16 @@ contract Kernel is KernelStorage, Initializable {
     * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
     function createPermission(
-        address _entity, 
-        address _app, 
-        bytes32 _role, 
+        address _entity,
+        address _app,
+        bytes32 _role,
         address _parent
-    ) auth(CREATE_PERMISSIONS_ROLE) external 
+    ) auth(CREATE_PERMISSIONS_ROLE) external
     {
         _createPermission(
-            _entity, 
-            _app, 
-            _role, 
+            _entity,
+            _app,
+            _role,
             _parent
         );
     }
@@ -76,9 +77,9 @@ contract Kernel is KernelStorage, Initializable {
     * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
     function grantPermission(
-        address _entity, 
-        address _app, 
-        bytes32 _role, 
+        address _entity,
+        address _app,
+        bytes32 _role,
         address _parent
     ) external
     {
@@ -88,10 +89,10 @@ contract Kernel is KernelStorage, Initializable {
         require(permissions[_entity][_app][_role].allowed == false);
 
         _setPermission(
-            _entity, 
-            _app, 
-            _role, 
-            _parent, 
+            _entity,
+            _app,
+            _role,
+            _parent,
             true
         );
     }
@@ -107,10 +108,10 @@ contract Kernel is KernelStorage, Initializable {
         require(permissions[_entity][_app][_role].parent == msg.sender);
 
         _setPermission(
-            _entity, 
-            _app, 
-            _role, 
-            0, 
+            _entity,
+            _app,
+            _role,
+            0,
             false
         );
     }
@@ -137,14 +138,38 @@ contract Kernel is KernelStorage, Initializable {
     }
 
     /**
+    * @dev Get permission status
+    * @param _entity Entity address checked
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @return allowed boolean indicating whether entity has permissions over role
+    * @return parent address of the entity which can revoke the permission
+    */
+    function getPermission(address _entity, address _app, bytes32 _role) constant public returns (bool allowed, address parent) {
+        Permission memory permission = permissions[_entity][_app][_role];
+
+        return (permission.allowed, permission.parent);
+    }
+
+    /**
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @return number of current permission instances (entities that can perform role actions on app)
+    */
+    function getPermissionInstances(address _app, bytes32 _role) constant public returns (uint256) {
+        return permissionInstances[_app][_role];
+    }
+
+    /**
     * @dev Function called by apps to check ACL on kernel
     * @param _entity Sender of the original call
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function canPerform(address _entity, address _app, bytes32 _role) constant returns (bool) {
-        return permissions[_entity][_app][_role].allowed;
+    function canPerform(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+        var (isAllowed,) = getPermission(_entity, _app, _role);
+        return isAllowed;
     }
 
     /**
@@ -152,7 +177,7 @@ contract Kernel is KernelStorage, Initializable {
     * @param _appId Identifier for app
     * @return address for app code
     */
-    function getAppCode(bytes32 _appId) constant returns (address) {
+    function getAppCode(bytes32 _appId) constant public returns (address) {
         return appCode[_appId];
     }
 
@@ -160,19 +185,19 @@ contract Kernel is KernelStorage, Initializable {
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(
-        address _entity, 
-        address _app, 
-        bytes32 _role, 
+        address _entity,
+        address _app,
+        bytes32 _role,
         address _parent
-    ) internal 
+    ) internal
     {
         // only allow permission creation when there is no instance of the permission
-        require(permissionInstances[_app][_role] == 0);
+        require(getPermissionInstances(_app, _role) == 0);
         _setPermission(
-            _entity, 
-            _app, 
-            _role, 
-            _parent, 
+            _entity,
+            _app,
+            _role,
+            _parent,
             true
         );
     }
@@ -181,12 +206,12 @@ contract Kernel is KernelStorage, Initializable {
     * @dev Internal function called to actually save the permission
     */
     function _setPermission(
-        address _entity, 
-        address _app, 
-        bytes32 _role, 
-        address _parent, 
+        address _entity,
+        address _app,
+        bytes32 _role,
+        address _parent,
         bool _allowed
-    ) internal 
+    ) internal
     {
         permissions[_entity][_app][_role] = Permission(_parent, _allowed);
 
@@ -195,12 +220,12 @@ contract Kernel is KernelStorage, Initializable {
         } else {
             permissionInstances[_app][_role] = permissionInstances[_app][_role].sub(1);
         }
-        
+
         SetPermission(
-            _entity, 
-            _app, 
-            _role, 
-            _parent, 
+            _entity,
+            _app,
+            _role,
+            _parent,
             _allowed
         );
     }
