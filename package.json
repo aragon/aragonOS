@@ -2,7 +2,6 @@
   "name": "@aragon/core",
   "version": "1.0.0",
   "description": "Core contracts for Aragon",
-  "main": "index.js",
   "scripts": {
     "test": "npm run testrpc:dev && npm run migrate:dev:apm-contracts && truffle test --network rpc",
     "lint": "solium --dir ./contracts",
