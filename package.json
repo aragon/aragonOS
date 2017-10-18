@@ -19,7 +19,8 @@
   "files": [
     "index.js",
     "build/",
-    "artifacts/"
+    "artifacts/",
+    "contracts/"
   ],
   "author": "Aragon",
   "license": "GPL-3.0",
