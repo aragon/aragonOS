@@ -28,12 +28,12 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         address creator;
         uint64 startDate;
         uint256 snapshotBlock;
+        uint256 minAcceptQuorumPct;
         uint256 yea;
         uint256 nay;
         uint256 totalVoters;
         string metadata;
         bytes executionScript;
-        bool open;
         bool executed;
         mapping (address => VoterState) voters;
     }
@@ -60,6 +60,7 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     {
         initialized();
 
+        require(_supportRequiredPct > 1);
         require(_supportRequiredPct <= PCT_BASE);
         require(_supportRequiredPct >= _minAcceptQuorumPct);
 
@@ -125,35 +126,41 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
     function canVote(uint256 _voteId, address _voter) constant returns (bool) {
         Vote storage vote = votes[_voteId];
 
-        return vote.open && uint64(now) < (vote.startDate + voteTime) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
+        return _isVoteOpen(vote) && token.balanceOfAt(_voter, vote.snapshotBlock) > 0;
     }
 
     function canExecute(uint256 _voteId) constant returns (bool) {
         Vote storage vote = votes[_voteId];
 
+        if (vote.executed)
+            return false;
+
         // Voting is already decided
-        if (vote.yea >= pct(vote.totalVoters, supportRequiredPct))
+        if (_isValuePct(vote.yea, vote.totalVoters, supportRequiredPct))
             return true;
 
         uint256 totalVotes = vote.yea + vote.nay;
-        if (uint64(now) >= (vote.startDate + voteTime) && vote.yea >= pct(totalVotes, supportRequiredPct) && vote.yea >= pct(vote.totalVoters, minAcceptQuorumPct))
-            return true;
 
-        return false;
+        bool voteEnded = !_isVoteOpen(vote);
+        bool hasSupport = _isValuePct(vote.yea, totalVotes, supportRequiredPct);
+        bool hasMinQuorum = _isValuePct(vote.yea, vote.totalVoters, vote.minAcceptQuorumPct);
+
+        return voteEnded && hasSupport && hasMinQuorum;
     }
 
-    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 yea, uint256 nay, uint256 totalVoters, bytes32 scriptHash, uint256 scriptActionsCount) {
+    function getVote(uint256 _voteId) constant returns (bool open, bool executed, address creator, uint64 startDate, uint256 snapshotBlock, uint256 minAcceptQuorum, uint256 yea, uint256 nay, uint256 totalVoters, bytes script, uint256 scriptActionsCount) {
         Vote storage vote = votes[_voteId];
 
-        open = vote.open;
+        open = _isVoteOpen(vote);
         executed = vote.executed;
         creator = vote.creator;
         startDate = vote.startDate;
         snapshotBlock = vote.snapshotBlock;
+        minAcceptQuorum = vote.minAcceptQuorumPct;
         yea = vote.yea;
         nay = vote.nay;
         totalVoters = vote.totalVoters;
-        scriptHash = sha3(vote.executionScript);
+        script = vote.executionScript;
         scriptActionsCount = getScriptActionsCount(vote.executionScript);
     }
 
@@ -171,10 +178,10 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
         vote.executionScript = _executionScript;
         vote.creator = msg.sender;
         vote.startDate = uint64(now);
-        vote.open = true;
         vote.metadata = _metadata;
         vote.snapshotBlock = getBlockNumber() - 1; // avoid double voting in this very block
         vote.totalVoters = token.totalSupplyAt(vote.snapshotBlock);
+        vote.minAcceptQuorumPct = minAcceptQuorumPct;
 
         StartVote(voteId);
 
@@ -210,17 +217,29 @@ contract Voting is App, Initializable, EVMCallScriptRunner, EVMCallScriptDecoder
 
     function _executeVote(uint256 _voteId) internal {
         Vote storage vote = votes[_voteId];
-        require(!vote.executed);
 
         vote.executed = true;
-        vote.open = false;
 
         runScript(vote.executionScript);
 
         ExecuteVote(_voteId);
     }
 
-    function pct(uint256 x, uint p) internal returns (uint256) {
-        return x * p / PCT_BASE;
+    function _isVoteOpen(Vote storage vote) internal returns (bool) {
+        return uint64(now) < (vote.startDate + voteTime) && !vote.executed;
+    }
+
+    /**
+    * @dev Calculates whether `_value` is at least a percent `_pct` over `_total`
+    */
+    function _isValuePct(uint256 _value, uint256 _total, uint256 _pct) internal returns (bool) {
+        if (_value == 0 && _total > 0)
+            return false;
+
+        uint256 m = _total * _pct;
+        uint256 v = m / PCT_BASE;
+
+        // If division is exact, allow same value, otherwise require value to be greater
+        return m % PCT_BASE == 0 ? _value >= v : _value > v;
     }
 }
