@@ -1,9 +1,0 @@
-{
-    "appName": "voting.aragonpm.test",
-    "version": "1.0.0",
-    "roles": [
-        { "name": "Create new votes", "id": "CREATE_VOTES_ROLE" },
-        { "name": "Modify quorum", "id": "MODIFY_QUORUM_ROLE" }
-    ],
-    "path": "apps/voting/Voting.sol"
-}

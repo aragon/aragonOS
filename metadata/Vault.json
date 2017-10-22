@@ -1,9 +1,0 @@
-{
-    "appName": "vault.aragonpm.test",
-    "version": "1.0.0",
-    "roles": [
-        { "name": "Request token allowances from Vault", "id": "REQUEST_ALLOWANCES_ROLE" },
-        { "name": "Transfer Vault's tokens", "id": "TRANSFER_ROLE" }
-    ],
-    "path": "apps/vault/Vault.sol"
-}
