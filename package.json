@@ -1,6 +1,6 @@
 {
   "name": "@aragon/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Core contracts for Aragon",
   "scripts": {
     "test": "npm run testrpc:dev && npm run migrate:dev:apm-contracts && truffle test --network rpc",
