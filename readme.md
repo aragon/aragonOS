@@ -21,17 +21,6 @@ npm test
 npm run lint
 ```
 
-## Deployment
-
-Running `npm run migrate:dev` performs:
-
-- If no process is listening at port 8545, a testrpc node is started.
-- Deploys an instance of the [Aragon Package Manager](https://github.com/aragon/apm-contracts)
-- Deploys an instance of the Kernel and the 6 default apps.
-- Creates an `aragonpm` repo for every app.
-- Deploys `BaseFactory` with a reference to the deployed ENS where aragonpm packages can be found.
-- Executes `BaseFactory.deploy()` which creates a test organization.
-
 ## Contributing
 
 For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/documentation/dev/aragon-core_how_to_contribute/) on the wiki.
