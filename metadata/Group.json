@@ -1,9 +1,0 @@
-{
-    "appName": "group.aragonpm.test",
-    "version": "1.0.0",
-    "roles": [
-        { "name": "Add members to group", "id": "ADD_MEMBER_ROLE" },
-        { "name": "Remove members from group", "id": "REMOVE_MEMBER_ROLE" }
-    ],
-    "path": "apps/group/Group.sol"
-}
