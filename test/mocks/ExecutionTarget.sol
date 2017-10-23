@@ -8,6 +8,10 @@ contract ExecutionTarget {
         Executed(counter);
     }
 
+    function failExecute() {
+        revert();
+    }
+
     function setCounter(uint x) {
         counter = x;
     }

@@ -1,6 +1,7 @@
 const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
+const { getBlockNumber } = require('./helpers/web3')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
@@ -20,6 +21,10 @@ contract('Kernel ACL', accounts => {
         app = kernel.address
         await kernel.initialize(permissionsRoot)
         role = await kernel.UPGRADE_KERNEL_ROLE()
+    })
+
+    it('has correct initialization block', async () => {
+        assert.equal(await kernel.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
     })
 
     it('throws on reinitialization', async () => {
