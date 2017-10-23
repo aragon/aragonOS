@@ -2,9 +2,6 @@ const { assertInvalidOpcode } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
-const { getBlockNumber } = require('./helpers/web3')
-
-const getSig = x => web3.sha3(x).slice(0, 10)
 
 contract('Kernel Upgrade', accounts => {
     let kernel = {}
