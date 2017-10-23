@@ -65,4 +65,21 @@ contract('EVM call script', accounts => {
             await executor.execute(script)
         })
     })
+
+    it('decodes action count', async () => {
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action, action, action, action])
+
+        assert.equal(await executor.getActionsCount(script), 4, 'action count should be correct')
+    })
+
+    it('decodes actions', async () => {
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeScript([action, action, action, action])
+
+        const [to, calldata] = await executor.getAction(script, 2)
+
+        assert.equal(action.to, to, 'action to should be correct')
+        assert.equal(action.calldata, calldata, 'action calldata should be correct')
+    })
 })
