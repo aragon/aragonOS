@@ -24,7 +24,7 @@ contract('MiniMeToken', accounts => {
         assert.ok(token.address)
     })
 
-    context('create and destroy tokens', () => {
+    context('create, destroy, and claim tokens', () => {
         it('should generate tokens', async () => {
             await token.generateTokens(accounts[1], 100)
             assert.equal(await token.totalSupply(), 100, 'total supply generated should be 100')
@@ -39,6 +39,10 @@ contract('MiniMeToken', accounts => {
             assert.equal(await token.totalSupply(), 80, 'total supply should be at 80')
             assert.equal(await token.totalSupplyAt(block - 1), 100, 'total supply should be 100 in previous block')
             assert.equal(await token.balanceOf(accounts[1]), 80, 'should have destroyed 20 tokens from orignal amount')
+
+            return assertInvalidOpcode(async () => {
+                await token.destroyTokens(accounts[2], 100)
+            })
         })
     })
 
@@ -76,16 +80,33 @@ contract('MiniMeToken', accounts => {
                 await token.transfer(accounts[3], 5)
             })
         })
+
+        it('claim tokens', async () => {
+            assert.ok(await token.claimTokens(0x0))
+        })
+
+        it('approve tokens for spending', async () => {
+            token.enableTransfers(true)
+            assert.ok(await token.approve(accounts[3], 10))
+            assert.equal(await token.allowance(accounts[0], accounts[3]), 10, 'should have an allowance')
+        })
     })
 
 
     context('test all cloning', () => {
         it('should be able to clone token', async () => {
             clone1 = await MiniMeToken.new(await token.createCloneToken("MMT2", 18, "MMT2", 0, false))
-
-            let curr_block = await getBlockNumber()
-
             assert.equal(await clone1.totalSupply(), 0, 'should have 0 tokens')
+        })
+
+        it('generate some clone tokens', async () => {
+            await clone1.generateTokens(accounts[0], 1000)
+
+            let block = await getBlockNumber()
+
+            assert.equal(await clone1.totalSupplyAt(block - 1), 0, 'previous supply should be 0 for cloned token')
+            assert.equal(await clone1.balanceOfAt(accounts[0], block), 1000, 'cloned token controller should have balance of 1000')
+            assert.equal(await clone1.balanceOfAt(accounts[0], block - 1), 0, 'cloned token controller should have previous balance of 0')
         })
     })
 })
