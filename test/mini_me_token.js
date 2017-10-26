@@ -21,7 +21,7 @@ contract('MiniMeToken', accounts => {
             'MMT',
             true)
 
-        assert.ok(token.address)
+        assert.ok(token)
     })
 
     context('create, destroy, and claim tokens', () => {
@@ -72,6 +72,16 @@ contract('MiniMeToken', accounts => {
         it('check transfer from controller', async () => {
             await token.transfer(accounts[2], 5)
             assert.equal(await token.balanceOf(accounts[2]), 5, 'accounts[2] should now have 10 tokens')
+
+            assert.ok(await token.transfer(accounts[1], 0))
+        })
+
+        it('claim tokens', async () => {
+            assert.ok(await token.claimTokens(0x0))
+            assert.ok(await token.claimTokens(token.address))
+            return assertInvalidOpcode(async () => {
+                await token.transfer(token.address, 5)
+            })
         })
 
         it('disable transfers', async () => {
@@ -81,14 +91,19 @@ contract('MiniMeToken', accounts => {
             })
         })
 
-        it('claim tokens', async () => {
-            assert.ok(await token.claimTokens(0x0))
-        })
-
         it('approve tokens for spending', async () => {
-            token.enableTransfers(true)
+            await token.enableTransfers(true)
             assert.ok(await token.approve(accounts[3], 10))
             assert.equal(await token.allowance(accounts[0], accounts[3]), 10, 'should have an allowance')
+            await token.transferFrom(accounts[3], accounts[4], 5)
+            let allowance = await token.allowance(accounts[0], accounts[3])
+
+            assert.equal(allowance, 10, 'should now have an allowance of 5')
+
+            await token.enableTransfers(false)
+            return assertInvalidOpcode(async () => {
+                await token.approve(accounts[2], 10)
+            })
         })
     })
 
