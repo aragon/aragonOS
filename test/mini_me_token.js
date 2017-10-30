@@ -123,5 +123,15 @@ contract('MiniMeToken', accounts => {
             assert.equal(await clone1.balanceOfAt(accounts[0], block), 1000, 'cloned token controller should have balance of 1000')
             assert.equal(await clone1.balanceOfAt(accounts[0], block - 1), 0, 'cloned token controller should have previous balance of 0')
         })
+
+        it('cloned token transfers', async() => {
+            await clone1.transferFrom(accounts[0], accounts[1], 100)
+
+            let block = await getBlockNumber()
+
+            assert.equal(await clone1.balanceOf(accounts[0]), 900, 'clone token controller should only have 900 tokens after transfer')
+            assert.equal(await clone1.balanceOfAt(accounts[0], block - 1), 1000, 'clone token controller should have 1000 in the past block')
+            assert.equal(await clone1.balanceOf(accounts[1]), 100, 'transferee should now have 100 tokens')
+        })
     })
 })
