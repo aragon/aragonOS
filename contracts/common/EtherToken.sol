@@ -34,6 +34,7 @@ contract EtherToken is ERC677Token {
 
     function withdraw(address _recipient, uint256 _amount) {
         require(_amount > 0);
+        require(balances[msg.sender] >= _amount);
 
         totalSupply = totalSupply.sub(_amount);
         balances[msg.sender] = balances[msg.sender].sub(_amount); // fails if no balance
