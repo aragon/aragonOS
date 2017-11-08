@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
@@ -28,7 +28,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('throws on reinitialization', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await kernel.initialize(accounts[0])
         })
     })
@@ -38,7 +38,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('protected actions fail if not allowed', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await kernel.upgradeKernel(accounts[0])
         })
     })
@@ -75,19 +75,19 @@ contract('Kernel ACL', accounts => {
         })
 
         it('root cannot revoke permission', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await kernel.revokePermission(granted, app, role, { from: permissionsRoot })
             })
         })
 
         it('root cannot re-create permission', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
             })
         })
 
         it('root cannot grant permission', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await kernel.grantPermission(granted, app, role, granted, { from: permissionsRoot })
             })
         })
@@ -117,7 +117,7 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child cannot re-grant permission', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await kernel.grantPermission(accounts[7], app, role, child, { from: child })
                 })
             })
@@ -128,7 +128,7 @@ contract('Kernel ACL', accounts => {
             })
 
             it('cannot be reset to change parent', async () => {
-                return assertInvalidOpcode(async () => {
+                return assertRevert(async () => {
                     await kernel.grantPermission(child, app, role, accounts[7], { from: granted })
                 })
             })

@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const { encodeScript } = require('./helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
@@ -61,7 +61,7 @@ contract('EVM call script', accounts => {
 
         const script = encodeScript([action1, action2])
 
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await executor.execute(script)
         })
     })

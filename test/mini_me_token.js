@@ -1,5 +1,5 @@
 const { getBlockNumber, getBlock, getBalance } = require('./helpers/web3')
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 
@@ -40,7 +40,7 @@ contract('MiniMeToken', accounts => {
             assert.equal(await token.totalSupplyAt(block - 1), 100, 'total supply should be 100 in previous block')
             assert.equal(await token.balanceOf(accounts[1]), 80, 'should have destroyed 20 tokens from orignal amount')
 
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await token.destroyTokens(accounts[2], 100)
             })
         })
@@ -79,14 +79,14 @@ contract('MiniMeToken', accounts => {
         it('claim tokens', async () => {
             assert.ok(await token.claimTokens(0x0))
             assert.ok(await token.claimTokens(token.address))
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await token.transfer(token.address, 5)
             })
         })
 
         it('disable transfers', async () => {
             token.enableTransfers(false)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await token.transfer(accounts[3], 5)
             })
         })
@@ -101,7 +101,7 @@ contract('MiniMeToken', accounts => {
             assert.equal(allowance, 10, 'should now have an allowance of 5')
 
             await token.enableTransfers(false)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await token.approve(accounts[2], 10)
             })
         })

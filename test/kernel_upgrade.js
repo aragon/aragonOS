@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
@@ -16,13 +16,13 @@ contract('Kernel Upgrade', accounts => {
     })
 
     it('fails to upgrade kernel without permission', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await kernel.upgradeKernel(accounts[0])
         })
     })
 
     it('fails when calling is upgraded on old version', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await UpgradedKernel.at(kernel.address).isUpgraded()
         })
     })

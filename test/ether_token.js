@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
 const EtherToken = artifacts.require('EtherToken')
 const ERC677Stub = artifacts.require('ERC677Stub')
@@ -14,7 +14,7 @@ contract('EtherToken', accounts => {
   })
 
   it('fails when wrapping 0', async () => {
-    return assertInvalidOpcode(async () => {
+    return assertRevert(async () => {
         await token.wrap({ value: 0 })
     })
   })
@@ -78,13 +78,13 @@ contract('EtherToken', accounts => {
       })
 
       it('fails when withdrawing more than balance', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await token.withdraw(withdrawAddr, value + 1)
         })
       })
 
       it('fails when withdrawing 0', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await token.withdraw(withdrawAddr, 0)
         })
       })
