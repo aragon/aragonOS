@@ -1,4 +1,4 @@
-const { assertInvalidOpcode } = require('./helpers/assertThrow')
+const { assertRevert } = require('./helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxy = artifacts.require('AppProxy')
@@ -27,7 +27,7 @@ contract('Kernel apps', accounts => {
     })
 
     it('throws if using app without reference in kernel', async () => {
-        return assertInvalidOpcode(async () => {
+        return assertRevert(async () => {
             await app.setValue(10)
         })
     })
@@ -43,7 +43,7 @@ contract('Kernel apps', accounts => {
         })
 
         it('throws when called by unauthorized entity', async () => {
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await app.setValue(10, { from: accounts[1] })
             })
         })
@@ -58,7 +58,7 @@ contract('Kernel apps', accounts => {
         it('can update app code and removed functions throw', async () => {
             await app.setValue(10)
             await kernel.setAppCode(appId, appCode2.address)
-            return assertInvalidOpcode(async () => {
+            return assertRevert(async () => {
                 await app.setValue(10)
             })
         })

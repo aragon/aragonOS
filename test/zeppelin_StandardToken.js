@@ -1,7 +1,7 @@
 'use strict';
 
 const assertJump = function(error) {
-  assert.isAbove(error.message.search('invalid opcode'), -1, 'Invalid opcode error must be returned');
+  assert.isAbove(error.message.search('revert'), -1, 'Revert should have occurred');
 }
 
 var StandardTokenMock = artifacts.require('./helpers/StandardTokenMock.sol');
