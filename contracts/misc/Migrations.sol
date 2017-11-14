@@ -10,15 +10,15 @@ contract Migrations {
             _;
     }
 
-    function Migrations() {
+    function Migrations()  public {
         owner = msg.sender;
     }
 
-    function setCompleted(uint completed) restricted {
+    function setCompleted(uint completed) restricted  public {
         lastCompletedMigration = completed;
     }
 
-    function upgrade(address newAddress) restricted {
+    function upgrade(address newAddress) restricted  public {
         Migrations upgraded = Migrations(newAddress);
         upgraded.setCompleted(lastCompletedMigration);
     }

@@ -33,7 +33,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @notice Initializes a kernel instance and sets `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _permissionsCreator) onlyInit {
+    function initialize(address _permissionsCreator) onlyInit  public {
         initialized();
 
         _createPermission(

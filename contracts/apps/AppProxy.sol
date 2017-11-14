@@ -10,7 +10,7 @@ contract AppProxy is AppStorage, DelegateProxy {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) {
+    function AppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
         kernel = _kernel;
         appId = _appId;
 
