@@ -4,7 +4,7 @@ import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
 
 contract AppProxy is AppStorage, DelegateProxy {
-    function AppProxy(IKernel _kernel, bytes32 _appId) {
+    function AppProxy(IKernel _kernel, bytes32 _appId)  public {
         kernel = _kernel;
         appId = _appId;
     }
