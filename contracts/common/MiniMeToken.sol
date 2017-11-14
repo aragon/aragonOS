@@ -32,27 +32,27 @@ contract Controlled {
     ///  a function with this modifier
     modifier onlyController {
         require(msg.sender == controller);
-        _; 
+        _;
     }
 
     address public controller;
 
-    function Controlled() { controller = msg.sender;}
+    function Controlled()  public { controller = msg.sender;}
 
     /// @notice Changes the controller of the contract
     /// @param _newController The new controller of the contract
-    function changeController(address _newController) onlyController {
+    function changeController(address _newController) onlyController  public {
         controller = _newController;
     }
 }
 
 contract ApproveAndCallFallBack {
     function receiveApproval(
-        address from, 
-        uint256 _amount, 
-        address _token, 
+        address from,
+        uint256 _amount,
+        address _token,
         bytes _data
-    );
+    ) public;
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -131,7 +131,8 @@ contract MiniMeToken is Controlled {
         uint8 _decimalUnits,
         string _tokenSymbol,
         bool _transfersEnabled
-    ) {
+    )  public
+    {
         tokenFactory = MiniMeTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
         decimals = _decimalUnits;                          // Set the decimals
@@ -418,7 +419,7 @@ contract MiniMeToken is Controlled {
 
     /// @notice Enables token holders to transfer their tokens freely if true
     /// @param _transfersEnabled True if transfers are allowed in the clone
-    function enableTransfers(bool _transfersEnabled) onlyController {
+    function enableTransfers(bool _transfersEnabled) onlyController  public {
         transfersEnabled = _transfersEnabled;
     }
 
@@ -492,7 +493,7 @@ contract MiniMeToken is Controlled {
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
-    function ()  payable {
+    function ()  payable  public {
         require(isContract(controller));
         // Adding the ` == true` makes the linter shut up so...
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender) == true);
@@ -506,7 +507,7 @@ contract MiniMeToken is Controlled {
     ///  sent tokens to this contract.
     /// @param _token The address of the token contract that you want to recover
     ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) onlyController {
+    function claimTokens(address _token) onlyController  public {
         if (_token == 0x0) {
             controller.transfer(this.balance);
             return;
