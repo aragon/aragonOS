@@ -32,7 +32,7 @@ contract Controlled {
     ///  a function with this modifier
     modifier onlyController {
         require(msg.sender == controller);
-        _; 
+        _;
     }
 
     address public controller;
@@ -48,9 +48,9 @@ contract Controlled {
 
 contract ApproveAndCallFallBack {
     function receiveApproval(
-        address from, 
-        uint256 _amount, 
-        address _token, 
+        address from,
+        uint256 _amount,
+        address _token,
         bytes _data
     ) public;
 }
@@ -131,7 +131,8 @@ contract MiniMeToken is Controlled {
         uint8 _decimalUnits,
         string _tokenSymbol,
         bool _transfersEnabled
-    )  public {
+    )  public
+    {
         tokenFactory = MiniMeTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
         decimals = _decimalUnits;                          // Set the decimals
