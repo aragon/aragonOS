@@ -20,7 +20,10 @@
     "contracts/",
     "truffle-config.js"
   ],
-  "author": "Aragon",
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>"
+  ],
   "license": "GPL-3.0",
   "devDependencies": {
     "eth-ens-namehash": "^2.0.0",
