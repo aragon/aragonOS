@@ -1,6 +1,6 @@
 {
   "name": "@aragon/core",
-  "version": "1.0.2",
+  "version": "1.1.1",
   "description": "Core contracts for Aragon",
   "scripts": {
     "test": "npm run testrpc:dev && truffle test --network rpc",
@@ -20,7 +20,10 @@
     "contracts/",
     "truffle-config.js"
   ],
-  "author": "Aragon",
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>"
+  ],
   "license": "GPL-3.0",
   "devDependencies": {
     "babel-helpers": "^6.24.1",
