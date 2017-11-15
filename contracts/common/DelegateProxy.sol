@@ -7,9 +7,8 @@ contract DelegateProxy {
     * @param _calldata Calldata for the delegatecall
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
+        require(isContract(_dst));
         assembly {
-            switch extcodesize(_dst) case 0 { revert(0, 0) }
-
             let result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
             let size := returndatasize
 
@@ -21,5 +20,11 @@ contract DelegateProxy {
             switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
+    }
+
+    function isContract(address _target) constant internal returns (bool) {
+        uint256 size;
+        assembly { size := extcodesize(_target) }
+        return size > 0;
     }
 }

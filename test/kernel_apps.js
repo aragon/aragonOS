@@ -19,47 +19,88 @@ contract('Kernel apps', accounts => {
 
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
-
-        const appProxy = await AppProxy.new(kernel.address, appId)
-        const r2 = await appCode1.ROLE()
-        await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
-        app = AppStub.at(appProxy.address)
     })
 
-    it('throws if using app without reference in kernel', async () => {
+    it('fails if initializing on constructor before setting app code', async () => {
+        const initializationPayload = appCode1.contract.initialize.getData()
+
         return assertRevert(async () => {
-            await app.setValue(10)
+            await AppProxy.new(kernel.address, appId, initializationPayload)
         })
     })
 
-    context('setting app code in kernel', async () => {
+    context('initializing on proxy constructor', () => {
         beforeEach(async () => {
             await kernel.setAppCode(appId, appCode1.address)
+
+            const initializationPayload = appCode1.contract.initialize.getData()
+            const appProxy = await AppProxy.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
+            app = AppStub.at(appProxy.address)
         })
 
-        it('app call works if sent from authed entity', async () => {
-            await app.setValue(10)
-            assert.equal(await app.getValue(), 10, 'should have returned correct value')
+        it('was initialized on constructor', async () => {
+            assert.isTrue(await app.initialized(), 'app should have been initialized')
         })
 
-        it('throws when called by unauthorized entity', async () => {
+        it('cannot reinitialize', async () => {
             return assertRevert(async () => {
-                await app.setValue(10, { from: accounts[1] })
+                await app.initialize()
+            })
+        })
+    })
+
+    context('not initializing on proxy constructor', () => {
+        beforeEach(async () => {
+            const initializationPayload = '0x' // dont initialize
+            const appProxy = await AppProxy.new(kernel.address, appId, initializationPayload)
+            app = AppStub.at(appProxy.address)
+
+            // assign app permissions
+            const r2 = await appCode1.ROLE()
+            await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
+        })
+
+        it('throws if using app without reference in kernel', async () => {
+            return assertRevert(async () => {
+                await app.setValue(10)
             })
         })
 
-        it('can update app code and storage is preserved', async () => {
-            await app.setValue(10)
-            await kernel.setAppCode(appId, appCode2.address)
-            // app2 returns the double of the value in storage
-            assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
-        })
+        context('setting app code in kernel', async () => {
+            beforeEach(async () => {
+                await kernel.setAppCode(appId, appCode1.address)
+            })
 
-        it('can update app code and removed functions throw', async () => {
-            await app.setValue(10)
-            await kernel.setAppCode(appId, appCode2.address)
-            return assertRevert(async () => {
+            it('can initialize', async () => {
+                await app.initialize()
+
+                assert.isTrue(await app.initialized(), 'app should have been initialized')
+            })
+
+            it('app call works if sent from authed entity', async () => {
                 await app.setValue(10)
+                assert.equal(await app.getValue(), 10, 'should have returned correct value')
+            })
+
+            it('fails when called by unauthorized entity', async () => {
+                return assertRevert(async () => {
+                    await app.setValue(10, { from: accounts[1] })
+                })
+            })
+
+            it('can update app code and storage is preserved', async () => {
+                await app.setValue(10)
+                await kernel.setAppCode(appId, appCode2.address)
+                // app2 returns the double of the value in storage
+                assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
+            })
+
+            it('can update app code and removed functions throw', async () => {
+                await app.setValue(10)
+                await kernel.setAppCode(appId, appCode2.address)
+                return assertRevert(async () => {
+                    await app.setValue(10)
+                })
             })
         })
     })
