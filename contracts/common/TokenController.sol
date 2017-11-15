@@ -13,7 +13,7 @@ contract TokenController {
     /// @param _to The destination of the transfer
     /// @param _amount The amount of the transfer
     /// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) returns(bool);
+    function onTransfer(address _from, address _to, uint _amount) public constant returns(bool);
 
     /// @notice Notifies the controller about an approval allowing the
     ///  controller to react if desired
@@ -21,6 +21,5 @@ contract TokenController {
     /// @param _spender The spender in the `approve()` call
     /// @param _amount The amount in the `approve()` call
     /// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount)
-        returns(bool);
+    function onApprove(address _owner, address _spender, uint _amount) public constant returns(bool);
 }
