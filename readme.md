@@ -23,4 +23,4 @@ npm run lint
 
 ## Contributing
 
-For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/documentation/dev/aragon-core_how_to_contribute/) on the wiki.
+For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/dev/aragon-core_how_to_contribute/) on the wiki.
