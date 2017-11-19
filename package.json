@@ -26,12 +26,6 @@
   ],
   "license": "GPL-3.0",
   "devDependencies": {
-    "babel-helpers": "^6.24.1",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-2": "^6.24.1",
-    "babel-preset-stage-3": "^6.17.0",
-    "babel-register": "^6.26.0",
     "coveralls": "^2.13.1",
     "eth-ens-namehash": "^2.0.0",
     "ethereumjs-abi": "^0.6.4",
