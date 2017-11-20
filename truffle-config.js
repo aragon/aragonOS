@@ -1,6 +1,3 @@
-require('babel-register');
-require('babel-polyfill');
-
 var HDWalletProvider = require('truffle-hdwallet-provider');
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
