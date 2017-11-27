@@ -103,6 +103,12 @@ contract('Kernel ACL', accounts => {
                 await kernel.grantPermission(newOwner, app, role, { from: newOwner })
             })
 
+            it('fails when setting owner to the zero address', async () => {
+                return assertRevert(async () => {
+                    await kernel.setPermissionOwner('0x00', app, role, { from: newOwner })
+                })
+            })
+
             it('old owner lost power', async () => {
                 return assertRevert(async () => {
                     await kernel.grantPermission(newOwner, app, role, { from: granted })
