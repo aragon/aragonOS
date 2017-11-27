@@ -48,22 +48,17 @@ contract('Kernel ACL', accounts => {
         assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, createPermissionRole))
     })
 
-    context('creating permission setting as parent', () => {
+    context('creating permission', () => {
         beforeEach(async () => {
             await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
         })
 
         it('returns created permission', async () => {
-            const [allowed, parent] = await kernel.getPermission(granted, app, role)
+            const allowed = await kernel.getPermission(granted, app, role)
+            const owner = await kernel.getPermissionOwner(app, role)
 
             assert.isTrue(allowed, 'entity should be allowed to perform role actions')
-            assert.equal(parent, granted, 'permission parent should be correct')
-        })
-
-        it('returns permission instances', async () => {
-            const instances = await kernel.getPermissionInstances(app, role)
-
-            assert.equal(instances, 1, 'should have 1 permission instance')
+            assert.equal(owner, granted, 'permission parent should be correct')
         })
 
         it('can perform action', async () => {
@@ -88,7 +83,30 @@ contract('Kernel ACL', accounts => {
 
         it('root cannot grant permission', async () => {
             return assertRevert(async () => {
-                await kernel.grantPermission(granted, app, role, granted, { from: permissionsRoot })
+                await kernel.grantPermission(granted, app, role, { from: permissionsRoot })
+            })
+        })
+
+        context('transferring ownership', () => {
+            const newOwner = accounts[8]
+
+            beforeEach(async () => {
+                await kernel.setPermissionOwner(newOwner, app, role, { from: granted })
+            })
+
+            it('changes owner', async () => {
+                const owner = await kernel.getPermissionOwner(app, role)
+                assert.equal(owner, newOwner, 'owner should have changed')
+            })
+
+            it('can grant permission', async () => {
+                await kernel.grantPermission(newOwner, app, role, { from: newOwner })
+            })
+
+            it('old owner lost power', async () => {
+                return assertRevert(async () => {
+                    await kernel.grantPermission(newOwner, app, role, { from: granted })
+                })
             })
         })
 
@@ -101,15 +119,16 @@ contract('Kernel ACL', accounts => {
                 assert.isFalse(await kernel.canPerform(granted, app, role))
             })
 
-            it('permissions root can re-create', async () => {
-                await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
-                assert.isTrue(await kernel.canPerform(granted, app, role))
+            it('permissions root cannot re-create', async () => {
+                return assertRevert(async () => {
+                    await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                })
             })
         })
 
         context('re-grants to child', () => {
             beforeEach(async () => {
-                await kernel.grantPermission(child, app, role, granted, { from: granted })
+                await kernel.grantPermission(child, app, role, { from: granted })
             })
 
             it('child entity can perform action', async () => {
@@ -118,19 +137,13 @@ contract('Kernel ACL', accounts => {
 
             it('child cannot re-grant permission', async () => {
                 return assertRevert(async () => {
-                    await kernel.grantPermission(accounts[7], app, role, child, { from: child })
+                    await kernel.grantPermission(accounts[7], app, role, { from: child })
                 })
             })
 
             it('parent can revoke permission', async () => {
                 await kernel.revokePermission(child, app, role, { from: granted })
                 assert.isFalse(await kernel.canPerform(child, app, role))
-            })
-
-            it('cannot be reset to change parent', async () => {
-                return assertRevert(async () => {
-                    await kernel.grantPermission(child, app, role, accounts[7], { from: granted })
-                })
             })
         })
     })
