@@ -2,6 +2,7 @@ const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
+const assertEvent = require('./helpers/assertEvent')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
@@ -19,7 +20,11 @@ contract('Kernel ACL', accounts => {
         const kernelProxy = await KernelProxy.new(kernelImpl.address)
         kernel = Kernel.at(kernelProxy.address)
         app = kernel.address
-        await kernel.initialize(permissionsRoot)
+        const receipt = await kernel.initialize(permissionsRoot)
+        // events for kernel.createPermission permission
+        assertEvent(receipt, 'SetPermission')
+        assertEvent(receipt, 'ChangePermissionOwner')
+
         role = await kernel.UPGRADE_KERNEL_ROLE()
     })
 
@@ -50,7 +55,9 @@ contract('Kernel ACL', accounts => {
 
     context('creating permission', () => {
         beforeEach(async () => {
-            await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+            const receipt = await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+            assertEvent(receipt, 'SetPermission')
+            assertEvent(receipt, 'ChangePermissionOwner')
         })
 
         it('returns created permission', async () => {
@@ -66,7 +73,8 @@ contract('Kernel ACL', accounts => {
         })
 
         it('can execute action', async () => {
-            await kernel.upgradeKernel(accounts[0], { from: granted })
+            const receipt = await kernel.upgradeKernel(accounts[0], { from: granted })
+            assertEvent(receipt, 'UpgradeKernel')
         })
 
         it('root cannot revoke permission', async () => {
@@ -91,7 +99,8 @@ contract('Kernel ACL', accounts => {
             const newOwner = accounts[8]
 
             beforeEach(async () => {
-                await kernel.setPermissionOwner(newOwner, app, role, { from: granted })
+                const receipt = await kernel.setPermissionOwner(newOwner, app, role, { from: granted })
+                assertEvent(receipt, 'ChangePermissionOwner')
             })
 
             it('changes owner', async () => {
@@ -100,7 +109,8 @@ contract('Kernel ACL', accounts => {
             })
 
             it('can grant permission', async () => {
-                await kernel.grantPermission(newOwner, app, role, { from: newOwner })
+                const receipt = await kernel.grantPermission(newOwner, app, role, { from: newOwner })
+                assertEvent(receipt, 'SetPermission')
             })
 
             it('fails when setting owner to the zero address', async () => {
@@ -118,7 +128,8 @@ contract('Kernel ACL', accounts => {
 
         context('self-revokes permission', () => {
             beforeEach(async () => {
-                await kernel.revokePermission(granted, app, role, { from: granted })
+                const receipt = await kernel.revokePermission(granted, app, role, { from: granted })
+                assertEvent(receipt, 'SetPermission')
             })
 
             it('can no longer perform action', async () => {
@@ -134,7 +145,8 @@ contract('Kernel ACL', accounts => {
 
         context('re-grants to child', () => {
             beforeEach(async () => {
-                await kernel.grantPermission(child, app, role, { from: granted })
+                const receipt = await kernel.grantPermission(child, app, role, { from: granted })
+                assertEvent(receipt, 'SetPermission')
             })
 
             it('child entity can perform action', async () => {
@@ -148,8 +160,9 @@ contract('Kernel ACL', accounts => {
             })
 
             it('parent can revoke permission', async () => {
-                await kernel.revokePermission(child, app, role, { from: granted })
+                const receipt = await kernel.revokePermission(child, app, role, { from: granted })
                 assert.isFalse(await kernel.canPerform(child, app, role))
+                assertEvent(receipt, 'SetPermission')
             })
         })
     })
