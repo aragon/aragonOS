@@ -17,11 +17,6 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     // appId -> implementation
     mapping (bytes32 => address) appCode;
 
-    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
-    event ChangePermissionOwner(address indexed app, bytes32 indexed role, address indexed owner);
-    event UpgradeKernel(address indexed newKernel);
-    event SetAppCode(bytes32 indexed appId, address indexed newAppCode);
-
     modifier onlyPermissionOwner(address app, bytes32 role) {
         require(msg.sender == getPermissionOwner(app, role));
         _;
