@@ -29,7 +29,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('has correct initialization block', async () => {
-        assert.equal(await kernel.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+        assert.equal(await kernel.initializationBlock(), await getBlockNumber(), 'initialization block should be correct')
     })
 
     it('throws on reinitialization', async () => {
