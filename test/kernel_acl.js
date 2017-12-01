@@ -2,6 +2,7 @@ const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
+const assertEvent = require('./helpers/assertEvent')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
@@ -19,7 +20,11 @@ contract('Kernel ACL', accounts => {
         const kernelProxy = await KernelProxy.new(kernelImpl.address)
         kernel = Kernel.at(kernelProxy.address)
         app = kernel.address
-        await kernel.initialize(permissionsRoot)
+        const receipt = await kernel.initialize(permissionsRoot)
+        // events for kernel.createPermission permission
+        assertEvent(receipt, 'SetPermission')
+        assertEvent(receipt, 'ChangePermissionManager')
+
         role = await kernel.UPGRADE_KERNEL_ROLE()
     })
 
@@ -34,7 +39,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('actions cannot be performed by default', async () => {
-        assert.isFalse(await kernel.canPerform(permissionsRoot, app, role))
+        assert.isFalse(await kernel.hasPermission(permissionsRoot, app, role))
     })
 
     it('protected actions fail if not allowed', async () => {
@@ -45,33 +50,31 @@ contract('Kernel ACL', accounts => {
 
     it('create permission action can be performed by root by default', async () => {
         const createPermissionRole = await kernel.CREATE_PERMISSIONS_ROLE()
-        assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, createPermissionRole))
+        assert.isTrue(await kernel.hasPermission(permissionsRoot, kernel.address, createPermissionRole))
     })
 
-    context('creating permission setting as parent', () => {
+    context('creating permission', () => {
         beforeEach(async () => {
-            await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+            const receipt = await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+            assertEvent(receipt, 'SetPermission')
+            assertEvent(receipt, 'ChangePermissionManager')
         })
 
         it('returns created permission', async () => {
-            const [allowed, parent] = await kernel.getPermission(granted, app, role)
+            const allowed = await kernel.hasPermission(granted, app, role)
+            const manager = await kernel.getPermissionManager(app, role)
 
             assert.isTrue(allowed, 'entity should be allowed to perform role actions')
-            assert.equal(parent, granted, 'permission parent should be correct')
-        })
-
-        it('returns permission instances', async () => {
-            const instances = await kernel.getPermissionInstances(app, role)
-
-            assert.equal(instances, 1, 'should have 1 permission instance')
+            assert.equal(manager, granted, 'permission parent should be correct')
         })
 
         it('can perform action', async () => {
-            assert.isTrue(await kernel.canPerform(granted, app, role))
+            assert.isTrue(await kernel.hasPermission(granted, app, role))
         })
 
         it('can execute action', async () => {
-            await kernel.upgradeKernel(accounts[0], { from: granted })
+            const receipt = await kernel.upgradeKernel(accounts[0], { from: granted })
+            assertEvent(receipt, 'UpgradeKernel')
         })
 
         it('root cannot revoke permission', async () => {
@@ -88,49 +91,83 @@ contract('Kernel ACL', accounts => {
 
         it('root cannot grant permission', async () => {
             return assertRevert(async () => {
-                await kernel.grantPermission(granted, app, role, granted, { from: permissionsRoot })
+                await kernel.grantPermission(granted, app, role, { from: permissionsRoot })
+            })
+        })
+
+        context('transferring managership', () => {
+            const newManager = accounts[8]
+
+            beforeEach(async () => {
+                const receipt = await kernel.setPermissionManager(newManager, app, role, { from: granted })
+                assertEvent(receipt, 'ChangePermissionManager')
+            })
+
+            it('changes manager', async () => {
+                const manager = await kernel.getPermissionManager(app, role)
+                assert.equal(manager, newManager, 'manager should have changed')
+            })
+
+            it('can grant permission', async () => {
+                const receipt = await kernel.grantPermission(newManager, app, role, { from: newManager })
+                assertEvent(receipt, 'SetPermission')
+            })
+
+            it('fails when setting manager to the zero address', async () => {
+                return assertRevert(async () => {
+                    await kernel.setPermissionManager('0x00', app, role, { from: newManager })
+                })
+            })
+
+            it('old manager lost power', async () => {
+                return assertRevert(async () => {
+                    await kernel.grantPermission(newManager, app, role, { from: granted })
+                })
             })
         })
 
         context('self-revokes permission', () => {
             beforeEach(async () => {
-                await kernel.revokePermission(granted, app, role, { from: granted })
+                const receipt = await kernel.revokePermission(granted, app, role, { from: granted })
+                assertEvent(receipt, 'SetPermission')
             })
 
             it('can no longer perform action', async () => {
-                assert.isFalse(await kernel.canPerform(granted, app, role))
+                assert.isFalse(await kernel.hasPermission(granted, app, role))
             })
 
-            it('permissions root can re-create', async () => {
-                await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
-                assert.isTrue(await kernel.canPerform(granted, app, role))
+            it('permissions root cannot re-create', async () => {
+                return assertRevert(async () => {
+                    await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                })
+            })
+
+            it('permission manager can grant the permission', async () => {
+                await kernel.grantPermission(granted, app, role, { from: granted })
+                assert.isTrue(await kernel.hasPermission(granted, app, role))
             })
         })
 
         context('re-grants to child', () => {
             beforeEach(async () => {
-                await kernel.grantPermission(child, app, role, granted, { from: granted })
+                const receipt = await kernel.grantPermission(child, app, role, { from: granted })
+                assertEvent(receipt, 'SetPermission')
             })
 
             it('child entity can perform action', async () => {
-                assert.isTrue(await kernel.canPerform(child, app, role))
+                assert.isTrue(await kernel.hasPermission(child, app, role))
             })
 
             it('child cannot re-grant permission', async () => {
                 return assertRevert(async () => {
-                    await kernel.grantPermission(accounts[7], app, role, child, { from: child })
+                    await kernel.grantPermission(accounts[7], app, role, { from: child })
                 })
             })
 
             it('parent can revoke permission', async () => {
-                await kernel.revokePermission(child, app, role, { from: granted })
-                assert.isFalse(await kernel.canPerform(child, app, role))
-            })
-
-            it('cannot be reset to change parent', async () => {
-                return assertRevert(async () => {
-                    await kernel.grantPermission(child, app, role, accounts[7], { from: granted })
-                })
+                const receipt = await kernel.revokePermission(child, app, role, { from: granted })
+                assert.isFalse(await kernel.hasPermission(child, app, role))
+                assertEvent(receipt, 'SetPermission')
             })
         })
     })

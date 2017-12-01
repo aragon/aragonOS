@@ -6,34 +6,28 @@ import "../common/Initializable.sol";
 import "../zeppelin/math/SafeMath.sol";
 
 contract Kernel is IKernel, KernelStorage, Initializable {
-    using SafeMath for uint256;
-
-    struct Permission {
-        address parent;
-        bool allowed;
-    }
-
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
     bytes32 constant public UPGRADE_APPS_ROLE = bytes32(2);
     bytes32 constant public UPGRADE_KERNEL_ROLE = bytes32(3);
 
     // whether a certain entity has a permission
-    mapping (address => mapping (address => mapping (bytes32 => Permission))) permissions;
-    // how many entities have been given a certain permission
-    mapping (address => mapping (bytes32 => uint256)) permissionInstances;
+    mapping (address => mapping (address => mapping (bytes32 => bool))) permissions;
+    // who is the manager of a permission
+    mapping (address => mapping (bytes32 => address)) permissionManager;
     // appId -> implementation
     mapping (bytes32 => address) appCode;
 
-    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, address parent, bool allowed);
-    event UpgradeKernel(address indexed newKernel);
-    event SetAppCode(bytes32 indexed appId, address indexed newAppCode);
+    modifier onlyPermissionManager(address app, bytes32 role) {
+        require(msg.sender == getPermissionManager(app, role));
+        _;
+    }
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
     * @notice Initializes a kernel instance and sets `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _permissionsCreator) onlyInit  public {
+    function initialize(address _permissionsCreator) onlyInit public {
         initialized();
 
         _createPermission(
@@ -47,52 +41,44 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
     *      if a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_parent` as parent)
+    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
-    * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
+    * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
     function createPermission(
         address _entity,
         address _app,
         bytes32 _role,
-        address _parent
-    ) auth(CREATE_PERMISSIONS_ROLE) external
+        address _manager
+    )
+        auth(CREATE_PERMISSIONS_ROLE)
+        external
     {
         _createPermission(
             _entity,
             _app,
             _role,
-            _parent
+            _manager
         );
     }
 
     /**
-    * @dev Grants a permission if allowed. This requires `msg.sender` to have the permission and be its own parent
-    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app` (setting `_parent` as parent)
+    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission manager
+    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
-    * @param _parent Address of the entity that will be able to revoke the permission. If set to `_entity`, then it will be able to grant it too
     */
-    function grantPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        address _parent
-    ) external
+    function grantPermission(address _entity, address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
+        external
     {
-        // Implicitely check parent has permission and its parent of it (if it didn't have permission, it wouldn't have a parent)
-        require(permissions[msg.sender][_app][_role].parent == msg.sender);
-        // Permission can only can be set if entity doesn't already have it
-        require(permissions[_entity][_app][_role].allowed == false);
-
         _setPermission(
             _entity,
             _app,
             _role,
-            _parent,
             true
         );
     }
@@ -104,16 +90,29 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _app Address of the app in which the role is revoked
     * @param _role Identifier for the group of actions in app given access to perform
     */
-    function revokePermission(address _entity, address _app, bytes32 _role) external {
-        require(permissions[_entity][_app][_role].parent == msg.sender);
-
+    function revokePermission(address _entity, address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
+        external
+    {
         _setPermission(
             _entity,
             _app,
             _role,
-            0,
             false
         );
+    }
+
+    /**
+    * @notice Sets `_newManager` as the manager of the permission `_role` in `_app`
+    * @param _newManager Address for the new manager
+    * @param _app Address of the app in which the permission management is being transferred
+    * @param _role Identifier for the group of actions in app given access to perform
+    */
+    function setPermissionManager(address _newManager, address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
+        external
+    {
+        _setPermissionManager(_newManager, _app, _role);
     }
 
     /**
@@ -138,38 +137,24 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Get permission status
-    * @param _entity Entity address checked
+    * @dev Get manager address for permission
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
-    * @return allowed boolean indicating whether entity has permissions over role
-    * @return parent address of the entity which can revoke the permission
+    * @return address of the manager for the permission
     */
-    function getPermission(address _entity, address _app, bytes32 _role) constant public returns (bool allowed, address parent) {
-        Permission memory permission = permissions[_entity][_app][_role];
-
-        return (permission.allowed, permission.parent);
+    function getPermissionManager(address _app, bytes32 _role) constant public returns (address) {
+        return permissionManager[_app][_role];
     }
 
     /**
-    * @param _app Address of the app
-    * @param _role Identifier for a group of actions in app
-    * @return number of current permission instances (entities that can perform role actions on app)
-    */
-    function getPermissionInstances(address _app, bytes32 _role) constant public returns (uint256) {
-        return permissionInstances[_app][_role];
-    }
-
-    /**
-    * @dev Function called by apps to check ACL on kernel
+    * @dev Function called by apps to check ACL on kernel or to check permission statu
     * @param _entity Sender of the original call
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function canPerform(address _entity, address _app, bytes32 _role) constant public returns (bool) {
-        var (isAllowed,) = getPermission(_entity, _app, _role);
-        return isAllowed;
+    function hasPermission(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+        return permissions[_entity][_app][_role];
     }
 
     /**
@@ -188,18 +173,20 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _entity,
         address _app,
         bytes32 _role,
-        address _parent
-    ) internal
+        address _manager
+    )
+        internal
     {
-        // only allow permission creation when there is no instance of the permission
-        require(getPermissionInstances(_app, _role) == 0);
+        // only allow permission creation when it has no manager (hasn't been created before)
+        require(permissionManager[_app][_role] == 0);
+
         _setPermission(
             _entity,
             _app,
             _role,
-            _parent,
             true
         );
+        _setPermissionManager(_manager, _app, _role);
     }
 
     /**
@@ -209,29 +196,32 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _entity,
         address _app,
         bytes32 _role,
-        address _parent,
         bool _allowed
-    ) internal
+    )
+        internal
     {
-        permissions[_entity][_app][_role] = Permission(_parent, _allowed);
-
-        if (_allowed) {
-            permissionInstances[_app][_role] = permissionInstances[_app][_role].add(1);
-        } else {
-            permissionInstances[_app][_role] = permissionInstances[_app][_role].sub(1);
-        }
+        permissions[_entity][_app][_role] = _allowed;
 
         SetPermission(
             _entity,
             _app,
             _role,
-            _parent,
             _allowed
         );
     }
 
+    /**
+    * @dev Internal function that sets management
+    */
+    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
+        require(_newManager > 0);
+
+        permissionManager[_app][_role] = _newManager;
+        ChangePermissionManager(_app, _role, _newManager);
+    }
+
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, address(this), _role));
+        require(hasPermission(msg.sender, address(this), _role));
         _;
     }
 }
