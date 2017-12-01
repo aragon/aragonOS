@@ -39,7 +39,7 @@ contract('Kernel ACL', accounts => {
     })
 
     it('actions cannot be performed by default', async () => {
-        assert.isFalse(await kernel.canPerform(permissionsRoot, app, role))
+        assert.isFalse(await kernel.hasPermission(permissionsRoot, app, role))
     })
 
     it('protected actions fail if not allowed', async () => {
@@ -50,7 +50,7 @@ contract('Kernel ACL', accounts => {
 
     it('create permission action can be performed by root by default', async () => {
         const createPermissionRole = await kernel.CREATE_PERMISSIONS_ROLE()
-        assert.isTrue(await kernel.canPerform(permissionsRoot, kernel.address, createPermissionRole))
+        assert.isTrue(await kernel.hasPermission(permissionsRoot, kernel.address, createPermissionRole))
     })
 
     context('creating permission', () => {
@@ -61,7 +61,7 @@ contract('Kernel ACL', accounts => {
         })
 
         it('returns created permission', async () => {
-            const allowed = await kernel.getPermission(granted, app, role)
+            const allowed = await kernel.hasPermission(granted, app, role)
             const owner = await kernel.getPermissionOwner(app, role)
 
             assert.isTrue(allowed, 'entity should be allowed to perform role actions')
@@ -69,7 +69,7 @@ contract('Kernel ACL', accounts => {
         })
 
         it('can perform action', async () => {
-            assert.isTrue(await kernel.canPerform(granted, app, role))
+            assert.isTrue(await kernel.hasPermission(granted, app, role))
         })
 
         it('can execute action', async () => {
@@ -133,7 +133,7 @@ contract('Kernel ACL', accounts => {
             })
 
             it('can no longer perform action', async () => {
-                assert.isFalse(await kernel.canPerform(granted, app, role))
+                assert.isFalse(await kernel.hasPermission(granted, app, role))
             })
 
             it('permissions root cannot re-create', async () => {
@@ -150,7 +150,7 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child entity can perform action', async () => {
-                assert.isTrue(await kernel.canPerform(child, app, role))
+                assert.isTrue(await kernel.hasPermission(child, app, role))
             })
 
             it('child cannot re-grant permission', async () => {
@@ -161,7 +161,7 @@ contract('Kernel ACL', accounts => {
 
             it('parent can revoke permission', async () => {
                 const receipt = await kernel.revokePermission(child, app, role, { from: granted })
-                assert.isFalse(await kernel.canPerform(child, app, role))
+                assert.isFalse(await kernel.hasPermission(child, app, role))
                 assertEvent(receipt, 'SetPermission')
             })
         })

@@ -9,6 +9,6 @@ contract App is AppStorage {
     }
 
     function canPerform(address _sender, bytes32 _role) public constant returns (bool) {
-        return address(kernel) == 0 || kernel.canPerform(_sender, address(this), _role);
+        return address(kernel) == 0 || kernel.hasPermission(_sender, address(this), _role);
     }
 }

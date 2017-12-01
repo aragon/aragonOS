@@ -14,9 +14,8 @@ contract IKernel {
     function setAppCode(bytes32 _appId, address _code) external;
     function upgradeKernel(address _newKernel) external;
 
-    function getPermission(address _entity, address _app, bytes32 _role) constant public returns (bool);
     function getPermissionOwner(address _app, bytes32 _role) constant public returns (address);
 
-    function canPerform(address _entity, address _app, bytes32 _role) constant public returns (bool);
+    function hasPermission(address _entity, address _app, bytes32 _role) constant public returns (bool);
     function getAppCode(bytes32 _appId) constant public returns (address);
 }

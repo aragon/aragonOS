@@ -137,18 +137,6 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Get permission status
-    * @param _entity Entity address checked
-    * @param _app Address of the app
-    * @param _role Identifier for a group of actions in app
-    * @return allowed boolean indicating whether entity has permissions over role
-    * @return owner address that can revoke or grant the permission
-    */
-    function getPermission(address _entity, address _app, bytes32 _role) constant public returns (bool) {
-        return permissions[_entity][_app][_role];
-    }
-
-    /**
     * @dev Get owner address for permission
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
@@ -159,14 +147,14 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel
+    * @dev Function called by apps to check ACL on kernel or to check permission statu
     * @param _entity Sender of the original call
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function canPerform(address _entity, address _app, bytes32 _role) constant public returns (bool) {
-        return getPermission(_entity, _app, _role);
+    function hasPermission(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+        return permissions[_entity][_app][_role];
     }
 
     /**
@@ -233,7 +221,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, address(this), _role));
+        require(hasPermission(msg.sender, address(this), _role));
         _;
     }
 }
