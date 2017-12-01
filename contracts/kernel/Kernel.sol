@@ -75,7 +75,6 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         onlyPermissionOwner(_app, _role)
         external
     {
-        // Only permission owner can grant permission
         _setPermission(
             _entity,
             _app,
