@@ -52,7 +52,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _app,
         bytes32 _role,
         address _owner
-    )   auth(CREATE_PERMISSIONS_ROLE)
+    )
+        auth(CREATE_PERMISSIONS_ROLE)
         external
     {
         _createPermission(
@@ -71,8 +72,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function grantPermission(address _entity, address _app, bytes32 _role)
-             onlyPermissionOwner(_app, _role)
-             external
+        onlyPermissionOwner(_app, _role)
+        external
     {
         // Only permission owner can grant permission
         _setPermission(
@@ -91,8 +92,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function revokePermission(address _entity, address _app, bytes32 _role)
-             onlyPermissionOwner(_app, _role)
-             external
+        onlyPermissionOwner(_app, _role)
+        external
     {
         _setPermission(
             _entity,
@@ -109,8 +110,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function setPermissionOwner(address _newOwner, address _app, bytes32 _role)
-             onlyPermissionOwner(_app, _role)
-             external
+        onlyPermissionOwner(_app, _role)
+        external
     {
         _setPermissionOwner(_newOwner, _app, _role);
     }
@@ -186,7 +187,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _app,
         bytes32 _role,
         address _owner
-    ) internal
+    )
+        internal
     {
         // only allow permission creation when it has no owner (hasn't been created before)
         require(permissionOwner[_app][_role] == 0);
@@ -208,7 +210,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _app,
         bytes32 _role,
         bool _allowed
-    ) internal
+    )
+        internal
     {
         permissions[_entity][_app][_role] = _allowed;
 
