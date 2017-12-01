@@ -141,6 +141,11 @@ contract('Kernel ACL', accounts => {
                     await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
                 })
             })
+
+            it('permission manager can grant the permission', async () => {
+                await kernel.grantPermission(granted, app, role, { from: granted })
+                assert.isTrue(await kernel.hasPermission(granted, app, role))
+            })
         })
 
         context('re-grants to child', () => {
