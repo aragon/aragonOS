@@ -23,7 +23,7 @@ contract('Kernel ACL', accounts => {
         const receipt = await kernel.initialize(permissionsRoot)
         // events for kernel.createPermission permission
         assertEvent(receipt, 'SetPermission')
-        assertEvent(receipt, 'ChangePermissionOwner')
+        assertEvent(receipt, 'ChangePermissionManager')
 
         role = await kernel.UPGRADE_KERNEL_ROLE()
     })
@@ -57,15 +57,15 @@ contract('Kernel ACL', accounts => {
         beforeEach(async () => {
             const receipt = await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
             assertEvent(receipt, 'SetPermission')
-            assertEvent(receipt, 'ChangePermissionOwner')
+            assertEvent(receipt, 'ChangePermissionManager')
         })
 
         it('returns created permission', async () => {
             const allowed = await kernel.hasPermission(granted, app, role)
-            const owner = await kernel.getPermissionOwner(app, role)
+            const manager = await kernel.getPermissionManager(app, role)
 
             assert.isTrue(allowed, 'entity should be allowed to perform role actions')
-            assert.equal(owner, granted, 'permission parent should be correct')
+            assert.equal(manager, granted, 'permission parent should be correct')
         })
 
         it('can perform action', async () => {
@@ -95,33 +95,33 @@ contract('Kernel ACL', accounts => {
             })
         })
 
-        context('transferring ownership', () => {
-            const newOwner = accounts[8]
+        context('transferring managership', () => {
+            const newManager = accounts[8]
 
             beforeEach(async () => {
-                const receipt = await kernel.setPermissionOwner(newOwner, app, role, { from: granted })
-                assertEvent(receipt, 'ChangePermissionOwner')
+                const receipt = await kernel.setPermissionManager(newManager, app, role, { from: granted })
+                assertEvent(receipt, 'ChangePermissionManager')
             })
 
-            it('changes owner', async () => {
-                const owner = await kernel.getPermissionOwner(app, role)
-                assert.equal(owner, newOwner, 'owner should have changed')
+            it('changes manager', async () => {
+                const manager = await kernel.getPermissionManager(app, role)
+                assert.equal(manager, newManager, 'manager should have changed')
             })
 
             it('can grant permission', async () => {
-                const receipt = await kernel.grantPermission(newOwner, app, role, { from: newOwner })
+                const receipt = await kernel.grantPermission(newManager, app, role, { from: newManager })
                 assertEvent(receipt, 'SetPermission')
             })
 
-            it('fails when setting owner to the zero address', async () => {
+            it('fails when setting manager to the zero address', async () => {
                 return assertRevert(async () => {
-                    await kernel.setPermissionOwner('0x00', app, role, { from: newOwner })
+                    await kernel.setPermissionManager('0x00', app, role, { from: newManager })
                 })
             })
 
-            it('old owner lost power', async () => {
+            it('old manager lost power', async () => {
                 return assertRevert(async () => {
-                    await kernel.grantPermission(newOwner, app, role, { from: granted })
+                    await kernel.grantPermission(newManager, app, role, { from: granted })
                 })
             })
         })

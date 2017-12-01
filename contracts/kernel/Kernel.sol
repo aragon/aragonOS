@@ -12,13 +12,13 @@ contract Kernel is IKernel, KernelStorage, Initializable {
 
     // whether a certain entity has a permission
     mapping (address => mapping (address => mapping (bytes32 => bool))) permissions;
-    // who is the owner of a permission
-    mapping (address => mapping (bytes32 => address)) permissionOwner;
+    // who is the manager of a permission
+    mapping (address => mapping (bytes32 => address)) permissionManager;
     // appId -> implementation
     mapping (bytes32 => address) appCode;
 
-    modifier onlyPermissionOwner(address app, bytes32 role) {
-        require(msg.sender == getPermissionOwner(app, role));
+    modifier onlyPermissionManager(address app, bytes32 role) {
+        require(msg.sender == getPermissionManager(app, role));
         _;
     }
 
@@ -41,17 +41,17 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
     *      if a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_owner` as parent)
+    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
-    * @param _owner Address of the entity that will be able to grant and revoke the permission further.
+    * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
     function createPermission(
         address _entity,
         address _app,
         bytes32 _role,
-        address _owner
+        address _manager
     )
         auth(CREATE_PERMISSIONS_ROLE)
         external
@@ -60,19 +60,19 @@ contract Kernel is IKernel, KernelStorage, Initializable {
             _entity,
             _app,
             _role,
-            _owner
+            _manager
         );
     }
 
     /**
-    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission owner
+    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission manager
     * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function grantPermission(address _entity, address _app, bytes32 _role)
-        onlyPermissionOwner(_app, _role)
+        onlyPermissionManager(_app, _role)
         external
     {
         _setPermission(
@@ -91,7 +91,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function revokePermission(address _entity, address _app, bytes32 _role)
-        onlyPermissionOwner(_app, _role)
+        onlyPermissionManager(_app, _role)
         external
     {
         _setPermission(
@@ -103,16 +103,16 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @notice Sets `_newOwner` as the owner of the permission `_role` in `_app`
-    * @param _newOwner Address for the new owner
-    * @param _app Address of the app in which the permission ownership is being transferred
+    * @notice Sets `_newManager` as the manager of the permission `_role` in `_app`
+    * @param _newManager Address for the new manager
+    * @param _app Address of the app in which the permission management is being transferred
     * @param _role Identifier for the group of actions in app given access to perform
     */
-    function setPermissionOwner(address _newOwner, address _app, bytes32 _role)
-        onlyPermissionOwner(_app, _role)
+    function setPermissionManager(address _newManager, address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
         external
     {
-        _setPermissionOwner(_newOwner, _app, _role);
+        _setPermissionManager(_newManager, _app, _role);
     }
 
     /**
@@ -137,13 +137,13 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Get owner address for permission
+    * @dev Get manager address for permission
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
-    * @return address of the owner for the permission
+    * @return address of the manager for the permission
     */
-    function getPermissionOwner(address _app, bytes32 _role) constant public returns (address) {
-        return permissionOwner[_app][_role];
+    function getPermissionManager(address _app, bytes32 _role) constant public returns (address) {
+        return permissionManager[_app][_role];
     }
 
     /**
@@ -173,12 +173,12 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         address _entity,
         address _app,
         bytes32 _role,
-        address _owner
+        address _manager
     )
         internal
     {
-        // only allow permission creation when it has no owner (hasn't been created before)
-        require(permissionOwner[_app][_role] == 0);
+        // only allow permission creation when it has no manager (hasn't been created before)
+        require(permissionManager[_app][_role] == 0);
 
         _setPermission(
             _entity,
@@ -186,7 +186,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
             _role,
             true
         );
-        _setPermissionOwner(_owner, _app, _role);
+        _setPermissionManager(_manager, _app, _role);
     }
 
     /**
@@ -211,13 +211,13 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Internal function that sets ownership
+    * @dev Internal function that sets management
     */
-    function _setPermissionOwner(address _newOwner, address _app, bytes32 _role) internal {
-        require(_newOwner > 0);
+    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
+        require(_newManager > 0);
 
-        permissionOwner[_app][_role] = _newOwner;
-        ChangePermissionOwner(_app, _role, _newOwner);
+        permissionManager[_app][_role] = _newManager;
+        ChangePermissionManager(_app, _role, _newManager);
     }
 
     modifier auth(bytes32 _role) {
