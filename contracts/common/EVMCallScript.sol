@@ -3,6 +3,8 @@ pragma solidity 0.4.15;
 // Inspired by https://github.com/reverendus/tx-manager
 
 contract EVMCallScriptRunner {
+    event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
+
     function runScript(bytes script) internal {
         uint256 location = 0;
         while (location < script.length) {
@@ -10,6 +12,10 @@ contract EVMCallScriptRunner {
             uint256 calldataLength = uint256(uint32At(script, location + 0x14));
             uint256 calldataStart = locationOf(script, location + 0x14 + 0x04);
             uint8 ok;
+            
+            // logged before execution to ensure event ordering in receipt
+            // if failed entire execution is reverted regardless
+            LogScriptCall(msg.sender, address(this), contractAddress);
             assembly {
                 ok := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
             }
