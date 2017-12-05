@@ -60,6 +60,21 @@ contract('Kernel ACL', accounts => {
             assertEvent(receipt, 'ChangePermissionManager')
         })
 
+        it('fails granting existing permission instance', async () => {
+            await kernel.grantPermission(accounts[8], app, role, { from: granted })
+            return assertRevert(async () => {
+                await kernel.grantPermission(accounts[8], app, role, { from: granted })
+            })
+        })
+
+        it('fails revoking non-granted permission', async () => {
+            await kernel.grantPermission(accounts[8], app, role, { from: granted })
+            await kernel.revokePermission(accounts[8], app, role, { from: granted })
+            return assertRevert(async () => {
+                await kernel.revokePermission(accounts[8], app, role, { from: granted })
+            })
+        })
+
         it('returns created permission', async () => {
             const allowed = await kernel.hasPermission(granted, app, role)
             const manager = await kernel.getPermissionManager(app, role)
