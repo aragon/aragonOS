@@ -75,6 +75,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         onlyPermissionManager(_app, _role)
         external
     {
+        require(!hasPermission(_entity, _app, _role));
         _setPermission(
             _entity,
             _app,
@@ -94,6 +95,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         onlyPermissionManager(_app, _role)
         external
     {
+        require(hasPermission(_entity, _app, _role));
         _setPermission(
             _entity,
             _app,
@@ -178,7 +180,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         internal
     {
         // only allow permission creation when it has no manager (hasn't been created before)
-        require(permissionManager[_app][_role] == 0);
+        require(permissionManager[_app][_role] == address(0));
 
         _setPermission(
             _entity,
