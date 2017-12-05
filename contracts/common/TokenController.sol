@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.15;
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
