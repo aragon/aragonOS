@@ -5,6 +5,7 @@ import "../../contracts/apps/App.sol";
 contract AppSt {
     uint a;
     bool public initialized;
+    string public stringTest;
 }
 
 contract AppStub is App, AppSt {
@@ -13,13 +14,14 @@ contract AppStub is App, AppSt {
     function initialize() {
         require(!initialized);
         initialized = true;
+        stringTest = "hola";
     }
 
     function setValue(uint i) auth(ROLE) {
         a = i;
     }
 
-    function getValue() constant returns (uint){
+    function getValue() constant returns (uint) {
         return a;
     }
 }
