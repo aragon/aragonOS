@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
+
 contract EVMCallScriptRunner {
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
@@ -57,6 +58,7 @@ contract EVMCallScriptRunner {
     }
 }
 
+
 contract EVMCallScriptDecoder is EVMCallScriptRunner {
     function getScriptActionsCount(bytes script) internal pure returns (uint256 i) {
         uint256 location = 0;
@@ -66,8 +68,9 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
         }
     }
 
-    function getScriptAction(bytes script, uint256 i) internal pure returns (address, bytes) {
+    function getScriptAction(bytes script, uint256 position) internal pure returns (address, bytes) {
         uint256 location = 0;
+        uint i = position;
         while (location < script.length) {
             if (i == 0) {
                 uint256 length = uint256(uint32At(script, location + 0x14));
@@ -86,7 +89,11 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
 
     // From https://github.com/Arachnid/solidity-stringutils
     // WARNING: HAS SIDE EFFECTS IN MEMORY
-    function memcpy(uint dest, uint src, uint len) pure private {
+    function memcpy(uint _dest, uint _src, uint _len) pure private {
+        uint256 src = _src;
+        uint256 dest = _dest;
+        uint256 len = _len;
+
         // Copy word-length chunks while possible
         for (; len >= 32; len -= 32) {
             assembly {

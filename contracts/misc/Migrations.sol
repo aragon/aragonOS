@@ -1,5 +1,8 @@
 pragma solidity ^0.4.2;
 
+/* solium-disable */
+
+
 contract Migrations {
     address public owner;
     uint public lastCompletedMigration;

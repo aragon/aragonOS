@@ -1,5 +1,6 @@
 pragma solidity 0.4.18;
 
+
 contract DelegateProxy {
     /**
     * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)

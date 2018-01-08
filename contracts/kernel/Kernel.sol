@@ -5,6 +5,7 @@ import "./KernelStorage.sol";
 import "../common/Initializable.sol";
 import "../zeppelin/math/SafeMath.sol";
 
+
 contract Kernel is IKernel, KernelStorage, Initializable {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
     bytes32 constant public UPGRADE_APPS_ROLE = bytes32(2);

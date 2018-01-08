@@ -3,6 +3,7 @@ pragma solidity 0.4.18;
 import "./KernelStorage.sol";
 import "../common/DelegateProxy.sol";
 
+
 contract KernelProxy is KernelStorage, DelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation

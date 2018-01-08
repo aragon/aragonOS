@@ -1,5 +1,6 @@
 pragma solidity ^0.4.18;
 
+
 contract IKernel {
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);

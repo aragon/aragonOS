@@ -3,6 +3,7 @@ pragma solidity 0.4.18;
 import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
 
+
 contract AppProxy is AppStorage, DelegateProxy {
     /**
     * @dev Initialize AppProxy

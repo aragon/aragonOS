@@ -1,5 +1,6 @@
 pragma solidity ^0.4.18;
 
+
 contract IForwarder {
     function isForwarder() public pure returns (bool) { return true; }
 

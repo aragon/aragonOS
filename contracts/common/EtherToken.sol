@@ -2,6 +2,7 @@ pragma solidity 0.4.18;
 
 import "./erc677/ERC677Token.sol";
 
+
 contract EtherToken is ERC677Token {
     using SafeMath for uint256;
 
@@ -9,23 +10,13 @@ contract EtherToken is ERC677Token {
     string public symbol = "ETH";
     uint8 public decimals = 18;
 
-    function wrap() payable  public {
+    function wrap() payable public {
         _wrap(msg.sender, msg.value);
     }
 
     function wrapAndCall(address _receiver, bytes _data) payable public {
         _wrap(_receiver, msg.value);
         _postTransferCall(_receiver, msg.value, _data);
-    }
-
-    function _wrap(address _beneficiary, uint256 _amount) internal {
-        require(_amount > 0);
-
-        totalSupply = totalSupply.add(_amount);
-        balances[_beneficiary] = balances[_beneficiary].add(_amount);
-
-        Mint(_beneficiary, _amount);
-        Transfer(0, _beneficiary, _amount);
     }
 
     function unwrap() public {
@@ -43,6 +34,16 @@ contract EtherToken is ERC677Token {
         Transfer(msg.sender, 0, _amount);
 
         _recipient.transfer(_amount);
+    }
+
+    function _wrap(address _beneficiary, uint256 _amount) internal {
+        require(_amount > 0);
+
+        totalSupply = totalSupply.add(_amount);
+        balances[_beneficiary] = balances[_beneficiary].add(_amount);
+
+        Mint(_beneficiary, _amount);
+        Transfer(0, _beneficiary, _amount);
     }
 
     event Mint(address indexed actor, uint value);

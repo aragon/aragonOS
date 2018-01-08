@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
 
+
 contract App is AppStorage {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role));
