@@ -13,7 +13,7 @@ contract EtherToken is ERC677Token {
         _wrap(msg.sender, msg.value);
     }
 
-    function wrapAndCall(address _receiver, bytes _data) payable  public {
+    function wrapAndCall(address _receiver, bytes _data) payable public {
         _wrap(_receiver, msg.value);
         _postTransferCall(_receiver, msg.value, _data);
     }
@@ -28,11 +28,11 @@ contract EtherToken is ERC677Token {
         Transfer(0, _beneficiary, _amount);
     }
 
-    function unwrap()  public {
+    function unwrap() public {
         withdraw(msg.sender, balances[msg.sender]);
     }
 
-    function withdraw(address _recipient, uint256 _amount)  public {
+    function withdraw(address _recipient, uint256 _amount) public {
         require(_amount > 0);
         require(balances[msg.sender] >= _amount);
 

@@ -144,7 +144,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) constant public returns (address) {
+    function getPermissionManager(address _app, bytes32 _role) view public returns (address) {
         return permissionManager[_app][_role];
     }
 
@@ -155,7 +155,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+    function hasPermission(address _entity, address _app, bytes32 _role) view public returns (bool) {
         return permissions[_entity][_app][_role];
     }
 
@@ -164,7 +164,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _appId Identifier for app
     * @return address for app code
     */
-    function getAppCode(bytes32 _appId) constant public returns (address) {
+    function getAppCode(bytes32 _appId) view public returns (address) {
         return appCode[_appId];
     }
 

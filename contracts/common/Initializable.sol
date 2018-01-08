@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 contract Initializable {
     uint256 private initializationBlock;
@@ -17,11 +17,11 @@ contract Initializable {
     /**
     * @return Block number in which the contract was initialized
     */
-    function getInitializationBlock() public constant returns (uint256) {
+    function getInitializationBlock() public view returns (uint256) {
         return initializationBlock;
     }
 
-    function getBlockNumber() internal constant returns (uint256) {
+    function getBlockNumber() internal view returns (uint256) {
         return block.number;
     }
 }
