@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
@@ -12,7 +12,7 @@ contract EVMCallScriptRunner {
             uint256 calldataLength = uint256(uint32At(script, location + 0x14));
             uint256 calldataStart = locationOf(script, location + 0x14 + 0x04);
             uint8 ok;
-            
+
             // logged before execution to ensure event ordering in receipt
             // if failed entire execution is reverted regardless
             LogScriptCall(msg.sender, address(this), contractAddress);

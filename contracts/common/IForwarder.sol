@@ -1,4 +1,4 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
 
 contract IForwarder {
     function isForwarder() public constant returns (bool) { return true; }
