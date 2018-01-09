@@ -7,8 +7,8 @@ import "../common/Initializable.sol";
 
 
 contract ENSSubdomainRegistrarConstants {
-    bytes32 constant public ethTld = keccak256(bytes32(0), keccak256("eth"));
-    bytes32 constant public publicResolverNode = keccak256(ethTld, keccak256("resolver"));
+    bytes32 constant public ETH_TLD_NODE = keccak256(bytes32(0), keccak256("eth"));
+    bytes32 constant public PUBLIC_RESOLVER_NODE = keccak256(ETH_TLD_NODE, keccak256("resolver"));
 }
 
 
@@ -68,7 +68,7 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
     }
 
     function _pointToResolverAndResolve(bytes32 _node, address _target) internal {
-        address publicResolver = getAddr(publicResolverNode);
+        address publicResolver = getAddr(PUBLIC_RESOLVER_NODE);
         ens.setResolver(_node, publicResolver);
 
         PublicResolver(publicResolver).setAddr(_node, _target);

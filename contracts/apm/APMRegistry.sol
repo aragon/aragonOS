@@ -11,7 +11,7 @@ import "./Repo.sol";
 
 contract APMRegistryConstants {
     // Cant have a regular APM appId because it is used to build APM
-    bytes32 constant public repoAppId = keccak256("repo");
+    bytes32 constant public REPO_APP_ID = keccak256("repo");
 }
 
 
@@ -72,7 +72,8 @@ contract APMRegistry is App, Initializable, AppProxyFactory, APMRegistryConstant
         bytes _contentURI
     )
     auth(CREATE_REPO_ROLE) auth(CREATE_VERSION_ROLE)
-    public returns (Repo)
+    public
+    returns (Repo)
     {
         Repo repo = _newRepo(_name, this);
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);
@@ -91,7 +92,10 @@ contract APMRegistry is App, Initializable, AppProxyFactory, APMRegistryConstant
         uint16[3] _semanticVersion,
         address _contractAddress,
         bytes _contentURI
-    ) auth(CREATE_VERSION_ROLE) public {
+    )
+    auth(CREATE_VERSION_ROLE)
+    public
+    {
         _repo.newVersion(_semanticVersion, _contractAddress, _contentURI);
     }
 
@@ -118,6 +122,6 @@ contract APMRegistry is App, Initializable, AppProxyFactory, APMRegistryConstant
     }
 
     function newClonedRepo() internal returns (Repo) {
-        return Repo(newAppProxy(kernel, repoAppId));
+        return Repo(newAppProxy(kernel, REPO_APP_ID));
     }
 }

@@ -2,6 +2,7 @@ pragma solidity ^0.4.15;
 
 import "../zeppelin/lifecycle/Ownable.sol";
 
+
 contract Repo is Ownable {
     struct Version {
         uint16[3] semanticVersion;
@@ -22,21 +23,23 @@ contract Repo is Ownable {
     * @param _contentURI External URI for fetching new version's content
     */
     function newVersion(uint16[3] _newSemanticVersion, address _contractAddress, bytes _contentURI) onlyOwner public {
+        address contractAddress = _contractAddress;
         if (versions.length > 0) {
             Version storage lastVersion = versions[versions.length - 1];
             require(isValidBump(lastVersion.semanticVersion, _newSemanticVersion));
-            if (_contractAddress == 0) _contractAddress = lastVersion.contractAddress;
+            if (contractAddress == 0)
+                contractAddress = lastVersion.contractAddress;
             // Only allows smart contract change on major version bumps
-            require(lastVersion.contractAddress == _contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0]);
+            require(lastVersion.contractAddress == contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0]);
         } else {
             versions.length += 1;
             uint16[3] memory zeroVersion;
             require(isValidBump(zeroVersion, _newSemanticVersion));
         }
 
-        uint versionId = versions.push(Version(_newSemanticVersion, _contractAddress, _contentURI)) - 1;
+        uint versionId = versions.push(Version(_newSemanticVersion, contractAddress, _contentURI)) - 1;
         versionIdForSemantic[semanticVersionHash(_newSemanticVersion)] = versionId;
-        latestVersionIdForContract[_contractAddress] = versionId;
+        latestVersionIdForContract[contractAddress] = versionId;
 
         NewVersion(versionId, _newSemanticVersion);
     }
@@ -60,8 +63,8 @@ contract Repo is Ownable {
     }
 
     function getVersionsCount() public view returns (uint256) {
-        uint256 l = versions.length;
-        return l > 0 ? l - 1 : 0;
+        uint256 len = versions.length;
+        return len > 0 ? len - 1 : 0;
     }
 
     function isValidBump(uint16[3] _oldVersion, uint16[3] _newVersion) public view returns (bool) {
@@ -69,9 +72,11 @@ contract Repo is Ownable {
         uint i = 0;
         while (i < 3) {
             if (hasBumped) {
-                if (_newVersion[i] != 0) return false;
+                if (_newVersion[i] != 0)
+                    return false;
             } else if (_newVersion[i] != _oldVersion[i]) {
-                if (_oldVersion[i] >= _newVersion[i] || _newVersion[i] - _oldVersion[i] != 1) return false;
+                if (_oldVersion[i] >= _newVersion[i] || _newVersion[i] - _oldVersion[i] != 1)
+                    return false;
                 hasBumped = true;
             }
             i++;

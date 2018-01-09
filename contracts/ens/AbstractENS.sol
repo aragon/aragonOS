@@ -1,5 +1,7 @@
 pragma solidity ^0.4.15;
 
+/* solium-disable */
+
 contract AbstractENS {
     function owner(bytes32 _node) constant returns (address);
     function resolver(bytes32 _node) constant returns (address);
