@@ -47,6 +47,10 @@ contract('Kernel apps', accounts => {
                 await app.initialize()
             })
         })
+
+        it('should return values', async () => {
+            assert.equal(await app.stringTest(), 'hola', 'string test')
+        })
     })
 
     context('not initializing on proxy constructor', () => {

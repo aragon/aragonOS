@@ -1,6 +1,7 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
 
 import "../kernel/IKernel.sol";
+
 
 contract AppStorage {
     IKernel public kernel;

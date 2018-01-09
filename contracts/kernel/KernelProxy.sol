@@ -1,7 +1,8 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "./KernelStorage.sol";
 import "../common/DelegateProxy.sol";
+
 
 contract KernelProxy is KernelStorage, DelegateProxy {
     /**
@@ -9,7 +10,7 @@ contract KernelProxy is KernelStorage, DelegateProxy {
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
-    function KernelProxy(address _kernelImpl)  public {
+    function KernelProxy(address _kernelImpl) public {
         kernelImpl = _kernelImpl;
     }
 

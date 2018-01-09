@@ -1,4 +1,5 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
+
 
 contract DelegateProxy {
     /**
@@ -22,7 +23,7 @@ contract DelegateProxy {
         }
     }
 
-    function isContract(address _target) constant internal returns (bool) {
+    function isContract(address _target) internal view returns (bool) {
         uint256 size;
         assembly { size := extcodesize(_target) }
         return size > 0;

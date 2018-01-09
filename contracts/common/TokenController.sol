@@ -1,6 +1,8 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
 
 /// @dev The token controller contract must implement these functions
+
+
 contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
