@@ -1,5 +1,6 @@
 pragma solidity ^0.4.0;
 
+import "../apps/App.sol";
 import "./AbstractENS.sol";
 import "./PublicResolver.sol";
 
@@ -11,8 +12,9 @@ contract ENSSubdomainRegistrarConstants {
 contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
     bytes32 constant public DELETE_NAME_ROLE = bytes32(2);
+    bytes32 constant public POINT_ROOTNODE_ROLE = bytes32(3);
 
-    AbstractENS ens;
+    AbstractENS public ens;
     bytes32 public rootNode;
 
     event NewName(bytes32 indexed node, bytes32 indexed label);
@@ -34,10 +36,7 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
 
     function createNameAndPoint(bytes32 _label, address _target) auth(CREATE_NAME_ROLE) external {
         bytes32 node = _createName(_label, this);
-        address publicResolver = getAddr(publicResolverNode);
-        ens.setResolver(node, publicResolver);
-
-        PublicResolver(publicResolver).setAddr(node, _target);
+        _pointToResolverAndResolve(node, _target);
     }
 
     function deleteName(bytes32 _label) auth(DELETE_NAME_ROLE) external {
@@ -52,6 +51,10 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
         DeleteName(node, _label);
     }
 
+    function pointRootNode(address _target) auth(POINT_ROOTNODE_ROLE) external {
+        _pointToResolverAndResolve(rootNode, _target);
+    }
+
     function _createName(bytes32 _label, address _owner) internal returns (bytes32 node) {
         node = sha3(rootNode, _label);
         require(ens.owner(node) == address(0)); // avoid name reset
@@ -59,6 +62,13 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
         ens.setSubnodeOwner(rootNode, _label, _owner);
 
         NewName(node, _label);
+    }
+
+    function _pointToResolverAndResolve(bytes32 _node, address _target) internal {
+        address publicResolver = getAddr(publicResolverNode);
+        ens.setResolver(_node, publicResolver);
+
+        PublicResolver(publicResolver).setAddr(_node, _target);
     }
 
     function getAddr(bytes32 node) internal view returns (address) {
