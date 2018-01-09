@@ -3,11 +3,14 @@ pragma solidity ^0.4.0;
 import "../apps/App.sol";
 import "./AbstractENS.sol";
 import "./PublicResolver.sol";
+import "../common/Initializable.sol";
+
 
 contract ENSSubdomainRegistrarConstants {
-    bytes32 constant public ethTld = sha3(bytes32(0), sha3("eth"));
-    bytes32 constant public publicResolverNode = sha3(ethTld, sha3("resolver"));
+    bytes32 constant public ethTld = keccak256(bytes32(0), keccak256("eth"));
+    bytes32 constant public publicResolverNode = keccak256(ethTld, keccak256("resolver"));
 }
+
 
 contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
@@ -30,17 +33,17 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
         rootNode = _rootNode;
     }
 
-    function createName(bytes32 _label, address _owner) auth(CREATE_NAME_ROLE) external {
-        _createName(_label, _owner);
+    function createName(bytes32 _label, address _owner) auth(CREATE_NAME_ROLE) external returns (bytes32 node) {
+        return _createName(_label, _owner);
     }
 
-    function createNameAndPoint(bytes32 _label, address _target) auth(CREATE_NAME_ROLE) external {
-        bytes32 node = _createName(_label, this);
+    function createNameAndPoint(bytes32 _label, address _target) auth(CREATE_NAME_ROLE) external returns (bytes32 node) {
+        node = _createName(_label, this);
         _pointToResolverAndResolve(node, _target);
     }
 
     function deleteName(bytes32 _label) auth(DELETE_NAME_ROLE) external {
-        bytes32 node = sha3(rootNode, _label);
+        bytes32 node = keccak256(rootNode, _label);
 
         if (ens.owner(node) != address(this)) // needs to reclaim ownership so it can set resolver
             ens.setSubnodeOwner(rootNode, _label, this);
@@ -56,7 +59,7 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
     }
 
     function _createName(bytes32 _label, address _owner) internal returns (bytes32 node) {
-        node = sha3(rootNode, _label);
+        node = keccak256(rootNode, _label);
         require(ens.owner(node) == address(0)); // avoid name reset
 
         ens.setSubnodeOwner(rootNode, _label, _owner);
@@ -72,7 +75,7 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConst
     }
 
     function getAddr(bytes32 node) internal view returns (address) {
-        address resolver = ens.getResolver(node);
-        return resolver.getAddr(node);
+        address resolver = ens.resolver(node);
+        return PublicResolver(resolver).addr(node);
     }
 }

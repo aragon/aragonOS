@@ -60,14 +60,14 @@ contract ENS is AbstractENS {
     }
 
     /**
-     * Transfers ownership of a subnode sha3(node, label) to a new address. May only be
+     * Transfers ownership of a subnode keccak256(node, label) to a new address. May only be
      * called by the owner of the parent node.
      * @param node The parent node.
      * @param label The hash of the label specifying the subnode.
      * @param owner The address of the new owner.
      */
     function setSubnodeOwner(bytes32 node, bytes32 label, address owner) only_owner(node) {
-        var subnode = sha3(node, label);
+        var subnode = keccak256(node, label);
         NewOwner(node, label, owner);
         records[subnode].owner = owner;
     }
