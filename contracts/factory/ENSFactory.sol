@@ -9,7 +9,7 @@ contract ENSFactory is ENSConstants {
     event DeployENS(address ens);
 
     // This is an incredibly trustfull ENS deployment, only use for testing
-    function newENS(address _owner) returns (ENS ens) {
+    function newENS(address _owner) public returns (ENS ens) {
         ens = new ENS();
 
         // Setup .eth TLD
