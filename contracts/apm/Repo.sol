@@ -1,9 +1,10 @@
 pragma solidity ^0.4.15;
 
 import "../zeppelin/lifecycle/Ownable.sol";
+import "../apps/AppStorage.sol";
 
 
-contract Repo is Ownable {
+contract Repo is AppStorage, Ownable {
     struct Version {
         uint16[3] semanticVersion;
         address contractAddress;

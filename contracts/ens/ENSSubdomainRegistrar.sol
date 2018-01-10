@@ -42,7 +42,11 @@ contract ENSSubdomainRegistrar is App, Initializable, ENSConstants {
     function deleteName(bytes32 _label) auth(DELETE_NAME_ROLE) external {
         bytes32 node = keccak256(rootNode, _label);
 
-        if (ens.owner(node) != address(this)) // needs to reclaim ownership so it can set resolver
+        address currentOwner = ens.owner(node);
+
+        require(currentOwner != address(0)); // fail if deleting unset name
+
+        if (currentOwner != address(this)) // needs to reclaim ownership so it can set resolver
             ens.setSubnodeOwner(rootNode, _label, this);
 
         ens.setResolver(node, address(0)); // remove resolver so it ends resolving

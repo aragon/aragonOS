@@ -7,7 +7,6 @@ const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
 const baseContracts = bases.map(getContract)
 
 module.exports = async (deployer, network, accounts) => {
-    console.log('deploying bases:')
     await deployer.deploy(baseContracts)
 
     const baseDeployed = baseContracts.map(c => c.address)
@@ -22,7 +21,5 @@ module.exports = async (deployer, network, accounts) => {
     await deployer.deploy(APMRegistryFactory, ...baseDeployed, ensAddr, ENSFactory.address)
     const factory = await APMRegistryFactory.deployed()
 
-    console.log('deploying apm:')
-    const r = await factory.newAPM(namehash('eth'), keccak256('aragonpm'), accounts[0], { gas: 7e6 })
-    console.log(r)
+    const r = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), accounts[0], { gas: 6e6 })
 }
