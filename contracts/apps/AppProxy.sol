@@ -27,7 +27,7 @@ contract AppProxy is AppStorage, DelegateProxy {
 
     function () payable public {
         address target = kernel.getAppCode(appId);
-        require(target > 0); // if app code hasn't been set yet, don't call
+        require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }
 }
