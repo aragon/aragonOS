@@ -1,21 +1,18 @@
-pragma solidity ^0.4.0;
+pragma solidity 0.4.18;
 
-import "../apps/App.sol";
 import "./AbstractENS.sol";
 import "./PublicResolver.sol";
+import "./ENSConstants.sol";
+
+import "../apps/App.sol";
 import "../common/Initializable.sol";
 
 
-contract ENSSubdomainRegistrarConstants {
-    bytes32 constant public ETH_TLD_NODE = keccak256(bytes32(0), keccak256("eth"));
-    bytes32 constant public PUBLIC_RESOLVER_NODE = keccak256(ETH_TLD_NODE, keccak256("resolver"));
-}
-
-
-contract ENSSubdomainRegistrar is App, Initializable, ENSSubdomainRegistrarConstants {
+contract ENSSubdomainRegistrar is App, Initializable, ENSConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
     bytes32 constant public DELETE_NAME_ROLE = bytes32(2);
     bytes32 constant public POINT_ROOTNODE_ROLE = bytes32(3);
+    // TODO: Add claim root name
 
     AbstractENS public ens;
     bytes32 public rootNode;

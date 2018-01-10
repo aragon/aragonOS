@@ -11,7 +11,9 @@ import "./Repo.sol";
 
 contract APMRegistryConstants {
     // Cant have a regular APM appId because it is used to build APM
-    bytes32 constant public REPO_APP_ID = keccak256("repo");
+    bytes32 constant public APM_APP_ID = keccak256("apm.aragon");
+    bytes32 constant public REPO_APP_ID = keccak256("repo.aragon");
+    bytes32 constant public ENS_SUB_APP_ID = keccak256("enssub.aragon");
 }
 
 

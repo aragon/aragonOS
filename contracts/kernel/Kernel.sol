@@ -31,6 +31,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     function initialize(address _permissionsCreator) onlyInit public {
         initialized();
 
+        // Permissions creator cannot be address(0), it will fail on setManager
+
         _createPermission(
             _permissionsCreator,
             address(this),
@@ -217,7 +219,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        require(_newManager > 0);
+        require(_newManager != address(0));
 
         permissionManager[_app][_role] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
