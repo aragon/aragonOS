@@ -2,12 +2,17 @@ pragma solidity ^0.4.18;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
+import "../ScriptHelpers.sol";
 
-contract EVMCallScriptRunner {
+
+contract EVMCallScriptRunner is ScriptHelpers {
+    uint32 constant SPEC_ID = 1;
+    uint256 constant START_LOCATION = 4;
+
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
-    function runScript(bytes script) internal {
-        uint256 location = 0;
+    function execScript(bytes script) internal {
+        uint256 location = START_LOCATION; // first 32 bits are spec id
         while (location < script.length) {
             address contractAddress = addressAt(script, location);
             uint256 calldataLength = uint256(uint32At(script, location + 0x14));
@@ -26,42 +31,12 @@ contract EVMCallScriptRunner {
             location += (0x14 + 0x04 + calldataLength);
         }
     }
-
-    function uint256At(bytes data, uint256 location) internal pure returns (uint256 result) {
-        assembly {
-            result := mload(add(data, add(0x20, location)))
-        }
-    }
-
-    function addressAt(bytes data, uint256 location) internal pure returns (address result) {
-        uint256 word = uint256At(data, location);
-
-        assembly {
-            result := div(and(word, 0xffffffffffffffffffffffffffffffffffffffff000000000000000000000000),
-                          0x1000000000000000000000000)
-        }
-    }
-
-    function uint32At(bytes data, uint256 location) internal pure returns (uint32 result) {
-        uint256 word = uint256At(data, location);
-
-        assembly {
-            result := div(and(word, 0xffffffff00000000000000000000000000000000000000000000000000000000),
-                                   0x100000000000000000000000000000000000000000000000000000000)
-        }
-    }
-
-    function locationOf(bytes data, uint256 location) internal pure returns (uint256 result) {
-        assembly {
-            result := add(data, add(0x20, location))
-        }
-    }
 }
 
 
 contract EVMCallScriptDecoder is EVMCallScriptRunner {
     function getScriptActionsCount(bytes script) internal pure returns (uint256 i) {
-        uint256 location = 0;
+        uint256 location = START_LOCATION;
         while (location < script.length) {
             location += (0x14 + 0x04 + uint256(uint32At(script, location + 0x14)));
             i++;
@@ -69,7 +44,7 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
     }
 
     function getScriptAction(bytes script, uint256 position) internal pure returns (address, bytes) {
-        uint256 location = 0;
+        uint256 location = START_LOCATION;
         uint i = position;
         while (location < script.length) {
             if (i == 0) {
