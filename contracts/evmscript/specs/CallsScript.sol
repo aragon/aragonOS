@@ -5,7 +5,7 @@ pragma solidity ^0.4.18;
 import "../ScriptHelpers.sol";
 
 
-contract EVMCallScriptRunner {
+contract CallsScript {
     using ScriptHelpers for bytes;
 
     uint32 constant SPEC_ID = 1;
@@ -13,22 +13,30 @@ contract EVMCallScriptRunner {
 
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
-    function execScript(bytes script) internal {
+    /**
+    * @notice Executes script by delegatecall into a contract
+    * @param script [ specId (uint32 = 1) ] many calls with this structure ->
+    *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
+    * @param banned Addresses the script cannot call to, or will revert.
+    */
+    function execScript(bytes memory script, address[] memory banned) internal {
         uint256 location = START_LOCATION; // first 32 bits are spec id
         while (location < script.length) {
             address contractAddress = script.addressAt(location);
-            uint256 calldataLength = uint256(script.uint32At(location + 0x14));
-            uint256 calldataStart = script.locationOf(location + 0x14 + 0x04);
-            uint8 ok;
+            // Check address being called is not banned
+            for (uint i = 0; i < banned.length; i++) require(contractAddress != banned[i]);
 
             // logged before execution to ensure event ordering in receipt
             // if failed entire execution is reverted regardless
             LogScriptCall(msg.sender, address(this), contractAddress);
+
+            uint256 calldataLength = uint256(script.uint32At(location + 0x14));
+            uint256 calldataStart = script.locationOf(location + 0x14 + 0x04);
+
             assembly {
-                ok := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
+                let success := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
+                switch success case 0 { revert(0, 0) }
             }
-            if (ok == 0)
-                revert();
 
             location += (0x14 + 0x04 + calldataLength);
         }
@@ -36,10 +44,10 @@ contract EVMCallScriptRunner {
 }
 
 
-contract EVMCallScriptDecoder is EVMCallScriptRunner {
+contract CallsScriptDecoder is CallsScript {
     using ScriptHelpers for bytes;
 
-    function getScriptActionsCount(bytes script) internal pure returns (uint256 i) {
+    function getScriptActionsCount(bytes memory script) internal pure returns (uint256 i) {
         uint256 location = START_LOCATION;
         while (location < script.length) {
             location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
@@ -47,7 +55,7 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
         }
     }
 
-    function getScriptAction(bytes script, uint256 position) internal pure returns (address, bytes) {
+    function getScriptAction(bytes memory script, uint256 position) internal pure returns (address, bytes) {
         uint256 location = START_LOCATION;
         uint i = position;
         while (location < script.length) {
