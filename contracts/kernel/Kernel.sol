@@ -31,7 +31,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     function initialize(address _permissionsCreator) onlyInit public {
         initialized();
 
-        // Permissions creator cannot be address(0), it will fail on setManager
+        // Permissions creator cannot be address(0), it will fail on setPermissionManager
 
         _createPermission(
             _permissionsCreator,

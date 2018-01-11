@@ -30,6 +30,9 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         repoBase = _repoBase;
         ensSubdomainRegistrarBase = _ensSubBase;
 
+        // Either the ENS address provided is used, if any.
+        // Or we use the ENSFactory to generate a test instance of ENS
+        // If not the ENS address nor factory address are provided, this will revert
         ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
     }
 
