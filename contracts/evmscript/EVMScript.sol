@@ -21,17 +21,18 @@ contract EVMScript is CallsScript, DelegateScript, DeployDelegateScript {
     *        in case of not being able to control addresses that will be interacted
     *        with (eg. spec delegatecalls), the script will fail.
     *        Example: this prevents a script in a token manager from transfering tokens
+    * @dev After script is executed, some basic checks should be done to ensure some
+    *      critical storage slots have been modified (for example: kernel and appid refs)
     */
     function execScript(bytes script, address[] bannedAddrs) internal {
         uint32 spec = script.getSpecId();
         require(spec > 0 && spec <= LAST_SPEC_ID);
 
-        // Log first as delegations will exit context
-        ExecuteScript(msg.sender, spec, keccak256(script));
-
         // Exec in spec
         if (spec == CallsScript.SPEC_ID) CallsScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
         if (spec == DelegateScript.SPEC_ID) DelegateScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
         if (spec == DeployDelegateScript.SPEC_ID) DeployDelegateScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
+
+        ExecuteScript(msg.sender, spec, keccak256(script));
     }
 }

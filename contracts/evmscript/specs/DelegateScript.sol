@@ -1,7 +1,6 @@
 pragma solidity 0.4.18;
 
 import "../ScriptHelpers.sol";
-import "../../common/DelegateProxy.sol";
 
 
 interface DelegateScriptTarget {
@@ -9,7 +8,7 @@ interface DelegateScriptTarget {
 }
 
 
-contract DelegateScript is DelegateProxy {
+contract DelegateScript {
     using ScriptHelpers for *;
 
     uint32 constant SPEC_ID = 2;
@@ -19,6 +18,7 @@ contract DelegateScript is DelegateProxy {
     * @notice Executes script by delegatecall into a contract
     * @param script [ specId (uint32 = 2) ][ contract address (20 bytes) ]
     * @param banned If any address is passed, will revert.
+    * @dev Selfdestruct contract at the end of execution to get gas refund
     */
     function execScript(bytes memory script, address[] memory banned) internal {
         require(banned.length == 0); // dont have ability to control bans, so fail.
@@ -29,9 +29,13 @@ contract DelegateScript is DelegateProxy {
     }
 
     function delegate(address addr) internal {
-        bytes4 execSig = DelegateScriptTarget(0).exec.selector;
-        bytes memory execData = execSig.toBytes();
+        require(isContract(addr));
+        require(addr.delegatecall(DelegateScriptTarget(0).exec.selector));
+    }
 
-        DelegateProxy.delegatedFwd(addr, execData);
+    function isContract(address _target) internal view returns (bool) {
+        uint256 size;
+        assembly { size := extcodesize(_target) }
+        return size > 0;
     }
 }

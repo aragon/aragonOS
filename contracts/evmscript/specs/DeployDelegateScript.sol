@@ -26,7 +26,7 @@ contract DeployDelegateScript is DelegateScript {
         assembly {
             // 0x24 = 0x20 (length) + 0x04 (spec id uint32)
             // Length of code is 4 bytes less than total script size
-            addr := create(0, add(addr, 0x24), sub(mload(script), 0x04))
+            addr := create(0, add(script, 0x24), sub(mload(script), 0x04))
             switch iszero(extcodesize(addr))
             case 1 { revert(0, 0) } // throw if contract failed to deploy
         }

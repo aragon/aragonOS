@@ -12,5 +12,8 @@ module.exports = {
             // Remove 12 first 0s of padding for addr and 28 0s for uint32
             return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
         }, '0x00000001') // spec 1
-    }
+    },
+
+    encodeDelegate: addr => '0x00000002' + addr.slice(2), // remove 0x from addr
+    encodeDeploy: contract => '0x00000003' + contract.binary.slice(2),
 }

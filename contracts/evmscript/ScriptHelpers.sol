@@ -35,14 +35,4 @@ library ScriptHelpers {
             result := add(data, add(0x20, location))
         }
     }
-
-    // TODO: Twitter question for better alternative: https://twitter.com/izqui9/status/951438012117913600
-    function toBytes(bytes4 _sig) internal pure returns (bytes memory) {
-        bytes memory payload = new bytes(4);
-        payload[0] = bytes1(_sig);
-        payload[1] = bytes1(_sig << 8);
-        payload[2] = bytes1(_sig << 16);
-        payload[3] = bytes1(_sig << 24);
-        return payload;
-    }
 }
