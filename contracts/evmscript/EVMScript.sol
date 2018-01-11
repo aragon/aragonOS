@@ -30,8 +30,8 @@ contract EVMScript is CallsScript, DelegateScript, DeployDelegateScript {
         ExecuteScript(msg.sender, spec, keccak256(script));
 
         // Exec in spec
-        if (spec == CallsScript.SPEC_ID) CallsScript.execScript(script, bannedAddrs);
-        if (spec == DelegateScript.SPEC_ID) DelegateScript.execScript(script, bannedAddrs);
-        if (spec == DeployDelegateScript.SPEC_ID) DeployDelegateScript.execScript(script, bannedAddrs);
+        if (spec == CallsScript.SPEC_ID) CallsScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
+        if (spec == DelegateScript.SPEC_ID) DelegateScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
+        if (spec == DeployDelegateScript.SPEC_ID) DeployDelegateScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
     }
 }

@@ -24,7 +24,9 @@ contract CallsScript {
         while (location < script.length) {
             address contractAddress = script.addressAt(location);
             // Check address being called is not banned
-            for (uint i = 0; i < banned.length; i++) require(contractAddress != banned[i]);
+            for (uint i = 0; i < banned.length; i++) {
+                require(contractAddress != banned[i]);
+            }
 
             // logged before execution to ensure event ordering in receipt
             // if failed entire execution is reverted regardless
