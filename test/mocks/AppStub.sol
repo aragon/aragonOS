@@ -8,7 +8,7 @@ contract AppSt {
     string public stringTest;
 }
 
-contract AppStub is App, AppSt {
+contract AppStub is AragonApp, AppSt {
     bytes32 constant public ROLE = bytes32(1);
 
     function initialize() {
@@ -26,7 +26,7 @@ contract AppStub is App, AppSt {
     }
 }
 
-contract AppStub2 is App, AppSt {
+contract AppStub2 is AragonApp, AppSt {
     function getValue() constant returns (uint){
         return a * 2;
     }
