@@ -1,5 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const { encodeScript } = require('./helpers/evmScript')
+const { encodeCallScript } = require('./helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
 
@@ -16,7 +16,7 @@ contract('EVM call script', accounts => {
 
     it('executes single action script', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeScript([action])
+        const script = encodeCallScript([action])
 
         await executor.execute(script)
 
@@ -25,7 +25,7 @@ contract('EVM call script', accounts => {
 
     it('executes multi action script', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeScript([action, action, action, action])
+        const script = encodeCallScript([action, action, action, action])
 
         await executor.execute(script)
 
@@ -38,7 +38,7 @@ contract('EVM call script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const action2 = { to: executionTarget2.address, calldata: executionTarget2.contract.execute.getData() }
 
-        const script = encodeScript([action2, action, action2, action, action2])
+        const script = encodeCallScript([action2, action, action2, action, action2])
 
         await executor.execute(script)
 
@@ -48,7 +48,7 @@ contract('EVM call script', accounts => {
 
     it('executes with parameters', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.setCounter.getData(101) }
-        const script = encodeScript([action])
+        const script = encodeCallScript([action])
 
         await executor.execute(script)
 
@@ -59,7 +59,7 @@ contract('EVM call script', accounts => {
         const action1 = { to: executionTarget.address, calldata: executionTarget.contract.setCounter.getData(101) }
         const action2 = { to: executionTarget.address, calldata: executionTarget.contract.failExecute.getData() }
 
-        const script = encodeScript([action1, action2])
+        const script = encodeCallScript([action1, action2])
 
         return assertRevert(async () => {
             await executor.execute(script)
@@ -68,14 +68,14 @@ contract('EVM call script', accounts => {
 
     it('decodes action count', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeScript([action, action, action, action])
+        const script = encodeCallScript([action, action, action, action])
 
         assert.equal(await executor.getActionsCount(script), 4, 'action count should be correct')
     })
 
     it('decodes actions', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeScript([action, action, action, action])
+        const script = encodeCallScript([action, action, action, action])
 
         const [to, calldata] = await executor.getAction(script, 2)
 

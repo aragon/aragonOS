@@ -1,10 +1,11 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/common/EVMCallScript.sol";
+import "../../contracts/evmscript/EVMScript.sol";
 
-contract Executor is EVMCallScriptRunner, EVMCallScriptDecoder {
+
+contract Executor is EVMScript, CallsScriptDecoder {
     function execute(bytes script) {
-        runScript(script);
+        execScript(script, new address[](0));
     }
 
     function getActionsCount(bytes script) constant returns (uint256) {
