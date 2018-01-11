@@ -5,18 +5,20 @@ pragma solidity ^0.4.18;
 import "../ScriptHelpers.sol";
 
 
-contract EVMCallScriptRunner is ScriptHelpers {
+contract EVMCallScriptRunner {
+    using ScriptHelpers for bytes;
+
     uint32 constant SPEC_ID = 1;
-    uint256 constant START_LOCATION = 4;
+    uint256 constant public START_LOCATION = 4;
 
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     function execScript(bytes script) internal {
         uint256 location = START_LOCATION; // first 32 bits are spec id
         while (location < script.length) {
-            address contractAddress = addressAt(script, location);
-            uint256 calldataLength = uint256(uint32At(script, location + 0x14));
-            uint256 calldataStart = locationOf(script, location + 0x14 + 0x04);
+            address contractAddress = script.addressAt(location);
+            uint256 calldataLength = uint256(script.uint32At(location + 0x14));
+            uint256 calldataStart = script.locationOf(location + 0x14 + 0x04);
             uint8 ok;
 
             // logged before execution to ensure event ordering in receipt
@@ -35,10 +37,12 @@ contract EVMCallScriptRunner is ScriptHelpers {
 
 
 contract EVMCallScriptDecoder is EVMCallScriptRunner {
+    using ScriptHelpers for bytes;
+
     function getScriptActionsCount(bytes script) internal pure returns (uint256 i) {
         uint256 location = START_LOCATION;
         while (location < script.length) {
-            location += (0x14 + 0x04 + uint256(uint32At(script, location + 0x14)));
+            location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
             i++;
         }
     }
@@ -48,16 +52,16 @@ contract EVMCallScriptDecoder is EVMCallScriptRunner {
         uint i = position;
         while (location < script.length) {
             if (i == 0) {
-                uint256 length = uint256(uint32At(script, location + 0x14));
-                address addr = addressAt(script, location);
+                uint256 length = uint256(script.uint32At(location + 0x14));
+                address addr = script.addressAt(location);
                 bytes memory calldata = new bytes(length);
                 uint calldataPtr;
                 assembly { calldataPtr := add(calldata, 0x20) }
-                memcpy(calldataPtr, locationOf(script, location + 0x14 + 0x04), length);
+                memcpy(calldataPtr, script.locationOf(location + 0x14 + 0x04), length);
                 return (addr, calldata);
             }
 
-            location += (0x14 + 0x04 + uint256(uint32At(script, location + 0x14)));
+            location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
             i--;
         }
     }
