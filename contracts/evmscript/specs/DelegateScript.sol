@@ -17,8 +17,12 @@ contract DelegateScript is DelegateProxy {
 
     /**
     * @notice Executes script by delegatecall into a contract
+    * @param script [ specId (uint32 = 2) ][ contract address (20 bytes) ]
+    * @param banned If any address is passed, will revert.
     */
-    function execScript(bytes script) internal {
+    function execScript(bytes memory script, address[] memory banned) internal {
+        require(banned.length == 0); // dont have ability to control bans, so fail.
+
         // Script should be spec id + address (20 bytes)
         require(script.length == START_LOCATION + 20);
         delegate(script.addressAt(START_LOCATION));
@@ -28,6 +32,6 @@ contract DelegateScript is DelegateProxy {
         bytes4 execSig = DelegateScriptTarget(0).exec.selector;
         bytes memory execData = execSig.toBytes();
 
-        delegatedFwd(addr, execData);
+        DelegateProxy.delegatedFwd(addr, execData);
     }
 }
