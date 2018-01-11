@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 
 contract Initializable {
-    uint256 public initializationBlock;
+    uint256 private initializationBlock;
 
     modifier onlyInit {
         require(initializationBlock == 0);
@@ -10,9 +10,20 @@ contract Initializable {
     }
 
     /**
+    * @return Block number in which the contract was initialized
+    */
+    function getInitializationBlock() public view returns (uint256) {
+        return initializationBlock;
+    }
+
+    /**
     * @dev Function to be called by top level contract after initialization has finished.
     */
     function initialized() internal onlyInit {
-        initializationBlock = block.number;
+        initializationBlock = getBlockNumber();
+    }
+
+    function getBlockNumber() internal view returns (uint256) {
+        return block.number;
     }
 }
