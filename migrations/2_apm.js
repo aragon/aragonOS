@@ -21,5 +21,7 @@ module.exports = async (deployer, network, accounts) => {
     await deployer.deploy(APMRegistryFactory, ...baseDeployed, ensAddr, ENSFactory.address)
     const factory = await APMRegistryFactory.deployed()
 
-    const r = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), accounts[0], { gas: 6e6 })
+    const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), accounts[0], { gas: 6e6 })
+    const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+    console.log('Deployed APM at:', apmAddr)
 }
