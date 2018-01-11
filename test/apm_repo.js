@@ -60,19 +60,19 @@ contract('Repo', accounts => {
             assert.equal(content, contentUri, 'content should match')
         }
 
-        it('version is fetcheable as latest', async () => {
+        it('version is fetcheble as latest', async () => {
             assertVersion(await repo.getLatest(), [1, 0, 0], initialCode, initialContent)
         })
 
-        it('version is fetcheable by semantic version', async () => {
+        it('version is fetcheble by semantic version', async () => {
             assertVersion(await repo.getBySemanticVersion([1, 0, 0]), [1, 0, 0], initialCode, initialContent)
         })
 
-        it('version is fetcheable by contract address', async () => {
+        it('version is fetcheble by contract address', async () => {
             assertVersion(await repo.getLatestForContractAddress(initialCode), [1, 0, 0], initialCode, initialContent)
         })
 
-        it('version is fetcheable by version id', async () => {
+        it('version is fetcheble by version id', async () => {
             assertVersion(await repo.getByVersionId(1), [1, 0, 0], initialCode, initialContent)
         })
 
@@ -101,31 +101,31 @@ contract('Repo', accounts => {
                 await repo.newVersion([2, 0, 0], newCode, newContent)
             })
 
-            it('new version is fetcheable as latest', async () => {
+            it('new version is fetcheble as latest', async () => {
                 assertVersion(await repo.getLatest(), [2, 0, 0], newCode, newContent)
             })
 
-            it('new version is fetcheable by semantic version', async () => {
+            it('new version is fetcheble by semantic version', async () => {
                 assertVersion(await repo.getBySemanticVersion([2, 0, 0]), [2, 0, 0], newCode, newContent)
             })
 
-            it('new version is fetcheable by contract address', async () => {
+            it('new version is fetcheble by contract address', async () => {
                 assertVersion(await repo.getLatestForContractAddress(newCode), [2, 0, 0], newCode, newContent)
             })
 
-            it('new version is fetcheable by version id', async () => {
+            it('new version is fetcheble by version id', async () => {
                 assertVersion(await repo.getByVersionId(2), [2, 0, 0], newCode, newContent)
             })
 
-            it('old version is fetcheable by semantic version', async () => {
+            it('old version is fetcheble by semantic version', async () => {
                 assertVersion(await repo.getBySemanticVersion([1, 0, 0]), [1, 0, 0], initialCode, initialContent)
             })
 
-            it('old version is fetcheable by contract address', async () => {
+            it('old version is fetcheble by contract address', async () => {
                 assertVersion(await repo.getLatestForContractAddress(initialCode), [1, 0, 0], initialCode, initialContent)
             })
 
-            it('old version is fetcheable by version id', async () => {
+            it('old version is fetcheble by version id', async () => {
                 assertVersion(await repo.getByVersionId(1), [1, 0, 0], initialCode, initialContent)
             })
         })
