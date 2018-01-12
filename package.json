@@ -36,5 +36,8 @@
     "truffle": "^4.0.4",
     "truffle-config": "^1.0.4",
     "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "eth-gas-reporter": "^0.1.1"
   }
 }
