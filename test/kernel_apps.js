@@ -8,7 +8,7 @@ const AppStub2 = artifacts.require('AppStub2')
 const getSig = x => web3.sha3(x).slice(0, 10)
 
 contract('Kernel apps', accounts => {
-    let kernel, app, appCode1, appCode2 = {}
+    let kernel, app, code1, code2 = {}
     const appId = hash('stub.aragonpm.test')
 
     beforeEach(async () => {
@@ -17,12 +17,12 @@ contract('Kernel apps', accounts => {
         const r = await kernel.UPGRADE_APPS_ROLE()
         await kernel.createPermission(accounts[0], kernel.address, r, accounts[0])
 
-        appCode1 = await AppStub.new()
-        appCode2 = await AppStub2.new()
+        code1 = await AppStub.new()
+        code2 = await AppStub2.new()
     })
 
     it('fails if initializing on constructor before setting app code', async () => {
-        const initializationPayload = appCode1.contract.initialize.getData()
+        const initializationPayload = code1.contract.initialize.getData()
 
         return assertRevert(async () => {
             await AppProxy.new(kernel.address, appId, initializationPayload)
@@ -31,9 +31,9 @@ contract('Kernel apps', accounts => {
 
     context('initializing on proxy constructor', () => {
         beforeEach(async () => {
-            await kernel.setAppCode(appId, appCode1.address)
+            await kernel.setCode(appId, code1.address)
 
-            const initializationPayload = appCode1.contract.initialize.getData()
+            const initializationPayload = code1.contract.initialize.getData()
             const appProxy = await AppProxy.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
             app = AppStub.at(appProxy.address)
         })
@@ -60,7 +60,7 @@ contract('Kernel apps', accounts => {
             app = AppStub.at(appProxy.address)
 
             // assign app permissions
-            const r2 = await appCode1.ROLE()
+            const r2 = await code1.ROLE()
             await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
         })
 
@@ -72,7 +72,7 @@ contract('Kernel apps', accounts => {
 
         context('setting app code in kernel', async () => {
             beforeEach(async () => {
-                await kernel.setAppCode(appId, appCode1.address)
+                await kernel.setCode(appId, code1.address)
             })
 
             it('can initialize', async () => {
@@ -94,14 +94,14 @@ contract('Kernel apps', accounts => {
 
             it('can update app code and storage is preserved', async () => {
                 await app.setValue(10)
-                await kernel.setAppCode(appId, appCode2.address)
+                await kernel.setCode(appId, code2.address)
                 // app2 returns the double of the value in storage
                 assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
             })
 
             it('can update app code and removed functions throw', async () => {
                 await app.setValue(10)
-                await kernel.setAppCode(appId, appCode2.address)
+                await kernel.setCode(appId, code2.address)
                 return assertRevert(async () => {
                     await app.setValue(10)
                 })

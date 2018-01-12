@@ -119,14 +119,14 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     }
 
     /**
-    * @dev Changes appCode reference for `_appId`. This role is required before an app with a certain appId working properly
+    * @dev Changes code reference for `_appId`. This role is required before an app with a certain appId working properly
     * @notice Upgrade app code of `_appId` to new implementation at address `_code` (CRITICAL!)
     * @param _appId Namehash of the app name
     * @param _code Address of new implementation for app
     */
-    function setAppCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
-        appCode[_appId] = _code;
-        SetAppCode(_appId, _code);
+    function setCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
+        code[_appId] = _code;
+        SetCode(_appId, _code);
     }
 
     /**
@@ -135,7 +135,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _newKernel Address for new kernel code
     */
     function upgradeKernel(address _newKernel) auth(UPGRADE_KERNEL_ROLE) external {
-        kernelImpl = _newKernel;
+        code[KERNEL_APP_ID] = _newKernel;
         UpgradeKernel(_newKernel);
     }
 
@@ -165,8 +165,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _appId Identifier for app
     * @return address for app code
     */
-    function getAppCode(bytes32 _appId) view public returns (address) {
-        return appCode[_appId];
+    function getCode(bytes32 _appId) view public returns (address) {
+        return code[_appId];
     }
 
     /**
