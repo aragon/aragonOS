@@ -26,7 +26,7 @@ contract('APMRegistry', accounts => {
         const baseAddrs = baseDeployed.map(c => c.address)
 
         const ensFactory = await getContract('ENSFactory').new()
-        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address, { gas: 6e6 })
+        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
     })
 
