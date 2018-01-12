@@ -1,12 +1,8 @@
-var HDWalletProvider = require('truffle-hdwallet-provider');
+var HDWalletProvider = require('truffle-hdwallet-provider')
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
-let developmentProvider, ropstenProvider, kovanProvider = {}
-
-if (!process.env.SOLIDITY_COVERAGE){
-  developmentProvider = require('ethereumjs-testrpc').provider({ gasLimit: 1e8, network_id: 15 })
-}
+let ropstenProvider, kovanProvider = {}
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
@@ -15,11 +11,6 @@ if (process.env.LIVE_NETWORKS) {
 
 module.exports = {
   networks: {
-    development: {
-      network_id: 15,
-      provider: developmentProvider,
-      gas: 9e6,
-    },
     rpc: {
       network_id: 15,
       host: 'localhost',
