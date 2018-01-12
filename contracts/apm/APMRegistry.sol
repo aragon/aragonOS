@@ -1,5 +1,6 @@
 pragma solidity 0.4.18;
 
+import "../kernel/Kernel.sol";
 import "../ens/AbstractENS.sol";
 import "../zeppelin/lifecycle/Ownable.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
@@ -22,8 +23,6 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
     ENSSubdomainRegistrar public registrar;
 
     bytes32 constant public CREATE_REPO_ROLE = bytes32(1);
-    bytes32 constant public CREATE_VERSION_ROLE = bytes32(2);
-    bytes32 constant public FREE_REPO_ROLE = bytes32(3);
 
     event NewRepo(bytes32 id, string name, address repo);
 
@@ -39,25 +38,19 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
 
         registrar.pointRootNode(this);
 
-        // Check we have permission to create names
-        require((kernel == address(0)) || kernel.hasPermission(address(this), registrar, registrar.CREATE_NAME_ROLE()));
+        // Check APM has all permissions it needss
+        require(kernel != address(0));
+        require(kernel.hasPermission(address(this), registrar, registrar.CREATE_NAME_ROLE()));
+        require(kernel.hasPermission(address(this), kernel, Kernel(kernel).CREATE_PERMISSIONS_ROLE()));
     }
 
     /**
     * @notice Create new repo in registry with `_name`
-    * @param _name Repo name
+    * @param _name Repo name, must be ununsed
+    * @param _dev Address that will be given permission to create versions
     */
-    function newRepo(string _name) auth(CREATE_REPO_ROLE) public returns (Repo) {
-        return _newRepo(_name, this);
-    }
-
-    /**
-    * @notice Create free new repo in registry with `_name` and owner `_owner`
-    * @param _name Repo name
-    * @param _owner Address that will own the repo
-    */
-    function newFreeRepo(string _name, address _owner) auth(CREATE_REPO_ROLE) auth(FREE_REPO_ROLE) public returns (Repo) {
-        return _newRepo(_name, _owner);
+    function newRepo(string _name, address _dev) auth(CREATE_REPO_ROLE) public returns (Repo) {
+        return _newRepo(_name, _dev);
     }
 
     /**
@@ -69,50 +62,25 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
     */
     function newRepoWithVersion(
         string _name,
+        address _dev,
         uint16[3] _initialSemanticVersion,
         address _contractAddress,
         bytes _contentURI
-    )
-    auth(CREATE_REPO_ROLE) auth(CREATE_VERSION_ROLE)
-    public
-    returns (Repo)
+    ) auth(CREATE_REPO_ROLE) public returns (Repo)
     {
-        Repo repo = _newRepo(_name, this);
+        Repo repo = _newRepo(_name, this); // need to have permissions to create version
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);
+
+        // Give permissions to _dev
+        kernel.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
+        kernel.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
         return repo;
     }
 
-    /**
-    * @notice Create new version in `_repo`
-    * @param _repo Repo address
-    * @param _semanticVersion Semantic version for the version
-    * @param _contractAddress address for smart contract logic for version (if set to 0, it uses last versions' contractAddress)
-    * @param _contentURI External URI for fetching new version's content
-    */
-    function newVersion(
-        Repo _repo,
-        uint16[3] _semanticVersion,
-        address _contractAddress,
-        bytes _contentURI
-    )
-    auth(CREATE_VERSION_ROLE)
-    public
-    {
-        _repo.newVersion(_semanticVersion, _contractAddress, _contentURI);
-    }
-
-    /**
-    * @notice Sets repo ownership to `_owner`, making the Registry lose all power
-    * @param _repo Repo address
-    * @param _owner New owner for repo
-    */
-    function freeRepo(Repo _repo, address _owner) auth(FREE_REPO_ROLE) public {
-        _repo.transferOwnership(_owner);
-    }
-
-    function _newRepo(string _name, address _owner) internal returns (Repo) {
+    function _newRepo(string _name, address _dev) internal returns (Repo) {
         Repo repo = newClonedRepo();
-        repo.transferOwnership(_owner);
+
+        kernel.createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev); // solium-disable-line arg-overflow
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists

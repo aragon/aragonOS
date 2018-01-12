@@ -64,6 +64,9 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
         configureAPMPermissions(dao, apm, _root);
 
+        // allow apm to create permissions for Repos in Kernel
+        dao.grantPermission(apm, dao, dao.CREATE_PERMISSIONS_ROLE());
+
         // Permission transition to _root
         dao.setPermissionManager(_root, dao, dao.UPGRADE_APPS_ROLE());
         dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE()); // solium-disable-line arg-overflow
@@ -84,7 +87,5 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
     function configureAPMPermissions(Kernel dao, APMRegistry apm, address root) internal {
         // root can create repos, versions, and free repos
         dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root); // solium-disable-line arg-overflow
-        dao.createPermission(root, apm, apm.CREATE_VERSION_ROLE(), root); // solium-disable-line arg-overflow
-        dao.createPermission(root, apm, apm.FREE_REPO_ROLE(), root); // solium-disable-line arg-overflow
     }
 }

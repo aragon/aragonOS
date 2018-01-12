@@ -1,10 +1,9 @@
 pragma solidity ^0.4.15;
 
-import "../zeppelin/lifecycle/Ownable.sol";
 import "../apps/AragonApp.sol";
 
 
-contract Repo is AppStorage, Ownable {
+contract Repo is AragonApp {
     struct Version {
         uint16[3] semanticVersion;
         address contractAddress;
@@ -15,6 +14,8 @@ contract Repo is AppStorage, Ownable {
     mapping (bytes32 => uint256) versionIdForSemantic;
     mapping (address => uint256) latestVersionIdForContract;
 
+    bytes32 constant public CREATE_VERSION_ROLE = bytes32(1);
+
     event NewVersion(uint256 versionId, uint16[3] semanticVersion);
 
     /**
@@ -23,7 +24,12 @@ contract Repo is AppStorage, Ownable {
     * @param _contractAddress address for smart contract logic for version (if set to 0, it uses last versions' contractAddress)
     * @param _contentURI External URI for fetching new version's content
     */
-    function newVersion(uint16[3] _newSemanticVersion, address _contractAddress, bytes _contentURI) onlyOwner public {
+    function newVersion(
+        uint16[3] _newSemanticVersion,
+        address _contractAddress,
+        bytes _contentURI
+    ) auth(CREATE_VERSION_ROLE) public
+    {
         address contractAddress = _contractAddress;
         if (versions.length > 0) {
             Version storage lastVersion = versions[versions.length - 1];

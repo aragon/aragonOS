@@ -24,21 +24,10 @@ contract('Repo', accounts => {
         await assert.isFalse(await repo.isValidBump([0, 0, Math.pow(2, 16)], [0, 0, Math.pow(2, 16) - 1]))
     })
 
-    it('owner can transfer ownership', async () => {
-        await repo.transferOwnership(accounts[2])
-        assert.equal(await repo.owner(), accounts[2], 'ownership should have been transfered')
-    })
-
     // valid version as being a correct bump from 0.0.0
     it('cannot create invalid first version', async () => {
         return assertRevert(async () => {
             await repo.newVersion([1, 1, 0], '0x00', '0x00')
-        })
-    })
-
-    it('non-owners cannot create versions', async () => {
-        return assertRevert(async () => {
-            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: accounts[2] })
         })
     })
 

@@ -11,9 +11,10 @@ const Kernel = artifacts.require('Kernel')
 const getContract = name => artifacts.require(name)
 
 contract('APMRegistry', accounts => {
-    let ens, apmFactory, registry, baseDeployed = {}
+    let ens, apmFactory, registry, baseDeployed, dao = {}
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
+    const repoDev  = accounts[2]
     const notOwner = accounts[5]
 
     const rootNode = namehash('aragonpm.eth')
@@ -34,11 +35,11 @@ contract('APMRegistry', accounts => {
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
 
-        const kernel = Kernel.at(await registry.kernel())
+        dao = Kernel.at(await registry.kernel())
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
-        await kernel.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+        await dao.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
     })
 
     afterEach(async () => {
@@ -51,7 +52,6 @@ contract('APMRegistry', accounts => {
         await registrar.deleteName('0x'+keccak256('test'), { from: apmOwner })
         assert.equal(await ens.owner(testName), zeroAddr, 'should have cleaned up')
     })
-
 
     it('aragonpm.eth should resolve to registry', async () => {
         const resolver = PublicResolver.at(await ens.resolver(rootNode))
@@ -69,7 +69,7 @@ contract('APMRegistry', accounts => {
         let repo = {}
 
         beforeEach(async () => {
-            const receipt = await registry.newRepo('test', { from: apmOwner })
+            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
             repo = Repo.at(getRepoFromLog(receipt))
         })
 
@@ -81,64 +81,53 @@ contract('APMRegistry', accounts => {
             assert.equal(await publicResolver.addr(testName), repo.address, 'resolver should resolve to repo address')
         })
 
-        it('is owned by registry', async () => {
-            assert.equal(await repo.owner(), registry.address, 'repo owner should be correct')
-        })
-
         it('repo should have 0 versions', async () => {
             assert.equal(await repo.getVersionsCount(), 0, 'shouldnt have crated version')
         })
 
         it('fails when creating repo with existing name', async () => {
             return assertRevert(async () => {
-                await registry.newRepo('test')
+                await registry.newRepo('test', repoDev)
             })
         })
 
-        it('can create versions through registry', async () => {
-            await registry.newVersion(repo.address, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
-            await registry.newVersion(repo.address, [2, 0, 0], '0x00', '0x00', { from: apmOwner })
+        it('repo dev can create versions', async () => {
+            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
+            await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
 
             assert.equal(await repo.getVersionsCount(), 2, 'should have created versions')
         })
 
-        it('can free repo and interact directly', async () => {
-            registry.newVersion(repo.address, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
+        it('repo dev can authorize someone to interact with repo', async () => {
+            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
             const newOwner = accounts[8]
-            await registry.freeRepo(repo.address, newOwner, { from: apmOwner })
-            await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
 
-            assert.equal(await repo.getVersionsCount(), 2, 'should have created versions')
+            await dao.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+
+            await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
+            await repo.newVersion([2, 1, 0], '0x00', '0x00', { from: repoDev }) // repoDev can still create them
+
+            assert.equal(await repo.getVersionsCount(), 3, 'should have created versions')
+        })
+
+        it('repo dev can no longer create versions if permission is removed', async () => {
+            await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
+            await dao.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+
+            return assertRevert(async () => {
+                await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
+            })
         })
 
         it('cannot create versions if not in ACL', async () => {
             return assertRevert(async () => {
-                await registry.newVersion(repo.address, [1, 0, 0], '0x00', '0x00', { from: notOwner })
-            })
-        })
-
-        it('cannot free repo if not in ACL', async () => {
-            return assertRevert(async () => {
-                await registry.freeRepo(repo.address, '0x12', { from: notOwner })
-            })
-        })
-
-        it('cant interact directly with a repo not freed', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: apmOwner })
-            })
-        })
-
-        it('cant interact through registry after freed', async () => {
-            await registry.freeRepo(repo.address, '0x12', { from: apmOwner })
-            return assertRevert(async () => {
-                await registry.newVersion(repo.address, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
+                await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: notOwner })
             })
         })
     })
 
     it('can create repo with version', async () => {
-        const receipt = await registry.newRepoWithVersion('test', [1, 0, 0], '0x00', '0x00', { from: apmOwner })
+        const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
         const repoAddr = getRepoFromLog(receipt)
 
         assert.equal(await Repo.at(repoAddr).getVersionsCount(), 1, 'should have crated version')
@@ -146,16 +135,7 @@ contract('APMRegistry', accounts => {
 
     it('cannot create repo if not in ACL', async () => {
         return assertRevert(async () => {
-            await registry.newRepo('test', { from: notOwner })
+            await registry.newRepo('test', repoDev, { from: notOwner })
         })
-    })
-
-    it('can create and free repo', async () => {
-        const newOwner = accounts[8]
-        const receipt = await registry.newFreeRepo('test', newOwner, { from: apmOwner })
-        const repo = Repo.at(getRepoFromLog(receipt))
-
-        await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: newOwner })
-        assert.equal(await repo.getVersionsCount(), 1, 'should have created version')
     })
 })
