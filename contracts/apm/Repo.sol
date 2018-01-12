@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
 import "../zeppelin/lifecycle/Ownable.sol";
-import "../apps/AppStorage.sol";
+import "../apps/AragonApp.sol";
 
 
 contract Repo is AppStorage, Ownable {

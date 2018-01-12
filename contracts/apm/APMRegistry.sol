@@ -4,7 +4,7 @@ import "../ens/AbstractENS.sol";
 import "../zeppelin/lifecycle/Ownable.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../apps/AppProxyFactory.sol";
-import "../apps/App.sol";
+import "../apps/AragonApp.sol";
 import "../common/Initializable.sol";
 import "./Repo.sol";
 
@@ -17,7 +17,7 @@ contract APMRegistryConstants {
 }
 
 
-contract APMRegistry is App, Initializable, AppProxyFactory, APMRegistryConstants {
+contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryConstants {
     AbstractENS ens;
     ENSSubdomainRegistrar public registrar;
 

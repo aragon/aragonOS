@@ -4,11 +4,11 @@ import "./AbstractENS.sol";
 import "./PublicResolver.sol";
 import "./ENSConstants.sol";
 
-import "../apps/App.sol";
+import "../apps/AragonApp.sol";
 import "../common/Initializable.sol";
 
 
-contract ENSSubdomainRegistrar is App, Initializable, ENSConstants {
+contract ENSSubdomainRegistrar is AragonApp, Initializable, ENSConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
     bytes32 constant public DELETE_NAME_ROLE = bytes32(2);
     bytes32 constant public POINT_ROOTNODE_ROLE = bytes32(3);
