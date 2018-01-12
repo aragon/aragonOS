@@ -1,4 +1,4 @@
-const { assertRevert } = require('./helpers/assertThrow')
+ const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
@@ -185,6 +185,18 @@ contract('EVM Script', accounts => {
         it('fails to execute if it has banned addresses', async () => {
             return assertRevert(async () => {
                 await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
+            })
+        })
+
+        it('fails if execution modifies kernel', async () => {
+            return assertRevert(async () => {
+                await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierKernel')))
+            })
+        })
+
+        it('fails if execution modifies app id', async () => {
+            return assertRevert(async () => {
+                await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
             })
         })
     })

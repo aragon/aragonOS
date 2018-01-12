@@ -6,8 +6,10 @@ import "./specs/CallsScript.sol";
 import "./specs/DelegateScript.sol";
 import "./specs/DeployDelegateScript.sol";
 
+import "../apps/AppStorage.sol";
 
-contract EVMScript is CallsScript, DelegateScript, DeployDelegateScript {
+
+contract EVMScript is AppStorage, CallsScript, DelegateScript, DeployDelegateScript {
     using ScriptHelpers for bytes;
 
     event ExecuteScript(address indexed sender, uint32 indexed spec, bytes32 scriptHash);
@@ -24,7 +26,7 @@ contract EVMScript is CallsScript, DelegateScript, DeployDelegateScript {
     * @dev After script is executed, some basic checks should be done to ensure some
     *      critical storage slots have been modified (for example: kernel and appid refs)
     */
-    function execScript(bytes script, address[] bannedAddrs) internal {
+    function execScript(bytes script, address[] bannedAddrs) protectState internal {
         uint32 spec = script.getSpecId();
         require(spec > 0 && spec <= LAST_SPEC_ID);
 
@@ -34,5 +36,14 @@ contract EVMScript is CallsScript, DelegateScript, DeployDelegateScript {
         if (spec == DeployDelegateScript.SPEC_ID) DeployDelegateScript.execScript(script, bannedAddrs); // solium-disable-line lbrace
 
         ExecuteScript(msg.sender, spec, keccak256(script));
+    }
+
+    // Some apps will need to have extended state protection
+    modifier protectState {
+        address preKernel = kernel;
+        bytes32 preAppId = appId;
+        _; // exec
+        require(kernel == preKernel);
+        require(appId == preAppId);
     }
 }
