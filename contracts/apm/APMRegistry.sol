@@ -2,7 +2,6 @@ pragma solidity 0.4.18;
 
 import "../kernel/Kernel.sol";
 import "../ens/AbstractENS.sol";
-import "../zeppelin/lifecycle/Ownable.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../apps/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
