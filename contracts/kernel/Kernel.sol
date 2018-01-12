@@ -12,7 +12,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     bytes32 constant public UPGRADE_KERNEL_ROLE = bytes32(3);
 
     // whether a certain entity has a permission
-    mapping (address => mapping (address => mapping (bytes32 => bool))) permissions;
+    mapping (bytes32 => bool) permissions; // 0 for no permission, or parameters id
     // who is the manager of a permission
     mapping (address => mapping (bytes32 => address)) permissionManager;
     // appId -> implementation
@@ -157,7 +157,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _entity, address _app, bytes32 _role) view public returns (bool) {
-        return permissions[_entity][_app][_role];
+        return permissions[permissionHash(_entity, _app, _role)] || permissions[permissionHash(ANY_ENTITY, _app, _role)];
     }
 
     /**
@@ -203,7 +203,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     )
         internal
     {
-        permissions[_entity][_app][_role] = _allowed;
+        permissions[permissionHash(_entity, _app, _role)] = _allowed;
 
         SetPermission(
             _entity,
@@ -221,6 +221,10 @@ contract Kernel is IKernel, KernelStorage, Initializable {
 
         permissionManager[_app][_role] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
+    }
+
+    function permissionHash(address who, address where, bytes32 what) pure internal returns (bytes32) {
+        return keccak256(who, where, what);
     }
 
     modifier auth(bytes32 _role) {
