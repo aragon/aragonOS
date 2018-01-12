@@ -17,16 +17,16 @@ contract AppProxy is AppStorage, DelegateProxy {
 
         // If initialize payload is provided, it will be executed
         if (_initializePayload.length > 0) {
-            address appCode = kernel.getAppCode(appId);
-            require(isContract(appCode));
+            address code = kernel.getCode(appId);
+            require(isContract(code));
             // Cannot make delegatecall as a delegateproxy.delegatedFwd as it
             // returns ending execution context and halts contract deployment
-            require(appCode.delegatecall(_initializePayload));
+            require(code.delegatecall(_initializePayload));
         }
     }
 
     function () payable public {
-        address target = kernel.getAppCode(appId);
+        address target = kernel.getCode(appId);
         require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }

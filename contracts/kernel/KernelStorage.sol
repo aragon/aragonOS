@@ -2,5 +2,6 @@ pragma solidity 0.4.18;
 
 
 contract KernelStorage {
-    address public kernelImpl;
+    bytes32 constant public KERNEL_APP_ID = keccak256("kernel.aragonpm.eth");
+    mapping (bytes32 => address) code;
 }
