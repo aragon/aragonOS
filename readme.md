@@ -1,4 +1,5 @@
 # AragonOS <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/dev.svg?style=flat-square)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/dev.svg?style=flat-square)](https://coveralls.io/github/aragon/aragonOS?branch=dev)
+[![NPM Package](https://img.shields.io/npm/@aragon/os.svg?style=flat-square)](https://www.npmjs.org/package/@aragon/os)
 
 This repo contains Aragon's reference implementation for [AragonOS](https://wiki.aragon.one/dev/AragonOS/).
 
