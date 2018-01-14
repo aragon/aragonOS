@@ -55,6 +55,7 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
     /**
     * @notice Create new repo in registry with `_name` and first repo version
     * @param _name Repo name
+    * @param _dev Address that will be given permission to create versions
     * @param _initialSemanticVersion Semantic version for new repo version
     * @param _contractAddress address for smart contract logic for version (if set to 0, it uses last versions' contractAddress)
     * @param _contentURI External URI for fetching new version's content
@@ -77,6 +78,8 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
     }
 
     function _newRepo(string _name, address _dev) internal returns (Repo) {
+        require(bytes(_name).length > 0);
+
         Repo repo = newClonedRepo();
 
         kernel.createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev); // solium-disable-line arg-overflow
