@@ -1,4 +1,4 @@
-# AragonOS <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragon-core/dev.svg?style=flat-square)](https://travis-ci.org/aragon/aragon-core) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragon-core/dev.svg?style=flat-square)](https://coveralls.io/github/aragon/aragon-core?branch=dev)
+# AragonOS <img align="right" src="https://github.com/aragonone/issues/blob/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/dev.svg?style=flat-square)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/dev.svg?style=flat-square)](https://coveralls.io/github/aragon/aragonOS?branch=dev)
 
 This repo contains Aragon's reference implementation for [AragonOS](https://wiki.aragon.one/dev/AragonOS/).
 
@@ -6,9 +6,9 @@ This repo contains Aragon's reference implementation for [AragonOS](https://wiki
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
 
 #### 🦋 We are using [Status Open Bounty](http://openbounty.status.im/app) to reward open source contributions with Aragon Tokens (ANT)
-All issues tagged with **[bounty](https://github.com/aragon/aragon-core/labels/bounty)** are eligible for a bounty on a successfully merged Pull Request that solves the issue. Even if the bounty says 0 ANT, if it has the **bounty** label, it will always be higher than 0 ANT (until we automate it, we may take a bit to fund the bounties manually).
+All issues tagged with **[bounty](https://github.com/aragon/aragonOS/labels/bounty)** are eligible for a bounty on a successfully merged Pull Request that solves the issue. Even if the bounty says 0 ANT, if it has the **bounty** label, it will always be higher than 0 ANT (until we automate it, we may take a bit to fund the bounties manually).
 
-#### 👋 We are tagging tasks that are [good first issues](https://github.com/aragon/aragon-core/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) so you can get started contributing to Aragon Core.
+#### 👋 We are tagging tasks that are [good first issues](https://github.com/aragon/aragonOS/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) so you can get started contributing to Aragon Core.
 Don't be shy to contribute even the smallest tweak. Everyone will be specially nice and helpful to beginners to help you get started!
 
 ## Documentation
