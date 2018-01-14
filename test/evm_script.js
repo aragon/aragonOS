@@ -182,6 +182,14 @@ contract('EVM Script', accounts => {
             assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
         })
 
+        it('caches deployed contract and reuses it', async () => {
+            const r1 = await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
+            const r2 = await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
+
+            assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed / 2, 'should have used less than half the gas because of cache')
+            assert.equal(await executor.randomNumber(), delegatorResultNumber * 2, 'should have executed correctly twice')
+        })
+
         it('fails if deployment fails', async () => {
             return assertRevert(async () => {
                 await executor.execute(encodeDeploy(FailingDeployment))

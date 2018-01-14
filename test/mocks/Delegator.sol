@@ -6,7 +6,7 @@ import "./Executor.sol";
 
 contract Delegator is ExecutorStorage, DelegateScriptTarget {
     function exec() public {
-        randomNumber = 1234;
+        randomNumber += 1234;
     }
 
     function execReturnValue(uint i) public pure returns (uint) { return i; }

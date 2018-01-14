@@ -7,6 +7,9 @@ import "./DelegateScript.sol";
 
 contract DeployDelegateScript is DelegateScript {
     uint32 constant SPEC_ID = 3;
+
+    mapping (bytes32 => address) cache;
+
     /**
     * @notice Executes script by delegatecall into a deployed contract (exec() function)
     * @param script [ specId (uint32 = 3) ][ contractInitcode (bytecode) ]
@@ -18,7 +21,15 @@ contract DeployDelegateScript is DelegateScript {
     function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes memory output) {
         require(banned.length == 0); // dont have ability to control bans, so fail.
 
-        address deployed = deploy(script); // TODO: Add cache
+        bytes32 id = keccak256(script);
+        address deployed;
+        if (!isCached(script)) {
+            deployed = deploy(script);
+            cache[id] = deployed;
+        } else {
+            deployed = cache[id];
+        }
+
         return DelegateScript.delegate(deployed, input);
     }
 
@@ -33,5 +44,9 @@ contract DeployDelegateScript is DelegateScript {
             switch iszero(extcodesize(addr))
             case 1 { revert(0, 0) } // throw if contract failed to deploy
         }
+    }
+
+    function isCached(bytes memory script) internal returns (bool) {
+        return cache[keccak256(script)] != address(0);
     }
 }
