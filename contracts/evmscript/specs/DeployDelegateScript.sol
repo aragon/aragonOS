@@ -10,19 +10,22 @@ contract DeployDelegateScript is DelegateScript {
     /**
     * @notice Executes script by delegatecall into a deployed contract (exec() function)
     * @param script [ specId (uint32 = 3) ][ contractInitcode (bytecode) ]
+    * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
     * @param banned If any address is passed, will revert.
+    * @param input ABI encoded call to be made to contract
+    * @return Call return data
     */
-    function execScript(bytes memory script, address[] memory banned) internal {
+    function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes memory output) {
         require(banned.length == 0); // dont have ability to control bans, so fail.
 
-        address deployed = create(script);
-        DelegateScript.delegate(deployed);
+        address deployed = deploy(script); // TODO: Add cache
+        return DelegateScript.delegate(deployed, input);
     }
 
     /**
-    * @dev Deploy a contract from a script
+    * @dev Deploys contract byte code to network
     */
-    function create(bytes script) internal returns (address addr) {
+    function deploy(bytes script) internal returns (address addr) {
         assembly {
             // 0x24 = 0x20 (length) + 0x04 (spec id uint32)
             // Length of code is 4 bytes less than total script size

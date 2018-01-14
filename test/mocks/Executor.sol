@@ -14,11 +14,11 @@ contract Executor is ExecutorStorage, EVMScript, CallsScriptDecoder {
     }
 
     function execute(bytes script) {
-        execScript(script, new address[](0));
+        execScript(script, new bytes(0), new address[](0));
     }
 
     function executeWithBan(bytes script, address[] memory banned) {
-        execScript(script, banned);
+        execScript(script, new bytes(0), banned);
     }
 
     function getActionsCount(bytes script) constant returns (uint256) {

@@ -35,4 +35,13 @@ library ScriptHelpers {
             result := add(data, add(0x20, location))
         }
     }
+
+    function toBytes(bytes4 _sig) internal pure returns (bytes) {
+       bytes memory payload = new bytes(4);
+       payload[0] = bytes1(_sig);
+       payload[1] = bytes1(_sig << 8);
+       payload[2] = bytes1(_sig << 16);
+       payload[3] = bytes1(_sig << 24);
+       return payload; // WORKS!
+   }
 }

@@ -17,9 +17,11 @@ contract CallsScript {
     * @notice Executes script by delegatecall into a contract
     * @param script [ specId (uint32 = 1) ] many calls with this structure ->
     *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
+    * @param input Input is ignored in callscript
     * @param banned Addresses the script cannot call to, or will revert.
+    * @return always returns empty byte array
     */
-    function execScript(bytes memory script, address[] memory banned) internal {
+    function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes output) {
         uint256 location = START_LOCATION; // first 32 bits are spec id
         while (location < script.length) {
             address contractAddress = script.addressAt(location);
