@@ -1,5 +1,7 @@
 pragma solidity ^0.4.6;
 
+/* solium-disable */
+
 /*
     Copyright 2016, Jordi Baylina
 
@@ -359,11 +361,11 @@ contract MiniMeToken is Controlled {
         bool _transfersEnabled
     ) public returns(address)
     {
-        if (_snapshotBlock == 0)
-            _snapshotBlock = block.number;
+        uint256 snapshot = _snapshotBlock == 0 ? block.number - 1 : _snapshotBlock;
+
         MiniMeToken cloneToken = tokenFactory.createCloneToken(
             this,
-            _snapshotBlock,
+            snapshot,
             _cloneTokenName,
             _cloneDecimalUnits,
             _cloneTokenSymbol,
@@ -373,7 +375,7 @@ contract MiniMeToken is Controlled {
         cloneToken.changeController(msg.sender);
 
         // An event to make the token easy to find on the blockchain
-        NewCloneToken(address(cloneToken), _snapshotBlock);
+        NewCloneToken(address(cloneToken), snapshot);
         return address(cloneToken);
     }
 

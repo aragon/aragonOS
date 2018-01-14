@@ -2,7 +2,9 @@
     "extends": "solium:all",
     "plugins": ["security"],
     "rules": {
+        "security/no-low-level-calls": "off",
         "security/no-inline-assembly": "off",
+        "function-order": "off",
         "imports-on-top": 1,
         "variable-declarations": 1,
         "array-declarations": 1,

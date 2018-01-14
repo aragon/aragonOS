@@ -1,9 +1,10 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
 import "../zeppelin/math/SafeMath.sol";
+
 
 contract Kernel is IKernel, KernelStorage, Initializable {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
@@ -40,7 +41,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
 
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
-    *      if a created permission is removed it is possible to reset it with createPermission.
+    *      If a created permission is removed it is possible to reset it with createPermission.
     * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
@@ -121,7 +122,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @dev Changes appCode reference for `_appId`. This role is required before an app with a certain appId working properly
     * @notice Upgrade app code of `_appId` to new implementation at address `_code` (CRITICAL!)
     * @param _appId Namehash of the app name
-    * @param _code Implementation for app
+    * @param _code Address of new implementation for app
     */
     function setAppCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
         appCode[_appId] = _code;
@@ -144,7 +145,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) constant public returns (address) {
+    function getPermissionManager(address _app, bytes32 _role) view public returns (address) {
         return permissionManager[_app][_role];
     }
 
@@ -155,7 +156,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _role Identifier for a group of actions in app
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address _entity, address _app, bytes32 _role) constant public returns (bool) {
+    function hasPermission(address _entity, address _app, bytes32 _role) view public returns (bool) {
         return permissions[_entity][_app][_role];
     }
 
@@ -164,7 +165,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @param _appId Identifier for app
     * @return address for app code
     */
-    function getAppCode(bytes32 _appId) constant public returns (address) {
+    function getAppCode(bytes32 _appId) view public returns (address) {
         return appCode[_appId];
     }
 

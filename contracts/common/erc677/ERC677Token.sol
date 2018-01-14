@@ -1,4 +1,6 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
+
+/* solium-disable */
 
 import "./ERC677Receiver.sol";
 import "../../zeppelin/token/StandardToken.sol";

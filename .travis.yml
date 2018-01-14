@@ -8,6 +8,7 @@ node_js:
   - '8'
 env:
   - TASK=lint
+  - TASK=test:geth
   - TASK=coverage
 before_script:
   - npm prune

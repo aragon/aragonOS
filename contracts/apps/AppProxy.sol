@@ -1,7 +1,8 @@
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
+
 
 contract AppProxy is AppStorage, DelegateProxy {
     /**
@@ -22,12 +23,11 @@ contract AppProxy is AppStorage, DelegateProxy {
             // returns ending execution context and halts contract deployment
             require(appCode.delegatecall(_initializePayload));
         }
-
     }
 
     function () payable public {
         address target = kernel.getAppCode(appId);
-        require(target > 0); // if app code hasn't been set yet, don't call
+        require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }
 }
