@@ -138,3 +138,5 @@ else
             ;;
     esac
 fi
+
+sleep 5
