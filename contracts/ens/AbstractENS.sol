@@ -23,7 +23,3 @@ contract AbstractENS {
     // Logged when the TTL of a node changes
     event NewTTL(bytes32 indexed _node, uint64 _ttl);
 }
-
-contract AddrResolver {
-    function addr(bytes32 _node) constant returns (address);
-}

@@ -46,8 +46,9 @@ contract ENSSubdomainRegistrar is AragonApp, Initializable, ENSConstants {
 
         require(currentOwner != address(0)); // fail if deleting unset name
 
-        if (currentOwner != address(this)) // needs to reclaim ownership so it can set resolver
+        if (currentOwner != address(this)) { // needs to reclaim ownership so it can set resolver
             ens.setSubnodeOwner(rootNode, _label, this);
+        }
 
         ens.setResolver(node, address(0)); // remove resolver so it ends resolving
         ens.setOwner(node, address(0));

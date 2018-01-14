@@ -50,9 +50,9 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this); // solium-disable-line arg-overflow
 
         // App code for relevant apps
-        dao.setAppCode(APM_APP_ID, registryBase);
-        dao.setAppCode(REPO_APP_ID, repoBase);
-        dao.setAppCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        dao.setCode(APM_APP_ID, registryBase);
+        dao.setCode(REPO_APP_ID, repoBase);
+        dao.setCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
 
         // Deploy proxies
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
@@ -85,7 +85,6 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
     // Factory can be subclassed and permissions changed
     function configureAPMPermissions(Kernel dao, APMRegistry apm, address root) internal {
-        // root can create repos, versions, and free repos
         dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root); // solium-disable-line arg-overflow
     }
 }

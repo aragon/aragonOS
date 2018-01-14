@@ -80,11 +80,13 @@ contract Repo is AragonApp {
         uint i = 0;
         while (i < 3) {
             if (hasBumped) {
-                if (_newVersion[i] != 0)
+                if (_newVersion[i] != 0) {
                     return false;
+                }
             } else if (_newVersion[i] != _oldVersion[i]) {
-                if (_oldVersion[i] >= _newVersion[i] || _newVersion[i] - _oldVersion[i] != 1)
+                if (_oldVersion[i] > _newVersion[i] || _newVersion[i] - _oldVersion[i] != 1) {
                     return false;
+                }
                 hasBumped = true;
             }
             i++;

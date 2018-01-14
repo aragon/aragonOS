@@ -18,7 +18,7 @@ contract('APMRegistry', accounts => {
     const notOwner = accounts[5]
 
     const rootNode = namehash('aragonpm.eth')
-    const testName = namehash('test.aragonpm.eth')
+    const testNode = namehash('test.aragonpm.eth')
 
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
@@ -45,12 +45,12 @@ contract('APMRegistry', accounts => {
     afterEach(async () => {
         // Clean up test.aragonpm.eth if was set
         const zeroAddr = '0x0000000000000000000000000000000000000000'
-        if (await ens.owner(testName) == zeroAddr) return
+        if (await ens.owner(testNode) == zeroAddr) return
 
         // Free test name so it can be used on next test
         const registrar = getContract('ENSSubdomainRegistrar').at(await registry.registrar())
         await registrar.deleteName('0x'+keccak256('test'), { from: apmOwner })
-        assert.equal(await ens.owner(testName), zeroAddr, 'should have cleaned up')
+        assert.equal(await ens.owner(testNode), zeroAddr, 'should have cleaned up')
     })
 
     it('aragonpm.eth should resolve to registry', async () => {
@@ -83,12 +83,12 @@ contract('APMRegistry', accounts => {
             const resolverNode = namehash('resolver.eth')
             const publicResolver = PublicResolver.at(await ens.resolver(resolverNode))
 
-            assert.equal(await ens.resolver(testName), await publicResolver.addr(resolverNode), 'resolver should be set to public resolver')
-            assert.equal(await publicResolver.addr(testName), repo.address, 'resolver should resolve to repo address')
+            assert.equal(await ens.resolver(testNode), await publicResolver.addr(resolverNode), 'resolver should be set to public resolver')
+            assert.equal(await publicResolver.addr(testNode), repo.address, 'resolver should resolve to repo address')
         })
 
         it('repo should have 0 versions', async () => {
-            assert.equal(await repo.getVersionsCount(), 0, 'shouldnt have crated version')
+            assert.equal(await repo.getVersionsCount(), 0, 'shouldnt have created version')
         })
 
         it('fails when creating repo with existing name', async () => {
@@ -136,7 +136,7 @@ contract('APMRegistry', accounts => {
         const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
         const repoAddr = getRepoFromLog(receipt)
 
-        assert.equal(await Repo.at(repoAddr).getVersionsCount(), 1, 'should have crated version')
+        assert.equal(await Repo.at(repoAddr).getVersionsCount(), 1, 'should have created version')
     })
 
     it('cannot create repo if not in ACL', async () => {
