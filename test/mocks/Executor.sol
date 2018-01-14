@@ -21,6 +21,10 @@ contract Executor is ExecutorStorage, EVMScript, CallsScriptDecoder {
         execScript(script, new bytes(0), banned);
     }
 
+    function executeWithIO(bytes script, bytes input, address[] memory banned) returns (bytes) {
+        return execScript(script, input, banned);
+    }
+
     function getActionsCount(bytes script) constant returns (uint256) {
         return getScriptActionsCount(script);
     }

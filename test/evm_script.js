@@ -1,4 +1,6 @@
- const { assertRevert } = require('./helpers/assertThrow')
+const { rawDecode } = require('ethereumjs-abi')
+
+const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
@@ -129,6 +131,14 @@ contract('EVM Script', accounts => {
             assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
         })
 
+        it('can execute action with input and output', async () => {
+            const value = 101
+            const input = delegator.contract.execReturnValue.getData(value)
+            const output = await executor.executeWithIO.call(encodeDelegate(delegator.address), input, [])
+
+            assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
+        })
+
         it('fails to execute if it has banned addresses', async () => {
             return assertRevert(async () => {
                 await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
@@ -161,6 +171,15 @@ contract('EVM Script', accounts => {
             await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
 
             assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
+        })
+
+        it('can deploy action with input and output', async () => {
+            const value = 102
+            const delegator = await Delegator.new()
+            const input = delegator.contract.execReturnValue.getData(value)
+            const output = await executor.executeWithIO.call(encodeDeploy(Delegator), input, [])
+
+            assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
         })
 
         it('fails if deployment fails', async () => {
