@@ -34,8 +34,9 @@ contract Repo is AragonApp {
         if (versions.length > 0) {
             Version storage lastVersion = versions[versions.length - 1];
             require(isValidBump(lastVersion.semanticVersion, _newSemanticVersion));
-            if (contractAddress == 0)
+            if (contractAddress == 0) {
                 contractAddress = lastVersion.contractAddress;
+            }
             // Only allows smart contract change on major version bumps
             require(lastVersion.contractAddress == contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0]);
         } else {

@@ -63,6 +63,12 @@ contract('APMRegistry', accounts => {
         assert.equal(await ens.owner(rootNode), await registry.registrar(), 'rootnode should be owned correctly')
     })
 
+    it('fails to create empty repo name', async () => {
+        return assertRevert(async () => {
+            await registry.newRepo('', repoDev, { from: apmOwner })
+        })
+    })
+
     const getRepoFromLog = receipt => receipt.logs.filter(x => x.event == 'NewRepo')[0].args.repo
 
     context('creating test.aragonpm.eth repo', () => {
