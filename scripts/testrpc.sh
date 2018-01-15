@@ -36,20 +36,14 @@ start_geth() {
         echo `$DEFAULT_PASSWORD` > ~/.accountpassword
     fi
 
-    # enforce datadir and networkid parameters to run geth locally using private network
-    if [ -z "$DATADIR" || -z $GETH_NETWORKID ]; then
-        echo "Error: missing DATADIR or GETH_NETWORKID environment variable(s)"
-    fi
     # create a primary account
     if [ ! -f ~/.primaryaccount ]; then
-        geth --datadir $DATADIR --password ~/.accountpassword account new > ~/.primaryaccount
+        geth --password ~/.accountpassword account new > ~/.primaryaccount
     fi
 
-    # init genesis block for private network
-    geth --datadir $DATADIR init genesis.json
-    geth --datadir $DATADIR --rpc --unlock "0" --password ~/.accountpassword \
+    geth --rpc --password ~/.accountpassword \
     --rpccorsdomain "*" --rpcaddr "0.0.0.0" --mine --minerthreads 1 \
-    --rpcport "$geth_port" --targetgaslimit 9000000 --nodiscover --networkid $GETH_NETWORKID &
+    --rpcport "$geth_port" --targetgaslimit 9000000 --dev &
 
     rpc_pid=$!
 }
@@ -73,19 +67,24 @@ start_parity() {
         fi
 
         for (( i = 0; i < $DEFAULT_ACCOUNTS; i++ )); do
-            echo "$DEFAULT_PASSWORD" >> password
+            echo "$DEFAULT_PASSWORD" > ~/.accountpassword
         done
-    else
-        parity --chain dev \
-        --author ${addresses[2]} \
-        --unlock ${addresses[0]},${addresses[1]},${addresses[2]} \
-        --password ./password --geth --no-dapps \
-        --tx-gas-limit 0x5F5E100 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
-        --reseal-on-txs all --reseal-min-period 0 \
-        --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port" &
-
-        rpc_pid=$!
     fi
+
+    # parity does not like aliases or env variables for password files so
+    # we need to grab the absolute path of the password file
+    PASSWORD_FILE=$(find ~ -name .accountpassword -maxdepth 1)
+
+    # start parity client in the background
+    parity --chain dev --geth \
+    --tx-gas-limit 0x5F5E100 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
+    --reseal-on-txs all --reseal-min-period 0 --no-dapps \
+    --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port" \
+    --author ${addresses[0]} \
+    --unlock ${addresses[0]} \
+    --password $PASSWORD_FILE
+
+    rpc_pid=$!
 }
 
 check_docker() {
@@ -101,8 +100,10 @@ docker_start_parity() {
     docker pull parity/parity:$PARITY_VERSION
     # run the container in detached mode
     docker run -d -p 8545:8545 --name parity parity/parity:$PARITY_VERSION \
-    --chain dev --jsonrpc-interface all --jsonrpc-hosts all --geth \
-    --tx-gas-limit 0x5F5E100
+    --chain dev --jsonrpc-interface all --jsonrpc-hosts all \
+    --tx-gas-limit 0x5F5E100 --gasprice 0x0 --gas-floor-target 0x47E7C \
+    --reseal-on-txs all --reseal-min-period 0 --no-dapps \
+    --jsonrpc-apis all -lrpc=trace
 }
 
 docker_start_geth() {
