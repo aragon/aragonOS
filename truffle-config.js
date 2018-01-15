@@ -9,13 +9,23 @@ if (process.env.LIVE_NETWORKS) {
   kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
 }
 
+const mochaGasSettings = {
+  reporter: 'eth-gas-reporter',
+  reporterOptions : {
+    currency: 'USD',
+    gasPrice: 21
+  }
+}
+
+const mocha = process.env.GAS_REPORTER ? mochaGasSettings : {}
+
 module.exports = {
   networks: {
     rpc: {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 7e6,
+      gas: 50e6,
     },
     ropsten: {
       network_id: 3,
@@ -36,4 +46,5 @@ module.exports = {
     },
   },
   build: {},
+  mocha,
 }
