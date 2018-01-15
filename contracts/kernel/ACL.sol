@@ -218,8 +218,13 @@ contract ACL is ACLEvents {
         bytes32 whoParams = permissions[permissionHash(who, where, what)];
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, where, what)];
 
-        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) return true;
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) return true;
+        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) {
+            return true;
+        }
+
+        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) {
+            return true;
+        }
 
         return false;
     }
@@ -231,7 +236,9 @@ contract ACL is ACLEvents {
 
         for (uint256 i = 0; i < params.length; i++) {
             bool success = evalParam(params[i], who, where, what, how);
-            if (!success) return false;
+            if (!success) {
+                return false;
+            }
         }
 
         return true;
@@ -247,8 +254,10 @@ contract ACL is ACLEvents {
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
         } else {
-            if (param.id >= how.length) return false;
-            value = how[param.id];
+            if (param.id >= how.length) {
+                return false;
+            }
+            value = uint256(uint240(how[param.id])); // force lost precision
         }
 
         return compare(value, Op(param.op), uint256(param.value));
