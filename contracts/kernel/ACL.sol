@@ -218,24 +218,33 @@ contract ACL is ACLEvents {
         bytes32 whoParams = permissions[permissionHash(who, where, what)];
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, where, what)];
 
-        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) {
+        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) {        // solium-disable-line arg-overflow
             return true;
         }
 
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) {
+        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) { // solium-disable-line arg-overflow
             return true;
         }
 
         return false;
     }
 
-    function evalParams(bytes32 paramsHash, address who, address where, bytes32 what, uint256[] how) internal view returns (bool) {
-        if (paramsHash == EMPTY_PARAM_HASH) return true;
+    function evalParams(
+        bytes32 paramsHash,
+        address who,
+        address where,
+        bytes32 what,
+        uint256[] how
+    ) internal view returns (bool)
+    {
+        if (paramsHash == EMPTY_PARAM_HASH) {
+            return true;
+        }
 
         Param[] memory params = permissionParams[paramsHash];
 
         for (uint256 i = 0; i < params.length; i++) {
-            bool success = evalParam(params[i], who, where, what, how);
+            bool success = evalParam(params[i], who, where, what, how); // solium-disable-line arg-overflow
             if (!success) {
                 return false;
             }
@@ -244,7 +253,14 @@ contract ACL is ACLEvents {
         return true;
     }
 
-    function evalParam(Param param, address who, address where, bytes32 what, uint256[] how) internal view returns (bool) {
+    function evalParam(
+        Param param,
+        address who,
+        address where,
+        bytes32 what,
+        uint256[] how
+    ) internal view returns (bool)
+    {
         uint256 value;
 
         if (param.id == ORACLE_PARAM_ID) {
@@ -263,16 +279,17 @@ contract ACL is ACLEvents {
         return compare(value, Op(param.op), uint256(param.value));
     }
 
+    /* solium-disable-function lbrace */
     function compare(uint256 a, Op op, uint256 b) internal pure returns (bool) {
-        if (op == Op.eq)  return a == b;
-        if (op == Op.neq) return a != b;
-        if (op == Op.gt)  return a > b;
-        if (op == Op.lt)  return a < b;
-        if (op == Op.gte) return a >= b;
-        if (op == Op.lte) return a <= b;
-        if (op == Op.and) return a > 0 && b > 0;
-        if (op == Op.or)  return a > 0 || b > 0;
-        if (op == Op.xor) return a > 0 && b == 0 || a == 0 && b > 0;
+        if (op == Op.eq)  return a == b;                              // solium-disable-line lbrace
+        if (op == Op.neq) return a != b;                              // solium-disable-line lbrace
+        if (op == Op.gt)  return a > b;                               // solium-disable-line lbrace
+        if (op == Op.lt)  return a < b;                               // solium-disable-line lbrace
+        if (op == Op.gte) return a >= b;                              // solium-disable-line lbrace
+        if (op == Op.lte) return a <= b;                              // solium-disable-line lbrace
+        if (op == Op.and) return a > 0 && b > 0;                      // solium-disable-line lbrace
+        if (op == Op.or)  return a > 0 || b > 0;                      // solium-disable-line lbrace
+        if (op == Op.xor) return a > 0 && b == 0 || a == 0 && b > 0;  // solium-disable-line lbrace
         return false;
     }
 
@@ -294,7 +311,7 @@ contract ACL is ACLEvents {
         return keccak256(uint256(2), who, where, what);
     }
 
-    function time() internal view returns (uint64) { return uint64(now); }
+    function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members
 
     function blockN() internal view returns (uint256) { return block.number; }
 }
