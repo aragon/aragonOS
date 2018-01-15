@@ -82,7 +82,7 @@ contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryCo
 
         Repo repo = newClonedRepo();
 
-        kernel.createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev); // solium-disable-line arg-overflow
+        kernel.createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists

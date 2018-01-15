@@ -47,7 +47,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
         Kernel dao = newDAO(this);
 
-        dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this); // solium-disable-line arg-overflow
+        dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this);
 
         // App code for relevant apps
         dao.setCode(APM_APP_ID, registryBase);
@@ -59,8 +59,8 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
-        dao.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root); // solium-disable-line arg-overflow
-        dao.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root); // solium-disable-line arg-overflow
+        dao.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
+        dao.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
         configureAPMPermissions(dao, apm, _root);
 
@@ -69,8 +69,8 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
         // Permission transition to _root
         dao.setPermissionManager(_root, dao, dao.UPGRADE_APPS_ROLE());
-        dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE()); // solium-disable-line arg-overflow
-        dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE()); // solium-disable-line arg-overflow
+        dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE());
+        dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
         dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
 
         // Initialize
@@ -85,6 +85,6 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
     // Factory can be subclassed and permissions changed
     function configureAPMPermissions(Kernel dao, APMRegistry apm, address root) internal {
-        dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root); // solium-disable-line arg-overflow
+        dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root);
     }
 }
