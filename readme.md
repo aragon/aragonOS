@@ -1,6 +1,6 @@
-# AragonOS <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/dev.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/dev.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragonOS?branch=dev) [![npm](https://img.shields.io/npm/v/@aragon/os.svg?style=for-the-badge)](https://www.npmjs.com/package/@aragon/os)
+# aragonOS <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/dev.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/dev.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragonOS?branch=dev) [![npm](https://img.shields.io/npm/v/@aragon/os.svg?style=for-the-badge)](https://www.npmjs.com/package/@aragon/os)
 
-This repo contains Aragon's reference implementation for [AragonOS](https://wiki.aragon.one/dev/AragonOS/).
+This repo contains Aragon's reference implementation for [aragonOS](https://wiki.aragon.one/dev/AragonOS/).
 
 #### 🚨 Everything in this repo is highly experimental software.
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
