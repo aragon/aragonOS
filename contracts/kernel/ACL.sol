@@ -214,30 +214,30 @@ contract ACL is ACLEvents {
         );
     }
 
-    function hasPermission(address who, address where, bytes32 what, uint256[] memory args) view public returns (bool) {
+    function hasPermission(address who, address where, bytes32 what, uint256[] memory how) view public returns (bool) {
         bytes32 whoParams = permissions[permissionHash(who, where, what)];
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, where, what)];
 
-        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, args)) return true;
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, args)) return true;
+        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) return true;
+        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) return true;
 
         return false;
     }
 
-    function evalParams(bytes32 paramsHash, address who, address where, bytes32 what, uint256[] args) internal view returns (bool) {
+    function evalParams(bytes32 paramsHash, address who, address where, bytes32 what, uint256[] how) internal view returns (bool) {
         if (paramsHash == EMPTY_PARAM_HASH) return true;
 
         Param[] memory params = permissionParams[paramsHash];
 
         for (uint256 i = 0; i < params.length; i++) {
-            bool success = evalParam(params[i], who, where, what, args);
+            bool success = evalParam(params[i], who, where, what, how);
             if (!success) return false;
         }
 
         return true;
     }
 
-    function evalParam(Param param, address who, address where, bytes32 what, uint256[] args) internal view returns (bool) {
+    function evalParam(Param param, address who, address where, bytes32 what, uint256[] how) internal view returns (bool) {
         uint256 value;
 
         if (param.id == ORACLE_PARAM_ID) {
@@ -247,8 +247,8 @@ contract ACL is ACLEvents {
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
         } else {
-            if (param.id >= args.length)
-            value = args[param.id];
+            if (param.id >= how.length) return false;
+            value = how[param.id];
         }
 
         return compare(value, Op(param.op), uint256(param.value));

@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/common/EVMCallScript.sol";
+import "../../contracts/common/EVMCallScriptRunner.sol";
 
 contract Executor is EVMCallScriptRunner, EVMCallScriptDecoder {
     function execute(bytes script) {
