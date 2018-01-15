@@ -11,7 +11,3 @@ scTopics
 functions.csv
 artifacts/
 allFiredEvents
-
-# geth and parity specific files
-password
-genesis.json
