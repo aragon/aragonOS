@@ -47,12 +47,12 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
 
         Kernel dao = newDAO(this);
 
-        dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this);
+        dao.createPermission(this, dao, dao.SET_CODE_ROLE(), this);
 
         // App code for relevant apps
-        dao.setAppCode(APM_APP_ID, registryBase);
-        dao.setAppCode(REPO_APP_ID, repoBase);
-        dao.setAppCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        dao.setCode(APM_APP_ID, registryBase);
+        dao.setCode(REPO_APP_ID, repoBase);
+        dao.setCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
 
         // Deploy proxies
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
@@ -68,7 +68,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         dao.grantPermission(apm, dao, dao.CREATE_PERMISSIONS_ROLE());
 
         // Permission transition to _root
-        dao.setPermissionManager(_root, dao, dao.UPGRADE_APPS_ROLE());
+        dao.setPermissionManager(_root, dao, dao.SET_CODE_ROLE());
         dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE());
         dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
         dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());

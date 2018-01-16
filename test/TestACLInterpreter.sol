@@ -5,7 +5,7 @@ import "../contracts/kernel/ACL.sol";
 import "../contracts/kernel/ACLSyntaxSugar.sol";
 
 
-contract TestACLInterpreter is ACL, ACLSyntaxSugar {
+contract TestACLInterpreter is ACL {
     function testEqualityUint() public {
         // Assert param 0 is equal to 10, given that params are [10, 11]
         assertEval(arr(10, 11), 0, Op.eq, 10, true);
@@ -66,22 +66,22 @@ contract TestACLInterpreter is ACL, ACLSyntaxSugar {
     function testAnd() public {
         assertEval(arr(uint256(1)), 0, Op.and, 1, true);
         assertEval(arr(uint256(1)), 0, Op.and, 0, false);
-        assertEval(arr(uint256(0)), 1, Op.and, 1, false);
-        assertEval(arr(uint256(0)), 1, Op.or, 0, false);
+        assertEval(arr(uint256(0)), 0, Op.and, 1, false);
+        assertEval(arr(uint256(0)), 0, Op.or, 0, false);
     }
 
     function testOr() public {
         assertEval(arr(uint256(1)), 0, Op.or, 1, true);
         assertEval(arr(uint256(1)), 0, Op.or, 0, true);
-        assertEval(arr(uint256(0)), 1, Op.or, 1, true);
-        assertEval(arr(uint256(0)), 1, Op.or, 0, false);
+        assertEval(arr(uint256(0)), 0, Op.or, 1, true);
+        assertEval(arr(uint256(0)), 0, Op.or, 0, false);
     }
 
     function testXor() public {
         assertEval(arr(uint256(1)), 0, Op.xor, 1, false);
         assertEval(arr(uint256(1)), 0, Op.xor, 0, true);
-        assertEval(arr(uint256(0)), 1, Op.xor, 1, true);
-        assertEval(arr(uint256(0)), 1, Op.xor, 0, false);
+        assertEval(arr(uint256(0)), 0, Op.xor, 1, true);
+        assertEval(arr(uint256(0)), 0, Op.xor, 0, false);
     }
 
     function assertEval(uint256[] args, uint8 argId, Op op, uint256 value, bool expected) internal {

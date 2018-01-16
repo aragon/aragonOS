@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
 import "./IKernel.sol";
+import "./ACLSyntaxSugar.sol";
 
 
 interface ACLOracle {
@@ -8,12 +9,12 @@ interface ACLOracle {
 }
 
 
-contract ACL is ACLEvents {
+contract ACL is ACLEvents, ACLSyntaxSugar {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
 
     // whether a certain entity has a permission
     mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id
-    mapping (bytes32 => Param[]) permissionParams;
+    mapping (bytes32 => Param[]) public permissionParams;
 
     // who is the manager of a permission
     mapping (bytes32 => address) permissionManager;
@@ -47,10 +48,8 @@ contract ACL is ACLEvents {
         _;
     }
 
-    modifier authP(bytes32 _role, bytes32 param1) {
-        uint256[] memory params = new uint256[](1);
-        params[0] = uint256(param1);
-        require(hasPermission(msg.sender, address(this), _role, params));
+    modifier authP(bytes32 _role, uint256[] _args) {
+        require(hasPermission(msg.sender, address(this), _role, _args));
         _;
     }
 
@@ -106,12 +105,28 @@ contract ACL is ACLEvents {
         onlyPermissionManager(_app, _role)
         external
     {
+        grantPermissionP(_entity, _app, _role, new uint256[](0));
+    }
+
+    /**
+    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission manager
+    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
+    * @param _entity Address of the whitelisted entity that will be able to perform the role
+    * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
+    * @param _role Identifier for the group of actions in app given access to perform
+    * @param _params Permission parameters
+    */
+    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
+        onlyPermissionManager(_app, _role)
+        public
+    {
         require(!hasPermission(_entity, _app, _role));
+        bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(
             _entity,
             _app,
             _role,
-            true
+            paramsHash
         );
     }
 
@@ -131,7 +146,7 @@ contract ACL is ACLEvents {
             _entity,
             _app,
             _role,
-            false
+            bytes32(0)
         );
     }
 
@@ -188,7 +203,7 @@ contract ACL is ACLEvents {
             _entity,
             _app,
             _role,
-            true
+            EMPTY_PARAM_HASH
         );
         _setPermissionManager(_manager, _app, _role);
     }
@@ -200,18 +215,33 @@ contract ACL is ACLEvents {
         address _entity,
         address _app,
         bytes32 _role,
-        bool _allowed
+        bytes32 _paramsHash
     )
         internal
     {
-        permissions[permissionHash(_entity, _app, _role)] = _allowed ? EMPTY_PARAM_HASH : bytes32(0);
+        permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
 
         SetPermission(
             _entity,
             _app,
             _role,
-            _allowed
+            _paramsHash != bytes32(0)
         );
+    }
+
+    function _saveParams(uint256[] encodedParams) internal returns (bytes32) {
+        bytes32 paramHash = keccak256(encodedParams);
+        Param[] storage params = permissionParams[paramHash];
+
+        if (params.length == 0) { // params not saved before
+            for (uint256 i = 0; i < encodedParams.length; i++) {
+                uint256 encodedParam = encodedParams[i];
+                Param memory param = Param(decodeParamId(encodedParam), decodeParamOp(encodedParam), uint240(encodedParam));
+                params.push(param);
+            }
+        }
+
+        return paramHash;
     }
 
     function hasPermission(address who, address where, bytes32 what, uint256[] memory how) view public returns (bool) {
@@ -279,7 +309,6 @@ contract ACL is ACLEvents {
         return compare(value, Op(param.op), uint256(param.value));
     }
 
-    /* solium-disable-function lbrace */
     function compare(uint256 a, Op op, uint256 b) internal pure returns (bool) {
         if (op == Op.eq)  return a == b;                              // solium-disable-line lbrace
         if (op == Op.neq) return a != b;                              // solium-disable-line lbrace

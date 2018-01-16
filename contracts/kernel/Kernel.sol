@@ -7,7 +7,7 @@ import "../common/Initializable.sol";
 
 
 contract Kernel is KernelStorage, Initializable, IKernel, ACL {
-    bytes32 constant public UPGRADE_APPS_ROLE = bytes32(2);
+    bytes32 constant public SET_CODE_ROLE = bytes32(2);
     bytes32 constant public UPGRADE_KERNEL_ROLE = bytes32(3);
 
     /**
@@ -27,7 +27,7 @@ contract Kernel is KernelStorage, Initializable, IKernel, ACL {
     * @param _appId Namehash of the app name
     * @param _code Address of new implementation for app
     */
-    function setCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
+    function setCode(bytes32 _appId, address _code) authP(SET_CODE_ROLE, arr(_appId)) external {
         code[_appId] = _code;
         SetCode(_appId, _code);
     }

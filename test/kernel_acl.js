@@ -25,7 +25,7 @@ contract('Kernel ACL', accounts => {
         assertEvent(receipt, 'SetPermission')
         assertEvent(receipt, 'ChangePermissionManager')
 
-        role = await kernel.UPGRADE_KERNEL_ROLE()
+        role = await kernel.SET_CODE_ROLE()
     })
 
     it('has correct initialization block', async () => {
@@ -38,13 +38,14 @@ contract('Kernel ACL', accounts => {
         })
     })
 
+
     it('actions cannot be performed by default', async () => {
         assert.isFalse(await kernel.hasPermission(permissionsRoot, app, role))
     })
 
     it('protected actions fail if not allowed', async () => {
         return assertRevert(async () => {
-            await kernel.upgradeKernel(accounts[0])
+            await kernel.setCode('0x1234', accounts[0])
         })
     })
 
@@ -58,6 +59,25 @@ contract('Kernel ACL', accounts => {
             const receipt = await kernel.createPermission(granted, app, role, granted, { from: permissionsRoot })
             assertEvent(receipt, 'SetPermission')
             assertEvent(receipt, 'ChangePermissionManager')
+        })
+
+        it('can grant permission with params', async () => {
+            // app id != 0 (kernel)
+            // param hash 0x68b4adfe8175b29530f1c715f147337823f4ae55693be119bef69129637d681f
+            const argId = '0x00' // arg 0
+            const op = '02'      // not equal
+            const value = '000000000000000000000000000000000000000000000000000000000000'  // appId 0
+            const param = new web3.BigNumber(argId + op + value)
+            await kernel.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+
+            // Allow setting code for appId other than 0
+            const receipt = await kernel.setCode('0x121212', accounts[4], { from: accounts[3] })
+
+            assertEvent(receipt, 'SetCode')
+            return assertRevert(async () => {
+                // Fail if setting code for appId 0
+                await kernel.setCode('0x0', accounts[4], { from: accounts[3] })
+            })
         })
 
         it('fails granting existing permission instance', async () => {
@@ -88,8 +108,8 @@ contract('Kernel ACL', accounts => {
         })
 
         it('can execute action', async () => {
-            const receipt = await kernel.upgradeKernel(accounts[0], { from: granted })
-            assertEvent(receipt, 'UpgradeKernel')
+            const receipt = await kernel.setCode('0x1234', accounts[0], { from: granted })
+            assertEvent(receipt, 'SetCode')
         })
 
         it('root cannot revoke permission', async () => {
