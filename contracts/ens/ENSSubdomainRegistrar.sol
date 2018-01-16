@@ -1,7 +1,7 @@
 pragma solidity 0.4.18;
 
-import "./AbstractENS.sol";
-import "./PublicResolver.sol";
+import "../lib/ens/AbstractENS.sol";
+import "../lib/ens/PublicResolver.sol";
 import "./ENSConstants.sol";
 
 import "../apps/AragonApp.sol";
