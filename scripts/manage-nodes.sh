@@ -10,14 +10,15 @@ else
     geth_port=8545
 fi
 
-DEFAULT_ACCOUNTS=5
-DEFAULT_PASSWORD=""
-
 PARITY_VERSION=v1.8.6
 GETH_VERSION=latest
 
 client_running() {
     nc -z localhost "$geth_port"
+}
+
+generate_password () {
+    openssl rand -base64 12
 }
 
 start_testrpc() {
@@ -33,7 +34,7 @@ start_testrpc() {
 start_geth() {
     # Generate and store a wallet password
     if [ ! -f ~/.accountpassword ]; then
-        echo `$DEFAULT_PASSWORD` > ~/.accountpassword
+        generate_password > ~/.accountpassword
     fi
 
     # create a primary account
@@ -54,21 +55,16 @@ start_parity() {
     echo $addresses
 
     if [ ${#addresses[@]} -lt 1 ]; then
-        echo "No parity accounts found, creating ($DEFAULT_ACCOUNTS) default accounts"
-        echo "(default password: \"$DEFAULT_PASSWORD\")"
+        echo "No parity accounts found, creating default account"
+        generate_password > ~/.accountpassword
 
-        for (( i = 0; i < $DEFAULT_ACCOUNTS; i++ )); do
-            echo "$DEFAULT_PASSWORD\n$DEFAULT_PASSWORD\n" | parity account new --chain dev
-        done
+        parity --chain dev account new --password ~/.accountpassword > ~/.accountaddress
 
-        echo "Creating password file for default accounts..."
-        if [ -e $1 ]; then
-            echo "'password' file already exists" >&2
+        if [ $? -eq 0 ]; then
+            echo "Account created succesfully:"
+            cat ~/.accountaddress
+            cat ~/.accountpassword
         fi
-
-        for (( i = 0; i < $DEFAULT_ACCOUNTS; i++ )); do
-            echo "$DEFAULT_PASSWORD" > ~/.accountpassword
-        done
     fi
 
     # parity does not like aliases or env variables for password files so
