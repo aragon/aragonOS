@@ -3,7 +3,6 @@ pragma solidity 0.4.18;
 import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
-import "../zeppelin/math/SafeMath.sol";
 
 
 contract Kernel is IKernel, KernelStorage, Initializable {

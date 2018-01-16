@@ -1,7 +1,5 @@
 pragma solidity ^0.4.6;
 
-/* solium-disable */
-
 /*
     Copyright 2016, Jordi Baylina
 
@@ -27,7 +25,7 @@ pragma solidity ^0.4.6;
 ///  affecting the original token
 /// @dev It is ERC20 compliant, but still needs to under go further testing.
 
-import "./TokenController.sol";
+import "./ITokenController.sol";
 
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
@@ -48,7 +46,7 @@ contract Controlled {
     }
 }
 
-interface ApproveAndCallFallBack {
+contract ApproveAndCallFallBack {
     function receiveApproval(
         address from,
         uint256 _amount,
@@ -204,7 +202,7 @@ contract MiniMeToken is Controlled {
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
             // Adding the ` == true` makes the linter shut up so...
-            require(TokenController(controller).onTransfer(_from, _to, _amount) == true);
+            require(ITokenController(controller).onTransfer(_from, _to, _amount) == true);
         }
         // First update the balance array with the new value for the address
         //  sending the tokens
@@ -243,7 +241,7 @@ contract MiniMeToken is Controlled {
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
             // Adding the ` == true` makes the linter shut up so...
-            require(TokenController(controller).onApprove(msg.sender, _spender, _amount) == true);
+            require(ITokenController(controller).onApprove(msg.sender, _spender, _amount) == true);
         }
 
         allowed[msg.sender][_spender] = _amount;
@@ -498,7 +496,7 @@ contract MiniMeToken is Controlled {
     function ()  payable  public {
         require(isContract(controller));
         // Adding the ` == true` makes the linter shut up so...
-        require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender) == true);
+        require(ITokenController(controller).proxyPayment.value(msg.value)(msg.sender) == true);
     }
 
 //////////
