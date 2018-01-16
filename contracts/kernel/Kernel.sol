@@ -31,6 +31,8 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     function initialize(address _permissionsCreator) onlyInit public {
         initialized();
 
+        // Permissions creator cannot be address(0), it will fail on setPermissionManager
+
         _createPermission(
             _permissionsCreator,
             address(this),
@@ -41,7 +43,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
 
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
-    *      if a created permission is removed it is possible to reset it with createPermission.
+    *      If a created permission is removed it is possible to reset it with createPermission.
     * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as parent)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
@@ -122,7 +124,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @dev Changes appCode reference for `_appId`. This role is required before an app with a certain appId working properly
     * @notice Upgrade app code of `_appId` to new implementation at address `_code` (CRITICAL!)
     * @param _appId Namehash of the app name
-    * @param _code Implementation for app
+    * @param _code Address of new implementation for app
     */
     function setAppCode(bytes32 _appId, address _code) auth(UPGRADE_APPS_ROLE) external {
         appCode[_appId] = _code;
@@ -217,7 +219,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        require(_newManager > 0);
+        require(_newManager != address(0));
 
         permissionManager[_app][_role] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
