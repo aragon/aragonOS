@@ -1,9 +1,10 @@
 pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
+import "../common/Initializable.sol";
 
 
-contract AragonApp is AppStorage {
+contract AragonApp is AppStorage, Initializable {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role));
         _;
