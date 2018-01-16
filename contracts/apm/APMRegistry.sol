@@ -17,7 +17,7 @@ contract APMRegistryConstants {
 }
 
 
-contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryConstants {
+contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     AbstractENS ens;
     ENSSubdomainRegistrar public registrar;
 
