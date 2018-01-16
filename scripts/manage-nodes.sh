@@ -78,7 +78,7 @@ start_parity() {
     --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port" \
     --author ${addresses[0]} \
     --unlock ${addresses[0]} \
-    --password $PASSWORD_FILE
+    --password $PASSWORD_FILE &
 
     rpc_pid=$!
 }

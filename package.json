@@ -3,7 +3,7 @@
   "version": "3.0.0-0",
   "description": "Core contracts for Aragon",
   "scripts": {
-    "test": "npm run testrpc:dev && truffle test --network rpc",
+    "test": "npm run manage-nodes:dev && truffle test --network rpc",
     "test:geth": "npm run manage-nodes:geth && truffle test --network rpc",
     "test:parity": "npm run manage-nodes:parity && truffle test --network rpc",
     "test:gas": "GAS_REPORTER=true npm test",
