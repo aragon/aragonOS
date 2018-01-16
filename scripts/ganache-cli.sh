@@ -17,7 +17,7 @@ start_testrpc() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
-    node_modules/.bin/ganache-cli -i 15 --gasLimit 7000000 > /dev/null &
+    node_modules/.bin/ganache-cli -i 15 --gasLimit 50000000 > /dev/null &
   fi
 
   testrpc_pid=$!
