@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/common/erc677/ERC677Receiver.sol";
+import "../../contracts/lib/erc677/ERC677Receiver.sol";
 
 contract ERC677Stub is ERC677Receiver {
     address public token;

@@ -1,7 +1,5 @@
 pragma solidity ^0.4.6;
 
-/* solium-disable */
-
 /*
     Copyright 2016, Jordi Baylina
 
