@@ -5,7 +5,6 @@ import "../ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../apps/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
-import "../common/Initializable.sol";
 import "./Repo.sol";
 
 
