@@ -1,8 +1,8 @@
 pragma solidity 0.4.18;
 
-import "../ens/ENS.sol";
+import "../lib/ens/ENS.sol";
+import "../lib/ens/PublicResolver.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
-import "../ens/PublicResolver.sol";
 
 
 contract ENSFactory is ENSConstants {
