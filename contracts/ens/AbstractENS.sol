@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 /* solium-disable */
 
-contract AbstractENS {
+interface AbstractENS {
     function owner(bytes32 _node) constant returns (address);
     function resolver(bytes32 _node) constant returns (address);
     function ttl(bytes32 _node) constant returns (uint64);

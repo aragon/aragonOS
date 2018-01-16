@@ -48,7 +48,7 @@ contract Controlled {
     }
 }
 
-contract ApproveAndCallFallBack {
+interface ApproveAndCallFallBack {
     function receiveApproval(
         address from,
         uint256 _amount,
