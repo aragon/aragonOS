@@ -84,9 +84,46 @@ contract TestACLInterpreter is ACL {
         assertEval(arr(uint256(0)), 0, Op.xor, 0, false);
     }
 
+    function testSender() public {
+        assertEval(arr(), SENDER_PARAM_ID, Op.eq, uint256(msg.sender), true);
+        assertEval(arr(), SENDER_PARAM_ID, Op.eq, uint256(0x1234), false);
+    }
+
+    function testTimestamp() public {
+        assertEval(arr(), TIMESTAMP_PARAM_ID, Op.eq, uint256(block.timestamp), true);
+        assertEval(arr(), TIMESTAMP_PARAM_ID, Op.eq, uint256(1), false);
+        assertEval(arr(), TIMESTAMP_PARAM_ID, Op.gt, uint256(1), true);
+    }
+
+    function testBlockNumber() public {
+        assertEval(arr(), BLOCK_NUMBER_PARAM_ID, Op.eq, uint256(block.number), true);
+        assertEval(arr(), BLOCK_NUMBER_PARAM_ID, Op.eq, uint256(1), false);
+        assertEval(arr(), BLOCK_NUMBER_PARAM_ID, Op.gt, uint256(block.number - 1), true);
+    }
+
+    function testOracle() public {
+        assertEval(arr(), ORACLE_PARAM_ID, Op.eq, uint256(new AcceptOracle()), true);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.eq, uint256(new RejectOracle()), false);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.neq, uint256(new RejectOracle()), true);
+    }
+
     function assertEval(uint256[] args, uint8 argId, Op op, uint256 value, bool expected) internal {
         bool allow = evalParam(Param(argId, uint8(op), uint240(value)), address(0), address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
+    }
+}
+
+
+contract AcceptOracle is ACLOracle {
+    function canPerform(address who, address where, bytes32 what) public view returns (bool) {
+        return true;
+    }
+}
+
+
+contract RejectOracle is ACLOracle {
+    function canPerform(address who, address where, bytes32 what) public view returns (bool) {
+        return false;
     }
 }

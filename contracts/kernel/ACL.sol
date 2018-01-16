@@ -32,7 +32,8 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
 
     uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
     uint8 constant TIMESTAMP_PARAM_ID    = 201;
-    uint8 constant ORACLE_PARAM_ID       = 202;
+    uint8 constant SENDER_PARAM_ID       = 202;
+    uint8 constant ORACLE_PARAM_ID       = 203;
     // TODO: Add execution times param type?
 
     bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
@@ -292,13 +293,17 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
     ) internal view returns (bool)
     {
         uint256 value;
+        uint256 comparedTo = uint256(param.value);
 
         if (param.id == ORACLE_PARAM_ID) {
             value = ACLOracle(param.value).canPerform(who, where, what) ? 1 : 0;
+            comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
+        } else if (param.id == SENDER_PARAM_ID) {
+            value = uint256(msg.sender);
         } else {
             if (param.id >= how.length) {
                 return false;
@@ -306,7 +311,7 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
             value = uint256(uint240(how[param.id])); // force lost precision
         }
 
-        return compare(value, Op(param.op), uint256(param.value));
+        return compare(value, Op(param.op), comparedTo);
     }
 
     function compare(uint256 a, Op op, uint256 b) internal pure returns (bool) {
