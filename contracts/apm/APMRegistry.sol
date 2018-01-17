@@ -3,7 +3,7 @@ pragma solidity 0.4.18;
 import "../kernel/Kernel.sol";
 import "../ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
-import "../apps/AppProxyFactory.sol";
+import "../factory/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
 import "../common/Initializable.sol";
 import "./Repo.sol";

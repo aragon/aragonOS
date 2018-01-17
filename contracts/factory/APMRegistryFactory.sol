@@ -3,10 +3,10 @@ pragma solidity 0.4.18;
 
 import "../apm/APMRegistry.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
-import "../apps/AppProxyFactory.sol";
 
 import "./DAOFactory.sol";
 import "./ENSFactory.sol";
+import "./AppProxyFactory.sol";
 
 
 contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory {
