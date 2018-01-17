@@ -31,7 +31,16 @@ contract('Kernel apps', accounts => {
     })
 
     context('upgradeable proxies', () => {
-        it('fails if code hasnt been set')
+        it('fails if code hasnt been set and initializes', async () => {
+            return assertRevert(async () => {
+                await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 5e6 })
+            })
+        })
+
+        it('doesnt fail if code hasnt been set and doesnt initialize', async () => {
+            await AppProxyUpgradeable.new(kernel.address, appId, '0x', { gas: 5e6 })
+        })
+
         context('initializing on proxy constructor', () => {
             beforeEach(async () => {
                 await kernel.setAppCode(appId, appCode1.address)
@@ -42,7 +51,7 @@ contract('Kernel apps', accounts => {
             })
 
             it('was initialized on constructor', async () => {
-                assert.isTrue(await app.initialized(), 'app should have been initialized')
+                assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
             })
 
             it('is upgradeable', async () => {
@@ -85,8 +94,7 @@ contract('Kernel apps', accounts => {
                 it('can initialize', async () => {
                     await app.initialize()
 
-                    assert.isTrue(await app.initialized(), 'app should have been initialized')
-                })
+                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')                })
 
                 it('app call works if sent from authed entity', async () => {
                     await app.setValue(10)
@@ -130,7 +138,12 @@ contract('Kernel apps', accounts => {
             await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
         })
 
-        it('fails if code hasnt been set on deploy')
+        it('fails if code hasnt been set on deploy', async () => {
+            await kernel.setAppCode(appId, '0x0')
+            return assertRevert(async () => {
+                await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
+            })
+        })
 
         it('is not upgradeable', async () => {
             assert.isFalse(await appProxy.isUpgradeable(), 'appproxy should not be upgradeable')
@@ -140,7 +153,7 @@ contract('Kernel apps', accounts => {
             await app.setValue(10)
             await app.setValue(11)
             await kernel.setAppCode(appId, appCode2.address)
-            console.log('hier')
+
             // app2 would return the double of the value in storage
             assert.equal(await app.getValue(), 11, 'app 2 should have returned correct value')
         })

@@ -12,7 +12,6 @@ contract AppStub is AragonApp, AppSt {
 
     function initialize() onlyInit {
         initialized();
-        initialized = true;
         stringTest = "hola";
     }
 
