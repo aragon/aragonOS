@@ -85,7 +85,7 @@ contract('MiniMeToken', accounts => {
         })
 
         it('disable transfers', async () => {
-            token.enableTransfers(false)
+            await token.enableTransfers(false)
             return assertRevert(async () => {
                 await token.transfer(accounts[3], 5)
             })
