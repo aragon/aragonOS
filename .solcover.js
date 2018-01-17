@@ -1,6 +1,9 @@
+const files = require('glob').sync('contracts/lib/**/*.sol').map(n => n.replace('contracts/', ''))
+
 module.exports = {
     norpc: true,
+    compileCommand: '../node_modules/.bin/truffle compile',
     testCommand: 'node --max-old-space-size=4096 ../node_modules/.bin/truffle test --network coverage',
-    skipFiles: ['zeppelin/math/Math.sol', 'zeppelin/math/SafeMath.sol', 'misc/Migrations.sol', 'ens/*ENS.sol', 'ens/PublicResolver.sol'],
+    skipFiles: ['common/IForwarder.sol', 'kernel/IKernel.sol'].concat(files),
     copyNodeModules: true,
 }

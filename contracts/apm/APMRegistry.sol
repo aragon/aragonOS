@@ -1,11 +1,10 @@
 pragma solidity 0.4.18;
 
 import "../kernel/Kernel.sol";
-import "../ens/AbstractENS.sol";
+import "../lib/ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../factory/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
-import "../common/Initializable.sol";
 import "./Repo.sol";
 
 
@@ -17,7 +16,7 @@ contract APMRegistryConstants {
 }
 
 
-contract APMRegistry is AragonApp, Initializable, AppProxyFactory, APMRegistryConstants {
+contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     AbstractENS ens;
     ENSSubdomainRegistrar public registrar;
 
