@@ -10,6 +10,9 @@ contract DAOFactory is AppProxyFactory {
     address public baseKernel;
     EVMScriptRegistryFactory public regFactory;
 
+    event DeployDAO(address dao);
+    event DeployEVMScriptRegistry(address reg);
+
     function DAOFactory(address _regFactory) public {
         // No need to init as it cannot be killed by devops199
         baseKernel = address(new Kernel());
@@ -32,15 +35,20 @@ contract DAOFactory is AppProxyFactory {
             dao.createPermission(regFactory, dao, dao.UPGRADE_APPS_ROLE(), this);
             dao.createPermission(regFactory, dao, dao.SET_APP_ROLE(), this);
 
-            regFactory.newEVMScriptRegistry(dao, _root);
+            EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
+            DeployEVMScriptRegistry(address(reg));
 
             dao.revokePermission(regFactory, dao, dao.UPGRADE_APPS_ROLE());
             dao.revokePermission(regFactory, dao, dao.SET_APP_ROLE());
+
+            dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
 
             dao.setPermissionManager(address(0), dao, dao.UPGRADE_APPS_ROLE());
             dao.setPermissionManager(address(0), dao, dao.SET_APP_ROLE());
 
             dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
         }
+
+        DeployDAO(dao);
     }
 }

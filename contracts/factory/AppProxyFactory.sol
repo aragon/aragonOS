@@ -5,19 +5,25 @@ import "../apps/AppProxyPinned.sol";
 
 
 contract AppProxyFactory {
-    function newAppProxy(IKernel _kernel, bytes32 _appId) internal returns (AppProxyUpgradeable) {
+    event NewAppProxy(address proxy);
+
+    function newAppProxy(IKernel _kernel, bytes32 _appId) public returns (AppProxyUpgradeable) {
         return newAppProxy(_kernel, _appId, new bytes(0));
     }
 
-    function newAppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) internal returns (AppProxyUpgradeable) {
-        return new AppProxyUpgradeable(_kernel, _appId, _initializePayload);
+    function newAppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyUpgradeable) {
+        AppProxyUpgradeable proxy = new AppProxyUpgradeable(_kernel, _appId, _initializePayload);
+        NewAppProxy(address(proxy));
+        return proxy;
     }
 
-    function newAppProxyPinned(IKernel _kernel, bytes32 _appId) internal returns (AppProxyPinned) {
+    function newAppProxyPinned(IKernel _kernel, bytes32 _appId) public returns (AppProxyPinned) {
         return newAppProxyPinned(_kernel, _appId, new bytes(0));
     }
 
-    function newAppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload) internal returns (AppProxyPinned) {
-        return new AppProxyPinned(_kernel, _appId, _initializePayload);
+    function newAppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyPinned) {
+        AppProxyPinned proxy = new AppProxyPinned(_kernel, _appId, _initializePayload);
+        NewAppProxy(address(proxy));
+        return proxy;
     }
 }

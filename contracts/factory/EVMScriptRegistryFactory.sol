@@ -25,6 +25,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
     function newEVMScriptRegistry(Kernel dao, address root) public returns (EVMScriptRegistry reg){
         dao.setAppCode(EVMSCRIPT_REGISTRY_APP_ID, baseReg);
         reg = EVMScriptRegistry(newAppProxyPinned(dao, EVMSCRIPT_REGISTRY_APP_ID));
+
         dao.setApp(EVMSCRIPT_REGISTRY_APP, reg);
         dao.createPermission(this, reg, reg.REGISTRY_MANAGER(), this);
 
@@ -32,6 +33,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         reg.addScriptExecutor(baseDel);       // spec 2 = DelegateScript
         reg.addScriptExecutor(baseDeployDel); // spec 3 = DeployDelegateScript
 
+        dao.revokePermission(this, reg, reg.REGISTRY_MANAGER());
         dao.setPermissionManager(root, reg, reg.REGISTRY_MANAGER());
 
         return reg;

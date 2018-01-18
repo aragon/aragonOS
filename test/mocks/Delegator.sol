@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/evmscript/specs/DelegateScript.sol";
+import "../../contracts/evmscript/executors/DelegateScript.sol";
 import "./Executor.sol";
 
 

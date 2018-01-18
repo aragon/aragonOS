@@ -12,9 +12,8 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
     function runScript(bytes script, bytes input, address[] blacklist) protectState returns (bytes output) {
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
-        IEVMScriptRegistry registry = IEVMScriptRegistry(registryAddr);
         // TOOD: Too much data flying around, maybe extracting spec id here is cheaper
-        address executorAddr = registry.getScriptExecutor(script);
+        address executorAddr = IEVMScriptRegistry(registryAddr).getScriptExecutor(script);
         require(executorAddr != address(0));
 
         bytes memory calldataArgs = script.encode(input, blacklist);
@@ -22,19 +21,22 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
         require(executorAddr.delegatecall(sig, calldataArgs));
 
-        return returnedData();
+        return returnedDataDecoded();
     }
 
     /**
-    * @dev copies and returns last's call data
+    * @dev copies and returns last's call data. Needs to ABI decode first
     */
-    function returnedData() internal view returns (bytes ret) {
+    function returnedDataDecoded() internal view returns (bytes ret) {
         assembly {
             let size := returndatasize
-            ret := mload(0x40) // free mem ptr get
-            mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
-            mstore(ret, size) // set array length
-            returndatacopy(add(ret, 0x20), 0, size) // copy return data
+            switch size
+            case 0 {}
+            default {
+                ret := mload(0x40) // free mem ptr get
+                mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
+                returndatacopy(ret, 0x20, sub(size, 0x20)) // copy return data
+            }
         }
         return ret;
     }
