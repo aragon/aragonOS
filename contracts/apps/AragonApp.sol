@@ -2,9 +2,10 @@ pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
 import "../common/Initializable.sol";
+import "../evmscript/EVMScriptRunner.sol";
 
 
-contract AragonApp is AppStorage, Initializable {
+contract AragonApp is AppStorage, Initializable, EVMScriptRunner {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role));
         _;

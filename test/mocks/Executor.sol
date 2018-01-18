@@ -17,12 +17,12 @@ contract Executor is ExecutorStorage, EVMScript, CallsScriptDecoder {
         execScript(script, new bytes(0), new address[](0));
     }
 
-    function executeWithBan(bytes script, address[] memory banned) {
-        execScript(script, new bytes(0), banned);
+    function executeWithBan(bytes script, address[] memory blacklist) {
+        execScript(script, new bytes(0), blacklist);
     }
 
-    function executeWithIO(bytes script, bytes input, address[] memory banned) returns (bytes) {
-        return execScript(script, input, banned);
+    function executeWithIO(bytes script, bytes input, address[] memory blacklist) returns (bytes) {
+        return execScript(script, input, blacklist);
     }
 
     function getActionsCount(bytes script) constant returns (uint256) {

@@ -128,11 +128,13 @@ contract('Kernel ACL', accounts => {
                 assertEvent(receipt, 'SetPermission')
             })
 
+            /*
             it('fails when setting manager to the zero address', async () => {
                 return assertRevert(async () => {
                     await kernel.setPermissionManager('0x00', app, role, { from: newManager })
                 })
             })
+            */
 
             it('old manager lost power', async () => {
                 return assertRevert(async () => {

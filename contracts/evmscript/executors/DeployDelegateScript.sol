@@ -6,7 +6,7 @@ import "./DelegateScript.sol";
 
 
 contract DeployDelegateScript is DelegateScript {
-    uint32 constant SPEC_ID = 3;
+    uint256 constant internal SCRIPT_START_LOCATION = 4;
 
     mapping (bytes32 => address) cache;
 
@@ -14,12 +14,12 @@ contract DeployDelegateScript is DelegateScript {
     * @notice Executes script by delegatecall into a deployed contract (exec() function)
     * @param script [ specId (uint32 = 3) ][ contractInitcode (bytecode) ]
     * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
-    * @param banned If any address is passed, will revert.
+    * @param blacklist If any address is passed, will revert.
     * @param input ABI encoded call to be made to contract
     * @return Call return data
     */
-    function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes memory output) {
-        require(banned.length == 0); // dont have ability to control bans, so fail.
+    function execScript(bytes script, bytes input, address[] blacklist) external returns (bytes) {
+        require(blacklist.length == 0); // dont have ability to control bans, so fail.
 
         bytes32 id = keccak256(script);
         address deployed;
@@ -31,6 +31,14 @@ contract DeployDelegateScript is DelegateScript {
         }
 
         return DelegateScript.delegate(deployed, input);
+    }
+
+    function getScriptActionsCount(bytes script) public pure returns (uint256)  {
+        return 1;
+    }
+
+    function getScriptAction(bytes, uint256) public pure returns (address, bytes) {
+        return (address(0), new bytes(0));
     }
 
     /**

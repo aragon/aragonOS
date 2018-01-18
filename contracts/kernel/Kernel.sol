@@ -22,6 +22,25 @@ contract Kernel is IKernel, KernelStorage, Initializable {
         _;
     }
 
+    // PROVISIONAL STUFF TO TEST, BROUGHT TO THE TOP FOR ATTENTION
+    event SetApp(bytes32 indexed id, address app);
+    bytes32 constant public SET_APP_ROLE = bytes32(4);
+    mapping (bytes32 => address) apps;
+
+    // IMO this could be made just one big bytes32 -> address mapping
+    // by renaming this PR's 'code' mapping to apps, and then appIds
+    // for upgradeability just use different IDS, same with kernel code
+    // This would also require ACL params as the implications of changes are different
+    // https://github.com/aragon/aragonOS/pull/184/files#diff-14a0803379fe8527d47915e3727fe7d0R30
+    function setApp(bytes32 name, address app) auth(SET_APP_ROLE) public {
+        apps[name] = app;
+        SetApp(name, app);
+    }
+
+    function getApp(bytes32 name) public view returns (address) {
+        return apps[name];
+    }
+
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
     * @notice Initializes a kernel instance and sets `_permissionsCreator` as the entity that can create other permissions
@@ -218,7 +237,7 @@ contract Kernel is IKernel, KernelStorage, Initializable {
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        require(_newManager != address(0));
+        // require(_newManager != address(0));
 
         permissionManager[_app][_role] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);

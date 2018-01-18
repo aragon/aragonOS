@@ -9,7 +9,7 @@ import "./ENSFactory.sol";
 import "./AppProxyFactory.sol";
 
 
-contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory {
+contract APMRegistryFactory is DAOFactory(address(0)), APMRegistryConstants {
     APMRegistry public registryBase;
     Repo public repoBase;
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;

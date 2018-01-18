@@ -38,7 +38,7 @@ contract('EVM Script', accounts => {
             assert.equal(await executionTarget.counter(), 1, 'should have executed action')
         })
 
-        it('fails to execute if has banned addresses being called', async () => {
+        it('fails to execute if has blacklist addresses being called', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
 
@@ -47,7 +47,7 @@ contract('EVM Script', accounts => {
             })
         })
 
-        it('can execute if call doesnt cointain banned addresses', async () => {
+        it('can execute if call doesnt cointain blacklist addresses', async () => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
 
@@ -139,7 +139,7 @@ contract('EVM Script', accounts => {
             assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
         })
 
-        it('fails to execute if it has banned addresses', async () => {
+        it('fails to execute if it has blacklist addresses', async () => {
             return assertRevert(async () => {
                 await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
             })
@@ -209,7 +209,7 @@ contract('EVM Script', accounts => {
             })
         })
 
-        it('fails to execute if it has banned addresses', async () => {
+        it('fails to execute if it has blacklist addresses', async () => {
             return assertRevert(async () => {
                 await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
             })

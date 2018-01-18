@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
 import "../ScriptHelpers.sol";
+import "../IEVMScriptExecutor.sol";
 
 
 interface DelegateScriptTarget {
@@ -8,25 +9,32 @@ interface DelegateScriptTarget {
 }
 
 
-contract DelegateScript {
+contract DelegateScript is IEVMScriptExecutor {
     using ScriptHelpers for *;
 
-    uint32 constant SPEC_ID = 2;
-    uint256 constant public START_LOCATION = 4;
-
+    uint256 constant internal SCRIPT_START_LOCATION = 4;
+    
     /**
     * @notice Executes script by delegatecall into a contract
     * @param script [ specId (uint32 = 2) ][ contract address (20 bytes) ]
     * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
-    * @param banned If any address is passed, will revert.
+    * @param blacklist If any address is passed, will revert.
     * @return Call return data
     */
-    function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes memory output) {
-        require(banned.length == 0); // dont have ability to control bans, so fail.
+    function execScript(bytes script, bytes input, address[] blacklist) external returns (bytes) {
+        require(blacklist.length == 0); // dont have ability to control bans, so fail.
 
         // Script should be spec id + address (20 bytes)
-        require(script.length == START_LOCATION + 20);
-        return delegate(script.addressAt(START_LOCATION), input);
+        require(script.length == SCRIPT_START_LOCATION + 20);
+        return delegate(script.addressAt(SCRIPT_START_LOCATION), input);
+    }
+
+    function getScriptActionsCount(bytes script) public pure returns (uint256) {
+        return 1;
+    }
+
+    function getScriptAction(bytes script, uint256 position) public pure returns (address, bytes) {
+        return (script.addressAt(SCRIPT_START_LOCATION), new bytes(0));
     }
 
     /**

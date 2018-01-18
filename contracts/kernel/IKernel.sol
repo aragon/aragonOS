@@ -19,4 +19,6 @@ interface IKernel {
 
     function hasPermission(address _entity, address _app, bytes32 _role) view public returns (bool);
     function getAppCode(bytes32 _appId) view public returns (address);
+
+    function getApp(bytes32 name) public view returns (address);
 }

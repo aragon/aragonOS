@@ -3,13 +3,12 @@ pragma solidity ^0.4.18;
 // Inspired by https://github.com/reverendus/tx-manager
 
 import "../ScriptHelpers.sol";
+import "../IEVMScriptExecutor.sol";
 
-
-contract CallsScript {
+contract CallsScript is IEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
-    uint32 constant SPEC_ID = 1;
-    uint256 constant public START_LOCATION = 4;
+    uint256 constant internal SCRIPT_START_LOCATION = 4;
 
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
@@ -18,16 +17,16 @@ contract CallsScript {
     * @param script [ specId (uint32 = 1) ] many calls with this structure ->
     *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
     * @param input Input is ignored in callscript
-    * @param banned Addresses the script cannot call to, or will revert.
+    * @param blacklist Addresses the script cannot call to, or will revert.
     * @return always returns empty byte array
     */
-    function execScript(bytes memory script, bytes memory input, address[] memory banned) internal returns (bytes output) {
-        uint256 location = START_LOCATION; // first 32 bits are spec id
+    function execScript(bytes script, bytes input, address[] blacklist) external returns (bytes) {
+        uint256 location = SCRIPT_START_LOCATION; // first 32 bits are spec id
         while (location < script.length) {
             address contractAddress = script.addressAt(location);
-            // Check address being called is not banned
-            for (uint i = 0; i < banned.length; i++) {
-                require(contractAddress != banned[i]);
+            // Check address being called is not blacklist
+            for (uint i = 0; i < blacklist.length; i++) {
+                require(contractAddress != blacklist[i]);
             }
 
             // logged before execution to ensure event ordering in receipt
@@ -45,22 +44,17 @@ contract CallsScript {
             location += (0x14 + 0x04 + calldataLength);
         }
     }
-}
 
-
-contract CallsScriptDecoder is CallsScript {
-    using ScriptHelpers for bytes;
-
-    function getScriptActionsCount(bytes memory script) internal pure returns (uint256 i) {
-        uint256 location = START_LOCATION;
+    function getScriptActionsCount(bytes script) public pure returns (uint256 i) {
+        uint256 location = SCRIPT_START_LOCATION;
         while (location < script.length) {
             location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
             i++;
         }
     }
 
-    function getScriptAction(bytes memory script, uint256 position) internal pure returns (address, bytes) {
-        uint256 location = START_LOCATION;
+    function getScriptAction(bytes script, uint256 position) public pure returns (address, bytes) {
+        uint256 location = SCRIPT_START_LOCATION;
         uint i = position;
         while (location < script.length) {
             if (i == 0) {
@@ -69,37 +63,12 @@ contract CallsScriptDecoder is CallsScript {
                 bytes memory calldata = new bytes(length);
                 uint calldataPtr;
                 assembly { calldataPtr := add(calldata, 0x20) }
-                memcpy(calldataPtr, script.locationOf(location + 0x14 + 0x04), length);
+                ScriptHelpers.memcpy(calldataPtr, script.locationOf(location + 0x14 + 0x04), length);
                 return (addr, calldata);
             }
 
             location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
             i--;
-        }
-    }
-
-    // From https://github.com/Arachnid/solidity-stringutils
-    // WARNING: HAS SIDE EFFECTS IN MEMORY
-    function memcpy(uint _dest, uint _src, uint _len) pure private {
-        uint256 src = _src;
-        uint256 dest = _dest;
-        uint256 len = _len;
-
-        // Copy word-length chunks while possible
-        for (; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
         }
     }
 }

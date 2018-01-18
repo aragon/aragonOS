@@ -2,12 +2,16 @@ pragma solidity 0.4.18;
 
 
 library ScriptHelpers {
+    // To test with JS and compare with actual encoder. Maintaining for reference.
     // t = function() { return IEVMScriptExecutor.at('0x4bcdd59d6c77774ee7317fc1095f69ec84421e49').contract.execScript.getData(...[].slice.call(arguments)).slice(10).match(/.{1,64}/g) }
-    // run = function() { return ScriptHelpers.new().then(sh => { sh.abiEncode.call(...[].slice.call(arguments)).then((a, l) => { console.log(l); console.log(a.match(/.{1,64}/g)) } ) }) }
+    // run = function() { return ScriptHelpers.new().then(sh => { sh.abiEncode.call(...[].slice.call(arguments)).then(a => console.log(a.slice(2).match(/.{1,64}/g)) ) }) }
     // This is truly not beautiful but lets no daydream to the day solidity gets reflection features
-    function abiEncode(bytes a, bytes memory b, address[] c) view returns (bytes d) {
-        // A is position after the 3 position words
-        uint256 bPosition = 96 + 32 * abiLength(a);
+
+    // TODO: Add test suite against actual ABI encoder (result of call vs our encoder)
+    function abiEncode(bytes a, bytes memory b, address[] c) internal pure returns (bytes d) {
+        // A is positioned after the 3 position words
+        uint256 aPosition = 0x60;
+        uint256 bPosition = aPosition + 32 * abiLength(a);
         uint256 cPosition = bPosition + 32 * abiLength(b);
         uint256 length    = cPosition + 32 * abiLength(c);
 
@@ -19,12 +23,12 @@ library ScriptHelpers {
             mstore(add(d, 0x60), cPosition)
         }
 
-        copy(d, a, 96);
+        copy(d, a, 0x60);
         copy(d, b, bPosition);
         copy(d, c, cPosition);
     }
 
-    function copy(bytes d, bytes a, uint256 pos) internal {
+    function copy(bytes d, bytes a, uint256 pos) internal pure {
         uint dest; uint src;
         assembly {
             src  := a
@@ -33,7 +37,7 @@ library ScriptHelpers {
         memcpy(dest, src, a.length + 32);
     }
 
-    function copy(bytes d, address[] a, uint256 pos) internal {
+    function copy(bytes d, address[] a, uint256 pos) internal pure {
         uint dest; uint src;
         assembly {
             src  := a
