@@ -60,18 +60,21 @@ start_geth() {
     rpc_pid=$!
 }
 
-start_parity()
-    IFS=$'\n' addresses=($(parity account list --chain dev))
-    # start parity client in the background
-     +    parity --chain dev --geth \
-     +    --tx-gas-limit 0x5F5E100 --gasprice 0x0 --gas-floor-target 0x47E7C4 \
-     +    --reseal-on-txs all --reseal-min-period 0 --no-dapps \
-     +    --jsonrpc-interface all --jsonrpc-hosts all --jsonrpc-cors="http://localhost:$geth_port" \
-     +    --author ${addresses[0]} \
-     +    --unlock ${addresses[0]} \
-     +    --password $PASSWORD_FILE
-     +
-     +    rpc_pid=$!
+start_parity() {
+    parity \
+    --chain dev \
+    --geth \
+    --tx-gas-limit 0x5F5E100 \
+    --gasprice 0x0 \
+    --gas-floor-target 0x47E7C4 \
+    --reseal-on-txs all \
+    --reseal-min-period 0 \
+    --no-dapps \
+    --jsonrpc-interface all \
+    --jsonrpc-hosts all \
+    --jsonrpc-cors="http://localhost:$geth_port" &
+
+     rpc_pid=$!
 }
 
 check_docker() {
