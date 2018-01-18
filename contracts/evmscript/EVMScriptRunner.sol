@@ -10,7 +10,7 @@ import "./ScriptHelpers.sol";
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
 
-    function runScript(bytes script, bytes input, address[] blacklist) protectState returns (bytes output) {
+    function runScript(bytes script, bytes input, address[] blacklist) protectState internal returns (bytes output) {
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
         // TOOD: Too much data flying around, maybe extracting spec id here is cheaper
         address executorAddr = IEVMScriptRegistry(registryAddr).getScriptExecutor(script);

@@ -9,6 +9,7 @@ import "../evmscript/executors/DeployDelegateScript.sol";
 import "./AppProxyFactory.sol";
 import "../kernel/Kernel.sol";
 
+
 contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants {
     address public baseReg;
     address public baseCalls;
@@ -22,7 +23,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         baseDeployDel = address(new DeployDelegateScript());
     }
 
-    function newEVMScriptRegistry(Kernel dao, address root) public returns (EVMScriptRegistry reg){
+    function newEVMScriptRegistry(Kernel dao, address root) public returns (EVMScriptRegistry reg) {
         dao.setAppCode(EVMSCRIPT_REGISTRY_APP_ID, baseReg);
         reg = EVMScriptRegistry(newAppProxyPinned(dao, EVMSCRIPT_REGISTRY_APP_ID));
 

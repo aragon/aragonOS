@@ -6,6 +6,7 @@ import "../kernel/KernelProxy.sol";
 import "./AppProxyFactory.sol";
 import "./EVMScriptRegistryFactory.sol";
 
+
 contract DAOFactory is AppProxyFactory {
     address public baseKernel;
     EVMScriptRegistryFactory public regFactory;

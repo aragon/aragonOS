@@ -5,6 +5,7 @@ pragma solidity ^0.4.18;
 import "../ScriptHelpers.sol";
 import "../IEVMScriptExecutor.sol";
 
+
 contract CallsScript is IEVMScriptExecutor {
     using ScriptHelpers for bytes;
 

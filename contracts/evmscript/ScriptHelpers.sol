@@ -17,7 +17,7 @@ library ScriptHelpers {
         uint256 aPosition = 0x60;
         uint256 bPosition = aPosition + 32 * abiLength(a);
         uint256 cPosition = bPosition + 32 * abiLength(b);
-        uint256 length    = cPosition + 32 * abiLength(c);
+        uint256 length = cPosition + 32 * abiLength(c);
 
         d = new bytes(length);
         assembly {
@@ -33,7 +33,8 @@ library ScriptHelpers {
     }
 
     function copy(bytes d, bytes a, uint256 pos) internal pure {
-        uint dest; uint src;
+        uint dest;
+        uint src;
         assembly {
             src  := a
             dest := add(add(d, 0x20), pos)
@@ -42,7 +43,8 @@ library ScriptHelpers {
     }
 
     function copy(bytes d, address[] a, uint256 pos) internal pure {
-        uint dest; uint src;
+        uint dest;
+        uint src;
         assembly {
             src  := a
             dest := add(add(d, 0x20), pos)
