@@ -4,16 +4,39 @@ import "../apps/AppStorage.sol";
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
+import "./ScriptHelpers.sol";
+
 
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
-    function runScript(bytes _script, bytes _input, address[] blacklist) protectState returns (bytes output) {
+    using ScriptHelpers for bytes;
+
+    function runScript(bytes script, bytes input, address[] blacklist) protectState returns (bytes output) {
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
         IEVMScriptRegistry registry = IEVMScriptRegistry(registryAddr);
-        address executorAddr = IEVMScriptExecutor(registry.getScriptExecutor(_script));
-        if (executorAddr != 0) {
-            // TODO: Encode delegate call payload!
-            // output = executor.delegatecall(..., _script, _input);
+        // TOOD: Too much data flying around, maybe extracting spec id here is cheaper
+        address executorAddr = registry.getScriptExecutor(script);
+        require(executorAddr != address(0));
+
+        bytes memory calldataArgs = script.encode(input, blacklist);
+        bytes4 sig = IEVMScriptExecutor(0).execScript.selector;
+
+        require(executorAddr.delegatecall(sig, calldataArgs));
+
+        return returnedData();
+    }
+
+    /**
+    * @dev copies and returns last's call data
+    */
+    function returnedData() internal view returns (bytes ret) {
+        assembly {
+            let size := returndatasize
+            ret := mload(0x40) // free mem ptr get
+            mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
+            mstore(ret, size) // set array length
+            returndatacopy(add(ret, 0x20), 0, size) // copy return data
         }
+        return ret;
     }
 
     modifier protectState {

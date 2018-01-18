@@ -24,10 +24,12 @@ contract DAOFactory is AppProxyFactory {
     */
     function newDAO(address _root) public returns (Kernel dao) {
         dao = Kernel(new KernelProxy(baseKernel));
-        dao.initialize(this);
-        dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
+        address initialRoot = address(regFactory) != address(0) ? this : _root;
+        dao.initialize(initialRoot);
 
         if (address(regFactory) != address(0)) {
+            dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
+
             dao.createPermission(regFactory, dao, dao.UPGRADE_APPS_ROLE(), this);
             dao.createPermission(regFactory, dao, dao.SET_APP_ROLE(), this);
 
@@ -35,6 +37,8 @@ contract DAOFactory is AppProxyFactory {
             // TODO: Revoke perms
             dao.setPermissionManager(address(0), dao, dao.UPGRADE_APPS_ROLE());
             dao.setPermissionManager(address(0), dao, dao.SET_APP_ROLE());
+
+            dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
         }
     }
 }

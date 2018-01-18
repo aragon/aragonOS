@@ -8,7 +8,11 @@ library ScriptHelpers {
     // This is truly not beautiful but lets no daydream to the day solidity gets reflection features
 
     // TODO: Add test suite against actual ABI encoder (result of call vs our encoder)
-    function abiEncode(bytes a, bytes memory b, address[] c) internal pure returns (bytes d) {
+    function abiEncode(bytes a, bytes b, address[] c) public pure returns (bytes d) {
+        return encode(a, b, c);
+    }
+
+    function encode(bytes memory a, bytes memory b, address[] memory c) internal pure returns (bytes memory d) {
         // A is positioned after the 3 position words
         uint256 aPosition = 0x60;
         uint256 bPosition = aPosition + 32 * abiLength(a);

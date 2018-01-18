@@ -13,7 +13,7 @@ contract DelegateScript is IEVMScriptExecutor {
     using ScriptHelpers for *;
 
     uint256 constant internal SCRIPT_START_LOCATION = 4;
-    
+
     /**
     * @notice Executes script by delegatecall into a contract
     * @param script [ specId (uint32 = 2) ][ contract address (20 bytes) ]
