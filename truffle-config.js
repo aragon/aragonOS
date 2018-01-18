@@ -22,7 +22,7 @@ const mocha = process.env.GAS_REPORTER ? mochaGasSettings : {}
 module.exports = {
   networks: {
     rpc: {
-      network_id: 15,
+      network_id: 454545,
       host: 'localhost',
       port: 8545,
       gas: 6e6,
