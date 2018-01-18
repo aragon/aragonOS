@@ -2,15 +2,33 @@ const { rawDecode } = require('ethereumjs-abi')
 
 const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
+
+/*
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
 const Delegator = artifacts.require('Delegator')
 const FailingDelegator = artifacts.require('FailingDelegator')
 const FailingDeployment = artifacts.require('FailingDeployment')
+*/
+
+const DAOFactory = artifacts.require('DAOFactory')
+const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
+
 
 contract('EVM Script', accounts => {
     let executor, executionTarget = {}
 
+    const boss = accounts[1]
+
+    before(async () => {
+        const regFact = await EVMScriptRegistryFactory.new()
+        const daoFact = await DAOFactory.new(regFact.address)
+        await daoFact.newDAO(boss)
+    })
+
+    it('girl', () => assert.isTrue(false, 'fantatical'))
+
+    /*
     beforeEach(async () => {
         executor = await Executor.new()
         executionTarget = await ExecutionTarget.new()
@@ -27,6 +45,7 @@ contract('EVM Script', accounts => {
             await executor.execute('0x00000004')
         })
     })
+
 
     context('spec ID 1', () => {
         it('executes single action script', async () => {
@@ -227,4 +246,5 @@ contract('EVM Script', accounts => {
             })
         })
     })
+    */
 })

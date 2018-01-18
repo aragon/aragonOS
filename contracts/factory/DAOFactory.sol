@@ -28,13 +28,15 @@ contract DAOFactory is AppProxyFactory {
         dao.initialize(initialRoot);
 
         if (address(regFactory) != address(0)) {
-            dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
-
+            dao.grantPermission(regFactory, dao, dao.CREATE_PERMISSIONS_ROLE());
             dao.createPermission(regFactory, dao, dao.UPGRADE_APPS_ROLE(), this);
             dao.createPermission(regFactory, dao, dao.SET_APP_ROLE(), this);
 
             regFactory.newEVMScriptRegistry(dao, _root);
-            // TODO: Revoke perms
+
+            dao.revokePermission(regFactory, dao, dao.UPGRADE_APPS_ROLE());
+            dao.revokePermission(regFactory, dao, dao.SET_APP_ROLE());
+
             dao.setPermissionManager(address(0), dao, dao.UPGRADE_APPS_ROLE());
             dao.setPermissionManager(address(0), dao, dao.SET_APP_ROLE());
 
