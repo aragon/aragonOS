@@ -27,64 +27,15 @@ start_testrpc() {
     rpc_pid=$!
 }
 
-start_geth() {
-    # hardcoded address of first account in keystore
-    ETHERBASE='0x1f7402f55e142820ea3812106d0657103fc1709e'
-    DATADIR="$HOME/.ethdata"
-    # Generate and store a wallet password
-    if [ ! -f $DATADIR ]; then
-        echo "Making data directory '$HOME/.ethdata'..."
-        mkdir -p $DATADIR
-        cp -R ./geth/keystore $DATADIR
-    fi
-
-    # initialize our private network
-    geth \
-    --datadir $DATADIR \
-    --networkid 454545 \
-    --etherbase $ETHERBASE \
-    --targetgaslimit '6700000' \
-    init ./geth/genesis.json
-
-    geth \
-    --rpc \
-    --rpcaddr '0.0.0.0' \
-    --rpcport $GETH_PORT \
-    --rpccorsdomain '*' \
-    --datadir $DATADIR \
-    --networkid 454545 \
-    --etherbase $ETHERBASE \
-    --targetgaslimit '6700000' \
-    js ./scripts/run-dev-node.js &
-
-    rpc_pid=$!
-}
-
-start_parity() {
-    parity \
-    --chain dev \
-    --geth \
-    --tx-gas-limit 0x5F5E100 \
-    --gasprice 0x0 \
-    --gas-floor-target 0x47E7C4 \
-    --reseal-on-txs all \
-    --reseal-min-period 0 \
-    --no-dapps \
-    --jsonrpc-interface all \
-    --jsonrpc-hosts all \
-    --jsonrpc-cors="http://localhost:$geth_port" &
-
-     rpc_pid=$!
-}
-
 check_docker() {
     # check that docker exists before attempting to pull/run images
     if ! [ -x "$(command -v docker)" ]; then
         echo 'Error: docker is not installed' >&2
+        exit 1
     fi
 }
 
-docker_start_parity() {
+start_parity() {
     check_docker
     # pull the most stable release of parity
     docker pull parity/parity:$PARITY_VERSION
@@ -96,7 +47,7 @@ docker_start_parity() {
     --jsonrpc-apis all -lrpc=trace
 }
 
-docker_start_geth() {
+start_geth() {
     check_docker
     # pull the latest image using the dev test network
     docker pull purta/geth-devnet:$GETH_VERSION
@@ -110,18 +61,10 @@ else
     echo "Starting our own ethereum client at port $GETH_PORT"
     case $GETH_CLIENT in
         geth )
-            if [ "$DOCKER_ENABLED" = true ]; then
-                docker_start_geth
-            else
-                start_geth
-            fi
+            start_geth
             ;;
         parity )
-            if [ "$DOCKER_ENABLED" = true ]; then
-                docker_start_parity
-            else
-                start_parity
-            fi
+            start_parity
             ;;
         * )
             echo "No ethereum client specified, using testrpc..."
