@@ -1,7 +1,5 @@
 pragma solidity ^0.4.0;
 
-/* solium-disable */
-
 import './AbstractENS.sol';
 
 /**

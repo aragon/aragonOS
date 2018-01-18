@@ -1,6 +1,6 @@
 # aragonOS <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/dev.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/dev.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragonOS?branch=dev) [![npm](https://img.shields.io/npm/v/@aragon/os.svg?style=for-the-badge)](https://www.npmjs.com/package/@aragon/os)
 
-This repo contains Aragon's reference implementation for [aragonOS](https://wiki.aragon.one/dev/AragonOS/).
+This repo contains Aragon's reference implementation for [aragonOS](https://wiki.aragon.one/dev/aragonOS_index/).
 
 #### 🚨 Everything in this repo is highly experimental software.
 It is not secure to use any of this code in production (mainnet) until proper security audits have been conducted. It can result in irreversible loss of funds.
@@ -13,7 +13,7 @@ Don't be shy to contribute even the smallest tweak. Everyone will be specially n
 
 ## Documentation
 
-Visit the [Aragon wiki](https://wiki.aragon.one/documentation/dev/aragon-core_home/) for in depth documentation on the [architecture](https://wiki.aragon.one/documentation/AragonOS_document/#1-kernel-and-the-access-control-list) and different parts of the system.
+Visit the [Aragon wiki](https://wiki.aragon.one/dev/aragonOS_index/) for in depth documentation on the [architecture](https://wiki.aragon.one/documentation/aragonOS/) and different parts of the system.
 
 ## Installing aragonOS
 
@@ -35,4 +35,4 @@ npm i --save-dev @aragon/os
 
 ## Contributing
 
-For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/dev/aragon-core_how_to_contribute/) on the wiki.
+For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/dev/aragonOS_how_to_contribute/) on the wiki.
