@@ -29,16 +29,14 @@ contract ACL is AragonApp, IACL {
     function initialize(address _permissionsCreator) onlyInit public {
         initialized();
 
-        //require(msg.sender == address(kernel));
+        require(msg.sender == address(kernel));
 
-        /*
         _createPermission(
             _permissionsCreator,
             address(this),
             CREATE_PERMISSIONS_ROLE,
             _permissionsCreator
         );
-        */
     }
 
     /**
