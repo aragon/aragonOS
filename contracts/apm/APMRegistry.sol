@@ -5,6 +5,7 @@ import "../lib/ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../factory/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
+import "../acl/ACL.sol";
 import "./Repo.sol";
 
 
@@ -38,8 +39,10 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         // Check APM has all permissions it needss
         require(kernel != address(0));
-        require(kernel.hasPermission(address(this), registrar, registrar.CREATE_NAME_ROLE()));
-        require(kernel.hasPermission(address(this), kernel, Kernel(kernel).CREATE_PERMISSIONS_ROLE()));
+
+        ACL acl = ACL(kernel.acl());
+        require(acl.hasPermission(address(this), registrar, registrar.CREATE_NAME_ROLE()));
+        require(acl.hasPermission(address(this), kernel, ACL(Kernel(kernel).acl()).CREATE_PERMISSIONS_ROLE()));
     }
 
     /**
@@ -71,8 +74,9 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);
 
         // Give permissions to _dev
-        kernel.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
-        kernel.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
+        ACL acl = ACL(kernel.acl());
+        acl.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
+        acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
         return repo;
     }
 
@@ -81,7 +85,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         Repo repo = newClonedRepo();
 
-        kernel.createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
+        ACL(kernel.acl()).createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists

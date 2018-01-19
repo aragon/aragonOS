@@ -46,32 +46,37 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         }
 
         Kernel dao = newDAO(this);
+        ACL acl = ACL(dao.acl());
 
-        dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this);
+        acl.createPermission(this, dao, dao.APP_MANAGER(), this);
+
+        bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
         // App code for relevant apps
-        dao.setAppCode(APM_APP_ID, registryBase);
-        dao.setAppCode(REPO_APP_ID, repoBase);
-        dao.setAppCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        dao.setApp(namespace, APM_APP_ID, registryBase);
+        dao.setApp(namespace, REPO_APP_ID, repoBase);
+        dao.setApp(namespace, ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
 
         // Deploy proxies
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
         APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
-        dao.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
-        dao.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
+        acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
+        acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
-        configureAPMPermissions(dao, apm, _root);
+        configureAPMPermissions(acl, apm, _root);
 
         // allow apm to create permissions for Repos in Kernel
-        dao.grantPermission(apm, dao, dao.CREATE_PERMISSIONS_ROLE());
+        bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
+
+        acl.grantPermission(apm, acl, permRole);
 
         // Permission transition to _root
-        dao.setPermissionManager(_root, dao, dao.UPGRADE_APPS_ROLE());
-        dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE());
-        dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
-        dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
+        acl.setPermissionManager(_root, dao, dao.APP_MANAGER());
+        acl.revokePermission(this, acl, permRole);
+        acl.grantPermission(_root, acl, permRole);
+        acl.setPermissionManager(_root, acl, permRole);
 
         // Initialize
         ens.setOwner(node, ensSub);
@@ -84,7 +89,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
     }
 
     // Factory can be subclassed and permissions changed
-    function configureAPMPermissions(Kernel dao, APMRegistry apm, address root) internal {
-        dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root);
+    function configureAPMPermissions(ACL acl, APMRegistry apm, address root) internal {
+        acl.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root);
     }
 }

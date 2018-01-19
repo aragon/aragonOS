@@ -15,7 +15,7 @@ contract AppProxyPinned is AppProxyBase {
     function AppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
              AppProxyBase(_kernel, _appId, _initializePayload) public
     {
-        pinnedCode = kernel.getAppCode(appId);
+        pinnedCode = getAppBase(appId);
         require(pinnedCode != address(0));
     }
 

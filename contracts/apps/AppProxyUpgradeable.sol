@@ -19,7 +19,7 @@ contract AppProxyUpgradeable is AppProxyBase {
     }
 
     function getCode() public view returns (address) {
-        return kernel.getAppCode(appId);
+        return getAppBase(appId);
     }
 
     function isUpgradeable() public pure returns (bool) {

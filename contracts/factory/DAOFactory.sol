@@ -3,12 +3,15 @@ pragma solidity 0.4.18;
 import "../kernel/Kernel.sol";
 import "../kernel/KernelProxy.sol";
 
+import "../acl/ACL.sol";
+
 import "./AppProxyFactory.sol";
 import "./EVMScriptRegistryFactory.sol";
 
 
 contract DAOFactory is AppProxyFactory {
     address public baseKernel;
+    address public baseACL;
     EVMScriptRegistryFactory public regFactory;
 
     event DeployDAO(address dao);
@@ -17,6 +20,7 @@ contract DAOFactory is AppProxyFactory {
     function DAOFactory(address _regFactory) public {
         // No need to init as it cannot be killed by devops199
         baseKernel = address(new Kernel());
+        baseACL = address(new ACL());
 
         if (_regFactory != address(0)) {
             regFactory = EVMScriptRegistryFactory(_regFactory);
@@ -28,26 +32,28 @@ contract DAOFactory is AppProxyFactory {
     */
     function newDAO(address _root) public returns (Kernel dao) {
         dao = Kernel(new KernelProxy(baseKernel));
+        ACL acl = ACL(newAppProxy(dao, dao.ACL_APP_ID()));
+
         address initialRoot = address(regFactory) != address(0) ? this : _root;
-        dao.initialize(initialRoot);
+        dao.initialize(acl, baseACL, initialRoot);
+
+        //require(address(dao.acl()) == address(acl));
 
         if (address(regFactory) != address(0)) {
-            dao.grantPermission(regFactory, dao, dao.CREATE_PERMISSIONS_ROLE());
-            dao.createPermission(regFactory, dao, dao.UPGRADE_APPS_ROLE(), this);
-            dao.createPermission(regFactory, dao, dao.SET_APP_ROLE(), this);
+            bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
+            bytes32 appManagerRole = dao.APP_MANAGER();
+
+            acl.grantPermission(regFactory, acl, permRole);
+            acl.createPermission(regFactory, dao, appManagerRole, this);
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
             DeployEVMScriptRegistry(address(reg));
 
-            dao.revokePermission(regFactory, dao, dao.UPGRADE_APPS_ROLE());
-            dao.revokePermission(regFactory, dao, dao.SET_APP_ROLE());
+            acl.revokePermission(regFactory, dao, appManagerRole);
+            acl.grantPermission(_root, acl, permRole);
 
-            dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
-
-            dao.setPermissionManager(address(0), dao, dao.UPGRADE_APPS_ROLE());
-            dao.setPermissionManager(address(0), dao, dao.SET_APP_ROLE());
-
-            dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
+            acl.setPermissionManager(address(0), dao, appManagerRole);
+            acl.setPermissionManager(_root, acl, permRole);
         }
 
         DeployDAO(dao);

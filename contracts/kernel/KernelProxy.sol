@@ -11,7 +11,8 @@ contract KernelProxy is KernelStorage, DelegateProxy {
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
     function KernelProxy(address _kernelImpl) public {
-        kernelImpl = _kernelImpl;
+        apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
+        require(apps[KERNEL_APP] == _kernelImpl);
     }
 
     /**
@@ -19,6 +20,6 @@ contract KernelProxy is KernelStorage, DelegateProxy {
     * @return Any bytes32 value the implementation returns
     */
     function () payable public {
-        delegatedFwd(kernelImpl, msg.data);
+        delegatedFwd(apps[KERNEL_APP], msg.data);
     }
 }
