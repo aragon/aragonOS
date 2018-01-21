@@ -22,45 +22,46 @@ library ScriptHelpers {
         d = new bytes(length);
         assembly {
             // Store positions
-            mstore(add(d, 0x20), 0x60)
+            mstore(add(d, 0x20), aPosition)
             mstore(add(d, 0x40), bPosition)
             mstore(add(d, 0x60), cPosition)
         }
 
-        copy(d, a, 0x60);
-        copy(d, b, bPosition);
-        copy(d, c, cPosition);
-    }
-
-    function copy(bytes d, bytes a, uint256 pos) internal pure {
-        uint dest;
-        uint src;
-        assembly {
-            src  := a
-            dest := add(add(d, 0x20), pos)
-        }
-        memcpy(dest, src, a.length + 32);
-    }
-
-    function copy(bytes d, address[] a, uint256 pos) internal pure {
-        uint dest;
-        uint src;
-        assembly {
-            src  := a
-            dest := add(add(d, 0x20), pos)
-        }
-        memcpy(dest, src, 32 * a.length + 32);
+        // Copy memory to correct position
+        copy(d, getPtr(a), aPosition, a.length);
+        copy(d, getPtr(b), bPosition, b.length);
+        copy(d, getPtr(c), cPosition, c.length * 32); // 1 word per address
     }
 
     function abiLength(bytes memory a) internal pure returns (uint256) {
         // 1 for length +
         // memory words + 1 if not divisible for 32 to offset word
-        return 1 + (a.length / 32) + (a.length % 32 > 0 || a.length == 0 ? 1 : 0);
+        return 1 + (a.length / 32) + (a.length % 32 > 0 ? 1 : 0);
     }
 
     function abiLength(address[] a) internal pure returns (uint256) {
         // 1 for length + 1 per item
         return 1 + a.length;
+    }
+
+    function copy(bytes d, uint256 src, uint256 pos, uint256 length) internal pure {
+        uint dest;
+        assembly {
+            dest := add(add(d, 0x20), pos)
+        }
+        memcpy(dest, src, length + 32);
+    }
+
+    function getPtr(bytes memory x) internal pure returns (uint256 ptr) {
+        assembly {
+            ptr := x
+        }
+    }
+
+    function getPtr(address[] memory x) internal pure returns (uint256 ptr) {
+        assembly {
+            ptr := x
+        }
     }
 
     function getSpecId(bytes script) internal pure returns (uint32) {
