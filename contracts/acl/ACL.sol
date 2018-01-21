@@ -31,10 +31,7 @@ contract ACL is AragonApp, IACL {
 
         require(msg.sender == address(kernel));
 
-        _createPermission(_permissionsCreator, this,
-            CREATE_PERMISSIONS_ROLE,
-            _permissionsCreator
-        );
+        _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
 
     /**
@@ -124,23 +121,11 @@ contract ACL is AragonApp, IACL {
     /**
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
-    function _createPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        address _manager
-    )
-        internal
-    {
+    function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
         // only allow permission creation when it has no manager (hasn't been created before)
         require(permissionManager[_app][_role] == address(0));
 
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            true
-        );
+        _setPermission(_entity, _app, _role, true);
         _setPermissionManager(_manager, _app, _role);
     }
 
@@ -157,12 +142,7 @@ contract ACL is AragonApp, IACL {
     {
         permissions[_entity][_app][_role] = _allowed;
 
-        SetPermission(
-            _entity,
-            _app,
-            _role,
-            _allowed
-        );
+        SetPermission(_entity, _app, _role, _allowed);
     }
 
     /**
