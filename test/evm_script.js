@@ -210,7 +210,7 @@ contract('EVM Script', accounts => {
         })
 
         context('spec ID 3', () => {
-            it('can deploy an execute', async () => {
+            it('can deploy and execute', async () => {
                 await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
 
                 assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
