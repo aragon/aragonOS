@@ -7,7 +7,6 @@ library ScriptHelpers {
     // run = function() { return ScriptHelpers.new().then(sh => { sh.abiEncode.call(...[].slice.call(arguments)).then(a => console.log(a.slice(2).match(/.{1,64}/g)) ) }) }
     // This is truly not beautiful but lets no daydream to the day solidity gets reflection features
 
-    // TODO: Add test suite against actual ABI encoder (result of call vs our encoder)
     function abiEncode(bytes a, bytes b, address[] c) public pure returns (bytes d) {
         return encode(a, b, c);
     }

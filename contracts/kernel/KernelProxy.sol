@@ -12,7 +12,7 @@ contract KernelProxy is KernelStorage, DelegateProxy {
     */
     function KernelProxy(address _kernelImpl) public {
         apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
-        require(apps[KERNEL_APP] == _kernelImpl);
+        assert(apps[KERNEL_APP] == _kernelImpl);
     }
 
     /**

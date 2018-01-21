@@ -22,7 +22,8 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
 
     function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER) returns (uint id) {
         // cheaply creates empty record so first index is 1
-        executors.length += executors.length == 0 ? 2 : 1;
+        uint256 newExecutors = executors.length == 0 ? 2 : 1;
+        executors.length += newExecutors;
         id = executors.length - 1;
         executors[id].executor = _executor;
         executors[id].enabled = true;

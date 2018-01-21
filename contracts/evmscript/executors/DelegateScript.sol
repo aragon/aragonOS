@@ -29,14 +29,6 @@ contract DelegateScript is IEVMScriptExecutor {
         return delegate(script.addressAt(SCRIPT_START_LOCATION), input);
     }
 
-    function getScriptActionsCount(bytes script) public pure returns (uint256) {
-        return 1;
-    }
-
-    function getScriptAction(bytes script, uint256 position) public pure returns (address, bytes) {
-        return (script.addressAt(SCRIPT_START_LOCATION), new bytes(0));
-    }
-
     /**
     * @dev Delegatecall to contract with input data
     */
