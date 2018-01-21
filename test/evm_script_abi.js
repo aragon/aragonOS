@@ -14,7 +14,7 @@ contract('EVM Script: ABI encoder', accounts => {
         ['0x', '0x', ['0x12', '0x34', '0x56', '0x57']],
         ['0x', '0x12', ['0x12', '0x34', '0x56', '0x57']],
         ['0x12', '0x00', ['0x12', '0x34', '0x56', '0x57']],
-        ['he he heyyyyy', 'wasasasasa', ['0x000000000000000000000000000000e000000000', '0xaaaab0000000000000000000000000e000000000']],
+        ['he he heyyyyy', 'wasa wasa wasaaaa', ['0x000000000000000000000000000000e000000000', '0xaaaab0000000000000000000000000e000000000']],
     ]
 
     before(async () => {
@@ -42,7 +42,7 @@ contract('EVM Script: ABI encoder', accounts => {
             it(`test: ${i + 1}`, async () => {
                 const a = await helper.abiEncode(...t)
                 const curatedT = t.map(to => to.indexOf('0x') != 0 ? to : toBuffer(to))
-                await tester.test(...t)
+                await tester.exec(...t)
                 const result = await tester.result()
                 const b = "0x" + result.slice(10) // remove signature
                 assert.equal(a, b, 'encoders should match')

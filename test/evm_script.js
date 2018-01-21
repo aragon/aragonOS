@@ -10,14 +10,17 @@ const FailingDelegator = artifacts.require('FailingDelegator')
 const FailingDeployment = artifacts.require('FailingDeployment')
 
 const Kernel = artifacts.require('Kernel')
+const ACL = artifacts.require('ACL')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const EVMScriptRegistryConstants = artifacts.require('EVMScriptRegistryConstants')
 
+const keccak256 = require('js-sha3').keccak_256
+const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 
 contract('EVM Script', accounts => {
-    let executor, executionTarget, dao, daoFact, reg, constants = {}
+    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}
 
     const boss = accounts[1]
 
@@ -33,16 +36,18 @@ contract('EVM Script', accounts => {
     beforeEach(async () => {
         const receipt = await daoFact.newDAO(boss)
         dao = Kernel.at(receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
+        acl = ACL.at(await dao.acl())
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
-        await dao.createPermission(boss, dao.address, await dao.UPGRADE_APPS_ROLE(), boss, { from: boss })
+        await acl.createPermission(boss, dao.address, await dao.APP_MANAGER(), boss, { from: boss })
 
         const baseExecutor = await Executor.new()
-        await dao.setAppCode(executorAppId, baseExecutor.address, { from: boss })
+        await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
     it('registered just 3 script executors', async () => {
         const zeroAddr = '0x0000000000000000000000000000000000000000'
+
         assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
         assert.notEqual(await reg.getScriptExecutor('0x00000001'), zeroAddr)
         assert.notEqual(await reg.getScriptExecutor('0x00000002'), zeroAddr)
@@ -70,7 +75,7 @@ contract('EVM Script', accounts => {
         })
 
         it('can disable executors', async () => {
-            await dao.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER(), { from: boss })
+            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))

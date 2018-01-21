@@ -9,11 +9,6 @@ contract ExecutorStorage is AragonApp {
 
 // TODO: Rename
 contract Executor is ExecutorStorage {
-    function Executor() {
-        kernel = IKernel(0);
-        appId = bytes32(0);
-    }
-
     function execute(bytes script) {
         runScript(script, new bytes(0), new address[](0));
     }

@@ -5,18 +5,33 @@ const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
+const DAOFactory = artifacts.require('DAOFactory')
+const ACL = artifacts.require('ACL')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
+const keccak256 = require('js-sha3').keccak_256
+const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+
 contract('Kernel apps', accounts => {
-    let kernel, app, appProxy, appCode1, appCode2 = {}
+    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}
+
+    const permissionsRoot = accounts[0]
     const appId = hash('stub.aragonpm.test')
 
+    before(async () => {
+        factory = await DAOFactory.new()
+    })
+
     beforeEach(async () => {
-        kernel = await Kernel.new()
-        await kernel.initialize(accounts[0])
-        const r = await kernel.UPGRADE_APPS_ROLE()
-        await kernel.createPermission(accounts[0], kernel.address, r, accounts[0])
+        const receipt = await factory.newDAO(permissionsRoot)
+        app = receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao
+
+        kernel = Kernel.at(app)
+        acl = ACL.at(await kernel.acl())
+
+        const r = await kernel.APP_MANAGER()
+        await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
 
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
@@ -43,7 +58,7 @@ contract('Kernel apps', accounts => {
 
         context('initializing on proxy constructor', () => {
             beforeEach(async () => {
-                await kernel.setAppCode(appId, appCode1.address)
+                await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
 
                 const initializationPayload = appCode1.contract.initialize.getData()
                 appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
@@ -77,7 +92,7 @@ contract('Kernel apps', accounts => {
 
                 // assign app permissions
                 const r2 = await appCode1.ROLE()
-                await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
+                await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
             })
 
             it('throws if using app without reference in kernel', async () => {
@@ -88,7 +103,7 @@ contract('Kernel apps', accounts => {
 
             context('setting app code in kernel', async () => {
                 beforeEach(async () => {
-                    await kernel.setAppCode(appId, appCode1.address)
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
                 })
 
                 it('can initialize', async () => {
@@ -109,14 +124,14 @@ contract('Kernel apps', accounts => {
 
                 it('can update app code and storage is preserved', async () => {
                     await app.setValue(10)
-                    await kernel.setAppCode(appId, appCode2.address)
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
                     // app2 returns the double of the value in storage
                     assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
                 })
 
                 it('can update app code and removed functions throw', async () => {
                     await app.setValue(10)
-                    await kernel.setAppCode(appId, appCode2.address)
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
                     return assertRevert(async () => {
                         await app.setValue(10)
                     })
@@ -127,7 +142,7 @@ contract('Kernel apps', accounts => {
 
     context('pinned proxies', () => {
         beforeEach(async () => {
-            await kernel.setAppCode(appId, appCode1.address)
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
 
             const initializationPayload = appCode1.contract.initialize.getData()
             appProxy = await AppProxyPinned.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
@@ -135,11 +150,11 @@ contract('Kernel apps', accounts => {
 
             // assign app permissions
             const r2 = await appCode1.ROLE()
-            await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
+            await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
         })
 
         it('fails if code hasnt been set on deploy', async () => {
-            await kernel.setAppCode(appId, '0x0')
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
             return assertRevert(async () => {
                 await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
             })
@@ -152,7 +167,7 @@ contract('Kernel apps', accounts => {
         it('can update app code and pinned proxy continues using former version', async () => {
             await app.setValue(10)
             await app.setValue(11)
-            await kernel.setAppCode(appId, appCode2.address)
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
 
             // app2 would return the double of the value in storage
             assert.equal(await app.getValue(), 11, 'app 2 should have returned correct value')

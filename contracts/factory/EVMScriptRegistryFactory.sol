@@ -10,6 +10,7 @@ import "./AppProxyFactory.sol";
 import "../kernel/Kernel.sol";
 import "../acl/ACL.sol";
 
+
 contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants {
     address public baseReg;
     address public baseCalls;
@@ -29,7 +30,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
 
         ACL acl = ACL(dao.acl());
 
-        dao.setApp(dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP, reg);
+        dao.setApp(dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, reg);
         acl.createPermission(this, reg, reg.REGISTRY_MANAGER(), this);
 
         reg.addScriptExecutor(baseCalls);     // spec 1 = CallsScript
