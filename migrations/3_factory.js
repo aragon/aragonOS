@@ -1,5 +1,3 @@
-const namehash = require('eth-ens-namehash').hash
-
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 

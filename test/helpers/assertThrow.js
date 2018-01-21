@@ -2,9 +2,9 @@ function assertError(error, s, message) {
     assert.isAbove(error.message.search(s), -1, message);
 }
 
-async function assertThrows(block, message, errorCode) {
+async function assertThrows(codeBlock, message, errorCode) {
     try {
-        await block()
+        await codeBlock()
     } catch (e) {
         return assertError(e, errorCode, message)
     }
@@ -12,15 +12,15 @@ async function assertThrows(block, message, errorCode) {
 }
 
 module.exports = {
-    async assertJump(block, message = 'should have failed with invalid JUMP') {
-        return assertThrows(block, message, 'invalid JUMP')
+    async assertJump(codeBlock, message = 'should have failed with invalid JUMP') {
+        return assertThrows(codeBlock, message, 'invalid JUMP')
     },
 
-    async assertInvalidOpcode(block, message = 'should have failed with invalid opcode') {
-        return assertThrows(block, message, 'invalid opcode')
+    async assertInvalidOpcode(codeBlock, message = 'should have failed with invalid opcode') {
+        return assertThrows(codeBlock, message, 'invalid opcode')
     },
 
-    async assertRevert(block, message = 'should have failed by reverting') {
-        return assertThrows(block, message, 'revert')
+    async assertRevert(codeBlock, message = 'should have failed by reverting') {
+        return assertThrows(codeBlock, message, 'revert')
     },
 }

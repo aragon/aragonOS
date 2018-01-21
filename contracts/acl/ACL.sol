@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
-import "./IKernel.sol";
+import "../apps/AragonApp.sol";
+import "../kernel/IACL.sol";
 import "./ACLSyntaxSugar.sol";
 
 
@@ -9,7 +10,7 @@ interface ACLOracle {
 }
 
 
-contract ACL is ACLEvents, ACLSyntaxSugar {
+contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
 
     // whether a certain entity has a permission
@@ -54,19 +55,19 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
         _;
     }
 
+    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
+    event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
+
     /**
     * @dev Initialize will only be called once.
     * @notice Initializes setting `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _permissionsCreator) public {
-        // Superclass needs to take care that this can only be called once
-        _createPermission(
-            _permissionsCreator,
-            address(this),
-            CREATE_PERMISSIONS_ROLE,
-            _permissionsCreator
-        );
+    function initialize(address _permissionsCreator) onlyInit public {
+        initialized();
+        require(msg.sender == address(kernel));
+
+        _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
 
     /**
@@ -78,21 +79,10 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
-    function createPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        address _manager
-    )
-        auth(CREATE_PERMISSIONS_ROLE)
-        external
-    {
-        _createPermission(
-            _entity,
-            _app,
-            _role,
-            _manager
-        );
+    function createPermission(address _entity, address _app, bytes32 _role, address _manager) external {
+        require(hasPermission(msg.sender, address(this), CREATE_PERMISSIONS_ROLE));
+
+        _createPermission(_entity, _app, _role, _manager);
     }
 
     /**
@@ -106,7 +96,9 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
         onlyPermissionManager(_app, _role)
         external
     {
-        grantPermissionP(_entity, _app, _role, new uint256[](0));
+        require(!hasPermission(_entity, _app, _role));
+
+        _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
     }
 
     /**
@@ -122,13 +114,9 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
         public
     {
         require(!hasPermission(_entity, _app, _role));
+
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            paramsHash
-        );
+        _setPermission(_entity, _app, _role, paramsHash);
     }
 
     /**
@@ -143,12 +131,8 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
         external
     {
         require(hasPermission(_entity, _app, _role));
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            bytes32(0)
-        );
+
+        _setPermission(_entity, _app, _role, bytes32(0));
     }
 
     /**
@@ -189,45 +173,21 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
     /**
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
-    function _createPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        address _manager
-    )
-        internal
-    {
+    function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
         // only allow permission creation when it has no manager (hasn't been created before)
         require(getPermissionManager(_app, _role) == address(0));
 
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            EMPTY_PARAM_HASH
-        );
+        _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
         _setPermissionManager(_manager, _app, _role);
     }
 
     /**
     * @dev Internal function called to actually save the permission
     */
-    function _setPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        bytes32 _paramsHash
-    )
-        internal
-    {
+    function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
 
-        SetPermission(
-            _entity,
-            _app,
-            _role,
-            _paramsHash != bytes32(0)
-        );
+        SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
     }
 
     function _saveParams(uint256[] encodedParams) internal returns (bytes32) {
@@ -245,7 +205,15 @@ contract ACL is ACLEvents, ACLSyntaxSugar {
         return paramHash;
     }
 
+    function hasPermission(address who, address where, bytes32 what, bytes memory _how) view public returns (bool) {
+        uint256[] memory how;
+        assembly { how := _how } // forced casting
+        return hasPermission(who, where, what, how);
+    }
+
     function hasPermission(address who, address where, bytes32 what, uint256[] memory how) view public returns (bool) {
+
+
         bytes32 whoParams = permissions[permissionHash(who, where, what)];
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, where, what)];
 

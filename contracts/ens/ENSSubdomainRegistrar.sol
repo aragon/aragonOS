@@ -1,18 +1,16 @@
 pragma solidity 0.4.18;
 
-import "./AbstractENS.sol";
-import "./PublicResolver.sol";
+import "../lib/ens/AbstractENS.sol";
+import "../lib/ens/PublicResolver.sol";
 import "./ENSConstants.sol";
 
 import "../apps/AragonApp.sol";
-import "../common/Initializable.sol";
 
 
-contract ENSSubdomainRegistrar is AragonApp, Initializable, ENSConstants {
+contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
     bytes32 constant public DELETE_NAME_ROLE = bytes32(2);
     bytes32 constant public POINT_ROOTNODE_ROLE = bytes32(3);
-    // TODO: Add claim root name
 
     AbstractENS public ens;
     bytes32 public rootNode;

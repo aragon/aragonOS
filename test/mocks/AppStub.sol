@@ -4,16 +4,14 @@ import "../../contracts/apps/AragonApp.sol";
 
 contract AppSt {
     uint a;
-    bool public initialized;
     string public stringTest;
 }
 
 contract AppStub is AragonApp, AppSt {
     bytes32 constant public ROLE = bytes32(1);
 
-    function initialize() {
-        require(!initialized);
-        initialized = true;
+    function initialize() onlyInit {
+        initialized();
         stringTest = "hola";
     }
 
