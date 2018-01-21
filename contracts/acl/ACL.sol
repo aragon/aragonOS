@@ -31,9 +31,7 @@ contract ACL is AragonApp, IACL {
 
         require(msg.sender == address(kernel));
 
-        _createPermission(
-            _permissionsCreator,
-            address(this),
+        _createPermission(_permissionsCreator, this,
             CREATE_PERMISSIONS_ROLE,
             _permissionsCreator
         );
@@ -48,21 +46,10 @@ contract ACL is AragonApp, IACL {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
-    function createPermission(
-        address _entity,
-        address _app,
-        bytes32 _role,
-        address _manager
-    )
-        external
-    {
-        require(hasPermission(msg.sender, address(this), _role));
-        _createPermission(
-            _entity,
-            _app,
-            _role,
-            _manager
-        );
+    function createPermission(address _entity, address _app, bytes32 _role, address _manager) external {
+        require(hasPermission(msg.sender, address(this), CREATE_PERMISSIONS_ROLE));
+
+        _createPermission(_entity, _app, _role, _manager);
     }
 
     /**
@@ -77,12 +64,8 @@ contract ACL is AragonApp, IACL {
         external
     {
         require(!hasPermission(_entity, _app, _role));
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            true
-        );
+
+        _setPermission(_entity, _app, _role, true);
     }
 
     /**
@@ -97,12 +80,7 @@ contract ACL is AragonApp, IACL {
         external
     {
         require(hasPermission(_entity, _app, _role));
-        _setPermission(
-            _entity,
-            _app,
-            _role,
-            false
-        );
+        _setPermission(_entity, _app, _role, false);
     }
 
     /**
@@ -191,8 +169,6 @@ contract ACL is AragonApp, IACL {
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        // require(_newManager != address(0));
-
         permissionManager[_app][_role] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
     }

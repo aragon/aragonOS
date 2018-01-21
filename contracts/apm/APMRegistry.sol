@@ -41,8 +41,8 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         require(kernel != address(0));
 
         ACL acl = ACL(kernel.acl());
-        require(acl.hasPermission(address(this), registrar, registrar.CREATE_NAME_ROLE()));
-        require(acl.hasPermission(address(this), kernel, ACL(Kernel(kernel).acl()).CREATE_PERMISSIONS_ROLE()));
+        require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()));
+        require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()));
     }
 
     /**

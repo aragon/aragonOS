@@ -24,7 +24,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         ENSSubdomainRegistrar _ensSubBase,
         ENS _ens,
         ENSFactory _ensFactory
-    ) DAOFactory(address(0)) public
+    ) DAOFactory(address(0)) public // DAO initialized without evmscript run support
     {
         registryBase = _registryBase;
         repoBase = _repoBase;
@@ -61,6 +61,8 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
         APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
 
+        DeployAPM(node, apm);
+
         // Grant permissions needed for APM on ENSSubdomainRegistrar
         acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
         acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
@@ -82,8 +84,6 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
         apm.initialize(ensSub);
-
-        DeployAPM(node, apm);
 
         return apm;
     }
