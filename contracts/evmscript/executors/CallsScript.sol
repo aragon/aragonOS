@@ -45,31 +45,4 @@ contract CallsScript is IEVMScriptExecutor {
             location += (0x14 + 0x04 + calldataLength);
         }
     }
-
-    function getScriptActionsCount(bytes script) public pure returns (uint256 i) {
-        uint256 location = SCRIPT_START_LOCATION;
-        while (location < script.length) {
-            location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
-            i++;
-        }
-    }
-
-    function getScriptAction(bytes script, uint256 position) public pure returns (address, bytes) {
-        uint256 location = SCRIPT_START_LOCATION;
-        uint i = position;
-        while (location < script.length) {
-            if (i == 0) {
-                uint256 length = uint256(script.uint32At(location + 0x14));
-                address addr = script.addressAt(location);
-                bytes memory calldata = new bytes(length);
-                uint calldataPtr;
-                assembly { calldataPtr := add(calldata, 0x20) }
-                ScriptHelpers.memcpy(calldataPtr, script.locationOf(location + 0x14 + 0x04), length);
-                return (addr, calldata);
-            }
-
-            location += (0x14 + 0x04 + uint256(script.uint32At(location + 0x14)));
-            i--;
-        }
-    }
 }

@@ -70,7 +70,7 @@ contract('Kernel apps', accounts => {
             })
 
             it('is upgradeable', async () => {
-                assert.isTrue(await appProxy.isUpgradeable(), 'appproxy should have be upgradeable')
+                assert.isTrue(await appProxy.isUpgradeable.call(), 'appproxy should have be upgradeable')
             })
 
             it('cannot reinitialize', async () => {
@@ -161,7 +161,7 @@ contract('Kernel apps', accounts => {
         })
 
         it('is not upgradeable', async () => {
-            assert.isFalse(await appProxy.isUpgradeable(), 'appproxy should not be upgradeable')
+            assert.isFalse(await appProxy.isUpgradeable.call(), 'appproxy should not be upgradeable')
         })
 
         it('can update app code and pinned proxy continues using former version', async () => {

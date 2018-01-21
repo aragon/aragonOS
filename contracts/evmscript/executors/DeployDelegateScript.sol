@@ -33,14 +33,6 @@ contract DeployDelegateScript is DelegateScript {
         return DelegateScript.delegate(deployed, input);
     }
 
-    function getScriptActionsCount(bytes script) public pure returns (uint256) {
-        return 1;
-    }
-
-    function getScriptAction(bytes, uint256) public pure returns (address, bytes) {
-        return (address(0), new bytes(0));
-    }
-
     /**
     * @dev Deploys contract byte code to network
     */

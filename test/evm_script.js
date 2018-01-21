@@ -15,6 +15,7 @@ const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const EVMScriptRegistryConstants = artifacts.require('EVMScriptRegistryConstants')
+const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
@@ -42,6 +43,7 @@ contract('EVM Script', accounts => {
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER(), boss, { from: boss })
 
         const baseExecutor = await Executor.new()
+
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
@@ -156,25 +158,6 @@ contract('EVM Script', accounts => {
             it('can execute empty script', async () => {
                 await executor.execute(encodeCallScript([]))
             })
-
-            /*
-            it('decodes action count', async () => {
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                const script = encodeCallScript([action, action, action, action])
-
-                assert.equal(await executor.getActionsCount(script), 4, 'action count should be correct')
-            })
-
-            it('decodes actions', async () => {
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                const script = encodeCallScript([action, action, action, action])
-
-                const [to, calldata] = await executor.getAction(script, 2)
-
-                assert.equal(action.to, to, 'action to should be correct')
-                assert.equal(action.calldata, calldata, 'action calldata should be correct')
-            })
-            */
         })
 
         const delegatorResultNumber = 1234

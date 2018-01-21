@@ -24,7 +24,7 @@ contract('EVM Script: ABI encoder', accounts => {
     context('against web3 encoding', () => {
         testCase.forEach(async (t, i) => {
             it(`test: ${i + 1}`, async () => {
-                const a = await helper.abiEncode(...t)
+                const a = await helper.abiEncode.call(...t)
                 const curatedT = t.map(to => to.indexOf('0x') != 0 ? to : toBuffer(to))
                 const b = '0x' + rawEncode(['bytes', 'bytes', 'address[]'], curatedT).toString('hex')
                 assert.equal(a, b, 'encoders should match')
@@ -40,7 +40,7 @@ contract('EVM Script: ABI encoder', accounts => {
 
         testCase.forEach(async (t, i) => {
             it(`test: ${i + 1}`, async () => {
-                const a = await helper.abiEncode(...t)
+                const a = await helper.abiEncode.call(...t)
                 const curatedT = t.map(to => to.indexOf('0x') != 0 ? to : toBuffer(to))
                 await tester.exec(...t)
                 const result = await tester.result()
