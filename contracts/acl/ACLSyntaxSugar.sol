@@ -13,6 +13,10 @@ contract ACLSyntaxSugar {
         return arr(uint256(a));
     }
 
+    function arr(bytes32 a, bytes32 b) internal view returns (uint256[] r) {
+        return arr(uint256(a), uint256(b));
+    }
+
     function arr(address a) internal view returns (uint256[] r) {
         return arr(uint256(a));
     }

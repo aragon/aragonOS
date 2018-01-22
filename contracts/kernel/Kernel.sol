@@ -3,9 +3,10 @@ pragma solidity 0.4.18;
 import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
+import "../acl/ACLSyntaxSugar.sol";
 
 
-contract Kernel is KernelStorage, Initializable, IKernel {
+contract Kernel is KernelStorage, Initializable, ACLSyntaxSugar, IKernel {
     bytes32 constant public APP_MANAGER = bytes32(1);
 
     /**
@@ -22,7 +23,7 @@ contract Kernel is KernelStorage, Initializable, IKernel {
         _acl.initialize(_permissionsCreator);
     }
 
-    function setApp(bytes32 namespace, bytes32 name, address app) auth(APP_MANAGER) public returns (bytes32 id) {
+    function setApp(bytes32 namespace, bytes32 name, address app) auth(APP_MANAGER, arr(namespace, name)) public returns (bytes32 id) {
         id = keccak256(namespace, name);
         apps[id] = app;
         SetApp(namespace, name, id, app);
@@ -49,8 +50,15 @@ contract Kernel is KernelStorage, Initializable, IKernel {
         return _acl == address(0) ? true : _acl.hasPermission(who, where, what, how);
     }
 
-    modifier auth(bytes32 _role) {
-        require(hasPermission(msg.sender, address(this), _role, new bytes(0)));
+    modifier auth(bytes32 _role, uint256[] memory params) {
+        bytes memory how;
+        uint256 byteLength = params.length * 32;
+        assembly {
+            how := params // forced casting
+            mstore(how, byteLength)
+        }
+        // Params is invalid from this point fwd
+        require(hasPermission(msg.sender, address(this), _role, how));
         _;
     }
 }

@@ -1,16 +1,16 @@
 pragma solidity 0.4.18;
 
 import "truffle/Assert.sol";
-import "../contracts/kernel/ACL.sol";
-import "../contracts/kernel/ACLSyntaxSugar.sol";
+import "../contracts/acl/ACL.sol";
+import "../contracts/acl/ACLSyntaxSugar.sol";
 
 
 contract TestACLInterpreter is ACL {
     function testEqualityUint() public {
         // Assert param 0 is equal to 10, given that params are [10, 11]
-        assertEval(arr(10, 11), 0, Op.eq, 10, true);
-        assertEval(arr(10, 11), 1, Op.eq, 10, false);
-        assertEval(arr(10, 11), 1, Op.eq, 11, true);
+        assertEval(arr(uint256(10), 11), 0, Op.eq, 10, true);
+        assertEval(arr(uint256(10), 11), 1, Op.eq, 10, false);
+        assertEval(arr(uint256(10), 11), 1, Op.eq, 11, true);
     }
 
     function testEqualityAddr() public {
@@ -19,19 +19,19 @@ contract TestACLInterpreter is ACL {
     }
 
     function testEqualityBytes() public {
-        assertEval(arr(sha3("hi")), 0, Op.eq, uint256(sha3("hi")), true);
-        assertEval(arr(sha3("hi")), 0, Op.eq, uint256(sha3("bye")), false);
+        assertEval(arr(keccak256("hi")), 0, Op.eq, uint256(keccak256("hi")), true);
+        assertEval(arr(keccak256("hi")), 0, Op.eq, uint256(keccak256("bye")), false);
     }
 
     function testInequalityUint() public {
-        assertEval(arr(10, 11), 0, Op.neq, 10, false);
-        assertEval(arr(10, 11), 1, Op.neq, 10, true);
-        assertEval(arr(10, 11), 1, Op.neq, 11, false);
+        assertEval(arr(uint256(10), 11), 0, Op.neq, 10, false);
+        assertEval(arr(uint256(10), 11), 1, Op.neq, 10, true);
+        assertEval(arr(uint256(10), 11), 1, Op.neq, 11, false);
     }
 
     function testInequalityBytes() public {
-        assertEval(arr(sha3("hi")), 0, Op.neq, uint256(sha3("hi")), false);
-        assertEval(arr(sha3("hi")), 0, Op.neq, uint256(sha3("bye")), true);
+        assertEval(arr(keccak256("hi")), 0, Op.neq, uint256(keccak256("hi")), false);
+        assertEval(arr(keccak256("hi")), 0, Op.neq, uint256(keccak256("bye")), true);
     }
 
     function testInequalityAddr() public {
@@ -40,27 +40,27 @@ contract TestACLInterpreter is ACL {
     }
 
     function testGreatherThan() public {
-        assertEval(arr(10, 11), 0, Op.gt, 9, true);
-        assertEval(arr(10, 11), 0, Op.gt, 10, false);
-        assertEval(arr(10, 11), 1, Op.gt, 10, true);
+        assertEval(arr(uint256(10), 11), 0, Op.gt, 9, true);
+        assertEval(arr(uint256(10), 11), 0, Op.gt, 10, false);
+        assertEval(arr(uint256(10), 11), 1, Op.gt, 10, true);
     }
 
     function testLessThan() public {
-        assertEval(arr(10, 11), 0, Op.lt, 9, false);
-        assertEval(arr(9, 11), 0, Op.lt, 10, true);
-        assertEval(arr(10, 11), 1, Op.lt, 10, false);
+        assertEval(arr(uint256(10), 11), 0, Op.lt, 9, false);
+        assertEval(arr(uint256(9), 11), 0, Op.lt, 10, true);
+        assertEval(arr(uint256(10), 11), 1, Op.lt, 10, false);
     }
 
     function testGreatherThanOrEqual() public {
-        assertEval(arr(10, 11), 0, Op.gte, 9, true);
-        assertEval(arr(10, 11), 0, Op.gte, 10, true);
-        assertEval(arr(10, 11), 1, Op.gte, 12, false);
+        assertEval(arr(uint256(10), 11), 0, Op.gte, 9, true);
+        assertEval(arr(uint256(10), 11), 0, Op.gte, 10, true);
+        assertEval(arr(uint256(10), 11), 1, Op.gte, 12, false);
     }
 
     function testLessThanOrEqual() public {
-        assertEval(arr(10, 11), 0, Op.lte, 9, false);
-        assertEval(arr(9, 11), 0, Op.lte, 10, true);
-        assertEval(arr(10, 11), 1, Op.lte, 11, true);
+        assertEval(arr(uint256(10), 11), 0, Op.lte, 9, false);
+        assertEval(arr(uint256(9), 11), 0, Op.lte, 10, true);
+        assertEval(arr(uint256(10), 11), 1, Op.lte, 11, true);
     }
 
     function testAnd() public {

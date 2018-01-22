@@ -207,7 +207,12 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
 
     function hasPermission(address who, address where, bytes32 what, bytes memory _how) view public returns (bool) {
         uint256[] memory how;
-        assembly { how := _how } // forced casting
+        uint256 intsLength = _how.length / 32;
+        assembly {
+            how := _how // forced casting
+            mstore(how, intsLength)
+        }
+        // _how is invalid from this point fwd
         return hasPermission(who, where, what, how);
     }
 

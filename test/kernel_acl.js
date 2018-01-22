@@ -74,17 +74,17 @@ contract('Kernel ACL', accounts => {
             // param hash 0x68b4adfe8175b29530f1c715f147337823f4ae55693be119bef69129637d681f
             const argId = '0x00' // arg 0
             const op = '02'      // not equal
-            const value = '000000000000000000000000000000000000000000000000000000000000'  // appId 0
+            const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
             const param = new web3.BigNumber(argId + op + value)
-            await kernel.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+            await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
 
-            // Allow setting code for appId other than 0
-            const receipt = await kernel.setCode('0x121212', accounts[4], { from: accounts[3] })
+            // Allow setting code for namespace other than 0
+            const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[3] })
 
-            assertEvent(receipt, 'SetCode')
+            assertEvent(receipt, 'SetApp')
             return assertRevert(async () => {
                 // Fail if setting code for appId 0
-                await kernel.setCode('0x0', accounts[4], { from: accounts[3] })
+                await kernel.setApp('0x0', '0x0', accounts[4], { from: accounts[3] })
             })
         })
 

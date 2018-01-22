@@ -21,6 +21,8 @@ contract('Kernel apps', accounts => {
 
     before(async () => {
         factory = await DAOFactory.new()
+        appCode1 = await AppStub.new()
+        appCode2 = await AppStub2.new()
     })
 
     beforeEach(async () => {
