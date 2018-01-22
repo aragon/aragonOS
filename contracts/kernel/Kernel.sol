@@ -6,8 +6,6 @@ import "../common/Initializable.sol";
 
 
 contract Kernel is KernelStorage, Initializable, IKernel {
-    // PROVISIONAL STUFF TO TEST, BROUGHT TO THE TOP FOR ATTENTION
-
     bytes32 constant public APP_MANAGER = bytes32(1);
 
     /**
