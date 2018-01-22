@@ -304,8 +304,6 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        require(_newManager > 0);
-
         permissionManager[roleHash(_app, _role)] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
     }

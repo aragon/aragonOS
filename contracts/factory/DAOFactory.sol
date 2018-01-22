@@ -44,6 +44,7 @@ contract DAOFactory is AppProxyFactory {
             bytes32 appManagerRole = dao.APP_MANAGER();
 
             acl.grantPermission(regFactory, acl, permRole);
+
             acl.createPermission(regFactory, dao, appManagerRole, this);
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
