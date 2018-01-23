@@ -41,9 +41,7 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER(), boss, { from: boss })
-
         const baseExecutor = await Executor.new()
-
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
@@ -211,7 +209,7 @@ contract('EVM Script', accounts => {
 
         context('spec ID 3', () => {
             it('can deploy and execute', async () => {
-                await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
+                await executor.execute(encodeDeploy(Delegator))
 
                 assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
             })
@@ -226,8 +224,8 @@ contract('EVM Script', accounts => {
             })
 
             it('caches deployed contract and reuses it', async () => {
-                const r1 = await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
-                const r2 = await executor.execute(encodeDeploy(Delegator), { gas: 2e6 })
+                const r1 = await executor.execute(encodeDeploy(Delegator))
+                const r2 = await executor.execute(encodeDeploy(Delegator))
 
                 assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed / 2, 'should have used less than half the gas because of cache')
                 assert.equal(await executor.randomNumber(), delegatorResultNumber * 2, 'should have executed correctly twice')
