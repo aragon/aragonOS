@@ -28,16 +28,16 @@ contract ACLSyntaxSugar {
     }
 
     function decodeParamOp(uint256 x) internal pure returns (uint8 b) {
-        assembly {
-            b := div(and(x, 0x00ff000000000000000000000000000000000000000000000000000000000000),
-                                   0x1000000000000000000000000000000000000000000000000000000000000)
-        }
+        return uint8(x >> (8 * 30));
     }
 
     function decodeParamId(uint256 x) internal pure returns (uint8 b) {
-        assembly {
-            b := div(and(x, 0xff00000000000000000000000000000000000000000000000000000000000000),
-                                   0x100000000000000000000000000000000000000000000000000000000000000)
-        }
+        return uint8(x >> (8 * 31));
+    }
+
+    function decodeParamsList(uint256 x) internal pure returns (uint32 a, uint32 b, uint32 c) {
+        a = uint32(x);
+        b = uint32(x >> (8 * 4));
+        c = uint32(x >> (8 * 8));
     }
 }
