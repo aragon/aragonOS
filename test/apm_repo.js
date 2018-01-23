@@ -85,6 +85,12 @@ contract('Repo', accounts => {
             })
         })
 
+        it('fails if requesting version 0', async () => {
+            return assertRevert(async () => {
+                await repo.getByVersionId(0)
+            })
+        })
+
         context('adding new version', async () => {
             const newCode = accounts[9] // random addr, irrelevant
             const newContent = '0x13'

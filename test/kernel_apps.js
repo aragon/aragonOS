@@ -67,6 +67,13 @@ contract('Kernel apps', accounts => {
                 app = AppStub.at(appProxy.address)
             })
 
+            it('fails if init fails', async () => {
+                const badInit = '0x1234'
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
+                })
+            })
+
             it('was initialized on constructor', async () => {
                 assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
             })

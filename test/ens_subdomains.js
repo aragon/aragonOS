@@ -74,6 +74,12 @@ contract('ENSSubdomainRegistrar', accounts => {
         })
     })
 
+    it('fails if deleting name not yet created', async () => {
+        return assertRevert(async () => {
+            await registrar.deleteName(holalabel, { from: apmOwner })
+        })
+    })
+
     it('fails if not authorized to create name', async () => {
         return assertRevert(async () => {
             await registrar.createName(holalabel, apmOwner, { from: notOwner })
