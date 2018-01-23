@@ -88,6 +88,18 @@ contract('Kernel ACL', accounts => {
             })
         })
 
+        it('can grant a public permission', async () => {
+            const anyEntity = "0xffffffffffffffffffffffffffffffffffffffff"
+
+            await acl.grantPermission(anyEntity, app, role, { from: permissionsRoot })
+            // many entities can succesfully perform action
+            await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
+            await kernel.setApp('0x121212', '0x00', accounts[6], { from: accounts[6] })
+            await kernel.setApp('0x121212', '0x00', accounts[8], { from: accounts[8] })
+
+            assert.isTrue(await acl.hasPermission(accounts[6], app, role), 'should have perm')
+        })
+
         it('fails granting existing permission instance', async () => {
             await acl.grantPermission(accounts[8], app, role, { from: granted })
             return assertRevert(async () => {
