@@ -111,7 +111,8 @@ contract('Kernel apps', accounts => {
                 it('can initialize', async () => {
                     await app.initialize()
 
-                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')                })
+                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                })
 
                 it('app call works if sent from authed entity', async () => {
                     await app.setValue(10)
@@ -121,6 +122,13 @@ contract('Kernel apps', accounts => {
                 it('fails when called by unauthorized entity', async () => {
                     return assertRevert(async () => {
                         await app.setValue(10, { from: accounts[1] })
+                    })
+                })
+
+                it('fails if updated app is not a contract', async () => {
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
+                    return assertRevert(async () => {
+                        await app.setValue(10)
                     })
                 })
 

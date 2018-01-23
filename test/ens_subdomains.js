@@ -86,4 +86,13 @@ contract('ENSSubdomainRegistrar', accounts => {
 
         assert.equal(await ens.owner(holanode), zeroAddr, 'should have reset name')
     })
+
+    it('fails if initializing without rootnode ownership', async () => {
+        const reg = await ENSSubdomainRegistrar.new()
+        const ens = await ENS.new()
+
+        return assertRevert(async () => {
+            await reg.initialize(ens.address, holanode)
+        })
+    })
 })

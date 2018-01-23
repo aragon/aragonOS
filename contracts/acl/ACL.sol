@@ -47,16 +47,6 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         _;
     }
 
-    modifier auth(bytes32 _role) {
-        require(hasPermission(msg.sender, address(this), _role));
-        _;
-    }
-
-    modifier authP(bytes32 _role, uint256[] _args) {
-        require(hasPermission(msg.sender, address(this), _role, _args));
-        _;
-    }
-
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
@@ -95,12 +85,9 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     * @param _role Identifier for the group of actions in app given access to perform
     */
     function grantPermission(address _entity, address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
     {
-        require(!hasPermission(_entity, _app, _role));
-
-        _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
+        grantPermissionP(_entity, _app, _role, new uint256[](0));
     }
 
     /**

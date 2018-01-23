@@ -38,8 +38,6 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         registrar.pointRootNode(this);
 
         // Check APM has all permissions it needss
-        require(kernel != address(0));
-
         ACL acl = ACL(kernel.acl());
         require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()));
         require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()));

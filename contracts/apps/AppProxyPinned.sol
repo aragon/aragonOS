@@ -28,8 +28,6 @@ contract AppProxyPinned is AppProxyBase {
     }
 
     function () payable public {
-        address target = getCode();
-        require(target != 0); // if app code hasn't been set yet, don't call
-        delegatedFwd(target, msg.data);
+        delegatedFwd(getCode(), msg.data);
     }
 }

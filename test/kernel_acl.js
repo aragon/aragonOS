@@ -36,6 +36,13 @@ contract('Kernel ACL', accounts => {
         acl = ACL.at(await kernel.acl())
     })
 
+    it('cannot initialize ACL outside of Kernel', async () => {
+        const acl = await ACL.new()
+        return assertRevert(async () => {
+            await acl.initialize('0x1234')
+        })
+    })
+
     it('has correct initialization block', async () => {
         assert.equal(await kernel.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
     })
@@ -62,6 +69,12 @@ contract('Kernel ACL', accounts => {
         assert.isTrue(await acl.hasPermission(permissionsRoot, acl.address, createPermissionRole))
     })
 
+    it('cannot create permissions without permission', async () => {
+        return assertRevert(async () => {
+            await acl.createPermission(granted, app, role, granted, { from: accounts[8] })
+        })
+    })
+
     context('creating permission', () => {
         beforeEach(async () => {
             const receipt = await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
@@ -76,10 +89,14 @@ contract('Kernel ACL', accounts => {
             const op = '02'      // not equal
             const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
             const param = new web3.BigNumber(argId + op + value)
-            await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
 
+            const r1 = await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+            // grants again without re-saving params
+            const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
+
+            assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed, 'should have used less gas because of cache')
             // Allow setting code for namespace other than 0
-            const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[3] })
+            const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
 
             assertEvent(receipt, 'SetApp')
             return assertRevert(async () => {
@@ -149,6 +166,12 @@ contract('Kernel ACL', accounts => {
             })
         })
 
+        it('root cannot grant permission', async () => {
+            return assertRevert(async () => {
+                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+            })
+        })
+
         context('transferring managership', () => {
             const newManager = accounts[8]
 
@@ -166,14 +189,6 @@ contract('Kernel ACL', accounts => {
                 const receipt = await acl.grantPermission(newManager, app, role, { from: newManager })
                 assertEvent(receipt, 'SetPermission')
             })
-
-            /*
-            it('fails when setting manager to the zero address', async () => {
-                return assertRevert(async () => {
-                    await kernel.setPermissionManager('0x00', app, role, { from: newManager })
-                })
-            })
-            */
 
             it('old manager lost power', async () => {
                 return assertRevert(async () => {
