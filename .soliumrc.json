@@ -17,7 +17,7 @@
         "no-unused-vars": 1,
         "quotes": 1,
         "indentation": 1,
-        "arg-overflow": ["error", 4],
+        "arg-overflow": ["error", 8],
         "whitespace": 1,
         "deprecated-suicide": 1,
         "pragma-on-top": 1
