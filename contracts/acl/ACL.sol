@@ -10,7 +10,7 @@ interface ACLOracle {
 }
 
 
-contract ACL is AragonApp, IACL, ACLSyntaxSugar {
+contract ACL is IACL, AragonApp, ACLSyntaxSugar {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
 
     // whether a certain entity has a permission
