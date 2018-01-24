@@ -46,8 +46,8 @@ contract Kernel is KernelStorage, Initializable, IKernel {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
-        IACL acl = acl();
-        return acl == address(0) ? true : acl.hasPermission(_who, _where, _what, _how);
+        IACL _acl = acl();
+        return address(_acl) == address(0) ? true : _acl.hasPermission(_who, _where, _what, _how);
     }
 
     modifier auth(bytes32 _role) {
