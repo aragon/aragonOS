@@ -18,6 +18,9 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
         appId = _appId;
 
         // Implicit check that kernel is actually a Kernel
+        // The EVM doesn't actually provide a way for us to make sure, but we can force a revert to
+        // occur if the kernel is set to 0x0 or a non-code address when we try to call a method on
+        // it.
         address appCode = getAppBase(appId);
 
         // If initialize payload is provided, it will be executed
