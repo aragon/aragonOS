@@ -11,7 +11,8 @@ contract Kernel is KernelStorage, Initializable, IKernel {
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
     * @notice Initializes a kernel instance and sets `_permissionsCreator` as the entity that can create other permissions
-    * @param _acl ACL for DAO
+    * @param _acl ACL AppProxy instance
+    * @param _baseAcl address of deployed ACL contract
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
     function initialize(IACL _acl, address _baseAcl, address _permissionsCreator) onlyInit public {
