@@ -96,21 +96,17 @@ contract TestACLInterpreter is ACL, ACLHelpers {
         Param memory retTrue = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 1);
         Param memory retFalse = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
 
-        Param memory notOp = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeOperator(0, 1));
+        Param memory notOp = Param(LOGIC_OP_PARAM_ID, uint8(Op.NOT), encodeOperator(1, 0));
         Param[] memory params = new Param[](2);
 
-
-        // !!!! causing stack overflow wat
         // !true == false
         params[0] = notOp;
         params[1] = retTrue;
-        //assertEval(params, false);
+        assertEval(params, false);
 
-        /*
         // !false == true
         params[1] = retFalse;
         assertEval(params, true);
-        */
     }
 
     function testComplexCombination() {
