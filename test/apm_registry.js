@@ -7,11 +7,12 @@ const Repo = artifacts.require('Repo')
 const APMRegistry = artifacts.require('APMRegistry')
 const PublicResolver = artifacts.require('PublicResolver')
 const Kernel = artifacts.require('Kernel')
+const ACL = artifacts.require('ACL')
 
 const getContract = name => artifacts.require(name)
 
 contract('APMRegistry', accounts => {
-    let ens, apmFactory, registry, baseDeployed, dao = {}
+    let ens, apmFactory, registry, baseDeployed, dao, acl = {}
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -36,10 +37,11 @@ contract('APMRegistry', accounts => {
         registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())
+        acl = ACL.at(await dao.acl())
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
-        await dao.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+        await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
     })
 
     afterEach(async () => {
@@ -108,7 +110,7 @@ contract('APMRegistry', accounts => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
             const newOwner = accounts[8]
 
-            await dao.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
             await repo.newVersion([2, 1, 0], '0x00', '0x00', { from: repoDev }) // repoDev can still create them
@@ -118,7 +120,7 @@ contract('APMRegistry', accounts => {
 
         it('repo dev can no longer create versions if permission is removed', async () => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            await dao.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             return assertRevert(async () => {
                 await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })

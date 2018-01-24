@@ -11,7 +11,6 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     bytes32 constant public CREATE_NAME_ROLE = bytes32(1);
     bytes32 constant public DELETE_NAME_ROLE = bytes32(2);
     bytes32 constant public POINT_ROOTNODE_ROLE = bytes32(3);
-    // TODO: Add claim root name
 
     AbstractENS public ens;
     bytes32 public rootNode;
