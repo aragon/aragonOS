@@ -102,18 +102,19 @@ contract ACL is AragonApp, IACL {
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel or to check permission statu
-    * @param _entity Sender of the original call
-    * @param _app Address of the app
-    * @param _role Identifier for a group of actions in app
+    * @dev Function called by apps to check ACL on kernel or to check permission status
+    * @param _who Sender of the original call
+    * @param _where Address of the app
+    * @param _what Identifier for a group of actions in app
+    * @param _how Extra data for ACL auth
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address _entity, address _app, bytes32 _role) view public returns (bool) {
-        return permissions[_entity][_app][_role];
+    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) view public returns (bool) {
+        return hasPermission(_who, _where, _what);
     }
 
-    function hasPermission(address who, address where, bytes32 what, bytes how) view public returns (bool) {
-        return hasPermission(who, where, what);
+    function hasPermission(address _who, address _where, bytes32 _what) view public returns (bool) {
+        return permissions[_who][_where][_what];
     }
 
     /**
