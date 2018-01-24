@@ -24,12 +24,24 @@ contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
         _acl.initialize(_permissionsCreator);
     }
 
+    /**
+    * @dev Set the resolving address of an app instance or base implementation
+    * @param _namespace App namespace to use
+    * @param _name Name of the app
+    * @param _app Address of the app
+    * @return ID of app
+    */
     function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) public returns (bytes32 id) {
         id = keccak256(_namespace, _name);
         apps[id] = _app;
         SetApp(_namespace, _name, id, _app);
     }
 
+    /**
+    * @dev Get the address of an app instance or base implementation
+    * @param _id App identifier
+    * @return Address of the app
+    */
     function getApp(bytes32 _id) public view returns (address) {
         return apps[_id];
     }
