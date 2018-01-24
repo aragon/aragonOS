@@ -40,7 +40,7 @@ contract('EVM Script', accounts => {
         acl = ACL.at(await dao.acl())
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
-        await acl.createPermission(boss, dao.address, await dao.APP_MANAGER(), boss, { from: boss })
+        await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
         const baseExecutor = await Executor.new()
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
@@ -53,6 +53,12 @@ contract('EVM Script', accounts => {
         assert.notEqual(await reg.getScriptExecutor('0x00000002'), zeroAddr)
         assert.notEqual(await reg.getScriptExecutor('0x00000003'), zeroAddr)
         assert.equal(await reg.getScriptExecutor('0x00000004'), zeroAddr)
+    })
+
+    it('fails if reinitializing registry', async () => {
+        return assertRevert(async () => {
+            await reg.initialize()
+        })
     })
 
     context('executor', () => {
@@ -75,7 +81,7 @@ contract('EVM Script', accounts => {
         })
 
         it('can disable executors', async () => {
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER(), { from: boss })
+            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))

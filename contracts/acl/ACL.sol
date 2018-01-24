@@ -41,8 +41,8 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
     address constant ANY_ENTITY = address(-1);
 
-    modifier onlyPermissionManager(address app, bytes32 role) {
-        require(msg.sender == getPermissionManager(app, role));
+    modifier onlyPermissionManager(address _app, bytes32 _role) {
+        require(msg.sender == getPermissionManager(_app, _role));
         _;
     }
 
@@ -50,8 +50,8 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     /**
-    * @dev Initialize will only be called once.
-    * @notice Initializes setting `_permissionsCreator` as the entity that can create other permissions
+    * @dev Initialize can only be called once. It saves the block number in which it was initialized.
+    * @notice Initializes an ACL instance and sets `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
     function initialize(address _permissionsCreator) onlyInit public {
@@ -64,7 +64,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     /**
     * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
     *      If a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as parent)
+    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
@@ -77,7 +77,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission manager
+    * @dev Grants permission if allowed. This requires `msg.sender` to be the permission manager
     * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
@@ -108,11 +108,11 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Revokes permission if allowed. This requires `msg.sender` to be the parent of the permission
+    * @dev Revokes permission if allowed. This requires `msg.sender` to be the the permission manager
     * @notice Revokes `_entity` the ability to perform actions of role `_role` on `_app`
-    * @param _entity Address of the whitelisted entity that will be revoked access
-    * @param _app Address of the app in which the role is revoked
-    * @param _role Identifier for the group of actions in app given access to perform
+    * @param _entity Address of the whitelisted entity to revoke access from
+    * @param _app Address of the app in which the role will be revoked
+    * @param _role Identifier for the group of actions in app being revoked
     */
     function revokePermission(address _entity, address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
@@ -127,7 +127,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     * @notice Sets `_newManager` as the manager of the permission `_role` in `_app`
     * @param _newManager Address for the new manager
     * @param _app Address of the app in which the permission management is being transferred
-    * @param _role Identifier for the group of actions in app given access to perform
+    * @param _role Identifier for the group of actions being transferred
     */
     function setPermissionManager(address _newManager, address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
@@ -137,7 +137,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Get manager address for permission
+    * @dev Get manager for permission
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
@@ -179,16 +179,16 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         return false;
     }
 
-    function hasPermission(address who, address where, bytes32 what) public view returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what) public view returns (bool) {
         uint256[] memory empty = new uint256[](0);
-        return hasPermission(who, where, what, empty);
+        return hasPermission(_who, _where, _what, empty);
     }
 
     /**
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
-        // only allow permission creation when it has no manager (hasn't been created before)
+        // only allow permission creation (or re-creation) when there is no manager
         require(getPermissionManager(_app, _role) == address(0));
 
         _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);

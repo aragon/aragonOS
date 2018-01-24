@@ -39,7 +39,7 @@ contract DAOFactory is AppProxyFactory {
 
         if (address(regFactory) != address(0)) {
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
-            bytes32 appManagerRole = dao.APP_MANAGER();
+            bytes32 appManagerRole = dao.APP_MANAGER_ROLE();
 
             acl.grantPermission(regFactory, acl, permRole);
 
