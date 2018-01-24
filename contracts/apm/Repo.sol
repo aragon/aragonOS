@@ -75,7 +75,7 @@ contract Repo is AragonApp {
         return len > 0 ? len - 1 : 0;
     }
 
-    function isValidBump(uint16[3] _oldVersion, uint16[3] _newVersion) public view returns (bool) {
+    function isValidBump(uint16[3] _oldVersion, uint16[3] _newVersion) public pure returns (bool) {
         bool hasBumped;
         uint i = 0;
         while (i < 3) {
