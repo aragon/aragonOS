@@ -19,7 +19,6 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
 
     // who is the manager of a permission
     mapping (bytes32 => address) permissionManager;
-    // appId -> implementation
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, NOT, AND, OR, XOR, IF_ELSE, RET } // op types
 
@@ -28,7 +27,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         uint8 op;
         uint240 value; // even though value is an uint240 it can store addresses
         // in the case of 32 byte hashes losing 2 bytes precision isn't a huge deal
-        // op and id take has 1 byte each so it can be kept in 1 sstore
+        // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
     uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
@@ -91,7 +90,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Grants a permission if allowed. This requires `msg.sender` to be the permission manager
+    * @dev Grants a permission with parameters if allowed. This requires `msg.sender` to be the permission manager
     * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
@@ -143,7 +142,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) view public returns (address) {
+    function getPermissionManager(address _app, bytes32 _role) public view returns (address) {
         return permissionManager[roleHash(_app, _role)];
     }
 
@@ -235,7 +234,6 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         return evalParam(paramsHash, 0, who, where, what, how); // solium-disable-line arg-overflow
     }
 
-    event Log(uint[] x);
     function evalParam(
         bytes32 paramsHash,
         uint32 paramId,
