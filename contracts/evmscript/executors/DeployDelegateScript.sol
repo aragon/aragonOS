@@ -12,7 +12,7 @@ contract DeployDelegateScript is DelegateScript {
 
     /**
     * @notice Executes script by delegatecall into a deployed contract (exec() function)
-    * @param script [ specId (uint32 = 3) ][ contractInitcode (bytecode) ]
+    * @param script [ specId (uint32) ][ contractInitcode (bytecode) ]
     * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
     * @param blacklist If any address is passed, will revert.
     * @param input ABI encoded call to be made to contract
