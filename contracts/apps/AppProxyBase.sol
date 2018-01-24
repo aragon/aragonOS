@@ -17,9 +17,11 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
         kernel = _kernel;
         appId = _appId;
 
+        // Implicit check that kernel is actually a Kernel
+        address appCode = getAppBase(appId);
+
         // If initialize payload is provided, it will be executed
         if (_initializePayload.length > 0) {
-            address appCode = getAppBase(appId);
             require(isContract(appCode));
             // Cannot make delegatecall as a delegateproxy.delegatedFwd as it
             // returns ending execution context and halts contract deployment
