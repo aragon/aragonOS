@@ -22,12 +22,10 @@ contract DeployDelegateScript is DelegateScript {
         require(blacklist.length == 0); // dont have ability to control bans, so fail.
 
         bytes32 id = keccak256(script);
-        address deployed;
-        if (!isCached(script)) {
+        address deployed = cache[id];
+        if (deployed == address(0)) {
             deployed = deploy(script);
             cache[id] = deployed;
-        } else {
-            deployed = cache[id];
         }
 
         return DelegateScript.delegate(deployed, input);
@@ -44,9 +42,5 @@ contract DeployDelegateScript is DelegateScript {
             switch iszero(extcodesize(addr))
             case 1 { revert(0, 0) } // throw if contract failed to deploy
         }
-    }
-
-    function isCached(bytes memory script) internal returns (bool) {
-        return cache[keccak256(script)] != address(0);
     }
 }
