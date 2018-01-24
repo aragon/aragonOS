@@ -16,25 +16,25 @@ contract DelegateScript is IEVMScriptExecutor {
 
     /**
     * @notice Executes script by delegatecall into a contract
-    * @param script [ specId (uint32) ][ contract address (20 bytes) ]
-    * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
-    * @param blacklist If any address is passed, will revert.
+    * @param _script [ specId (uint32) ][ contract address (20 bytes) ]
+    * @param _input ABI encoded call to be made to contract (if empty executes default exec() function)
+    * @param _blacklist If any address is passed, will revert.
     * @return Call return data
     */
-    function execScript(bytes script, bytes input, address[] blacklist) external returns (bytes) {
-        require(blacklist.length == 0); // dont have ability to control bans, so fail.
+    function execScript(bytes _script, bytes _input, address[] _blacklist) external returns (bytes) {
+        require(_blacklist.length == 0); // dont have ability to control bans, so fail.
 
         // Script should be spec id + address (20 bytes)
-        require(script.length == SCRIPT_START_LOCATION + 20);
-        return delegate(script.addressAt(SCRIPT_START_LOCATION), input);
+        require(_script.length == SCRIPT_START_LOCATION + 20);
+        return delegate(_script.addressAt(SCRIPT_START_LOCATION), _input);
     }
 
     /**
     * @dev Delegatecall to contract with input data
     */
-    function delegate(address addr, bytes memory input) internal returns (bytes memory output) {
-        require(isContract(addr));
-        require(addr.delegatecall(input.length > 0 ? input : defaultInput()));
+    function delegate(address _addr, bytes memory _input) internal returns (bytes memory output) {
+        require(isContract(_addr));
+        require(_addr.delegatecall(_input.length > 0 ? _input : defaultInput()));
         return returnedData();
     }
 

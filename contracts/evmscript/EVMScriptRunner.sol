@@ -10,12 +10,12 @@ import "./ScriptHelpers.sol";
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
 
-    function runScript(bytes script, bytes input, address[] blacklist) protectState internal returns (bytes output) {
+    function runScript(bytes _script, bytes _input, address[] _blacklist) protectState internal returns (bytes output) {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
-        address executorAddr = getExecutor(script);
+        address executorAddr = getExecutor(_script);
         require(executorAddr != address(0));
 
-        bytes memory calldataArgs = script.encode(input, blacklist);
+        bytes memory calldataArgs = _script.encode(_input, _blacklist);
         bytes4 sig = IEVMScriptExecutor(0).execScript.selector;
 
         require(executorAddr.delegatecall(sig, calldataArgs));
@@ -23,8 +23,8 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
         return returnedDataDecoded();
     }
 
-    function getExecutor(bytes script) public view returns (IEVMScriptExecutor) {
-        return IEVMScriptExecutor(getExecutorRegistry().getScriptExecutor(script));
+    function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
+        return IEVMScriptExecutor(getExecutorRegistry().getScriptExecutor(_script));
     }
 
     // TODO: Internal

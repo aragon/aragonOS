@@ -36,13 +36,13 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
     }
 
-    function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {
-        bytes32 node = keccak256(tld, label);
+    function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
+        bytes32 node = keccak256(_tld, _label);
 
         // Assume it is the test ENS
         if (ens.owner(node) != address(this)) {
             // If we weren't in test ens and factory doesn't have ownership, will fail
-            ens.setSubnodeOwner(tld, label, this);
+            ens.setSubnodeOwner(_tld, _label, this);
         }
 
         Kernel dao = newDAO(this);
@@ -89,7 +89,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
     }
 
     // Factory can be subclassed and permissions changed
-    function configureAPMPermissions(ACL acl, APMRegistry apm, address root) internal {
-        acl.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root);
+    function configureAPMPermissions(ACL _acl, APMRegistry _apm, address _root) internal {
+        _acl.createPermission(_root, _apm, _apm.CREATE_REPO_ROLE(), _root);
     }
 }

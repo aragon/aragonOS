@@ -8,8 +8,8 @@ contract EVMScriptRegistryConstants {
 
 
 interface IEVMScriptRegistry {
-    function addScriptExecutor(address _executor) external returns (uint id);
-    function disableScriptExecutor(uint256 _executorId) external;
+    function addScriptExecutor(address executor) external returns (uint id);
+    function disableScriptExecutor(uint256 executorId) external;
 
-    function getScriptExecutor(bytes _script) public view returns (address);
+    function getScriptExecutor(bytes script) public view returns (address);
 }

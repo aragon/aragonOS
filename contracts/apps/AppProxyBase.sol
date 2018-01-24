@@ -27,8 +27,8 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
         }
     }
 
-    function getAppBase(bytes32 appId) internal view returns (address) {
-        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, appId));
+    function getAppBase(bytes32 _appId) internal view returns (address) {
+        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
     }
 
     function () payable public {
