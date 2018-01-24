@@ -178,13 +178,13 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
     }
 
-    function _saveParams(uint256[] encodedParams) internal returns (bytes32) {
-        bytes32 paramHash = keccak256(encodedParams);
+    function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
+        bytes32 paramHash = keccak256(_encodedParams);
         Param[] storage params = permissionParams[paramHash];
 
         if (params.length == 0) { // params not saved before
-            for (uint256 i = 0; i < encodedParams.length; i++) {
-                uint256 encodedParam = encodedParams[i];
+            for (uint256 i = 0; i < _encodedParams.length; i++) {
+                uint256 encodedParam = _encodedParams[i];
                 Param memory param = Param(decodeParamId(encodedParam), decodeParamOp(encodedParam), uint240(encodedParam));
                 params.push(param);
             }
@@ -220,37 +220,37 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
     }
 
     function evalParams(
-        bytes32 paramsHash,
-        address who,
-        address where,
-        bytes32 what,
-        uint256[] how
+        bytes32 _paramsHash,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
     ) internal view returns (bool)
     {
-        if (paramsHash == EMPTY_PARAM_HASH) {
+        if (_paramsHash == EMPTY_PARAM_HASH) {
             return true;
         }
 
-        return evalParam(paramsHash, 0, who, where, what, how); // solium-disable-line arg-overflow
+        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
     }
 
     function evalParam(
-        bytes32 paramsHash,
-        uint32 paramId,
-        address who,
-        address where,
-        bytes32 what,
-        uint256[] how
+        bytes32 _paramsHash,
+        uint32 _paramId,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
     ) internal view returns (bool)
     {
-        if (paramId >= permissionParams[paramsHash].length) {
+        if (_paramId >= permissionParams[_paramsHash].length) {
             return false; // out of bounds
         }
 
-        Param memory param = permissionParams[paramsHash][paramId];
+        Param memory param = permissionParams[_paramsHash][_paramId];
 
         if (param.id == LOGIC_OP_PARAM_ID) {
-            return evalLogic(param, paramsHash, who, where, what, how);
+            return evalLogic(param, _paramsHash, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -258,7 +258,7 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = ACLOracle(param.value).canPerform(who, where, what) ? 1 : 0;
+            value = ACLOracle(param.value).canPerform(_who, _where, _what) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
@@ -269,10 +269,10 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
-            if (param.id >= how.length) {
+            if (param.id >= _how.length) {
                 return false;
             }
-            value = uint256(uint240(how[param.id])); // force lost precision
+            value = uint256(uint240(_how[param.id])); // force lost precision
         }
 
         if (Op(param.op) == Op.RET) {
@@ -282,45 +282,45 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function evalLogic(Param param, bytes32 paramsHash, address who, address where, bytes32 what, uint256[] how) internal view returns (bool) {
-        if (Op(param.op) == Op.IF_ELSE) {
-            var (condition, success, failure) = decodeParamsList(uint256(param.value));
-            bool result = evalParam(paramsHash, condition, who, where, what, how);
+    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        if (Op(_param.op) == Op.IF_ELSE) {
+            var (condition, success, failure) = decodeParamsList(uint256(_param.value));
+            bool result = evalParam(_paramsHash, condition, _who, _where, _what, _how);
 
-            return evalParam(paramsHash, result ? success : failure, who, where, what, how);
+            return evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
         }
 
-        var (v1, v2,) = decodeParamsList(uint256(param.value));
-        bool r1 = evalParam(paramsHash, v1, who, where, what, how);
+        var (v1, v2,) = decodeParamsList(uint256(_param.value));
+        bool r1 = evalParam(_paramsHash, v1, _who, _where, _what, _how);
 
-        if (Op(param.op) == Op.NOT) {
+        if (Op(_param.op) == Op.NOT) {
             return !r1;
         }
 
-        if (r1 && Op(param.op) == Op.OR) {
+        if (r1 && Op(_param.op) == Op.OR) {
             return true;
         }
 
-        if (!r1 && Op(param.op) == Op.AND) {
+        if (!r1 && Op(_param.op) == Op.AND) {
             return false;
         }
 
-        bool r2 = evalParam(paramsHash, v2, who, where, what, how);
+        bool r2 = evalParam(_paramsHash, v2, _who, _where, _what, _how);
 
-        if (Op(param.op) == Op.XOR) {
+        if (Op(_param.op) == Op.XOR) {
             return (r1 && !r2) || (!r1 && r2);
         }
 
         return r2; // both or and and depend on result of r2 after checks
     }
 
-    function compare(uint256 a, Op op, uint256 b) internal pure returns (bool) {
-        if (op == Op.EQ)  return a == b;                              // solium-disable-line lbrace
-        if (op == Op.NEQ) return a != b;                              // solium-disable-line lbrace
-        if (op == Op.GT)  return a > b;                               // solium-disable-line lbrace
-        if (op == Op.LT)  return a < b;                               // solium-disable-line lbrace
-        if (op == Op.GTE) return a >= b;                              // solium-disable-line lbrace
-        if (op == Op.LTE) return a <= b;                              // solium-disable-line lbrace
+    function compare(uint256 _a, Op _op, uint256 _b) internal pure returns (bool) {
+        if (_op == Op.EQ)  return _a == _b;                              // solium-disable-line lbrace
+        if (_op == Op.NEQ) return _a != _b;                              // solium-disable-line lbrace
+        if (_op == Op.GT)  return _a > _b;                               // solium-disable-line lbrace
+        if (_op == Op.LT)  return _a < _b;                               // solium-disable-line lbrace
+        if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
+        if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
         return false;
     }
 
@@ -332,12 +332,12 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         ChangePermissionManager(_app, _role, _newManager);
     }
 
-    function roleHash(address where, bytes32 what) pure internal returns (bytes32) {
-        return keccak256(uint256(1), where, what);
+    function roleHash(address _where, bytes32 _what) pure internal returns (bytes32) {
+        return keccak256(uint256(1), _where, _what);
     }
 
-    function permissionHash(address who, address where, bytes32 what) pure internal returns (bytes32) {
-        return keccak256(uint256(2), who, where, what);
+    function permissionHash(address _who, address _where, bytes32 _what) pure internal returns (bytes32) {
+        return keccak256(uint256(2), _who, _where, _what);
     }
 
     function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members
