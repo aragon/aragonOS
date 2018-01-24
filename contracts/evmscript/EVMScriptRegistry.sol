@@ -11,7 +11,7 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
     using ScriptHelpers for bytes;
 
     // WARN: Manager can censor all votes and the like happening in an org
-    bytes32 constant public REGISTRY_MANAGER = bytes32(1);
+    bytes32 constant public REGISTRY_MANAGER_ROLE = bytes32(1);
 
     struct ExecutorEntry {
         address executor;
@@ -20,7 +20,7 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
 
     ExecutorEntry[] public executors;
 
-    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER) returns (uint id) {
+    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
         // cheaply creates empty record so first index is 1
         uint256 newExecutors = executors.length == 0 ? 2 : 1;
         executors.length += newExecutors;
@@ -29,7 +29,7 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
         executors[id].enabled = true;
     }
 
-    function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER) {
+    function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {
         executors[_executorId].enabled = false;
     }
 

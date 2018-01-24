@@ -21,7 +21,7 @@ contract('Kernel Upgrade', accounts => {
         kernel = Kernel.at(app)
         acl = ACL.at(await kernel.acl())
 
-        const r = await kernel.APP_MANAGER()
+        const r = await kernel.APP_MANAGER_ROLE()
 
         namespace = await kernel.CORE_NAMESPACE()
         kernelId = await kernel.KERNEL_APP_ID()
@@ -40,7 +40,7 @@ contract('Kernel Upgrade', accounts => {
     })
 
     it('successfully upgrades kernel', async () => {
-        const role = await kernel.APP_MANAGER()
+        const role = await kernel.APP_MANAGER_ROLE()
         await acl.createPermission(permissionsRoot, kernel.address, role, permissionsRoot, { from: permissionsRoot })
 
         const upgradedImpl = await UpgradedKernel.new()

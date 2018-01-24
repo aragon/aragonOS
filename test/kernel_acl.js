@@ -32,7 +32,7 @@ contract('Kernel ACL', accounts => {
         //assertEvent(receipt, 'SetPermission')
         //assertEvent(receipt, 'ChangePermissionManager')
 
-        role = await kernel.APP_MANAGER()
+        role = await kernel.APP_MANAGER_ROLE()
         acl = ACL.at(await kernel.acl())
     })
 

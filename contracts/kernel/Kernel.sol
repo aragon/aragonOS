@@ -6,7 +6,7 @@ import "../common/Initializable.sol";
 
 
 contract Kernel is KernelStorage, Initializable, IKernel {
-    bytes32 constant public APP_MANAGER = bytes32(1);
+    bytes32 constant public APP_MANAGER_ROLE = bytes32(1);
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
