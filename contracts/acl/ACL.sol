@@ -121,7 +121,7 @@ contract ACL is AragonApp, IACL {
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
-        // only allow permission creation when it has no manager (hasn't been created before)
+        // only allow permission creation (or re-creation) when there is no manager
         require(permissionManager[_app][_role] == address(0));
 
         _setPermission(_entity, _app, _role, true);
