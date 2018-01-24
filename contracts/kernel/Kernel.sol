@@ -46,6 +46,10 @@ contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
         return apps[_id];
     }
 
+    /**
+    * @dev Get the installed ACL app
+    * @return ACL app
+    */
     function acl() public view returns (IACL) {
         return IACL(getApp(ACL_APP));
     }
