@@ -36,6 +36,4 @@ contract AppProxyBase is AppStorage, DelegateProxy, IProxy, KernelConstants {
         require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }
-
-    event Log(address a);
 }
