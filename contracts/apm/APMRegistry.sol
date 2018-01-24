@@ -1,6 +1,5 @@
 pragma solidity 0.4.18;
 
-import "../kernel/Kernel.sol";
 import "../lib/ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../factory/AppProxyFactory.sol";
