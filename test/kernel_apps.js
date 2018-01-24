@@ -30,7 +30,7 @@ contract('Kernel apps', accounts => {
         kernel = Kernel.at(app)
         acl = ACL.at(await kernel.acl())
 
-        const r = await kernel.APP_MANAGER()
+        const r = await kernel.APP_MANAGER_ROLE()
         await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
 
         appCode1 = await AppStub.new()

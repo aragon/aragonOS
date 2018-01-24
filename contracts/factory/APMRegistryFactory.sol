@@ -48,7 +48,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         Kernel dao = newDAO(this);
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(this, dao, dao.APP_MANAGER(), this);
+        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
@@ -75,7 +75,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
         acl.grantPermission(apm, acl, permRole);
 
         // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER());
+        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
         acl.revokePermission(this, acl, permRole);
         acl.grantPermission(_root, acl, permRole);
         acl.setPermissionManager(_root, acl, permRole);

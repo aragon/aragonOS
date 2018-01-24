@@ -16,7 +16,7 @@ contract DelegateScript is IEVMScriptExecutor {
 
     /**
     * @notice Executes script by delegatecall into a contract
-    * @param script [ specId (uint32 = 2) ][ contract address (20 bytes) ]
+    * @param script [ specId (uint32) ][ contract address (20 bytes) ]
     * @param input ABI encoded call to be made to contract (if empty executes default exec() function)
     * @param blacklist If any address is passed, will revert.
     * @return Call return data

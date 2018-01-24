@@ -14,8 +14,8 @@ contract CallsScript is IEVMScriptExecutor {
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     /**
-    * @notice Executes script by delegatecall into a contract
-    * @param script [ specId (uint32 = 1) ] many calls with this structure ->
+    * @notice Executes a number of call scripts
+    * @param script [ specId (uint32) ] many calls with this structure ->
     *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
     * @param input Input is ignored in callscript
     * @param blacklist Addresses the script cannot call to, or will revert.

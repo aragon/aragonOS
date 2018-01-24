@@ -7,11 +7,11 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
-contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptRegistry {
+contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
     // WARN: Manager can censor all votes and the like happening in an org
-    bytes32 constant public REGISTRY_MANAGER = bytes32(1);
+    bytes32 constant public REGISTRY_MANAGER_ROLE = bytes32(1);
 
     struct ExecutorEntry {
         address executor;
@@ -20,16 +20,17 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
 
     ExecutorEntry[] public executors;
 
-    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER) returns (uint id) {
-        // cheaply creates empty record so first index is 1
-        uint256 newExecutors = executors.length == 0 ? 2 : 1;
-        executors.length += newExecutors;
-        id = executors.length - 1;
-        executors[id].executor = _executor;
-        executors[id].enabled = true;
+    function initialize() onlyInit public {
+        initialized();
+        // Create empty record to begin executor IDs at 1
+        executors.push(ExecutorEntry(address(0), false));
     }
 
-    function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER) {
+    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
+        return executors.push(ExecutorEntry(_executor, true));
+    }
+
+    function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {
         executors[_executorId].enabled = false;
     }
 
@@ -40,7 +41,7 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
             return address(0);
         }
 
-        ExecutorEntry memory entry = executors[id];
+        ExecutorEntry storage entry = executors[id];
         return entry.enabled ? entry.executor : address(0);
     }
 }
