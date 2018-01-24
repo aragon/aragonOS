@@ -14,22 +14,22 @@ contract Kernel is KernelStorage, Initializable, IKernel {
     * @param _acl ACL for DAO
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(IACL _acl, address baseACL, address _permissionsCreator) onlyInit public {
+    function initialize(IACL _acl, address _baseAcl, address _permissionsCreator) onlyInit public {
         initialized();
 
-        setApp(APP_BASES_NAMESPACE, ACL_APP_ID, baseACL);
+        setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
         setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, _acl);
         _acl.initialize(_permissionsCreator);
     }
 
-    function setApp(bytes32 namespace, bytes32 name, address app) auth(APP_MANAGER) public returns (bytes32 id) {
-        id = keccak256(namespace, name);
-        apps[id] = app;
-        SetApp(namespace, name, id, app);
+    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE) public returns (bytes32 id) {
+        id = keccak256(_namespace, _name);
+        apps[id] = _app;
+        SetApp(_namespace, _name, id, _app);
     }
 
-    function getApp(bytes32 id) public view returns (address) {
-        return apps[id];
+    function getApp(bytes32 _id) public view returns (address) {
+        return apps[_id];
     }
 
     function acl() view public returns (IACL) {
@@ -38,15 +38,15 @@ contract Kernel is KernelStorage, Initializable, IKernel {
 
     /**
     * @dev Function called by apps to check ACL on kernel or to check permission status
-    * @param who Sender of the original call
-    * @param where Address of the app
-    * @param what Identifier for a group of actions in app
-    * @param how Extra data for ACL auth
+    * @param _who Sender of the original call
+    * @param _where Address of the app
+    * @param _what Identifier for a group of actions in app
+    * @param _how Extra data for ACL auth
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address who, address where, bytes32 what, bytes how) view public returns (bool) {
-        IACL _acl = acl();
-        return _acl == address(0) ? true : _acl.hasPermission(who, where, what, how);
+    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
+        IACL acl = acl();
+        return acl == address(0) ? true : acl.hasPermission(_who, _where, _what, _how);
     }
 
     modifier auth(bytes32 _role) {

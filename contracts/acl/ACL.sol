@@ -12,8 +12,8 @@ contract ACL is AragonApp, IACL {
     // who is the manager of a permission
     mapping (address => mapping (bytes32 => address)) permissionManager;
 
-    modifier onlyPermissionManager(address app, bytes32 role) {
-        require(msg.sender == getPermissionManager(app, role));
+    modifier onlyPermissionManager(address _app, bytes32 _role) {
+        require(msg.sender == getPermissionManager(_app, _role));
         _;
     }
 
