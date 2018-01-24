@@ -140,7 +140,6 @@ contract ACL is AragonApp, IACL {
         internal
     {
         permissions[_entity][_app][_role] = _allowed;
-
         SetPermission(_entity, _app, _role, _allowed);
     }
 

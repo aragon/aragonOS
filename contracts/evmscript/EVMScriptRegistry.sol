@@ -42,7 +42,7 @@ contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptR
             return address(0);
         }
 
-        ExecutorEntry memory entry = executors[id];
+        ExecutorEntry storage entry = executors[id];
         return entry.enabled ? entry.executor : address(0);
     }
 }
