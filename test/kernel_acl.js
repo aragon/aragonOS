@@ -49,7 +49,7 @@ contract('Kernel ACL', accounts => {
 
     it('throws on reinitialization', async () => {
         return assertRevert(async () => {
-            await kernel.initialize(accounts[0], accounts[0], accounts[0])
+            await kernel.initialize(accounts[0], accounts[0])
         })
     })
 

@@ -9,7 +9,7 @@ import "./ENSFactory.sol";
 import "./AppProxyFactory.sol";
 
 
-contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
+contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants {
     APMRegistry public registryBase;
     Repo public repoBase;
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
@@ -52,14 +52,12 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants {
 
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
-        // App code for relevant apps
-        dao.setApp(namespace, APM_APP_ID, registryBase);
-        dao.setApp(namespace, REPO_APP_ID, repoBase);
-        dao.setApp(namespace, ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        // Deploy app proxies
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(ENS_SUB_APP_ID, ensSubdomainRegistrarBase));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(APM_APP_ID, registryBase));
 
-        // Deploy proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
-        APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
+        // APMRegistry controls Repos
+        dao.setApp(namespace, REPO_APP_ID, repoBase);
 
         DeployAPM(node, apm);
 
