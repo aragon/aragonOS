@@ -1,5 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const { hash } = require('eth-ens-namehash')
+const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const AppProxyPinned = artifacts.require('AppProxyPinned')

@@ -68,7 +68,7 @@ contract('APMRegistry', accounts => {
 
     it('fails to create empty repo name', async () => {
         return assertRevert(async () => {
-            await registry.newRepo('', repoDev, { from: apmOwner })
+            await registry.newRepo('', repoDev, { from: apmOwner })
         })
     })
 
@@ -103,7 +103,7 @@ contract('APMRegistry', accounts => {
         let repo = {}
 
         beforeEach(async () => {
-            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
+            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
             repo = Repo.at(getRepoFromLog(receipt))
         })
 

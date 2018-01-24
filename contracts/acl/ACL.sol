@@ -147,7 +147,7 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel or to check permission statu
+    * @dev Function called by apps to check ACL on kernel or to check permission statu
     * @param _who Sender of the original call
     * @param _where Address of the app
     * @param _where Identifier for a group of actions in app

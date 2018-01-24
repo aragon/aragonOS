@@ -39,7 +39,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel or to check permission status
+    * @dev Function called by apps to check ACL on kernel or to check permission status
     * @param _who Sender of the original call
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app
