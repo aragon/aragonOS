@@ -148,12 +148,38 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
 
     /**
     * @dev Function called by apps to check ACL on kernel or to check permission statu
-    * @param who Sender of the original call
-    * @param where Address of the app
-    * @param where Identifier for a group of actions in app
+    * @param _who Sender of the original call
+    * @param _where Address of the app
+    * @param _where Identifier for a group of actions in app
+    * @param _how Permission parameters
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address who, address where, bytes32 what) view public returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
+        uint256[] memory how;
+        uint256 intsLength = _how.length / 32;
+        assembly {
+            how := _how // forced casting
+            mstore(how, intsLength)
+        }
+        // _how is invalid from this point fwd
+        return hasPermission(_who, _where, _what, how);
+    }
+
+    function hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) public view returns (bool) {
+        bytes32 whoParams = permissions[permissionHash(_who, _where, _what)];
+        if (whoParams != bytes32(0) && evalParams(whoParams, _who, _where, _what, _how)) {
+            return true;
+        }
+
+        bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, _where, _what)];
+        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function hasPermission(address who, address where, bytes32 what) public view returns (bool) {
         uint256[] memory empty = new uint256[](0);
         return hasPermission(who, where, what, empty);
     }
@@ -191,32 +217,6 @@ contract ACL is AragonApp, IACL, ACLSyntaxSugar {
         }
 
         return paramHash;
-    }
-
-    function hasPermission(address who, address where, bytes32 what, bytes memory _how) view public returns (bool) {
-        uint256[] memory how;
-        uint256 intsLength = _how.length / 32;
-        assembly {
-            how := _how // forced casting
-            mstore(how, intsLength)
-        }
-        // _how is invalid from this point fwd
-        return hasPermission(who, where, what, how);
-    }
-
-    function hasPermission(address who, address where, bytes32 what, uint256[] memory how) view public returns (bool) {
-        bytes32 whoParams = permissions[permissionHash(who, where, what)];
-        bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, where, what)];
-
-        if (whoParams != bytes32(0) && evalParams(whoParams, who, where, what, how)) {        // solium-disable-line arg-overflow
-            return true;
-        }
-
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, where, what, how)) { // solium-disable-line arg-overflow
-            return true;
-        }
-
-        return false;
     }
 
     function evalParams(
