@@ -33,7 +33,7 @@ contract Kernel is KernelStorage, Initializable, IKernel {
         return apps[_id];
     }
 
-    function acl() view public returns (IACL) {
+    function acl() public view returns (IACL) {
         return IACL(getApp(ACL_APP));
     }
 

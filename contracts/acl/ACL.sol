@@ -97,7 +97,7 @@ contract ACL is AragonApp, IACL {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) view public returns (address) {
+    function getPermissionManager(address _app, bytes32 _role) public view returns (address) {
         return permissionManager[_app][_role];
     }
 
@@ -109,11 +109,11 @@ contract ACL is AragonApp, IACL {
     * @param _how Extra data for ACL auth
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) view public returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
         return hasPermission(_who, _where, _what);
     }
 
-    function hasPermission(address _who, address _where, bytes32 _what) view public returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what) public view returns (bool) {
         return permissions[_who][_where][_what];
     }
 
