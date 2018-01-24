@@ -55,6 +55,12 @@ contract('EVM Script', accounts => {
         assert.equal(await reg.getScriptExecutor('0x00000004'), zeroAddr)
     })
 
+    it('fails if reinitializing registry', async () => {
+        return assertRevert(async () => {
+            await reg.initialize()
+        })
+    })
+
     context('executor', () => {
         beforeEach(async () => {
             const receipt = await daoFact.newAppProxy(dao.address, executorAppId)

@@ -20,15 +20,14 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
 
     ExecutorEntry[] public executors;
 
-    function EVMScriptRegistry() public {
+    function initialize() onlyInit public {
+        initialized();
         // Create empty record to begin executor IDs at 1
-        executors.length += 1;
+        executors.push(ExecutorEntry(address(0), false));
     }
 
     function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
-        id = executors.length++;
-        executors[id].executor = _executor;
-        executors[id].enabled = true;
+        return executors.push(ExecutorEntry(_executor, true));
     }
 
     function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {

@@ -27,6 +27,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
     function newEVMScriptRegistry(Kernel dao, address root) public returns (EVMScriptRegistry reg) {
         dao.setApp(dao.APP_BASES_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, baseReg);
         reg = EVMScriptRegistry(newAppProxyPinned(dao, EVMSCRIPT_REGISTRY_APP_ID));
+        reg.initialize();
 
         ACL acl = ACL(dao.acl());
 
