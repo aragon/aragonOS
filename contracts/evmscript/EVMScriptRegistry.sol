@@ -7,7 +7,7 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
-contract EVMScriptRegistry is EVMScriptRegistryConstants, AragonApp, IEVMScriptRegistry {
+contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
     // WARN: Manager can censor all votes and the like happening in an org
