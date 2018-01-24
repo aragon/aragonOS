@@ -1,8 +1,8 @@
 pragma solidity 0.4.18;
 
 import "../apps/AragonApp.sol";
-import "../kernel/IACL.sol";
 import "./ACLSyntaxSugar.sol";
+import "./IACL.sol";
 
 
 interface ACLOracle {
