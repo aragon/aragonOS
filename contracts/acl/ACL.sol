@@ -1,7 +1,6 @@
 pragma solidity 0.4.18;
 
 import "../kernel/IACL.sol";
-import "../common/Initializable.sol";
 import "../apps/AragonApp.sol";
 
 
