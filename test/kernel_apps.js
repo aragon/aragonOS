@@ -1,5 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const { hash } = require('eth-ens-namehash')
+const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const AppProxyPinned = artifacts.require('AppProxyPinned')
@@ -21,6 +21,8 @@ contract('Kernel apps', accounts => {
 
     before(async () => {
         factory = await DAOFactory.new()
+        appCode1 = await AppStub.new()
+        appCode2 = await AppStub2.new()
     })
 
     beforeEach(async () => {
@@ -33,12 +35,12 @@ contract('Kernel apps', accounts => {
         const r = await kernel.APP_MANAGER_ROLE()
         await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
 
-        appCode1 = await AppStub.new()
-        appCode2 = await AppStub2.new()
+        code1 = await AppStub.new()
+        code2 = await AppStub2.new()
     })
 
     it('fails if initializing on constructor before setting app code', async () => {
-        const initializationPayload = appCode1.contract.initialize.getData()
+        const initializationPayload = code1.contract.initialize.getData()
 
         return assertRevert(async () => {
             await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
@@ -63,6 +65,13 @@ contract('Kernel apps', accounts => {
                 const initializationPayload = appCode1.contract.initialize.getData()
                 appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
                 app = AppStub.at(appProxy.address)
+            })
+
+            it('fails if init fails', async () => {
+                const badInit = '0x1234'
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
+                })
             })
 
             it('was initialized on constructor', async () => {
@@ -109,7 +118,8 @@ contract('Kernel apps', accounts => {
                 it('can initialize', async () => {
                     await app.initialize()
 
-                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')                })
+                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                })
 
                 it('app call works if sent from authed entity', async () => {
                     await app.setValue(10)
@@ -119,6 +129,13 @@ contract('Kernel apps', accounts => {
                 it('fails when called by unauthorized entity', async () => {
                     return assertRevert(async () => {
                         await app.setValue(10, { from: accounts[1] })
+                    })
+                })
+
+                it('fails if updated app is not a contract', async () => {
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
+                    return assertRevert(async () => {
+                        await app.setValue(10)
                     })
                 })
 

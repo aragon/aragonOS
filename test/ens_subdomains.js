@@ -74,6 +74,12 @@ contract('ENSSubdomainRegistrar', accounts => {
         })
     })
 
+    it('fails if deleting name not yet created', async () => {
+        return assertRevert(async () => {
+            await registrar.deleteName(holalabel, { from: apmOwner })
+        })
+    })
+
     it('fails if not authorized to create name', async () => {
         return assertRevert(async () => {
             await registrar.createName(holalabel, apmOwner, { from: notOwner })
@@ -85,5 +91,14 @@ contract('ENSSubdomainRegistrar', accounts => {
         await registrar.deleteName(holalabel, { from: apmOwner })
 
         assert.equal(await ens.owner(holanode), zeroAddr, 'should have reset name')
+    })
+
+    it('fails if initializing without rootnode ownership', async () => {
+        const reg = await ENSSubdomainRegistrar.new()
+        const ens = await ENS.new()
+
+        return assertRevert(async () => {
+            await reg.initialize(ens.address, holanode)
+        })
     })
 })

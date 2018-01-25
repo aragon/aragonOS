@@ -6,7 +6,7 @@ import "../common/DelegateProxy.sol";
 import "../kernel/KernelStorage.sol";
 
 
-contract AppProxyBase is AppStorage, DelegateProxy, IAppProxy, KernelConstants {
+contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -27,8 +27,8 @@ contract AppProxyBase is AppStorage, DelegateProxy, IAppProxy, KernelConstants {
         }
     }
 
-    function getAppBase(bytes32 appId) internal view returns (address) {
-        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, appId));
+    function getAppBase(bytes32 _appId) internal view returns (address) {
+        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
     }
 
     function () payable public {

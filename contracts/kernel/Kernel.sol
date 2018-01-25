@@ -3,9 +3,10 @@ pragma solidity 0.4.18;
 import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/Initializable.sol";
+import "../acl/ACLSyntaxSugar.sol";
 
 
-contract Kernel is KernelStorage, Initializable, IKernel {
+contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
     bytes32 constant public APP_MANAGER_ROLE = bytes32(1);
 
     /**
@@ -23,22 +24,38 @@ contract Kernel is KernelStorage, Initializable, IKernel {
         _acl.initialize(_permissionsCreator);
     }
 
-    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE) public returns (bytes32 id) {
+    /**
+    * @dev Set the resolving address of an app instance or base implementation
+    * @param _namespace App namespace to use
+    * @param _name Name of the app
+    * @param _app Address of the app
+    * @return ID of app
+    */
+    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) public returns (bytes32 id) {
         id = keccak256(_namespace, _name);
         apps[id] = _app;
         SetApp(_namespace, _name, id, _app);
     }
 
+    /**
+    * @dev Get the address of an app instance or base implementation
+    * @param _id App identifier
+    * @return Address of the app
+    */
     function getApp(bytes32 _id) public view returns (address) {
         return apps[_id];
     }
 
+    /**
+    * @dev Get the installed ACL app
+    * @return ACL app
+    */
     function acl() public view returns (IACL) {
         return IACL(getApp(ACL_APP));
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel or to check permission status
+    * @dev Function called by apps to check ACL on kernel or to check permission status
     * @param _who Sender of the original call
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app
@@ -50,8 +67,15 @@ contract Kernel is KernelStorage, Initializable, IKernel {
         return address(_acl) == address(0) ? true : _acl.hasPermission(_who, _where, _what, _how);
     }
 
-    modifier auth(bytes32 _role) {
-        require(hasPermission(msg.sender, address(this), _role, new bytes(0)));
+    modifier auth(bytes32 _role, uint256[] memory params) {
+        bytes memory how;
+        uint256 byteLength = params.length * 32;
+        assembly {
+            how := params // forced casting
+            mstore(how, byteLength)
+        }
+        // Params is invalid from this point fwd
+        require(hasPermission(msg.sender, address(this), _role, how));
         _;
     }
 }

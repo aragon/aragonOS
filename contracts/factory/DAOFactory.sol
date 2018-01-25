@@ -37,13 +37,12 @@ contract DAOFactory is AppProxyFactory {
         address initialRoot = address(regFactory) != address(0) ? this : _root;
         dao.initialize(acl, baseACL, initialRoot);
 
-        require(address(dao.acl()) == address(acl));
-
         if (address(regFactory) != address(0)) {
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
             bytes32 appManagerRole = dao.APP_MANAGER_ROLE();
 
             acl.grantPermission(regFactory, acl, permRole);
+
             acl.createPermission(regFactory, dao, appManagerRole, this);
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);

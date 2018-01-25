@@ -24,14 +24,14 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         baseDeployDel = address(new DeployDelegateScript());
     }
 
-    function newEVMScriptRegistry(Kernel dao, address root) public returns (EVMScriptRegistry reg) {
-        dao.setApp(dao.APP_BASES_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, baseReg);
-        reg = EVMScriptRegistry(newAppProxyPinned(dao, EVMSCRIPT_REGISTRY_APP_ID));
+    function newEVMScriptRegistry(Kernel _dao, address _root) public returns (EVMScriptRegistry reg) {
+        _dao.setApp(_dao.APP_BASES_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, baseReg);
+        reg = EVMScriptRegistry(newAppProxyPinned(_dao, EVMSCRIPT_REGISTRY_APP_ID));
         reg.initialize();
 
-        ACL acl = ACL(dao.acl());
+        ACL acl = ACL(_dao.acl());
 
-        dao.setApp(dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, reg);
+        _dao.setApp(_dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, reg);
         acl.createPermission(this, reg, reg.REGISTRY_MANAGER_ROLE(), this);
 
         reg.addScriptExecutor(baseCalls);     // spec 1 = CallsScript
@@ -39,7 +39,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         reg.addScriptExecutor(baseDeployDel); // spec 3 = DeployDelegateScript
 
         acl.revokePermission(this, reg, reg.REGISTRY_MANAGER_ROLE());
-        acl.setPermissionManager(root, reg, reg.REGISTRY_MANAGER_ROLE());
+        acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
 
         return reg;
     }
