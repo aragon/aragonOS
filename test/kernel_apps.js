@@ -67,6 +67,18 @@ contract('Kernel apps', accounts => {
                 app = AppStub.at(appProxy.address)
             })
 
+            it('fails if kernel addr is not a kernel', async () => {
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
+                })
+            })
+
+            it('fails if kernel addr is 0', async () => {
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 5e6 })
+                })
+            })
+
             it('fails if init fails', async () => {
                 const badInit = '0x1234'
                 return assertRevert(async () => {
