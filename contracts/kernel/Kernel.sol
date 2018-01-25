@@ -2,26 +2,54 @@ pragma solidity 0.4.18;
 
 import "./IKernel.sol";
 import "./KernelStorage.sol";
-import "../common/Initializable.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../apps/IAppProxy.sol";
+import "../common/Initializable.sol";
+import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar {
     bytes32 constant public APP_MANAGER_ROLE = bytes32(1);
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initializes a kernel instance and sets `_permissionsCreator` as the entity that can create other permissions
-    * @param _acl ACL AppProxy instance
-    * @param _baseAcl address of deployed ACL contract
+    * @notice Initializes a kernel instance along with its ACL and sets `_permissionsCreator` as the entity that can create other permissions
+    * @param _baseAcl Address of base ACL app
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(IACL _acl, address _baseAcl, address _permissionsCreator) onlyInit public {
+    function initialize(address _baseAcl, address _permissionsCreator) onlyInit public {
         initialized();
 
-        setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
-        setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, _acl);
-        _acl.initialize(_permissionsCreator);
+        IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
+
+        _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
+        _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
+
+        acl.initialize(_permissionsCreator);
+    }
+
+    /**
+    * @dev Create a new instance of an app linked to this kernel and set its base
+    *      implementation if it was not already set
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
+    */
+    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
+        appProxy = newAppProxy(this, _name);
+    }
+
+    /**
+    * @dev Create a new pinned instance of an app linked to this kernel and set
+    *      its base implementation if it was not already set
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
+    */
+    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
+        appProxy = newAppProxyPinned(this, _name);
     }
 
     /**
@@ -32,9 +60,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
     * @return ID of app
     */
     function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) kernelIntegrity public returns (bytes32 id) {
-        id = keccak256(_namespace, _name);
-        apps[id] = _app;
-        SetApp(_namespace, _name, id, _app);
+        return _setApp(_namespace, _name, _app);
     }
 
     /**
@@ -63,8 +89,27 @@ contract Kernel is IKernel, KernelStorage, Initializable, ACLSyntaxSugar {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
-        IACL _acl = acl();
-        return address(_acl) == address(0) ? true : _acl.hasPermission(_who, _where, _what, _how);
+        return acl().hasPermission(_who, _where, _what, _how);
+    }
+
+    function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        id = keccak256(_namespace, _name);
+        apps[id] = _app;
+        SetApp(_namespace, _name, id, _app);
+    }
+
+    function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        id = keccak256(_namespace, _name);
+
+        if (_app != address(0)) {
+            address app = getApp(id);
+            if (app != address(0)) {
+                require(app == _app);
+            } else {
+                apps[id] = _app;
+                SetApp(_namespace, _name, id, _app);
+            }
+        }
     }
 
     modifier auth(bytes32 _role, uint256[] memory params) {

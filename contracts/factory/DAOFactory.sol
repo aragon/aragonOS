@@ -5,11 +5,10 @@ import "../kernel/KernelProxy.sol";
 
 import "../acl/ACL.sol";
 
-import "./AppProxyFactory.sol";
 import "./EVMScriptRegistryFactory.sol";
 
 
-contract DAOFactory is AppProxyFactory {
+contract DAOFactory {
     address public baseKernel;
     address public baseACL;
     EVMScriptRegistryFactory public regFactory;
@@ -32,10 +31,11 @@ contract DAOFactory is AppProxyFactory {
     */
     function newDAO(address _root) public returns (Kernel dao) {
         dao = Kernel(new KernelProxy(baseKernel));
-        ACL acl = ACL(newAppProxy(dao, dao.ACL_APP_ID()));
 
         address initialRoot = address(regFactory) != address(0) ? this : _root;
-        dao.initialize(acl, baseACL, initialRoot);
+        dao.initialize(baseACL, initialRoot);
+
+        ACL acl = ACL(dao.acl());
 
         if (address(regFactory) != address(0)) {
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();

@@ -49,13 +49,21 @@ contract('Kernel ACL', accounts => {
 
     it('throws on reinitialization', async () => {
         return assertRevert(async () => {
-            await kernel.initialize(accounts[0], accounts[0], accounts[0])
+            await kernel.initialize(accounts[0], accounts[0])
         })
     })
 
 
     it('actions cannot be performed by default', async () => {
         assert.isFalse(await acl.hasPermission(permissionsRoot, app, role))
+    })
+
+    it('actions cannot be performed if uninitialized', async () => {
+        const newKernelProxy = await KernelProxy.new(await factory.baseKernel())
+        const newKernel = Kernel.at(newKernelProxy.address)
+        return assertRevert(async () => {
+          const result = await newKernel.hasPermission(permissionsRoot, app, role, '0x00')
+        })
     })
 
     it('protected actions fail if not allowed', async () => {
