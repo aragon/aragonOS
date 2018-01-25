@@ -1,214 +1,134 @@
-pragma solidity ^0.4.13;
-
-/**
-* @title DAO Kernel
-* @author Jorge Izquierdo (Aragon)
-* @description Kernel's purpose is to intercept different types of transactions that can
-* be made to the DAO, check if the action can be done and dispatch it.
-* The Kernel keeps a registry what organ or applications handles each action.
-*/
+pragma solidity 0.4.18;
 
 import "./IKernel.sol";
-import "./KernelRegistry.sol";
-import "./IPermissionsOracle.sol";
-import "../misc/DAOMsg.sol";
+import "./KernelStorage.sol";
+import "../acl/ACLSyntaxSugar.sol";
+import "../apps/IAppProxy.sol";
+import "../common/Initializable.sol";
+import "../factory/AppProxyFactory.sol";
 
-import "../tokens/EtherToken.sol";
-import "zeppelin/token/ERC20.sol";
 
-import "../organs/IOrgan.sol";
-import "../apps/Application.sol";
+contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar {
+    bytes32 constant public APP_MANAGER_ROLE = bytes32(1);
 
-contract Kernel is IKernel, IOrgan, KernelRegistry, DAOMsgEncoder {
     /**
-    * @dev MetaOrgan instance keeps saved in its own context.
-    * @param _deployedMeta an instance of a MetaOrgan (used for setup)
+    * @dev Initialize can only be called once. It saves the block number in which it was initialized.
+    * @notice Initializes a kernel instance along with its ACL and sets `_permissionsCreator` as the entity that can create other permissions
+    * @param _baseAcl Address of base ACL app
+    * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function Kernel(address _deployedMeta) {
-        deployedMeta = _deployedMeta;
+    function initialize(address _baseAcl, address _permissionsCreator) onlyInit public {
+        initialized();
+
+        IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
+
+        _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
+        _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
+
+        acl.initialize(_permissionsCreator);
     }
 
     /**
-    * @dev Registers 'installOrgan' function from MetaOrgan, all further organ installs can be performed with it
-    * @param _baseKernel an instance to the kernel to call and get the deployedMeta
+    * @dev Create a new instance of an app linked to this kernel and set its base
+    *      implementation if it was not already set
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
     */
-    function setupOrgans(address _baseKernel) {
-        var (a,) = get(INSTALL_ORGAN_SIG);
-        require(a == 0); // assert this can only be called once in the DAO
-        bytes4[] memory installOrganSig = new bytes4[](1);
-        installOrganSig[0] = INSTALL_ORGAN_SIG;
-        register(Kernel(_baseKernel).deployedMeta(), installOrganSig, true);
+    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
+        appProxy = newAppProxy(this, _name);
     }
 
     /**
-    * @dev Vanilla ETH transfers get intercepted in the fallback
+    * @dev Create a new pinned instance of an app linked to this kernel and set
+    *      its base implementation if it was not already set
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
     */
-    function () payable public {
-        dispatchEther(msg.sender, msg.value, msg.data);
+    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
+        appProxy = newAppProxyPinned(this, _name);
     }
 
     /**
-    * @notice Send a transaction of behalf of the holder that signed it (data: `data`)
-    * @dev Dispatches a preauthorized ETH transaction
-    * @param _data Presigned transaction data to be executed
-    * @param _nonce Numeric identifier that allows for multiple tx with the same data to be executed.
-    * @param _r ECDSA signature r value
-    * @param _s ECDSA signature s value
-    * @param _v ECDSA signature v value
+    * @dev Set the resolving address of an app instance or base implementation
+    * @param _namespace App namespace to use
+    * @param _name Name of the app
+    * @param _app Address of the app
+    * @return ID of app
     */
-    function preauthDispatch(bytes _data, uint _nonce, bytes32 _r, bytes32 _s, uint8 _v) payable public {
-        bytes32 signingPayload = personalSignedPayload(_data, _nonce); // Calculate the hashed payload that was signed
-        require(!isUsedPayload(signingPayload));
-        setUsedPayload(signingPayload);
-
-        address signer = ecrecover(signingPayload, _v, _r, _s);
-        dispatchEther(signer, msg.value, _data);
+    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) kernelIntegrity public returns (bytes32 id) {
+        return _setApp(_namespace, _name, _app);
     }
 
     /**
-    * @dev ERC223 receiver compatible
-    * @param _sender address that performed the token transfer (only trustable if token is trusted)
-    * @param _origin address from which the tokens came from (same as _sender unless transferFrom)
-    * @param _value amount of tokens being sent
-    * @param _data executable data alonside token transaction
+    * @dev Get the address of an app instance or base implementation
+    * @param _id App identifier
+    * @return Address of the app
     */
-    function tokenFallback(address _sender, address _origin, uint256 _value, bytes _data) public returns (bool ok) {
-        _origin; // silence unused variable warning
-        dispatch(_sender, msg.sender, _value, _data);
-        return true;
+    function getApp(bytes32 _id) public view returns (address) {
+        return apps[_id];
     }
 
     /**
-    * @dev ApproveAndCall compatibility
-    * @param _sender address that performed the token transfer (only trustable if token is trusted)
-    * @param _value amount of tokens being sent
-    * @param _token token address (same as msg.sender)
-    * @param _data executable data alonside token transaction
+    * @dev Get the installed ACL app
+    * @return ACL app
     */
-    function receiveApproval(address _sender, uint256 _value, address _token, bytes _data) public {
-        assert(ERC20(_token).transferFrom(_sender, address(this), _value));
-        // We can only trust the values sent for sender and data when the sender is the token (assures a trustless approveAndCall happened)
-        // This still allows to do an external approveAndCall for just depositing the tokens (w/o execution but w/ accounting)
-        // Ref: https://github.com/aragon/aragon-core/issues/72#issuecomment-321508691
-        dispatch(_token == msg.sender ? _sender : msg.sender, _token, _value, _token == msg.sender ? _data : new bytes(0));
-      }
-
-    /**
-    * @dev For ETH transactions this function wraps the ETH in a token and dispatches it
-    * @param _sender address that performed the ether transfer
-    * @param _value amount of tokens being sent
-    * @param _data executable data alonside token transaction
-    */
-    function dispatchEther(address _sender, uint256 _value, bytes _data) internal {
-        // dispatched token address is 0, this is intercepted by the Vault
-        dispatch(_sender, 0, _value, _data);
+    function acl() public view returns (IACL) {
+        return IACL(getApp(ACL_APP));
     }
 
     /**
-    * @dev Sends the transaction to the dispatcher organ
-    * @param _sender address that performed the token transfer
-    * @param _token token address
-    * @param _value amount of tokens being sent
-    * @param _payload executable data alonside token transaction
-    * @return - the underlying call returns (upto RETURN_MEMORY_SIZE memory)
+    * @dev Function called by apps to check ACL on kernel or to check permission status
+    * @param _who Sender of the original call
+    * @param _where Address of the app
+    * @param _what Identifier for a group of actions in app
+    * @param _how Extra data for ACL auth
+    * @return boolean indicating whether the ACL allows the role or not
     */
-    function dispatch(address _sender, address _token, uint256 _value, bytes _payload) internal {
+    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
+        return acl().hasPermission(_who, _where, _what, _how);
+    }
 
-        vaultDeposit(_sender, _token, _value); // deposit tokens that come with the call in the vault
+    function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        id = keccak256(_namespace, _name);
+        apps[id] = _app;
+        SetApp(_namespace, _name, id, _app);
+    }
 
+    function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        id = keccak256(_namespace, _name);
 
-        if (_payload.length == 0)
-          return; // Just receive the tokens
-
-        require(canPerformAction(_sender, _token, _value, _payload));
-
-        bytes4 sig;
-        assembly { sig := mload(add(_payload, 0x20)) }
-        var (target, isDelegate) = get(sig);
-        uint32 len = RETURN_MEMORY_SIZE;
-
-        require(target > 0);
-
-        bytes memory payloadMsg = calldataWithDAOMsg(_payload, _sender, _token, _value);
-
-        assembly {
-            let result := 0
-
-            switch isDelegate
-            case 1 { result := delegatecall(sub(gas, 10000), target, add(payloadMsg, 0x20), mload(payloadMsg), 0, len) }
-            case 0 { result := call(sub(gas, 10000), target, 0, add(payloadMsg, 0x20), mload(payloadMsg), 0, len) }
-            switch result case 0 { invalid() }
-            return(0, len)
+        if (_app != address(0)) {
+            address app = getApp(id);
+            if (app != address(0)) {
+                require(app == _app);
+            } else {
+                apps[id] = _app;
+                SetApp(_namespace, _name, id, _app);
+            }
         }
     }
 
-    /**
-    * @dev Sends the transaction to the dispatcher organ
-    * @param _sender address that performed the token transfer
-    * @param _token token address
-    * @param _value amount of tokens being sent
-    * @param _data executable data alonside token transaction
-    * @return bool whether the action is allowed by permissions oracle
-    */
-    function canPerformAction(address _sender, address _token, uint256 _value, bytes _data) constant returns (bool) {
-        address p = getPermissionsOracle();
-        return p == 0 || IPermissionsOracle(p).canPerformAction(_sender, _token, _value, _data);
+    modifier auth(bytes32 _role, uint256[] memory params) {
+        bytes memory how;
+        uint256 byteLength = params.length * 32;
+        assembly {
+            how := params // forced casting
+            mstore(how, byteLength)
+        }
+        // Params is invalid from this point fwd
+        require(hasPermission(msg.sender, address(this), _role, how));
+        _;
     }
 
-    /**
-    * @dev Low level deposit of funds to the Vault Organ
-    * @param _sender address that performed the token transfer
-    * @param _token address of the token
-    * @param _amount amount of the token
-    */
-    function vaultDeposit(address _sender, address _token, uint256 _amount) internal {
-        var (vaultOrgan,) = get(DEPOSIT_SIG);
-        if (_amount == 0 || vaultOrgan == 0)
-          return;
-
-        assert(vaultOrgan.delegatecall(DEPOSIT_SIG, uint256(_sender), uint256(_token), _amount));
+    modifier kernelIntegrity {
+        _; // After execution check integrity
+        address kernel = getApp(KERNEL_APP);
+        uint256 size;
+        assembly { size := extcodesize(kernel) }
+        require(size > 0);
     }
-
-    /**
-    * @dev Sets a preauth payload as used
-    * @param _payload hash of the action used
-    */
-    function setUsedPayload(bytes32 _payload) internal {
-        storageSet(getStorageKeyForPayload(_payload), 1);
-    }
-
-    /**
-    * @dev Whether a given preauth payload was already used
-    * @param _payload hash of the action used
-    * @return bool was payload it was used before or not
-    */
-    function isUsedPayload(bytes32 _payload) constant returns (bool) {
-        return storageGet(getStorageKeyForPayload(_payload)) == 1;
-    }
-
-    /**
-    * @dev Compute payload to be signed in order to preauthorize a transaction
-    * @param _data transaction data to be executed
-    * @param _nonce identifier of the transaction to allow repeating actions without double-spends
-    * @return bytes32 hash to be signed
-    */
-    function personalSignedPayload(bytes _data, uint _nonce) constant public returns (bytes32) {
-        return keccak256(0x19, "Ethereum Signed Message:\n32", payload(_data, _nonce));
-    }
-
-    function payload(bytes _data, uint _nonce) constant public returns (bytes32) {
-        return keccak256(address(this), _data, _nonce);
-    }
-
-    function getStorageKeyForPayload(bytes32 _payload) constant internal returns (bytes32) {
-        return sha3(0x01, 0x01, _payload);
-    }
-
-    function getPermissionsOracle() constant returns (address) {
-        return address(storageGet(sha3(0x01, 0x03)));
-    }
-
-    address public deployedMeta;
-    bytes4 constant INSTALL_ORGAN_SIG = bytes4(sha3('installOrgan(address,bytes4[])'));
-    bytes4 constant DEPOSIT_SIG = bytes4(sha3('deposit(address,address,uint256)'));
 }

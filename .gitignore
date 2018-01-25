@@ -9,3 +9,5 @@ coverageEnv/
 coverage.json
 scTopics
 functions.csv
+artifacts/
+allFiredEvents

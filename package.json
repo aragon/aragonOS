@@ -1,43 +1,43 @@
 {
-  "name": "aragon-core",
-  "version": "1.0.0",
+  "name": "@aragon/os",
+  "version": "3.0.0",
   "description": "Core contracts for Aragon",
-  "main": "index.js",
   "scripts": {
-    "prepublish": "truffle compile",
-    "generate:factory": "truffle exec scripts/generate_factory.js",
-    "test": "truffle test",
+    "test": "npm run ganache-cli:dev && truffle test --network rpc",
+    "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
-    "coverage": "scripts/coverage.sh",
-    "coveralls": "scripts/coveralls.sh"
+    "coverage": "npm run ganache-cli:coverage && node_modules/.bin/solidity-coverage",
+    "console": "node_modules/.bin/truffle console",
+    "ganache-cli:dev": "scripts/ganache-cli.sh",
+    "ganache-cli:coverage": "SOLIDITY_COVERAGE=true scripts/ganache-cli.sh",
+    "migrate:dev": "npm run ganache-cli:dev && npm run migrate:dev:contracts",
+    "migrate:dev:contracts": "truffle migrate --all --network rpc;",
+    "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js"
   },
   "files": [
     "index.js",
-    "build/"
+    "build/",
+    "artifacts/",
+    "contracts/",
+    "truffle-config.js"
   ],
-  "author": "Jorge Izquierdo (Aragon)",
-  "license": "ISxC",
-  "dependencies": {
-    "babel-polyfill": "^6.23.0",
-    "ethereumjs-abi": "^0.6.4",
-    "ethereumjs-util": "^5.1.1",
-    "keybase-eth": "^0.3.0",
-    "solium": "^0.5.4",
-    "truffle-config": "^1.0.1",
-    "truffle-expect": "0.0.3",
-    "truffle-hdwallet-provider": "0.0.3"
-  },
+  "author": "Aragon Institution MTU <contact@aragon.one>",
+  "contributors": [
+    "Jorge Izquierdo <jorge@aragon.one>"
+  ],
+  "license": "GPL-3.0",
   "devDependencies": {
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-2": "^6.24.1",
-    "babel-preset-stage-3": "^6.17.0",
-    "babel-register": "^6.23.0",
-    "coveralls": "^2.13.1",
-    "ethereumjs-testrpc": "^4.0.1",
-    "handlebars": "^4.0.10",
+    "coveralls": "^2.13.3",
+    "eth-ens-namehash": "^2.0.8",
+    "eth-gas-reporter": "^0.1.1",
+    "ethereumjs-abi": "^0.6.5",
+    "ganache-cli": "^6.0.3",
+    "glob": "^7.1.2",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "^0.2.1",
-    "solidity-inspector": "^0.1.0",
-    "truffle": "^3.4.6"
+    "solidity-coverage": "^0.3.5",
+    "solium": "^1.1.2",
+    "truffle": "^4.0.4",
+    "truffle-config": "^1.0.4",
+    "truffle-hdwallet-provider": "0.0.3"
   }
 }
