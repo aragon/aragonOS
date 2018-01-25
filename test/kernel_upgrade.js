@@ -48,4 +48,15 @@ contract('Kernel Upgrade', accounts => {
 
         assert.isTrue(await UpgradedKernel.at(kernel.address).isUpgraded(), 'kernel should have been upgraded')
     })
+
+    it('fails if upgrading to kernel that is not a contract', async () => {
+        const role = await kernel.APP_MANAGER_ROLE()
+        await acl.createPermission(permissionsRoot, kernel.address, role, permissionsRoot, { from: permissionsRoot })
+
+        const upgradedImpl = await UpgradedKernel.new()
+
+        return assertRevert(async () => {
+            await kernel.setApp(namespace, kernelId, '0x1234')
+        })
+    })
 })
