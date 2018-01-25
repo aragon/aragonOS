@@ -3,13 +3,13 @@ pragma solidity 0.4.18;
 
 import "../apm/APMRegistry.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
-import "../apps/AppProxyFactory.sol";
 
 import "./DAOFactory.sol";
 import "./ENSFactory.sol";
+import "./AppProxyFactory.sol";
 
 
-contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory {
+contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants {
     APMRegistry public registryBase;
     Repo public repoBase;
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
@@ -24,7 +24,7 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         ENSSubdomainRegistrar _ensSubBase,
         ENS _ens,
         ENSFactory _ensFactory
-    ) public
+    ) DAOFactory(address(0)) public // DAO initialized without evmscript run support
     {
         registryBase = _registryBase;
         repoBase = _repoBase;
@@ -36,55 +36,58 @@ contract APMRegistryFactory is DAOFactory, APMRegistryConstants, AppProxyFactory
         ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
     }
 
-    function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {
-        bytes32 node = keccak256(tld, label);
+    function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
+        bytes32 node = keccak256(_tld, _label);
 
         // Assume it is the test ENS
         if (ens.owner(node) != address(this)) {
             // If we weren't in test ens and factory doesn't have ownership, will fail
-            ens.setSubnodeOwner(tld, label, this);
+            ens.setSubnodeOwner(_tld, _label, this);
         }
 
         Kernel dao = newDAO(this);
+        ACL acl = ACL(dao.acl());
 
-        dao.createPermission(this, dao, dao.UPGRADE_APPS_ROLE(), this);
+        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
-        // App code for relevant apps
-        dao.setAppCode(APM_APP_ID, registryBase);
-        dao.setAppCode(REPO_APP_ID, repoBase);
-        dao.setAppCode(ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
-        // Deploy proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
-        APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
+        // Deploy app proxies
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(ENS_SUB_APP_ID, ensSubdomainRegistrarBase));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(APM_APP_ID, registryBase));
+
+        // APMRegistry controls Repos
+        dao.setApp(namespace, REPO_APP_ID, repoBase);
+
+        DeployAPM(node, apm);
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
-        dao.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
-        dao.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
+        acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
+        acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
-        configureAPMPermissions(dao, apm, _root);
+        configureAPMPermissions(acl, apm, _root);
 
         // allow apm to create permissions for Repos in Kernel
-        dao.grantPermission(apm, dao, dao.CREATE_PERMISSIONS_ROLE());
+        bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
+
+        acl.grantPermission(apm, acl, permRole);
 
         // Permission transition to _root
-        dao.setPermissionManager(_root, dao, dao.UPGRADE_APPS_ROLE());
-        dao.revokePermission(this, dao, dao.CREATE_PERMISSIONS_ROLE());
-        dao.grantPermission(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
-        dao.setPermissionManager(_root, dao, dao.CREATE_PERMISSIONS_ROLE());
+        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+        acl.revokePermission(this, acl, permRole);
+        acl.grantPermission(_root, acl, permRole);
+        acl.setPermissionManager(_root, acl, permRole);
 
         // Initialize
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
         apm.initialize(ensSub);
 
-        DeployAPM(node, apm);
-
         return apm;
     }
 
     // Factory can be subclassed and permissions changed
-    function configureAPMPermissions(Kernel dao, APMRegistry apm, address root) internal {
-        dao.createPermission(root, apm, apm.CREATE_REPO_ROLE(), root);
+    function configureAPMPermissions(ACL _acl, APMRegistry _apm, address _root) internal {
+        _acl.createPermission(_root, _apm, _apm.CREATE_REPO_ROLE(), _root);
     }
 }

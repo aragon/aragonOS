@@ -1,10 +1,9 @@
 pragma solidity ^0.4.18;
 
+import "../apps/AppStorage.sol";
 
-contract Initializable {
-    // Kept private to protect against modifications from subclasses
-    uint256 private initializationBlock;
 
+contract Initializable is AppStorage {
     modifier onlyInit {
         require(initializationBlock == 0);
         _;

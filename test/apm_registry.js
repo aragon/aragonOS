@@ -7,11 +7,12 @@ const Repo = artifacts.require('Repo')
 const APMRegistry = artifacts.require('APMRegistry')
 const PublicResolver = artifacts.require('PublicResolver')
 const Kernel = artifacts.require('Kernel')
+const ACL = artifacts.require('ACL')
 
 const getContract = name => artifacts.require(name)
 
 contract('APMRegistry', accounts => {
-    let ens, apmFactory, registry, baseDeployed, dao = {}
+    let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl = {}
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -23,10 +24,11 @@ contract('APMRegistry', accounts => {
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
         baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))
-        const baseAddrs = baseDeployed.map(c => c.address)
+        baseAddrs = baseDeployed.map(c => c.address)
 
-        const ensFactory = await getContract('ENSFactory').new()
+        ensFactory = await getContract('ENSFactory').new()
         apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
+        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
     })
 
@@ -36,10 +38,11 @@ contract('APMRegistry', accounts => {
         registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())
+        acl = ACL.at(await dao.acl())
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
-        await dao.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+        await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
     })
 
     afterEach(async () => {
@@ -65,8 +68,33 @@ contract('APMRegistry', accounts => {
 
     it('fails to create empty repo name', async () => {
         return assertRevert(async () => {
-            await registry.newRepo('', repoDev, { from: apmOwner })
+            await registry.newRepo('', repoDev, { from: apmOwner })
         })
+    })
+
+    it('fails if factory doesnt give permission to create permissions', async () => {
+        return assertRevert(async () => {
+            await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
+        })
+    })
+
+    it('fails if factory doesnt give permission to create names', async () => {
+        return assertRevert(async () => {
+            await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
+        })
+    })
+
+    it('inits with existing ENS deployment', async () => {
+        const receipt = await ensFactory.newENS(accounts[0])
+        const ens2 = ENS.at(receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens)
+        const newFactory = await getContract('APMRegistryFactory').new(...baseAddrs, ens2.address, '0x00')
+
+        await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
+        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const resolver = PublicResolver.at(await ens2.resolver(rootNode))
+
+        assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
     })
 
     const getRepoFromLog = receipt => receipt.logs.filter(x => x.event == 'NewRepo')[0].args.repo
@@ -75,7 +103,7 @@ contract('APMRegistry', accounts => {
         let repo = {}
 
         beforeEach(async () => {
-            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
+            const receipt = await registry.newRepo('test', repoDev, { from: apmOwner })
             repo = Repo.at(getRepoFromLog(receipt))
         })
 
@@ -108,7 +136,7 @@ contract('APMRegistry', accounts => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
             const newOwner = accounts[8]
 
-            await dao.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
             await repo.newVersion([2, 1, 0], '0x00', '0x00', { from: repoDev }) // repoDev can still create them
@@ -118,7 +146,7 @@ contract('APMRegistry', accounts => {
 
         it('repo dev can no longer create versions if permission is removed', async () => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            await dao.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             return assertRevert(async () => {
                 await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })

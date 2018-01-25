@@ -1,110 +1,285 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const { hash } = require('eth-ens-namehash')
+const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
-const AppProxy = artifacts.require('AppProxy')
+const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
+const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
+const DAOFactory = artifacts.require('DAOFactory')
+const ACL = artifacts.require('ACL')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
 
+const keccak256 = require('js-sha3').keccak_256
+const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+
 contract('Kernel apps', accounts => {
-    let kernel, app, appCode1, appCode2 = {}
+    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}
+
+    const permissionsRoot = accounts[0]
     const appId = hash('stub.aragonpm.test')
+    const zeroAddr = '0x0000000000000000000000000000000000000000'
 
-    beforeEach(async () => {
-        kernel = await Kernel.new()
-        await kernel.initialize(accounts[0])
-        const r = await kernel.UPGRADE_APPS_ROLE()
-        await kernel.createPermission(accounts[0], kernel.address, r, accounts[0])
-
+    before(async () => {
+        factory = await DAOFactory.new()
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
     })
 
+    beforeEach(async () => {
+        const receipt = await factory.newDAO(permissionsRoot)
+        app = receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao
+
+        kernel = Kernel.at(app)
+        acl = ACL.at(await kernel.acl())
+
+        const r = await kernel.APP_MANAGER_ROLE()
+        await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
+
+        code1 = await AppStub.new()
+        code2 = await AppStub2.new()
+    })
+
     it('fails if initializing on constructor before setting app code', async () => {
-        const initializationPayload = appCode1.contract.initialize.getData()
+        const initializationPayload = code1.contract.initialize.getData()
 
         return assertRevert(async () => {
-            await AppProxy.new(kernel.address, appId, initializationPayload)
+            await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
         })
     })
 
-    context('initializing on proxy constructor', () => {
-        beforeEach(async () => {
-            await kernel.setAppCode(appId, appCode1.address)
-
-            const initializationPayload = appCode1.contract.initialize.getData()
-            const appProxy = await AppProxy.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
-            app = AppStub.at(appProxy.address)
-        })
-
-        it('was initialized on constructor', async () => {
-            assert.isTrue(await app.initialized(), 'app should have been initialized')
-        })
-
-        it('cannot reinitialize', async () => {
+    context('upgradeable proxies', () => {
+        it('fails if code hasnt been set and initializes', async () => {
             return assertRevert(async () => {
-                await app.initialize()
+                await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 5e6 })
             })
         })
 
-        it('should return values', async () => {
-            assert.equal(await app.stringTest(), 'hola', 'string test')
+        it('doesnt fail if code hasnt been set and doesnt initialize', async () => {
+            await AppProxyUpgradeable.new(kernel.address, appId, '0x', { gas: 5e6 })
+        })
+
+        context('initializing on proxy constructor', () => {
+            beforeEach(async () => {
+                await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+
+                const initializationPayload = appCode1.contract.initialize.getData()
+                appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
+                app = AppStub.at(appProxy.address)
+            })
+
+            it('fails if kernel addr is not a kernel', async () => {
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
+                })
+            })
+
+            it('fails if kernel addr is 0', async () => {
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 5e6 })
+                })
+            })
+
+            it('fails if init fails', async () => {
+                const badInit = '0x1234'
+                return assertRevert(async () => {
+                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
+                })
+            })
+
+            it('was initialized on constructor', async () => {
+                assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+            })
+
+            it('is upgradeable', async () => {
+                assert.isTrue(await appProxy.isUpgradeable.call(), 'appproxy should have be upgradeable')
+            })
+
+            it('cannot reinitialize', async () => {
+                return assertRevert(async () => {
+                    await app.initialize()
+                })
+            })
+
+            it('should return values', async () => {
+                assert.equal(await app.stringTest(), 'hola', 'string test')
+            })
+        })
+
+        context('not initializing on proxy constructor', () => {
+            beforeEach(async () => {
+                const initializationPayload = '0x' // dont initialize
+                appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
+                app = AppStub.at(appProxy.address)
+
+                // assign app permissions
+                const r2 = await appCode1.ROLE()
+                await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
+            })
+
+            it('throws if using app without reference in kernel', async () => {
+                return assertRevert(async () => {
+                    await app.setValue(10)
+                })
+            })
+
+            context('setting app code in kernel', async () => {
+                beforeEach(async () => {
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+                })
+
+                it('can initialize', async () => {
+                    await app.initialize()
+
+                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                })
+
+                it('app call works if sent from authed entity', async () => {
+                    await app.setValue(10)
+                    assert.equal(await app.getValue(), 10, 'should have returned correct value')
+                })
+
+                it('fails when called by unauthorized entity', async () => {
+                    return assertRevert(async () => {
+                        await app.setValue(10, { from: accounts[1] })
+                    })
+                })
+
+                it('fails if updated app is not a contract', async () => {
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
+                    return assertRevert(async () => {
+                        await app.setValue(10)
+                    })
+                })
+
+                it('can update app code and storage is preserved', async () => {
+                    await app.setValue(10)
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
+                    // app2 returns the double of the value in storage
+                    assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
+                })
+
+                it('can update app code and removed functions throw', async () => {
+                    await app.setValue(10)
+                    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
+                    return assertRevert(async () => {
+                        await app.setValue(10)
+                    })
+                })
+            })
         })
     })
 
-    context('not initializing on proxy constructor', () => {
+    context('pinned proxies', () => {
         beforeEach(async () => {
-            const initializationPayload = '0x' // dont initialize
-            const appProxy = await AppProxy.new(kernel.address, appId, initializationPayload)
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+
+            const initializationPayload = appCode1.contract.initialize.getData()
+            appProxy = await AppProxyPinned.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
             app = AppStub.at(appProxy.address)
 
             // assign app permissions
             const r2 = await appCode1.ROLE()
-            await kernel.createPermission(accounts[0], appProxy.address, r2, accounts[0])
+            await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
         })
 
-        it('throws if using app without reference in kernel', async () => {
+        it('fails if code hasnt been set on deploy', async () => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
             return assertRevert(async () => {
-                await app.setValue(10)
+                await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
             })
         })
 
-        context('setting app code in kernel', async () => {
-            beforeEach(async () => {
-                await kernel.setAppCode(appId, appCode1.address)
+        it('is not upgradeable', async () => {
+            assert.isFalse(await appProxy.isUpgradeable.call(), 'appproxy should not be upgradeable')
+        })
+
+        it('can update app code and pinned proxy continues using former version', async () => {
+            await app.setValue(10)
+            await app.setValue(11)
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
+
+            // app2 would return the double of the value in storage
+            assert.equal(await app.getValue(), 11, 'app 2 should have returned correct value')
+        })
+    })
+
+    context('new app instances', () => {
+        const appSetId = web3.sha3(APP_BASE_NAMESPACE + appId.substring(2), { encoding: 'hex' })
+
+        it('creates a new upgradeable app proxy instance', async () => {
+            const receipt = await kernel.newAppInstance(appId, appCode1.address)
+            const appProxy = AppProxyUpgradeable.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            assert.isTrue(await appProxy.isUpgradeable.call(), 'new appProxy instance should be upgradeable')
+            assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
+            assert.equal(await appProxy.getCode(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
+        })
+
+        it('sets the app base when not previously registered', async() => {
+            assert.equal(zeroAddr, await kernel.getApp(appSetId))
+
+            const appProxy = await kernel.newAppInstance(appId, appCode1.address)
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+        })
+
+        it("doesn't set the app base when already set", async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            const receipt = await kernel.newAppInstance(appId, appCode1.address)
+            assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
+        })
+
+        it("doesn't set the app base if not given", async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+
+            const appProxy = await kernel.newAppInstance(appId, '0x0')
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+        })
+
+        it('fails if the given app base is different than the existing one', async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            return assertRevert(async () => {
+                await kernel.newAppInstance(appId, appCode2.address)
             })
+        })
+    })
 
-            it('can initialize', async () => {
-                await app.initialize()
+    context('new pinned app instances', () => {
+        const appSetId = web3.sha3(APP_BASE_NAMESPACE + appId.substring(2), { encoding: 'hex' })
 
-                assert.isTrue(await app.initialized(), 'app should have been initialized')
-            })
+        it('creates a new non upgradeable app proxy instance', async () => {
+            const receipt = await kernel.newPinnedAppInstance(appId, appCode1.address)
+            const appProxy = AppProxyPinned.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            assert.isFalse(await appProxy.isUpgradeable.call(), 'new appProxy instance should be not upgradeable')
+            assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
+            assert.equal(await appProxy.getCode(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
+        })
 
-            it('app call works if sent from authed entity', async () => {
-                await app.setValue(10)
-                assert.equal(await app.getValue(), 10, 'should have returned correct value')
-            })
+        it('sets the app base when not previously registered', async() => {
+            assert.equal(zeroAddr, await kernel.getApp(appSetId))
 
-            it('fails when called by unauthorized entity', async () => {
-                return assertRevert(async () => {
-                    await app.setValue(10, { from: accounts[1] })
-                })
-            })
+            const appProxy = await kernel.newPinnedAppInstance(appId, appCode1.address)
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+        })
 
-            it('can update app code and storage is preserved', async () => {
-                await app.setValue(10)
-                await kernel.setAppCode(appId, appCode2.address)
-                // app2 returns the double of the value in storage
-                assert.equal(await app.getValue(), 20, 'app 2 should have returned correct value')
-            })
+        it("doesn't set the app base when already set", async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            const receipt = await kernel.newPinnedAppInstance(appId, appCode1.address)
+            assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
+        })
 
-            it('can update app code and removed functions throw', async () => {
-                await app.setValue(10)
-                await kernel.setAppCode(appId, appCode2.address)
-                return assertRevert(async () => {
-                    await app.setValue(10)
-                })
+        it("doesn't set the app base if not given", async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+
+            const appProxy = await kernel.newPinnedAppInstance(appId, '0x0')
+            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+        })
+
+        it('fails if the given app base is different than the existing one', async() => {
+            await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            return assertRevert(async () => {
+                await kernel.newPinnedAppInstance(appId, appCode2.address)
             })
         })
     })
