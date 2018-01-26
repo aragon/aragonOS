@@ -76,6 +76,7 @@ contract ACLSyntaxSugar {
     }
 }
 
+
 contract ACLHelpers {
     function decodeParamOp(uint256 _x) internal pure returns (uint8 b) {
         return uint8(_x >> (8 * 30));
