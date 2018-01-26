@@ -53,9 +53,12 @@ start_parity() {
 start_geth() {
     check_docker
     # pull the latest image using the dev test network
-    docker pull purta/geth-devnet:$GETH_VERSION
+    docker pull ethereum/client-go:$GETH_VERSION
     # run the geth dev network container
-    docker run -d -p 8545:8545 purta/geth-devnet:$GETH_VERSION
+    docker run -d -p 8545:8545 ethereum/client-go:$GETH_VERSION \
+    --rpc --rpcport 8545 --rpcaddr '0.0.0.0' --rpccorsdomain '*' --dev --dev.period 1 --targetgaslimit 10000000
+
+    sleep 5
 }
 
 if client_running; then
