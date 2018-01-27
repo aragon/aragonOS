@@ -23,6 +23,19 @@ technically-oriented introduction to aragonOS 3.0, you can check the [alpha rele
 ### 4.2 Basic ACL
 ### 4.3 Permission managers
 ### 4.4 Parameter interpretation
+When a permission is granted to an entity by the permission manager, it can be
+assigned an array of parameters that will be evaluated every time the ACL is checked
+to see if the entity can perform the action.
+
+Parameters allow to perform certain computations with the arguments of a role in
+order to decide whether the action can be done or not. This moves the ACL for being
+a purely binary access list, to a more sophisticated system that allows way more
+granular control.
+
+An ACL parameter is comprised of a data structure with 3 values:
+
+- **Argument ID**:
+
 ### 4.5 Examples of rules
 
 ## 5. Forwarders and EVMScript
