@@ -1,10 +1,10 @@
 pragma solidity 0.4.18;
 
 import "truffle/Assert.sol";
-import "./helpers/ACLHelpers.sol";
+import "./helpers/ACLHelper.sol";
 
 
-contract TestACLInterpreter is ACL, ACLHelpers {
+contract TestACLInterpreter is ACL, ACLHelper {
     function testEqualityUint() public {
         // Assert param 0 is equal to 10, given that params are [10, 11]
         assertEval(arr(uint256(10), 11), 0, Op.EQ, 10, true);
