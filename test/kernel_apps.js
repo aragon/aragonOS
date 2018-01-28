@@ -107,13 +107,14 @@ contract('Kernel apps', accounts => {
         })
 
         context('not initializing on proxy constructor', () => {
+            let r2 = {}
             beforeEach(async () => {
                 const initializationPayload = '0x' // dont initialize
                 appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
                 app = AppStub.at(appProxy.address)
 
                 // assign app permissions
-                const r2 = await appCode1.ROLE()
+                r2 = await appCode1.ROLE()
                 await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
             })
 
@@ -137,6 +138,32 @@ contract('Kernel apps', accounts => {
                 it('app call works if sent from authed entity', async () => {
                     await app.setValue(10)
                     assert.equal(await app.getValue(), 10, 'should have returned correct value')
+                })
+
+                it('parametrized app call works if no params', async () => {
+                    await app.setValueParam(11)
+                    assert.equal(await app.getValue(), 11, 'should have returned correct value')
+                })
+
+                context('parametrized calls', () => {
+                    beforeEach(async () => {
+                        const argId = '0x00' // arg 0
+                        const op = '03'      // greater than
+                        const value = '000000000000000000000000000000000000000000000000000000000005'  // 5
+                        const param = new web3.BigNumber(argId + op + value)
+
+                        await acl.grantPermissionP(accounts[2], appProxy.address, r2, [param], { from: permissionsRoot })
+                    })
+
+                    it('parametrized app call fails if param eval fails', async () => {
+                        return assertRevert(async () => {
+                            await app.setValueParam(4, { from: accounts[2]})
+                        })
+                    })
+
+                    it('parametrized app call succeeds if param eval succeeds', async () => {
+                        await app.setValueParam(6, { from: accounts[2]})
+                    })
                 })
 
                 it('fails when called by unauthorized entity', async () => {
