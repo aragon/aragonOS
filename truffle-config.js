@@ -25,7 +25,7 @@ module.exports = {
       network_id: 454545,
       host: 'localhost',
       port: 8545,
-      gas: 6e6,
+      gas: 9e6,
     },
     ropsten: {
       network_id: 3,
