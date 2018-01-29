@@ -58,7 +58,8 @@ start_geth() {
     docker run -d -p 8545:8545 ethereum/client-go:$GETH_VERSION \
     --rpc --rpcport 8545 --rpcaddr '0.0.0.0' --rpccorsdomain '*' --dev --dev.period 1 --targetgaslimit 10000000
 
-    sleep 5
+    echo "Allowing network to approach target gas limit..."
+    sleep 300
 }
 
 if client_running; then
