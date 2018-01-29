@@ -21,6 +21,7 @@ technically-oriented introduction to aragonOS 3.0, you can check the [alpha rele
 ## 4. ACL
 ### 4.1 The ACL as an Aragon app, the Interface
 ### 4.2 Basic ACL
+- any entity!
 ### 4.3 Permission managers
 ### 4.4 Parameter interpretation
 When a permission is granted to an entity by the permission manager, it can be
@@ -34,9 +35,79 @@ granular control.
 
 An ACL parameter is comprised of a data structure with 3 values:
 
-- **Argument ID**:
+- **Argument Value** (`uint240`): It is the value to compare against depending on
+the argument. It is a regular Ethereum memory word, that looses it 2 most significant
+bytes of precision. The reason for this was to allow parameters to be saved in just
+one storage slot, saving significant gas.
+Even though `uint240`s are used, it can be used to store any integer up to `2^30 - 1`,
+addresses and bytes32 (in the case of comparing hashes, losing 2 bytes of precision
+shouldn't be a dealbreaker if the hash algorithm is secure). The only problem is
+when
+- **Argument ID** (`uint8`): Determines how the comparison value is fetched. From
+0 to 200 it refers to the argument index number passed to the role. After 200, there
+are some *special Argument IDs*:
+    - `BLOCK_NUMBER_PARAM_ID` (`id = 200`): Sets comparison value to the block number
+    at the time of execution. This allows for setting up timelocks depending
+    on blocks.
+    - `TIMESTAMP_PARAM_ID` (`id = 201`): Sets comparison value to the timestamp of the
+    current block at the time of execution. This allows for setting up timelocks
+    on time.
+    - `SENDER_PARAM_ID` (`id = 202`): Sets comparison value to the sender of the call.
+    (Currently useless because of [this issue]())
+    - `ORACLE_PARAM_ID` (`id = 203`): Checks with an oracle at the address in the
+    *argument value* and returns whether it returned true or false (no comparison with arg).
+    - `LOGIC_OP_PARAM_ID` (`id = 204`): Evaluates a logical operation and returns
+    true or false depending on its result (no comparison with arg).
+    - `PARAM_VALUE_PARAM_ID` (`id = 205`): Uses value as return. Commonly used with
+    the `RET` operation, to just return a value. If the value in the param is greater
+    than 0, it will evaluate to true, otherwise it will return false.
+- **Operation type** (`uint8`): Determines what operation is made to compare the
+value fetched using the argument ID or the argument value. For all comparisons,
+both values are compared in the following order `args[param.id] <param.op> param.value`.
+Therefore for a greater than operation, with a `param = {id: 0, op: Op.GT, value: 10}`,
+it will interpret whether the argument 0 is greater than 10. The implemented
+operation types are:
+    - None (`Op.NONE`): Always evaluates to `false`, regardless of parameter or arguments.
+    - Equals (`Op.EQ`): Evaluates to true if every byte matches between `args[param.id]` and
+    `param.value`.
+    - Not equals (`Op.NEQ`): Evaluates to true if any byte doesn't match.
+    - Greater than (`Op.GT`): Evaluates to true if `args[param.id] > param.value`.
+    - Less than (`Op.LT`): Evaluates to true if `args[param.id] < param.value`.
+    - Greater than or equal (`Op.GTE`): Evaluates to true if `args[param.id] >= param.value`.
+    - Less than or equal (`Op.LTE`): Evaluates to true if `args[param.id] <= param.value`.
+    - Return (`Op.RET`): Evaluates to true if `args[param.id]` is greater than one.
+    Used with `PARAM_VALUE_PARAM_ID`, it makes `args[param.id] = param.value`, so it
+    returns the parameter associated value.
 
-### 4.5 Examples of rules
+While also representing an operation, when the id is `LOGIC_OP_PARAM_ID`, only the
+ops below are valid. These operations use the parameter's value to point to other
+parameters index in the parameter array. These values are encoded as `uint32`
+numbers, left-shifted 32 bits to the left each (example: for example, an op that
+takes two inputs value would be `0x00....0000000200000001`, would be input 1, 1,
+and input 2, 2, refering to params at index 1 and 2). Available logic ops:
+    - Not (`Op.NOT`): Takes 1 parameter index and evaluates to the opposite of what
+    the linked parameter evaluates to.
+    - And (`Op.AND`): Takes 2 parameter indices and evaluates to true if both
+    evaluate to true.
+    - Or (`Op.OR`): Takes 2 parameter indices and evaluates to true if any of them
+    evaluate to true.
+    - Exclusive or (`Op.XOR`): Takes 2 parameter indices and evaluates to true if
+    only one of the parameters evaluate to true.
+    - If else (`Op.IF_ELSE`): Takes 3 parameters, evaluates the first parameter
+    and if it evaluates to true, it evaluates to whatever the parameter second
+    parameter evaluates to, otherwise it evaluates to whatever the third parameter
+    does.
+
+### 4.6 Parameter execution
+When evaluating a rule, the ACL will always evaluate the result of the first parameter.
+This first parameter can be an operation that links to other parameters and its
+evaluation depends on those parameter evaluation.
+
+Execution is recursive and the result evaluated is always the result of the eval
+of the first parameter.
+
+### 4.7 Parameter encoding
+### 4.8 Examples of rules
 
 ## 5. Forwarders and EVMScript
 ### 5.1 Forwarding and transaction pathing

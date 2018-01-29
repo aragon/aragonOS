@@ -20,7 +20,7 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
     // who is the manager of a permission
     mapping (bytes32 => address) permissionManager;
 
-    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, NOT, AND, OR, XOR, IF_ELSE, RET } // op types
+    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
 
     struct Param {
         uint8 id;
