@@ -99,6 +99,6 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     }
 
     function repoAppId() internal returns (bytes32) {
-        return keccak256(registrar.rootNode(), REPO_APP_NAME);
+        return keccak256(registrar.rootNode(), keccak256(REPO_APP_NAME));
     }
 }

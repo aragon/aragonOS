@@ -53,11 +53,11 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
         // Deploy app proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase));
-        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase));
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, keccak256(ENS_SUB_APP_NAME)), ensSubdomainRegistrarBase));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, keccak256(APM_APP_NAME)), registryBase));
 
         // APMRegistry controls Repos
-        dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
+        dao.setApp(namespace, keccak256(node, keccak256(REPO_APP_NAME)), repoBase);
 
         DeployAPM(node, apm);
 
@@ -80,9 +80,9 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
 
         acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
 
-        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, hex'697066733a686f6c610d0a');
-        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, hex'697066733a6164696f730d0a0d0a');
-        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, hex'697066733a686f6c610d0a');
+        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, hex'697066733a61706d');
+        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, hex'697066733a737562');
+        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, hex'697066733a7265706f');
 
         configureAPMPermissions(acl, apm, _root);
 
