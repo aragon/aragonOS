@@ -27,12 +27,13 @@ contract('APMRegistry', accounts => {
         baseAddrs = baseDeployed.map(c => c.address)
 
         ensFactory = await getContract('ENSFactory').new()
-        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
-        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(...baseAddrs, '0x0', ensFactory.address)
-        ens = ENS.at(await apmFactory.ens())
     })
 
     beforeEach(async () => {
+        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
+        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(...baseAddrs, '0x0', ensFactory.address)
+        ens = ENS.at(await apmFactory.ens())
+
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
@@ -43,17 +44,6 @@ contract('APMRegistry', accounts => {
 
         // Get permission to delete names after each test case
         await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
-    })
-
-    afterEach(async () => {
-        // Clean up test.aragonpm.eth if was set
-        const zeroAddr = '0x0000000000000000000000000000000000000000'
-        if (await ens.owner(testNode) == zeroAddr) return
-
-        // Free test name so it can be used on next test
-        const registrar = getContract('ENSSubdomainRegistrar').at(await registry.registrar())
-        await registrar.deleteName('0x'+keccak256('test'), { from: apmOwner })
-        assert.equal(await ens.owner(testNode), zeroAddr, 'should have cleaned up')
     })
 
     it('aragonpm.eth should resolve to registry', async () => {

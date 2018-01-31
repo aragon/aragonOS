@@ -53,11 +53,11 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
         // Deploy app proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(ENS_SUB_APP_ID, ensSubdomainRegistrarBase));
-        APMRegistry apm = APMRegistry(dao.newAppInstance(APM_APP_ID, registryBase));
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase));
 
         // APMRegistry controls Repos
-        dao.setApp(namespace, REPO_APP_ID, repoBase);
+        dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
 
         DeployAPM(node, apm);
 
@@ -70,12 +70,6 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
 
         acl.grantPermission(apm, acl, permRole);
 
-        // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
-        acl.revokePermission(this, acl, permRole);
-        acl.grantPermission(_root, acl, permRole);
-        acl.setPermissionManager(_root, acl, permRole);
-
         // Initialize
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
@@ -86,11 +80,17 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
 
         acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
 
-        apm.newRepoWithVersion("apm", _root, firstVersion, registryBase, hex'697066733a686f6c610d0a');
-        apm.newRepoWithVersion("enssub", _root, firstVersion, ensSubdomainRegistrarBase, hex'697066733a6164696f730d0a0d0a');
-        apm.newRepoWithVersion("repo", _root, firstVersion, repoBase, hex'697066733a686f6c610d0a');
+        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, hex'697066733a686f6c610d0a');
+        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, hex'697066733a6164696f730d0a0d0a');
+        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, hex'697066733a686f6c610d0a');
 
         configureAPMPermissions(acl, apm, _root);
+
+        // Permission transition to _root
+        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+        acl.revokePermission(this, acl, permRole);
+        acl.grantPermission(_root, acl, permRole);
+        acl.setPermissionManager(_root, acl, permRole);
 
         return apm;
     }
