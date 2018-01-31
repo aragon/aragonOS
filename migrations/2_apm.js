@@ -22,7 +22,14 @@ module.exports = async (deployer, network, accounts) => {
     const factory = await APMRegistryFactory.deployed()
 
     console.log('Deploying APM...')
-    const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), accounts[0])
+    const root = '0xffffffffffffffffffffffffffffffffffffffff' // public
+    const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root)
     const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
     console.log('Deployed APM at:', apmAddr)
+
+    const apm = getContract('APMRegistry').at(apmAddr)
+    console.log('Kernel:', await apm.kernel())
+
+    const ensSub = getContract('ENSSubdomainRegistrar').at(await apm.registrar())
+    console.log('ENS:', await ensSub.ens())
 }

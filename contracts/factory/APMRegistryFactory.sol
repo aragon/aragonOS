@@ -65,8 +65,6 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
         acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
         acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
-        configureAPMPermissions(acl, apm, _root);
-
         // allow apm to create permissions for Repos in Kernel
         bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
 
@@ -83,11 +81,23 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
         ensSub.initialize(ens, node);
         apm.initialize(ensSub);
 
+        uint16[3] memory firstVersion;
+        firstVersion[0] = 1;
+
+        acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
+
+        apm.newRepoWithVersion("apm", _root, firstVersion, registryBase, hex'697066733a686f6c610d0a');
+        apm.newRepoWithVersion("enssub", _root, firstVersion, ensSubdomainRegistrarBase, hex'697066733a6164696f730d0a0d0a');
+        apm.newRepoWithVersion("repo", _root, firstVersion, repoBase, hex'697066733a686f6c610d0a');
+
+        configureAPMPermissions(acl, apm, _root);
+
         return apm;
     }
 
     // Factory can be subclassed and permissions changed
     function configureAPMPermissions(ACL _acl, APMRegistry _apm, address _root) internal {
-        _acl.createPermission(_root, _apm, _apm.CREATE_REPO_ROLE(), _root);
+        _acl.grantPermission(_root, _apm, _apm.CREATE_REPO_ROLE());
+        _acl.setPermissionManager(_root, _apm, _apm.CREATE_REPO_ROLE());
     }
 }
