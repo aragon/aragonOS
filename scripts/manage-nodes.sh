@@ -10,7 +10,7 @@ else
     GETH_PORT=8545
 fi
 
-PARITY_VERSION=v1.8.6
+PARITY_VERSION=latest
 GETH_VERSION=v1.7.3
 
 client_running() {
@@ -38,16 +38,9 @@ check_docker() {
 start_parity() {
     check_docker
     # pull the most stable release of parity
-    docker pull parity/parity:$PARITY_VERSION
+    docker pull augurproject/dev-node-instant:$PARITY_VERSION
     # run the container in detached mode
-    docker run -d -p 8545:8545 parity/parity:$PARITY_VERSION \
-    --chain dev --jsonrpc-interface all --jsonrpc-hosts all \
-    --jsonrpc-apis all
-
-    sleep 5
-    echo 'Unlocking dev account...'
-    curl -d '{"jsonrpc":"2.0","id":9,"method":"personal_unlockAccount","params":["0x00a329c0648769a73afac7f9381e08fb43dbea72","",null]}' \
-    -H 'Content-Type: application/json' -X POST http://localhost:$GETH_PORT
+    docker run -d -p 8545:8545 augurproject/dev-node-instant:$PARITY_VERSION
 }
 
 start_geth() {

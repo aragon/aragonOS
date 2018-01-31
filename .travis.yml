@@ -12,6 +12,7 @@ services:
 env:
   - TASK=lint
   - TASK=test:geth
+  - TASK=test:parity
   - TASK=coverage
 before_script:
   - npm prune

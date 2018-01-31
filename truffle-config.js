@@ -19,13 +19,15 @@ const mochaGasSettings = {
 
 const mocha = process.env.GAS_REPORTER ? mochaGasSettings : {}
 
+const clientGas = process.env.GETH_CLIENT == 'parity' ? 6.5e6 : 8e6
+
 module.exports = {
   networks: {
     rpc: {
       network_id: 454545,
       host: 'localhost',
       port: 8545,
-      gas: 8e6,
+      gas: clientGas,
     },
     ropsten: {
       network_id: 3,
