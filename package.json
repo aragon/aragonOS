@@ -11,8 +11,6 @@
     "coverage": "npm run manage-nodes:coverage && node_modules/.bin/solidity-coverage",
     "console": "node_modules/.bin/truffle console",
     "manage-nodes:dev": "scripts/manage-nodes.sh",
-    "manage-nodes:geth": "scripts/manage-nodes.sh",
-    "manage-nodes:parity": "scripts/manage-nodes.sh",
     "manage-nodes:coverage": "SOLIDITY_COVERAGE=true scripts/manage-nodes.sh",
     "migrate:dev": "npm run manage-nodes:dev && npm run migrate:dev:contracts",
     "migrate:dev:contracts": "truffle migrate --all --network rpc;",
