@@ -1,12 +1,14 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
-const getContract = name => artifacts.require(name)
+module.exports = async (deployer, network, accounts, arts = null) => {
+  if (arts != null) artifacts = arts // allow running outside
 
-const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
-const baseContracts = bases.map(getContract)
+  const getContract = name => artifacts.require(name)
 
-module.exports = async (deployer, network, accounts) => {
+  const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
+  const baseContracts = bases.map(getContract)
+
     await deployer.deploy(baseContracts)
 
     const baseDeployed = baseContracts.map(c => c.address)
@@ -32,4 +34,6 @@ module.exports = async (deployer, network, accounts) => {
 
     const ensSub = getContract('ENSSubdomainRegistrar').at(await apm.registrar())
     console.log('ENS:', await ensSub.ens())
+
+    return { apm, ensAddr: await ensSub.ens() }
 }
