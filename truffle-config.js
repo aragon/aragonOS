@@ -41,7 +41,7 @@ module.exports = {
     rinkeby: {
       network_id: 4,
       provider: rinkebyProvider,
-      gas: 7e6,
+      gas: 6.9e6,
     },
     coverage: {
       host: "localhost",
