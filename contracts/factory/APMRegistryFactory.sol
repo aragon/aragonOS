@@ -80,9 +80,9 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
 
         acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
 
-        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, b('ipfs:apm'));
-        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, b('ipfs:enssub'));
-        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, b('ipfs:repo'));
+        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, b("ipfs:apm"));
+        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, b("ipfs:enssub"));
+        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, b("ipfs:repo"));
 
         configureAPMPermissions(acl, apm, _root);
 
@@ -96,7 +96,7 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
     }
 
     function b(string memory x) internal pure returns (bytes memory y) {
-      y = bytes(x);
+        y = bytes(x);
     }
 
     // Factory can be subclassed and permissions changed
