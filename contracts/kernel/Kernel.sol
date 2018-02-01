@@ -9,7 +9,7 @@ import "../factory/AppProxyFactory.sol";
 
 
 contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar {
-    bytes32 constant public APP_MANAGER_ROLE = keccak256('APP_MANAGER_ROLE');
+    bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
