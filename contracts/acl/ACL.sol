@@ -11,7 +11,7 @@ interface ACLOracle {
 
 
 contract ACL is IACL, AragonApp, ACLHelpers {
-    bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
+    bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
 
     // whether a certain entity has a permission
     mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id

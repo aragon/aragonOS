@@ -1,12 +1,14 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
-const getContract = name => artifacts.require(name)
+module.exports = async (deployer, network, accounts, arts = null) => {
+  if (arts != null) artifacts = arts // allow running outside
 
-const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
-const baseContracts = bases.map(getContract)
+  const getContract = name => artifacts.require(name)
 
-module.exports = async (deployer, network, accounts) => {
+  const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
+  const baseContracts = bases.map(getContract)
+
     await deployer.deploy(baseContracts)
 
     const baseDeployed = baseContracts.map(c => c.address)
@@ -22,7 +24,16 @@ module.exports = async (deployer, network, accounts) => {
     const factory = await APMRegistryFactory.deployed()
 
     console.log('Deploying APM...')
-    const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), accounts[0])
+    const root = '0xffffffffffffffffffffffffffffffffffffffff' // public
+    const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root)
     const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
     console.log('Deployed APM at:', apmAddr)
+
+    const apm = getContract('APMRegistry').at(apmAddr)
+    console.log('Kernel:', await apm.kernel())
+
+    const ensSub = getContract('ENSSubdomainRegistrar').at(await apm.registrar())
+    console.log('ENS:', await ensSub.ens())
+
+    return { apm, ensAddr: await ensSub.ens() }
 }
