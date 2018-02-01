@@ -2,11 +2,12 @@ var HDWalletProvider = require('truffle-hdwallet-provider')
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
-let ropstenProvider, kovanProvider = {}
+let ropstenProvider, kovanProvider, rinkebyProvider = {}
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
   kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
+  rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
 }
 
 const mochaGasSettings = {
@@ -36,6 +37,11 @@ module.exports = {
       network_id: 42,
       provider: kovanProvider,
       gas: 6.9e6,
+    },
+    rinkeby: {
+      network_id: 4,
+      provider: rinkebyProvider,
+      gas: 7e6,
     },
     coverage: {
       host: "localhost",
