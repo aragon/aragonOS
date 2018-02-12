@@ -9,6 +9,7 @@ const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
+const getContract = artifacts.require
 
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
@@ -21,7 +22,9 @@ contract('Kernel apps', accounts => {
     const zeroAddr = '0x0000000000000000000000000000000000000000'
 
     before(async () => {
-        factory = await DAOFactory.new()
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
     })

@@ -12,7 +12,7 @@ const ACL = artifacts.require('ACL')
 const getContract = name => artifacts.require(name)
 
 contract('APMRegistry', accounts => {
-    let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl = {}
+    let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -27,11 +27,15 @@ contract('APMRegistry', accounts => {
         baseAddrs = baseDeployed.map(c => c.address)
 
         ensFactory = await getContract('ENSFactory').new()
+
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {
-        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
-        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(...baseAddrs, '0x0', ensFactory.address)
+        apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
+        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
 
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
@@ -77,7 +81,7 @@ contract('APMRegistry', accounts => {
     it('inits with existing ENS deployment', async () => {
         const receipt = await ensFactory.newENS(accounts[0])
         const ens2 = ENS.at(receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens)
-        const newFactory = await getContract('APMRegistryFactory').new(...baseAddrs, ens2.address, '0x00')
+        const newFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
 
         await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
         const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)

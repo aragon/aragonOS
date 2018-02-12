@@ -4,15 +4,15 @@
 import "../../contracts/factory/APMRegistryFactory.sol";
 
 contract APMRegistryFactoryMock is APMRegistryFactory {
-
     function APMRegistryFactoryMock(
+        DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
         ENSSubdomainRegistrar _ensSubBase,
         ENS _ens,
         ENSFactory _ensFactory
     )
-    APMRegistryFactory(_registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
+    APMRegistryFactory(_daoFactory, _registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
 
     function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {}
 
@@ -25,7 +25,7 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
             ens.setSubnodeOwner(tld, label, this);
         }
 
-        Kernel dao = newDAO(this);
+        Kernel dao = daoFactory.newDAO(this);
         ACL acl = ACL(dao.acl());
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
