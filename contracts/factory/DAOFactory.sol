@@ -19,7 +19,7 @@ contract DAOFactory {
     function DAOFactory(address _baseKernel, address _baseACL, address _regFactory) public {
         // No need to init as it cannot be killed by devops199
         if (_regFactory != address(0)) {
-          regFactory = EVMScriptRegistryFactory(_regFactory);
+            regFactory = EVMScriptRegistryFactory(_regFactory);
         }
 
         baseKernel = _baseKernel;
