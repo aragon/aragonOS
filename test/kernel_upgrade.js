@@ -4,6 +4,7 @@ const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
 const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
+const getContract = artifacts.require
 
 contract('Kernel Upgrade', accounts => {
     let kernel, namespace, kernelId = {}
@@ -11,7 +12,9 @@ contract('Kernel Upgrade', accounts => {
     const permissionsRoot = accounts[0]
 
     before(async () => {
-        factory = await DAOFactory.new()
+      const kernelBase = await getContract('Kernel').new()
+      const aclBase = await getContract('ACL').new()
+      factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {

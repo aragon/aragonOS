@@ -7,6 +7,8 @@ const assertEvent = require('./helpers/assertEvent')
 const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
 
+const getContract = artifacts.require
+
 const getSig = x => web3.sha3(x).slice(0, 10)
 
 contract('Kernel ACL', accounts => {
@@ -19,7 +21,9 @@ contract('Kernel ACL', accounts => {
     let role = null
 
     before(async () => {
-        factory = await DAOFactory.new()
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {

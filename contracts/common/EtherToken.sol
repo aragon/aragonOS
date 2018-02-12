@@ -27,7 +27,7 @@ contract EtherToken is ERC677Token {
         require(_amount > 0);
         require(balances[msg.sender] >= _amount);
 
-        totalSupply = totalSupply.sub(_amount);
+        totalSupply_ = totalSupply_.sub(_amount);
         balances[msg.sender] = balances[msg.sender].sub(_amount); // fails if no balance
 
         Burn(msg.sender, _amount);
@@ -39,7 +39,7 @@ contract EtherToken is ERC677Token {
     function _wrap(address _beneficiary, uint256 _amount) internal {
         require(_amount > 0);
 
-        totalSupply = totalSupply.add(_amount);
+        totalSupply_ = totalSupply_.add(_amount);
         balances[_beneficiary] = balances[_beneficiary].add(_amount);
 
         Mint(_beneficiary, _amount);

@@ -1,14 +1,12 @@
-const { getBlockNumber, getBlock, getBalance } = require('./helpers/web3')
+const { getBlockNumber } = require('./helpers/web3')
 const { assertRevert } = require('./helpers/assertThrow')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 
 contract('MiniMeToken', accounts => {
-    const from = accounts[0]
     let factory = {}
     let token = {}
     let clone1 = {}
-    let clone2 = {}
 
     it('should deploy contracts', async () => {
         factory = await MiniMeTokenFactory.new()
@@ -31,7 +29,7 @@ contract('MiniMeToken', accounts => {
             assert.equal(await token.balanceOf(accounts[1]), 100, 'accounts[1] balance should be 100')
         })
 
-        it('should be able to destroy tokens', async() => {
+        it('should be able to destroy tokens', async () => {
             await token.destroyTokens(accounts[1], 20)
 
             let block = await getBlockNumber()
@@ -91,15 +89,20 @@ contract('MiniMeToken', accounts => {
             })
         })
 
-        it('approve tokens for spending', async () => {
+        it('re-enable transfers', async () => {
             await token.enableTransfers(true)
+        })
+
+        it('approve tokens for spending', async () => {
             assert.ok(await token.approve(accounts[3], 10))
-            assert.equal(await token.allowance(accounts[0], accounts[3]), 10, 'should have an allowance')
-            await token.transferFrom(accounts[3], accounts[4], 5)
-            let allowance = await token.allowance(accounts[0], accounts[3])
+            assert.equal(await token.allowance(accounts[0], accounts[3]), 10, 'account 3 should have an allowance')
+            await token.transferFrom(accounts[0], accounts[4], 5, {from: accounts[3]})
 
-            assert.equal(allowance, 10, 'should now have an allowance of 5')
+            const newAllowance = await token.allowance(accounts[0], accounts[3])
+            assert.equal(newAllowance, 5, 'should have an allowance of 5')
+        })
 
+        it('refuse new allowances if transfer are disabled', async () => {
             await token.enableTransfers(false)
             return assertRevert(async () => {
                 await token.approve(accounts[2], 10)
@@ -107,31 +110,51 @@ contract('MiniMeToken', accounts => {
         })
     })
 
-
     context('test all cloning', () => {
         it('should be able to clone token', async () => {
-            clone1 = await MiniMeToken.new(await token.createCloneToken("MMT2", 18, "MMT2", 0, false))
-            assert.equal(await clone1.totalSupply(), 0, 'should have 0 tokens')
+            // We create a clone token out of a past block
+            const cloneTokenTx = await token.createCloneToken('MMT2', 18, 'MMT2', 0, false)
+            const addr = cloneTokenTx.logs[0].args._cloneToken
+
+            clone1 = MiniMeToken.at(addr)
         })
 
-        it('generate some clone tokens', async () => {
-            await clone1.generateTokens(accounts[0], 1000)
+        it('has the same total supply than parent token', async () => {
+            assert.equal((await token.totalSupply()).toNumber(), (await clone1.totalSupply()).toNumber(), 'tokens should have the same total supply')
+        })
+
+        it('keep main balances from parent token', async () => {
+            assert.isAbove((await token.balanceOf(accounts[1])).toNumber(), 0, 'account 1 should own some tokens')
+
+            assert.equal((await token.balanceOf(accounts[1])).toNumber(), (await clone1.balanceOf(accounts[1])).toNumber(), 'account balances should be the same')
+        })
+
+        it('should not have kept allowances from parent token', async () => {
+            let tokenAllowance = await token.allowance(accounts[0], accounts[3])
+            let cloneAllowance = await clone1.allowance(accounts[0], accounts[3])
+
+            assert.equal(tokenAllowance, 5, 'should have an allowance of 5 for main token')
+            assert.equal(cloneAllowance, 0, 'should have no allowance for clone token')
+        })
+
+        it('generate some clone tokens to account 4', async () => {
+            await clone1.generateTokens(accounts[4], 1000)
 
             let block = await getBlockNumber()
 
-            assert.equal(await clone1.totalSupplyAt(block - 1), 0, 'previous supply should be 0 for cloned token')
-            assert.equal(await clone1.balanceOfAt(accounts[0], block), 1000, 'cloned token controller should have balance of 1000')
-            assert.equal(await clone1.balanceOfAt(accounts[0], block - 1), 0, 'cloned token controller should have previous balance of 0')
+            assert.equal(await clone1.balanceOfAt(accounts[4], block), 1000, 'should have balance of 1000')
+            assert.equal(await clone1.balanceOfAt(accounts[4], block - 1), 0, 'should have previous balance of 0')
         })
 
-        it('cloned token transfers', async() => {
-            await clone1.transferFrom(accounts[0], accounts[1], 100)
+        it('cloned token transfers from account 4 to account 5', async () => {
+            await clone1.transferFrom(accounts[4], accounts[5], 100)
 
             let block = await getBlockNumber()
 
-            assert.equal(await clone1.balanceOf(accounts[0]), 900, 'clone token controller should only have 900 tokens after transfer')
-            assert.equal(await clone1.balanceOfAt(accounts[0], block - 1), 1000, 'clone token controller should have 1000 in the past block')
-            assert.equal(await clone1.balanceOf(accounts[1]), 100, 'transferee should now have 100 tokens')
+            assert.equal(await clone1.balanceOf(accounts[4]), 900, 'should only have 900 tokens after transfer')
+            assert.equal(await clone1.balanceOfAt(accounts[4], block - 1), 1000, 'should have 1000 in the past block')
+            assert.equal(await clone1.balanceOf(accounts[5]), 100, 'transferee should have balance of 100')
+            assert.equal(await clone1.balanceOfAt(accounts[5], block - 1), 0, 'transferee should have previous balance of 0')
         })
     })
 })

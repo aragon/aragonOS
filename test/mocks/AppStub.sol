@@ -19,6 +19,10 @@ contract AppStub is AragonApp, AppSt {
         a = i;
     }
 
+    function setValueParam(uint i) authP(ROLE, arr(i)) {
+        a = i;
+    }
+
     function getValue() constant returns (uint) {
         return a;
     }
