@@ -11,9 +11,11 @@ import '../math/SafeMath.sol';
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
+  uint256 totalSupply_;
 
   mapping(address => uint256) balances;
 
+  function totalSupply() public view returns (uint256) { return totalSupply_; }
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.

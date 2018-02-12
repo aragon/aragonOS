@@ -9,7 +9,8 @@ import "./ENSFactory.sol";
 import "./AppProxyFactory.sol";
 
 
-contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants {
+contract APMRegistryFactory is APMRegistryConstants {
+    DAOFactory public daoFactory;
     APMRegistry public registryBase;
     Repo public repoBase;
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
@@ -19,13 +20,15 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
 
     // Needs either one ENS or ENSFactory
     function APMRegistryFactory(
+        DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
         ENSSubdomainRegistrar _ensSubBase,
         ENS _ens,
         ENSFactory _ensFactory
-    ) DAOFactory(address(0)) public // DAO initialized without evmscript run support
+    ) public // DAO initialized without evmscript run support
     {
+        daoFactory = _daoFactory;
         registryBase = _registryBase;
         repoBase = _repoBase;
         ensSubdomainRegistrarBase = _ensSubBase;
@@ -45,7 +48,7 @@ contract APMRegistryFactory is DAOFactory, AppProxyFactory, APMRegistryConstants
             ens.setSubnodeOwner(_tld, _label, this);
         }
 
-        Kernel dao = newDAO(this);
+        Kernel dao = daoFactory.newDAO(this);
         ACL acl = ACL(dao.acl());
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);

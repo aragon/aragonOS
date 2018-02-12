@@ -20,8 +20,13 @@ module.exports = async (deployer, network, accounts, arts = null) => {
     const APMRegistryFactory = getContract('APMRegistryFactory')
     const ensAddr = '0x0' // so ensfactory creates one
 
-    await deployer.deploy(APMRegistryFactory, ...baseDeployed, ensAddr, ENSFactory.address)
+    const kernelBase = await getContract('Kernel').new()
+    const aclBase = await getContract('ACL').new()
+    const daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
+
+    await deployer.deploy(APMRegistryFactory, daoFactory.address, ...baseDeployed, ensAddr, ENSFactory.address)
     const factory = await APMRegistryFactory.deployed()
+
 
     console.log('Deploying APM...')
     const root = '0xffffffffffffffffffffffffffffffffffffffff' // public
