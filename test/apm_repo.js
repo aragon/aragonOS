@@ -1,6 +1,7 @@
 const { assertRevert } = require('./helpers/assertThrow')
 
 const Repo = artifacts.require('Repo')
+const getContract = artifacts.require
 
 contract('Repo', accounts => {
     let repo = {}

@@ -26,7 +26,7 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 50e6,
+      gas: 6.9e6,
     },
     ropsten: {
       network_id: 3,
@@ -41,7 +41,7 @@ module.exports = {
     rinkeby: {
       network_id: 4,
       provider: rinkebyProvider,
-      gas: 7e6,
+      gas: 6.9e6,
     },
     coverage: {
       host: "localhost",
