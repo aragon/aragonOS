@@ -43,8 +43,8 @@ for upgradeability or any other aspect of the protocol or application.
 
 ## 1. General architecture and design philosophy
 
-Using aragonOS to build an application allows to **decouple** specific **business
-logic** of a protocol or application, from its **authentication logic**.
+Using aragonOS to build an application allows to **decouple** specific \*\*business
+logic\*\* of a protocol or application, from its **authentication logic**.
 
 It allows to code your application without thinking about authentication or
 governance at all, just by inheriting from the **AragonApp** base class and defining
@@ -74,19 +74,41 @@ This helps with the decoupling of authentication and logic explained before.
 
 ### 1.2 Architecture: Kernel and apps
 
-An aragonOS deployme
+An organization or protocol that is built with aragonOS is composed by a set of smart contracts of two types:
+
+- **Kernel:** it is at the core of every organization, there is only one instance of it per organization. It manages one very important mapping to keep track of the different *base contract* address depending on the application, registered apps in the kernel (such as the ACL) or the kernel’s own *base contract*.
+- **Apps:** are contracts that rely on use the kernel for their upgradeability and access control. Apps don’t need to implement any of those as they occur directly in the Kernel or ACL.
 
 ### 1.3 Design philosophy
 
+The design philosophy we use when developing Aragon apps is very similar to the UNIX philosophy, we try to architect them to do one thing and one thing well, and to respect and implement the few aragonOS interfaces so that they play nicely with the rest of the ecosystem.
+
+This results in purely technical benefits such as testability, but it is also very powerful when apps are combined and the output of one app becomes the input of an other one (forwarders resemble UNIX pipes in some way).
+
 ## 2. Kernel
 ### 2.1 The app mapping
-### 2.2 Namespaces
-### 2.3 The apps of a DAO
 
+At the core of the kernel lives a mapping, called the `app` mapping, which
+
+Modifying this mapping can have completely destructive consequences and can result in loss of funds. The permission to execute this action has to be well protected behind the ACL.
+
+`function setApp(bytes32 namespace, bytes appId, address app) public;
+`
+- **Namespace:** specifies what type of app record is being set.
+- **AppId:** used to identify what app is being setis the ENS `namehash` of the APM repo (e.g. `namehash('voting.aragonpm.eth')`).
+- **App:** Address of a contract that can have different meaning depending on the namespace.
+
+### 2.2 Namespaces
+
+- Core namespace (`keccak256('core')`): in this namespace is where the core components of the kernel reside. The only thing in the core mapping is the reference to the kernel base contract.
+- Base namespace (`keccak256('base')`): keeps track of the base contracts for appIds.
+- App namespace (`keccak256('app')`): some apps use the app namespace as a way to reference other apps. For example this is used to store the reference to the ACL instance or the EVMScriptsRegistry.
+
+(Explained before, can skip)
 ## 3. Upgradeability
 ### 3.1 DelegateProxies
 ### 3.2 Kernel upgradeability
-### 3.3 AppProxies and upgradeability
+### 3.3 AppProxies and upgradeability
 ### 3.4 App sandbox (Oliver)
 
 ## 4. ACL
@@ -119,38 +141,38 @@ when
 - **Argument ID** (`uint8`): Determines how the comparison value is fetched. From
 0 to 200 it refers to the argument index number passed to the role. After 200, there
 are some *special Argument IDs*:
-    - `BLOCK_NUMBER_PARAM_ID` (`id = 200`): Sets comparison value to the block number
-    at the time of execution. This allows for setting up timelocks depending
-    on blocks.
-    - `TIMESTAMP_PARAM_ID` (`id = 201`): Sets comparison value to the timestamp of the
-    current block at the time of execution. This allows for setting up timelocks
-    on time.
-    - `SENDER_PARAM_ID` (`id = 202`): Sets comparison value to the sender of the call.
-    (Currently useless because of [this issue]())
-    - `ORACLE_PARAM_ID` (`id = 203`): Checks with an oracle at the address in the
-    *argument value* and returns whether it returned true or false (no comparison with arg).
-    - `LOGIC_OP_PARAM_ID` (`id = 204`): Evaluates a logical operation and returns
-    true or false depending on its result (no comparison with arg).
-    - `PARAM_VALUE_PARAM_ID` (`id = 205`): Uses value as return. Commonly used with
-    the `RET` operation, to just return a value. If the value in the param is greater
-    than 0, it will evaluate to true, otherwise it will return false.
+	- `BLOCK_NUMBER_PARAM_ID` (`id = 200`): Sets comparison value to the block number
+	at the time of execution. This allows for setting up timelocks depending
+	on blocks.
+	- `TIMESTAMP_PARAM_ID` (`id = 201`): Sets comparison value to the timestamp of the
+	current block at the time of execution. This allows for setting up timelocks
+	on time.
+	- `SENDER_PARAM_ID` (`id = 202`): Sets comparison value to the sender of the call.
+	(Currently useless because of [this issue]())
+	- `ORACLE_PARAM_ID` (`id = 203`): Checks with an oracle at the address in the
+	*argument value* and returns whether it returned true or false (no comparison with arg).
+	- `LOGIC_OP_PARAM_ID` (`id = 204`): Evaluates a logical operation and returns
+	true or false depending on its result (no comparison with arg).
+	- `PARAM_VALUE_PARAM_ID` (`id = 205`): Uses value as return. Commonly used with
+	the `RET` operation, to just return a value. If the value in the param is greater
+	than 0, it will evaluate to true, otherwise it will return false.
 - **Operation type** (`uint8`): Determines what operation is made to compare the
 value fetched using the argument ID or the argument value. For all comparisons,
 both values are compared in the following order `args[param.id] <param.op> param.value`.
 Therefore for a greater than operation, with a `param = {id: 0, op: Op.GT, value: 10}`,
 it will interpret whether the argument 0 is greater than 10. The implemented
 operation types are:
-    - None (`Op.NONE`): Always evaluates to `false`, regardless of parameter or arguments.
-    - Equals (`Op.EQ`): Evaluates to true if every byte matches between `args[param.id]` and
-    `param.value`.
-    - Not equals (`Op.NEQ`): Evaluates to true if any byte doesn't match.
-    - Greater than (`Op.GT`): Evaluates to true if `args[param.id] > param.value`.
-    - Less than (`Op.LT`): Evaluates to true if `args[param.id] < param.value`.
-    - Greater than or equal (`Op.GTE`): Evaluates to true if `args[param.id] >= param.value`.
-    - Less than or equal (`Op.LTE`): Evaluates to true if `args[param.id] <= param.value`.
-    - Return (`Op.RET`): Evaluates to true if `args[param.id]` is greater than one.
-    Used with `PARAM_VALUE_PARAM_ID`, it makes `args[param.id] = param.value`, so it
-    returns the parameter associated value.
+	- None (`Op.NONE`): Always evaluates to `false`, regardless of parameter or arguments.
+	- Equals (`Op.EQ`): Evaluates to true if every byte matches between `args[param.id]` and
+	`param.value`.
+	- Not equals (`Op.NEQ`): Evaluates to true if any byte doesn't match.
+	- Greater than (`Op.GT`): Evaluates to true if `args[param.id] > param.value`.
+	- Less than (`Op.LT`): Evaluates to true if `args[param.id] < param.value`.
+	- Greater than or equal (`Op.GTE`): Evaluates to true if `args[param.id] >= param.value`.
+	- Less than or equal (`Op.LTE`): Evaluates to true if `args[param.id] <= param.value`.
+	- Return (`Op.RET`): Evaluates to true if `args[param.id]` is greater than one.
+	Used with `PARAM_VALUE_PARAM_ID`, it makes `args[param.id] = param.value`, so it
+	returns the parameter associated value.
 
 While also representing an operation, when the id is `LOGIC_OP_PARAM_ID`, only the
 ops below are valid. These operations use the parameter's value to point to other
@@ -158,18 +180,18 @@ parameters index in the parameter array. These values are encoded as `uint32`
 numbers, left-shifted 32 bits to the left each (example: for example, an op that
 takes two inputs value would be `0x00....0000000200000001`, would be input 1, 1,
 and input 2, 2, refering to params at index 1 and 2). Available logic ops:
-    - Not (`Op.NOT`): Takes 1 parameter index and evaluates to the opposite of what
-    the linked parameter evaluates to.
-    - And (`Op.AND`): Takes 2 parameter indices and evaluates to true if both
-    evaluate to true.
-    - Or (`Op.OR`): Takes 2 parameter indices and evaluates to true if any of them
-    evaluate to true.
-    - Exclusive or (`Op.XOR`): Takes 2 parameter indices and evaluates to true if
-    only one of the parameters evaluate to true.
-    - If else (`Op.IF_ELSE`): Takes 3 parameters, evaluates the first parameter
-    and if it evaluates to true, it evaluates to whatever the parameter second
-    parameter evaluates to, otherwise it evaluates to whatever the third parameter
-    does.
+	- Not (`Op.NOT`): Takes 1 parameter index and evaluates to the opposite of what
+	the linked parameter evaluates to.
+	- And (`Op.AND`): Takes 2 parameter indices and evaluates to true if both
+	evaluate to true.
+	- Or (`Op.OR`): Takes 2 parameter indices and evaluates to true if any of them
+	evaluate to true.
+	- Exclusive or (`Op.XOR`): Takes 2 parameter indices and evaluates to true if
+	only one of the parameters evaluate to true.
+	- If else (`Op.IF_ELSE`): Takes 3 parameters, evaluates the first parameter
+	and if it evaluates to true, it evaluates to whatever the parameter second
+	parameter evaluates to, otherwise it evaluates to whatever the third parameter
+	does.
 
 ### 4.6 Parameter execution
 When evaluating a rule, the ACL will always evaluate the result of the first parameter.
@@ -183,16 +205,62 @@ of the first parameter.
 ### 4.8 Examples of rules
 
 ## 5. Forwarders and EVMScript
-### 5.1 Forwarding and transaction pathing (Oliver)
-### 5.2 EVMScripts
-#### 5.2.1 Warnings
-#### 5.2.2 Script executors
-##### 5.2.2.1 CallScript
-##### 5.2.2.1 DelegateScript
-##### 5.2.2.3 DeployDelegateScript
 
-## 6. The Aragon Package Manager
-### 6.1 APM as an Aragon DAO
+Forwarders are one of the most important concepts of aragonOS. Rather than hardcoding the notion of a vote into each separate app’s functionality and ACL, one can instead use a generic Voting App, which implements the forwarding interface, to pass actions forward to other apps after successful votes. If the Voting App is set up to only allow a token’s holders to vote, that means any actions/calls being passed from it must have been approved by the token’s holders.
+
+### 5.1 Forwarding and transaction pathing (Oliver)
+
+The forwarding interface also allows the Aragon client through aragon.js to calculate what we call ‘forwarding paths’. If you wish to perform an action and the client determines you don’t have direct permission to do it, it will think of alternative paths for execution. For example, you might directly go to the Vault App wishing to perform a token transfer, and the client directly prompts you to create a vote, as you have permission to create votes, that will perform the transfer if successful, as illustrated in the animation below.
+
+Transaction pathing and forwarding visualization (governance model and characters are fictional)
+We have designed our own scripting format, known as EVM scripts, to encode complex actions into a representation that can be stored and later executed by another entity. aragonOS 3.0 allows you to have multiple script executors that can be housed in your organization
+
+### 5.2 EVMScripts
+
+Script executors are contracts that take a script and an input and return an output after execution. We have built three script executors for the initial release:
+
+#### 5.2.1 Script executors and EVMScriptRegistry
+
+##### 5.2.1.1 CallsScript
+A simple way to concatenate multiple calls. It cancels the operation if any of the calls fail.
+
+- **Script body:** (See source code file for spec of the payload)
+- **Input: ** None
+- **Output:** None.
+- **Blacklist:** Entire script reverts if a call to one of the addresses in the blacklist is performed.
+
+##### 5.2.1.1 DelegateScript
+`delegatecalls` into a given contract, which basically allows for any arbitrary computation within the EVM in the caller’s context.
+
+- **Script body:** Address of the contract to make the call to.
+- **Input: ** `calldata` for the `delegatecall` that will be performed.
+- **Output:** raw return data of the call.
+- **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
+
+##### 5.2.1.3 DeployDelegateScript
+
+Is a superset of the DelegateScript, but it takes a contract’s initcode bytecode as its script body instead of just an address. On execution, it deploys the contract to the blockchain and executes it with a `delegatecall`.
+
+- **Script body:**: initcode for contract being created.
+- **Input: ** `calldata` for the `delegatecall` that will be performed after contract creation.
+- **Output:** raw return data of the call.
+- **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
+
+
+### 5.3 Making an app a Forwarder
+
+Examples of forwarders can be found in the aragon-apps repo, both the Voting and the Token Manager are forwarders.
+
+### 5.3.1 Warnings
+
+EVMScripts can be too powerful. Providing forwarding functionality to an app
+
+Some things to have in mind when developing an app
+
+For example the Token Manager has the token address in its blacklist because otherwise any token holder that is allowed to forward through the Token Manager would effectively have control over the token in the same way the Token Manager has, which would allow to bypass it. By having it in the blacklist, the latter 2 script executors can’t be used, so it only works with CallsScripts that don’t make calls to the token address.
+
+##  6. The Aragon Package Manager
+###  6.1 APM as an Aragon DAO
 The Aragon Package Manager (APM) is built on top of aragonOS and is integrated as a
 part of aragonOS. It is a DAO running on the same Aragon (taking advantage of
 upgradeability and access control), that‘s used to build Aragon DAOs!
