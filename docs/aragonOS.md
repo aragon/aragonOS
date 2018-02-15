@@ -21,7 +21,7 @@ platforms that are still evolving fast. Done well, it can allow for bug fixes
 and improvements with very little disruption and not causing problems at the
 protocol level. As a history lesson, if *The DAO* had had an effective
 upgradeability mechanism, no hard fork would have been required to fix the problem.
-which caused the community months of unproductive discussions, delays in the roadmap
+which cost the community months of unproductive discussions, delays in the roadmap
 and billions lost in the market capitalization of the protocol due to loss of
 network effect because of the fork.
 
@@ -41,7 +41,42 @@ results of our research will be made aragonOS compatible, meaning that by using
 aragonOS, any protocol can take advantage of our extensive research on governance
 for upgradeability or any other aspect of the protocol or application.
 
-## 1. General architecture, Kernel and apps
+## 1. General architecture and design philosophy
+
+Using aragonOS to build an application allows to **decouple** specific **business
+logic** of a protocol or application, from its **authentication logic**.
+
+It allows to code your application without thinking about authentication or
+governance at all, just by inheriting from the **AragonApp** base class and defining
+actions that require authentication with a special modifier, aragonOS can handle
+authentication for the protocol.
+
+### 1.1 Basic concepts: Proxy and Forwarder
+
+Before describing general ideas about the architecture, it is important to
+understand two concepts the entire framework builds upon:
+
+- **Proxy:** A Proxy is a very simple smart contract construct which consists on
+decoupling the instance of a particular smart contract with the location of its actual
+business logic. We call individual instances of contracts **Proxy** and the logic
+**base contracts**. A Proxy delegates all its logic on a base contract. Upgradeability
+is achieved because this link to the base contract can be modified, effectively
+updating the Proxy business logic.
+
+- **Forwarder:** A Forwarder is a contract that, given some conditions, will pass
+along a certain action to other contract(s).
+Thanks to the fact that proxies allow a certain instance of a contract to never
+have to change its address even if its underlying logic changes, this allows to
+identify a concept such as that an action has been approved in a voting with a
+certain support by a group of holders of a token, just by checking that the
+action sender address is an instance of a Voting app with a particular address.
+This helps with the decoupling of authentication and logic explained before.
+
+### 1.2 Architecture: Kernel and apps
+
+
+
+### 1.3 Design philosophy
 
 ## 2. Kernel
 ### 2.1 The app mapping
@@ -290,3 +325,4 @@ repoVersion = repo.getLatest()
 ### 7.1 Using the ACL
 ### 7.2 Upgradeability: storage considerations
 ### 7.3 Testing and publishing your app with aragon-dev-cli
+### 7.4 Deployment
