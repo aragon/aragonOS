@@ -1,10 +1,45 @@
 # aragonOS 3.0 alpha, developer documentation
 
-*Documentation for [aragonOS](https://github.com/aragon/aragonOS) 3.0.0 reference implementation.
-Updated Jan. 25th, 2018.*
+*Documentation for [aragonOS](https://github.com/aragon/aragonOS) 3.0 reference implementation.
+Updated Feb. 15th, 2018. (aragonOS v3.0.2 release)*
 
-This document provides a technical overview about the architecture. For a less
-technically-oriented introduction to aragonOS 3.0, you can check the [alpha release blog post]().
+This document provides a technical overview about the architecture and can be used
+as a specification and developer guide. For a less technically-oriented introduction
+to aragonOS 3.0, you can check the [alpha release blog post]().
+
+## 0. Motivation
+
+aragonOS was born in our path to developing modular and upgradeable smart contracts
+to power decentralized organizations.
+
+As the project was maturing and we started abstracting more and more, we ended up
+with a pretty generic framework that can be used by any protocol or decentralized
+application that needs upgradeability.
+
+**Upgradeability** is really important when developing high-stakes systems in
+platforms that are still evolving fast. Done well, it can allow for bug fixes
+and improvements with very little disruption and not causing problems at the
+protocol level. As a history lesson, if *The DAO* had had an effective
+upgradeability mechanism, no hard fork would have been required to fix the problem.
+which caused the community months of unproductive discussions, delays in the roadmap
+and billions lost in the market capitalization of the protocol due to loss of
+network effect because of the fork.
+
+But upgradeability is a double edged sword. It doesn't matter how secure or trustless
+a smart contract is, if it can be upgraded, the contract will effectively be whatever
+who/what can upgrade the contract decides. The guarantees of an upgradeable smart
+contract are only as strong as the **governance mechanism** that can upgrade it,
+making governance the most important aspect of upgradeability.
+
+In a similar way, you cannot have effective governance without a way for upgrading
+itself to a superior form of governance. Therefore we feel very strongly that
+**upgradeability** and **governance**, in the context of smart contract, are actually
+**two sides of the same coin**.
+
+At Aragon we are doing a lot of research in decentralized governance and the
+results of our research will be made aragonOS compatible, meaning that by using
+aragonOS, any protocol can take advantage of our extensive research on governance
+for upgradeability or any other aspect of the protocol or application.
 
 ## 1. General architecture, Kernel and apps
 
@@ -21,7 +56,9 @@ technically-oriented introduction to aragonOS 3.0, you can check the [alpha rele
 ## 4. ACL
 ### 4.1 The ACL as an Aragon app, the Interface
 ### 4.2 Basic ACL
+
 - any entity!
+
 ### 4.3 Permission managers
 ### 4.4 Parameter interpretation
 When a permission is granted to an entity by the permission manager, it can be
