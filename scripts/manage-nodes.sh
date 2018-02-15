@@ -10,7 +10,7 @@ else
     GETH_PORT=8545
 fi
 
-PARITY_VERSION=latest
+PARITY_VERSION=v1.8.0
 GETH_VERSION=v1.7.3
 
 client_running() {
@@ -38,21 +38,17 @@ check_docker() {
 start_parity() {
     check_docker
     # pull the most stable release of parity
-    docker pull augurproject/dev-node-instant:$PARITY_VERSION
+    docker pull purta/parity-instantseal:$PARITY_VERSION
     # run the container in detached mode
-    docker run -d -p 8545:8545 augurproject/dev-node-instant:$PARITY_VERSION
+    docker run -d -p 8545:8545 purta/parity-instantseal:$PARITY_VERSION
 }
 
 start_geth() {
     check_docker
     # pull the latest image using the dev test network
-    docker pull ethereum/client-go:$GETH_VERSION
+    docker pull purta/geth-devnet:$GETH_VERSION
     # run the geth dev network container
-    docker run -d -p 8545:8545 ethereum/client-go:$GETH_VERSION \
-    --rpc --rpcport 8545 --rpcaddr '0.0.0.0' --rpccorsdomain '*' --dev --dev.period 1 --targetgaslimit 10000000
-
-    echo "Allowing network to approach target gas limit..."
-    sleep 300
+    docker run -d -p 8545:8545 purta/geth-devnet:$GETH_VERSION
 }
 
 if client_running; then
