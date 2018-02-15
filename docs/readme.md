@@ -74,7 +74,7 @@ This helps with the decoupling of authentication and logic explained before.
 
 ### 1.2 Architecture: Kernel and apps
 
-
+An aragonOS deployme
 
 ### 1.3 Design philosophy
 
@@ -87,6 +87,7 @@ This helps with the decoupling of authentication and logic explained before.
 ### 3.1 DelegateProxies
 ### 3.2 Kernel upgradeability
 ### 3.3 AppProxies and upgradeability
+### 3.4 App sandbox (Oliver)
 
 ## 4. ACL
 ### 4.1 The ACL as an Aragon app, the Interface
@@ -182,7 +183,7 @@ of the first parameter.
 ### 4.8 Examples of rules
 
 ## 5. Forwarders and EVMScript
-### 5.1 Forwarding and transaction pathing
+### 5.1 Forwarding and transaction pathing (Oliver)
 ### 5.2 EVMScripts
 #### 5.2.1 Warnings
 #### 5.2.2 Script executors
@@ -321,7 +322,7 @@ Pretty self-describing.
 repoVersion = repo.getLatest()
 ```
 
-## 7. Aragon app development guide
+## 7. Aragon app development guide (Oliver)
 ### 7.1 Using the ACL
 ### 7.2 Upgradeability: storage considerations
 ### 7.3 Testing and publishing your app with aragon-dev-cli
