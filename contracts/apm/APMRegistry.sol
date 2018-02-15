@@ -73,7 +73,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         // Give permissions to _dev
         ACL acl = ACL(kernel.acl());
-        acl.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
+        acl.revoke(this, repo, repo.CREATE_VERSION_ROLE());
         acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
         return repo;
     }
@@ -83,7 +83,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         Repo repo = newClonedRepo();
 
-        ACL(kernel.acl()).createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
+        ACL(kernel.acl()).create(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists

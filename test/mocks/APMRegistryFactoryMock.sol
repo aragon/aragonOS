@@ -28,7 +28,7 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         Kernel dao = daoFactory.newDAO(this);
         ACL acl = ACL(dao.acl());
 
-        acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
+        acl.create(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
@@ -44,10 +44,10 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         // Grant permissions needed for APM on ENSSubdomainRegistrar
 
         if (withoutACL) {
-            acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
+            acl.create(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
         }
 
-        acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
+        acl.create(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
         configureAPMPermissions(acl, apm, _root);
 
@@ -55,13 +55,13 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
 
         if (!withoutACL) {
-            acl.grantPermission(apm, acl, permRole);
+            acl.grant(apm, acl, permRole);
         }
 
         // Permission transition to _root
         acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
-        acl.revokePermission(this, acl, permRole);
-        acl.grantPermission(_root, acl, permRole);
+        acl.revoke(this, acl, permRole);
+        acl.grant(_root, acl, permRole);
         acl.setPermissionManager(_root, acl, permRole);
 
         // Initialize

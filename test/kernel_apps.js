@@ -37,7 +37,7 @@ contract('Kernel apps', accounts => {
         acl = ACL.at(await kernel.acl())
 
         const r = await kernel.APP_MANAGER_ROLE()
-        await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
+        await acl.create(permissionsRoot, kernel.address, r, permissionsRoot)
 
         code1 = await AppStub.new()
         code2 = await AppStub2.new()
@@ -118,7 +118,7 @@ contract('Kernel apps', accounts => {
 
                 // assign app permissions
                 r2 = await appCode1.ROLE()
-                await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
+                await acl.create(permissionsRoot, appProxy.address, r2, permissionsRoot)
             })
 
             it('throws if using app without reference in kernel', async () => {
@@ -210,7 +210,7 @@ contract('Kernel apps', accounts => {
 
             // assign app permissions
             const r2 = await appCode1.ROLE()
-            await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
+            await acl.create(permissionsRoot, appProxy.address, r2, permissionsRoot)
         })
 
         it('fails if code hasnt been set on deploy', async () => {

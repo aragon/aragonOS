@@ -83,13 +83,13 @@ contract('Kernel ACL', accounts => {
 
     it('cannot create permissions without permission', async () => {
         return assertRevert(async () => {
-            await acl.createPermission(granted, app, role, granted, { from: accounts[8] })
+            await acl.create(granted, app, role, granted, { from: accounts[8] })
         })
     })
 
     context('creating permission', () => {
         beforeEach(async () => {
-            const receipt = await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
+            const receipt = await acl.create(granted, app, role, granted, { from: permissionsRoot })
             assertEvent(receipt, 'SetPermission')
             assertEvent(receipt, 'ChangePermissionManager')
         })
@@ -120,7 +120,7 @@ contract('Kernel ACL', accounts => {
         it('can grant a public permission', async () => {
             const anyEntity = "0xffffffffffffffffffffffffffffffffffffffff"
 
-            await acl.grantPermission(anyEntity, app, role, { from: granted })
+            await acl.grant(anyEntity, app, role, { from: granted })
             // many entities can succesfully perform action
             await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
             await kernel.setApp('0x121212', '0x00', accounts[6], { from: accounts[6] })
@@ -129,17 +129,17 @@ contract('Kernel ACL', accounts => {
         })
 
         it('fails granting existing permission instance', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
+            await acl.grant(accounts[8], app, role, { from: granted })
             return assertRevert(async () => {
-                await acl.grantPermission(accounts[8], app, role, { from: granted })
+                await acl.grant(accounts[8], app, role, { from: granted })
             })
         })
 
         it('fails revoking non-granted permission', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
-            await acl.revokePermission(accounts[8], app, role, { from: granted })
+            await acl.grant(accounts[8], app, role, { from: granted })
+            await acl.revoke(accounts[8], app, role, { from: granted })
             return assertRevert(async () => {
-                await acl.revokePermission(accounts[8], app, role, { from: granted })
+                await acl.revoke(accounts[8], app, role, { from: granted })
             })
         })
 
@@ -162,25 +162,25 @@ contract('Kernel ACL', accounts => {
 
         it('root cannot revoke permission', async () => {
             return assertRevert(async () => {
-                await acl.revokePermission(granted, app, role, { from: permissionsRoot })
+                await acl.revoke(granted, app, role, { from: permissionsRoot })
             })
         })
 
         it('root cannot re-create permission', async () => {
             return assertRevert(async () => {
-                await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                await acl.create(granted, app, role, granted, { from: permissionsRoot })
             })
         })
 
         it('root cannot grant permission', async () => {
             return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                await acl.grant(granted, app, role, { from: permissionsRoot })
             })
         })
 
         it('root cannot grant permission', async () => {
             return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                await acl.grant(granted, app, role, { from: permissionsRoot })
             })
         })
 
@@ -198,20 +198,20 @@ contract('Kernel ACL', accounts => {
             })
 
             it('can grant permission', async () => {
-                const receipt = await acl.grantPermission(newManager, app, role, { from: newManager })
+                const receipt = await acl.grant(newManager, app, role, { from: newManager })
                 assertEvent(receipt, 'SetPermission')
             })
 
             it('old manager lost power', async () => {
                 return assertRevert(async () => {
-                    await acl.grantPermission(newManager, app, role, { from: granted })
+                    await acl.grant(newManager, app, role, { from: granted })
                 })
             })
         })
 
         context('self-revokes permission', () => {
             beforeEach(async () => {
-                const receipt = await acl.revokePermission(granted, app, role, { from: granted })
+                const receipt = await acl.revoke(granted, app, role, { from: granted })
                 assertEvent(receipt, 'SetPermission')
             })
 
@@ -221,19 +221,19 @@ contract('Kernel ACL', accounts => {
 
             it('permissions root cannot re-create', async () => {
                 return assertRevert(async () => {
-                    await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                    await acl.create  (granted, app, role, granted, { from: permissionsRoot })
                 })
             })
 
             it('permission manager can grant the permission', async () => {
-                await acl.grantPermission(granted, app, role, { from: granted })
+                await acl.grant(granted, app, role, { from: granted })
                 assert.isTrue(await acl.hasPermission(granted, app, role))
             })
         })
 
         context('re-grants to child', () => {
             beforeEach(async () => {
-                const receipt = await acl.grantPermission(child, app, role, { from: granted })
+                const receipt = await acl.grant(child, app, role, { from: granted })
                 assertEvent(receipt, 'SetPermission')
             })
 
@@ -243,12 +243,12 @@ contract('Kernel ACL', accounts => {
 
             it('child cannot re-grant permission', async () => {
                 return assertRevert(async () => {
-                    await acl.grantPermission(accounts[7], app, role, { from: child })
+                    await acl.grant(accounts[7], app, role, { from: child })
                 })
             })
 
             it('parent can revoke permission', async () => {
-                const receipt = await acl.revokePermission(child, app, role, { from: granted })
+                const receipt = await acl.revoke(child, app, role, { from: granted })
                 assert.isFalse(await acl.hasPermission(child, app, role))
                 assertEvent(receipt, 'SetPermission')
             })
