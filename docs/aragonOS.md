@@ -109,7 +109,15 @@ Modifying this mapping can have completely destructive consequences and can resu
 ### 3.1 DelegateProxies
 ### 3.2 Kernel upgradeability
 ### 3.3 AppProxies and upgradeability
-### 3.4 App sandbox (Oliver)
+### 3.4 App sandbox
+
+It is of paramount importance that apps can not change the DOM of other apps in an attempt to mislead users. As such, all apps are sandboxed.
+
+This means that apps are run inside an iframe that only has access to itself, and in order to send transactions, calls, and more, it communicates with the Aragon dapp (the "wrapper") through a custom RPC protocol built specifically for Aragon. Apps do not have direct access to Web3.
+
+RPC calls are sent to the wrapper using the PostMessage API and the wrapper will use the information in the calls to perform specific actions, such as listen for events, cache values and calculate transaction paths.
+
+In practice, this means that apps only publish intents, and do not execute actions directly. Instead, all business logic is deffered to the wrapper.
 
 ## 4. ACL
 ### 4.1 The ACL as an Aragon app, the Interface
