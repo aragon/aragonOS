@@ -85,6 +85,10 @@ The design philosophy we use when developing Aragon apps is very similar to the 
 
 This results in purely technical benefits such as testability, but it is also very powerful when apps are combined and the output of one app becomes the input of an other one (forwarders resemble UNIX pipes in some way).
 
+### 1.4 Lifecycle of an aragonOS call
+
+![](./rsc/os3.gif)
+
 ## 2. Kernel
 ### 2.1 The app mapping
 
@@ -120,11 +124,9 @@ RPC calls are sent to the wrapper using the PostMessage API and the wrapper will
 In practice, this means that apps only publish intents, and do not execute actions directly. Instead, all business logic is deffered to the wrapper.
 
 ## 4. ACL
+Please see [aragonOS 2 docs](https://wiki.aragon.one/documentation/aragonOS/#permissions)
 ### 4.1 The ACL as an Aragon app, the Interface
 ### 4.2 Basic ACL
-
-- any entity!
-
 ### 4.3 Permission managers
 ### 4.4 Parameter interpretation
 When a permission is granted to an entity by the permission manager, it can be
@@ -220,7 +222,8 @@ Forwarders are one of the most important concepts of aragonOS. Rather than hardc
 
 The forwarding interface also allows the Aragon client through aragon.js to calculate what we call ‘forwarding paths’. If you wish to perform an action and the client determines you don’t have direct permission to do it, it will think of alternative paths for execution. For example, you might directly go to the Vault App wishing to perform a token transfer, and the client directly prompts you to create a vote, as you have permission to create votes, that will perform the transfer if successful, as illustrated in the animation below.
 
-TODO (Jorge): Transaction pathing and forwarding visualization (governance model and characters are fictional)
+![forwarding animation](./rsc/fwd.gif)
+(governance model and characters are fictional)
 
 We have designed our own scripting format, known as EVM scripts, to encode complex actions into a representation that can be stored and later executed by another entity. aragonOS 3.0 allows you to have multiple script executors that can be housed in your organization
 
