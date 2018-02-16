@@ -87,7 +87,7 @@ This results in purely technical benefits such as testability, but it is also ve
 
 ### 1.4 Lifecycle of an aragonOS call
 
-![](./rsc/os3.gif)
+![](https://github.com/aragon/aragonOS/raw/docs/docs/rsc/os3.gif)
 
 ## 2. Kernel
 ### 2.1 The app mapping
@@ -222,7 +222,7 @@ Forwarders are one of the most important concepts of aragonOS. Rather than hardc
 
 The forwarding interface also allows the Aragon client through aragon.js to calculate what we call ‘forwarding paths’. If you wish to perform an action and the client determines you don’t have direct permission to do it, it will think of alternative paths for execution. For example, you might directly go to the Vault App wishing to perform a token transfer, and the client directly prompts you to create a vote, as you have permission to create votes, that will perform the transfer if successful, as illustrated in the animation below.
 
-![forwarding animation](./rsc/fwd.gif)
+![forwarding animation](https://github.com/aragon/aragonOS/raw/docs/docs/rsc/fwd.gif)
 (governance model and characters are fictional)
 
 We have designed our own scripting format, known as EVM scripts, to encode complex actions into a representation that can be stored and later executed by another entity. aragonOS 3.0 allows you to have multiple script executors that can be housed in your organization
