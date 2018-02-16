@@ -583,6 +583,47 @@ First you need to install Aragon.js.
 npm i @aragon/client
 ```
 
-### 7.6 Upgradeability: storage considerations
+The client-side of Aragon.js takes care of sending RPC calls from your app to the wrapper. This is an important part of our security model, since this allows us to sandbox apps. This also means that you do not have direct access to Web3, and you have to do your transactions, calls and event filtering using Aragon.js.
 
-### 7.7 Publishing your app with `aragon-dev-cli`
+Let's create a simple file that simply listens to the events we defined and builds our application state.
+
+```js
+const Aragon = require('@aragon/client')
+
+// Initialise app
+const app = new Aragon()
+
+// Listen for events and reduce state, much like in Redux
+// This will listen for events, build the state using our reducer function
+// and cache the state for later
+app.store((state, event) => {
+  // Define initial state
+  if (state === null) state = []
+  
+  // Reduce based on events
+  switch (event.event) {
+    case 'EntryAdded':
+      return state.concat(event.returnValues.id)
+    case 'EntryRemoved':
+      return state.filter((entryId) => entryId !== event.returnValues.id))
+  }
+  
+  // Reducers **must** always return a state
+  return state
+})
+```
+
+The `state` parameter in our reducer is the current state (`null` if no state is there at all) and the `event` parameter is a standard Web3 event.
+
+Now our application state is an array of entry IDs. You could also fetch the actual entry using `app.call('get', entryId)`, which will return an observable that emits the result of the call.
+
+Let's simply log out the state for the purpose of this guide, but know that you can build your app and bundle it with something like React (we have a UI library called [Aragon UI](https://ui.aragon.one) to build beautiful app front-ends).
+
+```js
+// ...
+app.state().subscribe((state) => console.log(state))
+```
+
+Build your app using something like Webpack to bundle your scripts together so they can run in the browser. That's it!
+
+### 7.6 Publishing your app with `aragon-dev-cli`
