@@ -399,8 +399,190 @@ Pretty self-describing.
 repoVersion = repo.getLatest()
 ```
 
-## 7. Aragon app development guide (Oliver)
-### 7.1 Using the ACL
-### 7.2 Upgradeability: storage considerations
-### 7.3 Testing and publishing your app with aragon-dev-cli
-### 7.4 Deployment
+## 7. Aragon app development guide
+
+This is a small walk through on how to build a fully upgradeable registry app with pluggable governance.
+
+### 7.1 Getting the tools
+
+The first thing you will need is aragon-dev-cli. This is the primary development tool for creating and publishing apps on Aragon.
+
+```
+npm i -g @aragon/cli
+```
+
+You also need to install your favorite Solidity development tool, such as Truffle.
+
+```
+npm i -g truffle
+```
+
+### 7.2 Directory structure
+
+Next we initialise a new app using the CLI.
+
+```
+aragon-dev-cli init registry.aragonpm.eth bare
+```
+
+This will create a folder named `registry` in the current directory from the `bare` boilerplate. The `bare` boilerplate only includes the essentials: a directory structure, the manifest files and two dependencies; `@aragon/os` and `@aragon/client`.
+
+```js
+- contracts/
+- test/
+- manifest.json
+- arapp.json
+```
+
+The boilerplate provides a contracts directory for your Solidity source files, a test directory for your Truffle tests and two Aragon-specific files: `manifest.json` and `arapp.json`.
+
+As a rule of thumb, `manifest.json` defines everything the user will see, such as the human-readable app name, a description and icons. `arapp.json` defines everything aragon.js will need for transaction pathing and more, such as the app name (a fully qualified ENS name such as `voting.aragonpm.eth`), the current version of your app, the path to the contract sources and an array of roles used in transaction pathing.
+
+To see what these files look like, check out our voting app's manifest files [here](https://github.com/aragon/aragon-apps/blob/master/apps/voting/manifest.json) and [here](https://github.com/aragon/aragon-apps/blob/master/apps/voting/arapp.json).
+
+### 7.3 Writing the contract
+
+Our contract is a simple registry, so it has three operations: get, set and remove. Let's write it as a normal contract first, and plug in AragonOS afterwards to illustrate how simple it is.
+
+```js
+pragma solidity ^0.4.15;
+
+/**
+ * A generic registry app.
+ *
+ * The registry has three simple operations: `add`, `remove` and `get`.
+ *
+ * The registry itself is useless, but in combination with other apps to govern
+ * the rules for who can add and remove entries in the registry, it becomes
+ * a powerful building block (examples are token-curated registries and stake machines).
+ */
+contract RegistryApp {
+    // The entries in the registry.
+    mapping(bytes32 => bytes32) entries;
+
+    // Fired when an entry is added to the registry.
+    event EntryAdded(bytes32 id);
+    // Fired when an entry is removed from the registry.
+    event EntryRemoved(bytes32 id);
+
+    /**
+     * Add an entry to the registry.
+     * @param _data The entry to add to the registry
+     */
+    function add(
+        bytes32 _data
+    ) public returns (bytes32 _id) {
+        _id = keccak256(_data);
+        entries[_id] = _data;
+
+        EntryAdded(_id);
+    }
+
+    /**
+     * Remove an entry from the registry.
+     * @param _id The ID of the entry to remove
+     */
+    function remove(
+        bytes32 _id
+    ) public {
+        delete entries[_id];
+        EntryRemoved(_id);
+    }
+
+    /**
+     * Get an entry from the registry.
+     * @param _id The ID of the entry to get
+     */
+    function get(
+        bytes32 _id
+    ) public constant returns (bytes32) {
+        return entries[_id];
+    }
+}
+```
+
+So, now we have a registry contract, but how do we make it upgradeable? You simply import the `AragonApp` interface and inherit it.
+
+```js
+// ...
+
+import "@aragon/os/contracts/apps/AragonApp.sol";
+
+// ...
+
+contract RegistryApp is AragonApp {
+  // ...
+}
+```
+
+That's it! Your contract is now fully upgradeable. But wait, there's more! What about governance?
+
+If we add a governance layer **without** specifying the exact governance mechanism (i.e. `onlyOwner`), we could make all sorts of interesting registries using this contract - token curated registries, registries governed by simple democracy, registries governed by liquid democracy... the possibilities are truly endless.
+
+To plug in governance, we need to learn about the ACL.
+
+### 7.4 Using the ACL
+
+The ACL (access-control list) defines who can do what where and under which circumstances. `who` can be any address: an app, your dog, your fridge or you. This, combined with the concept of forwarders ([learn more](#)) makes it possible to make very complex governance structures out of small building blocks.
+
+You can sort of think of forwarders and apps as UNIX commands. They're small, they do one thing well, and might be useful in isolation, but they become more powerful when you combine them using the pipe operator (`|`). In this analogy, apps are the commands, and forwarders are the pipes.
+
+This might sound a bit complex, but it's very simple to use.
+
+1. You define the roles your app has. This has to be a `keccak256` of the role identifier. For example, a role named `ADD_ENTRY_ROLE` should be defined as such: `bytes32 public constant ADD_ENTRY_ROLE = keccak256("ADD_ENTRY_ROLE");`
+2. You use the Solidity `auth` modifier provided by `AragonApp`
+
+Let's try this for our registry. We define two roles, `ADD_ENTRY_ROLE` and `REMOVE_ENTRY_ROLE`:
+
+```js
+// ...
+
+contract RegistryApp is AragonApp {
+  bytes32 public constant ADD_ENTRY_ROLE = keccak256("ADD_ENTRY_ROLE");
+  bytes32 public constant REMOVE_ENTRY_ROLE = keccak256("REMOVE_ENTRY_ROLE");
+  // ...
+}
+```
+
+Next, we guard the `add` and `remove` functions with the `auth` modifier:
+
+```js
+// ...
+
+contract RegistryApp is AragonApp {
+  // ...
+  /**
+   * Add an entry to the registry.
+   * @param _data The entry to add to the registry
+   */
+  function add(
+    bytes32 _data
+  ) public auth(ADD_ENTRY_ROLE) returns (bytes32 _id) {
+    // ...
+  }
+
+  /**
+   * Remove an entry from the registry.
+   * @param _id The ID of the entry to remove
+   */
+  function remove(
+    bytes32 _id
+  ) public auth(REMOVE_ENTRY_ROLE) {
+    // ...
+  }
+}
+```
+
+Congratulations! You just built a fully upgradeable and arbitrarily governable registry app on Aragon 👏
+
+### 7.5 Building the front-end
+
+First you need to install Aragon.js.
+
+```
+npm i @aragon/client
+```
+
+### 7.6 Upgradeability: storage considerations
+
+### 7.7 Publishing your app with `aragon-dev-cli`
