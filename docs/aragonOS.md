@@ -124,10 +124,98 @@ RPC calls are sent to the wrapper using the PostMessage API and the wrapper will
 In practice, this means that apps only publish intents, and do not execute actions directly. Instead, all business logic is deffered to the wrapper.
 
 ## 4. ACL
-Please see [aragonOS 2 docs](https://wiki.aragon.one/documentation/aragonOS/#permissions)
+
+A **Permission** is defined as the ability to perform actions (grouped by roles) in a certain app instance (identified by its address).
+
+We refer to a **Permission Instance** as an entity holding a certain permission.
+
 ### 4.1 The ACL as an Aragon app, the Interface
+First of all, you need to define your base ACL instance for your kernel with:
+
+```
+acl = ACL(kernel.acl())
+```
+
+Then you can execute the following actions:
+
+#### Create Permission
+
+```
+acl.createPermission(address entity, address app, bytes32 role, address manager)
+```
+
+`createPermission()` will fail if that permission has pre-existing permission instances.
+
+This action is identical to [`grantPermission()`](#grant-permission) except it allows the creation of a new permission if it doesn’t exist yet.
+
+A role in the ACL protects access to `createPermission()` as this important function could be used in malicious ways. When the Kernel is initialized, it also creates the permission that grants the initializing address the ability to create new permissions.
+
+Note that creating permissions is made mandatory by the ACL: all actions requiring yet-to-be-created permissions are disallowed by default. Any permission checks on non-existent permissions are failed automatically.
+
+#### Grant Permission
+
+```
+acl.grantPermission(address entity, address app, bytes32 role)
+```
+
+Grants `role` in `app` for an `entity`. Only callable by the `manager` of a certain permission. This `entity` would then be allowed to call all actions that their `role` can perform on that particular `app` until the permission manager revokes their role with [`revokePermission()`](#revoke-permission).
+
+The `grantPermission()` action doesn’t require protection with the ACL because an entity can only make changes to a permission if it is the permission's `manager`.
+
+#### Revoke Permission
+
+```
+acl.revokePermission(address entity, address app, bytes32 role)
+```
+
+Revokes `role` in `app` for an `entity`. Only callable by the `manager` of a certain permission.
+
+The `revokePermission()` action doesn’t need to be protected by the ACL either, as an entity can only make changes if it is the `manager` for a given permission.
+
+#### Adding Permissions
+
+Apps have the choice of which actions to protect behind the ACL, as some actions may make sense to be completely public. Protecting an action behind the ACL is done in the smart contract by simply adding the authentication modifier [`auth()`](https://github.com/aragon/aragonOS/blob/4f4e89abaac6c70243c8288b27272003ecb63e1d/contracts/apps/AragonApp.sol#L10) or [`authP()`](https://github.com/aragon/aragonOS/blob/4f4e89abaac6c70243c8288b27272003ecb63e1d/contracts/apps/AragonApp.sol#L15)(passing the role required as a parameter) to the action. On executing the action, the `auth()`/`authP()` modifiers check with the Kernel whether the entity performing the call holds the required role or not.
+
+
 ### 4.2 Basic ACL
+As an example, the following steps show a complete flow for user "Root" to create a new DAO with the basic permissions set so that a [Voting app](https://github.com/aragon/aragon-apps/tree/master/apps/voting) can manage the funds stored in a [Vault app](https://github.com/aragon/aragon-apps/tree/master/apps/vault):
+
+1. Deploy the Kernel and the ACL
+2. Executing `kernel.initialize(acl, rootAddress)` which in turns calls `acl.initialize(rootAddress)` creates the "permissions creator" permission under the hood:
+`createPermission(rootAddress, aclAddress, CREATE_PERMISSIONS_ROLE, rootAddress)`
+3. Deploy the Voting app
+4. Grant the Voting app the ability to call `createPermission()`:
+`grantPermission(votingAppAddress, aclAddress, CREATE_PERMISSIONS_ROLE)` (must be executed by `rootAddress`)
+5. Deploy the Vault app, which has a action called `transferTokens()`
+6. Create a new vote via the Voting app to create the `TRANSFER_TOKENS_ROLE` permission
+`createPermission(votingAppAddress, vaultAppAddress, TRANSFER_TOKENS_ROLE, votingAppAddress)`
+7. If the vote passes, the Voting app then has access to all actions in the Vault protected by `TRANSFER_TOKENS_ROLE`, which in this case is just `transferTokens()`
+8. Fund transfers from the Vault can now be controlled via votes from the Voting app. Each time a user wishes to transfer funds, they can create a new vote via the Voting app to propose an execution of the Vault's `transferTokens()` action. If, and only if, the vote passes, will the `transferTokens()` action be executed.
+
+Note that the Voting app is also able to revoke or regrant the `TRANSFER_TOKENS_ROLE` permission as it is that permission's manager on `vaultAppAddress`.
+
+
 ### 4.3 Permission managers
+As we have seen, when a permission is created, a **Permission Manager** is set for that specific permission. The permission manager is able to grant or revoke permission instances for that permission.
+
+The Permission Manager can be changed with:
+
+```
+acl.setPermissionManager(address newManager, address app, bytes32 role)
+```
+
+Changes the permission manager to `newManager`. Only callable by the `manager` of a certain permission.
+
+The new permission manager replaces the old permission manager, resulting in the old manager losing any management power over that permission.
+
+[`createPermission()`](#create-permission) executes a special case of this action to set the initial manager for the newly created permission. From that point forward, the manager can only be changed with `setPermissionManager()`.
+
+There's also a getter for the Permission Manager:
+
+```
+acl.getPermissionManager(address app, bytes32 role)
+```
+
 ### 4.4 Parameter interpretation
 When a permission is granted to an entity by the permission manager, it can be
 assigned an array of parameters that will be evaluated every time the ACL is checked
@@ -212,7 +300,55 @@ Execution is recursive and the result evaluated is always the result of the eval
 of the first parameter.
 
 ### 4.7 Parameter encoding
+To encode some logic operations (AND, OR, IF-ELSE) which link to other parameters, the following helpers are provided, where the function arguments always refer to parameter indexes in the `Param` array they belong to:
+
+#### If-Else (ternary) operation
+```
+encodeIfElse(uint condition, uint success, uint failure)
+```
+
+#### Binary operations (And, Or)
+```
+encodeOperator(uint param1, uint param2)
+```
+
 ### 4.8 Examples of rules
+The interpreter supports encoding complex rules in what would look almost like a programming language, for example let’s look at the following [test case](https://github.com/aragon/aragonOS/blob/63c4722b8629f78350586bcea7c0837ab5882a20/test/TestACLInterpreter.sol#L112-L126):
+
+```
+    function testComplexCombination() {
+        // if (oracle and block number > block number - 1) then arg 0 < 10 or oracle else false
+        Param[] memory params = new Param[](7);
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));
+        params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(new AcceptOracle()));
+        params[3] = Param(BLOCK_NUMBER_PARAM_ID, uint8(Op.GT), uint240(block.number - 1));
+        params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.OR), encodeOperator(5, 2));
+        params[5] = Param(0, uint8(Op.LT), uint240(10));
+        params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
+
+        assertEval(params, arr(uint256(10)), true);
+
+        params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
+        assertEval(params, arr(uint256(10)), false);
+    }
+```
+
+When assigned to a permission, this rule will **evaluate to true** (and therefore allow the action) if an oracle accepts it and the block number is greater than the previous block number, and either the oracle allows it (again! testing redundancy too) or the first parameter of the rule is lower than 10. The possibilities for customizing organizations/DApps governance model are truly endless, without the need to write any actual Solidity.
+
+### 4.9 Events
+[`createPermission()`](#create-permission), [`grantPermission()`](#grant-permission), and [`revokePermission()`](#revoke-permission) all fire the same `SetPermission` event that Aragon clients are expected to cache and process into a locally stored version of the ACL:
+
+```
+SetPermission(address indexed from, address indexed to, bytes32 indexed role, bool allowed)
+```
+
+[`setPermissionManager()`](#set-permission-manager) fires the following event:
+
+```
+ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager)
+```
+
 
 ## 5. Forwarders and EVMScript
 
@@ -533,7 +669,7 @@ You can sort of think of forwarders and apps as UNIX commands. They're small, th
 This might sound a bit complex, but it's very simple to use.
 
 1. You define the roles your app has. This has to be a `keccak256` of the role identifier. For example, a role named `ADD_ENTRY_ROLE` should be defined as such: `bytes32 public constant ADD_ENTRY_ROLE = keccak256("ADD_ENTRY_ROLE");`
-2. You use the Solidity `auth` modifier provided by `AragonApp`
+2. You use the Solidity `auth` or `authP` modifiers provided by `AragonApp`
 
 Let's try this for our registry. We define two roles, `ADD_ENTRY_ROLE` and `REMOVE_ENTRY_ROLE`:
 
