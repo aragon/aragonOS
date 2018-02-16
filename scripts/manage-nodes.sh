@@ -41,6 +41,8 @@ start_parity() {
     docker pull purta/parity-instantseal:$PARITY_VERSION
     # run the container in detached mode
     docker run -d -p 8545:8545 purta/parity-instantseal:$PARITY_VERSION
+
+    sleep 5
 }
 
 start_geth() {
