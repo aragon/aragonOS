@@ -208,11 +208,12 @@ of the first parameter.
 
 Forwarders are one of the most important concepts of aragonOS. Rather than hardcoding the notion of a vote into each separate app’s functionality and ACL, one can instead use a generic Voting App, which implements the forwarding interface, to pass actions forward to other apps after successful votes. If the Voting App is set up to only allow a token’s holders to vote, that means any actions/calls being passed from it must have been approved by the token’s holders.
 
-### 5.1 Forwarding and transaction pathing (Oliver)
+### 5.1 Forwarding and transaction pathing
 
 The forwarding interface also allows the Aragon client through aragon.js to calculate what we call ‘forwarding paths’. If you wish to perform an action and the client determines you don’t have direct permission to do it, it will think of alternative paths for execution. For example, you might directly go to the Vault App wishing to perform a token transfer, and the client directly prompts you to create a vote, as you have permission to create votes, that will perform the transfer if successful, as illustrated in the animation below.
 
-Transaction pathing and forwarding visualization (governance model and characters are fictional)
+TODO (Jorge): Transaction pathing and forwarding visualization (governance model and characters are fictional)
+
 We have designed our own scripting format, known as EVM scripts, to encode complex actions into a representation that can be stored and later executed by another entity. aragonOS 3.0 allows you to have multiple script executors that can be housed in your organization
 
 ### 5.2 EVMScripts
