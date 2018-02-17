@@ -19,6 +19,7 @@
     "build/",
     "artifacts/",
     "contracts/",
+    "migrations/",
     "truffle-config.js"
   ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
