@@ -1,4 +1,3 @@
-const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
@@ -42,9 +41,12 @@ contract('Kernel ACL', accounts => {
 
     it('cannot initialize ACL outside of Kernel', async () => {
         const acl = await ACL.new()
-        return assertRevert(async () => {
-            await acl.initialize('0x1234')
-        })
+        try {
+            let result = await acl.initialize('0x1234')
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     it('has correct initialization block', async () => {
@@ -52,9 +54,12 @@ contract('Kernel ACL', accounts => {
     })
 
     it('throws on reinitialization', async () => {
-        return assertRevert(async () => {
-            await kernel.initialize(accounts[0], accounts[0])
-        })
+        try {
+            let result = await kernel.initialize(accounts[0], accounts[0])
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
 
@@ -65,15 +70,21 @@ contract('Kernel ACL', accounts => {
     it('actions cannot be performed if uninitialized', async () => {
         const newKernelProxy = await KernelProxy.new(await factory.baseKernel())
         const newKernel = Kernel.at(newKernelProxy.address)
-        return assertRevert(async () => {
-          const result = await newKernel.hasPermission(permissionsRoot, app, role, '0x00')
-        })
+        try {
+            let result = await newKernel.hasPermission(permissionsRoot, app, role, '0x00')
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     it('protected actions fail if not allowed', async () => {
-        return assertRevert(async () => {
-            await kernel.setApp('0x0', '0x1234', accounts[0])
-        })
+        try {
+            let result = await kernel.setApp('0x0', '0x1234', accounts[0])
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     it('create permission action can be performed by root by default', async () => {
@@ -82,9 +93,12 @@ contract('Kernel ACL', accounts => {
     })
 
     it('cannot create permissions without permission', async () => {
-        return assertRevert(async () => {
-            await acl.createPermission(granted, app, role, granted, { from: accounts[8] })
-        })
+        try {
+            let result = await acl.createPermission(granted, app, role, granted, { from: accounts[8] })
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     context('creating permission', () => {
@@ -111,10 +125,13 @@ contract('Kernel ACL', accounts => {
             const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
 
             assertEvent(receipt, 'SetApp')
-            return assertRevert(async () => {
+            try {
                 // Fail if setting code for appId 0
-                await kernel.setApp('0x0', '0x0', accounts[4], { from: accounts[3] })
-            })
+                let result = await kernel.setApp('0x0', '0x0', accounts[4], { from: accounts[3] })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('can grant a public permission', async () => {
@@ -130,17 +147,23 @@ contract('Kernel ACL', accounts => {
 
         it('fails granting existing permission instance', async () => {
             await acl.grantPermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.grantPermission(accounts[8], app, role, { from: granted })
-            })
+            try {
+                let result = await acl.grantPermission(accounts[8], app, role, { from: granted })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('fails revoking non-granted permission', async () => {
             await acl.grantPermission(accounts[8], app, role, { from: granted })
             await acl.revokePermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.revokePermission(accounts[8], app, role, { from: granted })
-            })
+            try {
+                let result = await acl.revokePermission(accounts[8], app, role, { from: granted })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('returns created permission', async () => {
@@ -161,27 +184,39 @@ contract('Kernel ACL', accounts => {
         })
 
         it('root cannot revoke permission', async () => {
-            return assertRevert(async () => {
-                await acl.revokePermission(granted, app, role, { from: permissionsRoot })
-            })
+            try {
+                let result = await acl.revokePermission(granted, app, role, { from: permissionsRoot })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('root cannot re-create permission', async () => {
-            return assertRevert(async () => {
-                await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
-            })
+            try {
+                let result = await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('root cannot grant permission', async () => {
-            return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
-            })
+            try {
+                let result = await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('root cannot grant permission', async () => {
-            return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
-            })
+            try {
+                let result = await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         context('transferring managership', () => {
@@ -203,9 +238,12 @@ contract('Kernel ACL', accounts => {
             })
 
             it('old manager lost power', async () => {
-                return assertRevert(async () => {
-                    await acl.grantPermission(newManager, app, role, { from: granted })
-                })
+                try {
+                    let result = await acl.grantPermission(newManager, app, role, { from: granted })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
         })
 
@@ -220,9 +258,12 @@ contract('Kernel ACL', accounts => {
             })
 
             it('permissions root cannot re-create', async () => {
-                return assertRevert(async () => {
-                    await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
-                })
+                try {
+                    let result = await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('permission manager can grant the permission', async () => {
@@ -242,9 +283,12 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child cannot re-grant permission', async () => {
-                return assertRevert(async () => {
-                    await acl.grantPermission(accounts[7], app, role, { from: child })
-                })
+                try {
+                    let result = await acl.grantPermission(accounts[7], app, role, { from: child })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('parent can revoke permission', async () => {

@@ -1,4 +1,3 @@
-const { assertRevert } = require('./helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
@@ -46,16 +45,22 @@ contract('Kernel apps', accounts => {
     it('fails if initializing on constructor before setting app code', async () => {
         const initializationPayload = code1.contract.initialize.getData()
 
-        return assertRevert(async () => {
-            await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
-        })
+        try {
+            let result = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     context('upgradeable proxies', () => {
         it('fails if code hasnt been set and initializes', async () => {
-            return assertRevert(async () => {
-                await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 5e6 })
-            })
+            try {
+                let result = await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 5e6 })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('doesnt fail if code hasnt been set and doesnt initialize', async () => {
@@ -72,22 +77,31 @@ contract('Kernel apps', accounts => {
             })
 
             it('fails if kernel addr is not a kernel', async () => {
-                return assertRevert(async () => {
-                    await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
-                })
+                try {
+                    let result = await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if kernel addr is 0', async () => {
-                return assertRevert(async () => {
-                    await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 5e6 })
-                })
+                try {
+                    let result = await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 5e6 })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if init fails', async () => {
                 const badInit = '0x1234'
-                return assertRevert(async () => {
-                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
-                })
+                try {
+                    let result = await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('was initialized on constructor', async () => {
@@ -99,9 +113,12 @@ contract('Kernel apps', accounts => {
             })
 
             it('cannot reinitialize', async () => {
-                return assertRevert(async () => {
-                    await app.initialize()
-                })
+                try {
+                    let result = await app.initialize()
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('should return values', async () => {
@@ -122,9 +139,12 @@ contract('Kernel apps', accounts => {
             })
 
             it('throws if using app without reference in kernel', async () => {
-                return assertRevert(async () => {
-                    await app.setValue(10)
-                })
+                try {
+                    let result = await app.setValue(10)
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             context('setting app code in kernel', async () => {
@@ -159,9 +179,12 @@ contract('Kernel apps', accounts => {
                     })
 
                     it('parametrized app call fails if param eval fails', async () => {
-                        return assertRevert(async () => {
-                            await app.setValueParam(4, { from: accounts[2]})
-                        })
+                        try {
+                            let result = await app.setValueParam(4, { from: accounts[2]})
+                            assert.equal(result.receipt.status, 0, 'should have failed status')
+                        } catch (e) {
+                            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                        }
                     })
 
                     it('parametrized app call succeeds if param eval succeeds', async () => {
@@ -170,16 +193,23 @@ contract('Kernel apps', accounts => {
                 })
 
                 it('fails when called by unauthorized entity', async () => {
-                    return assertRevert(async () => {
-                        await app.setValue(10, { from: accounts[1] })
-                    })
+                    try {
+                        let result = await app.setValue(10, { from: accounts[1] })
+                        assert.equal(result.receipt.status, 0, 'should have failed status')
+                    } catch (e) {
+                        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                    }
                 })
 
                 it('fails if updated app is not a contract', async () => {
                     await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
-                    return assertRevert(async () => {
-                        await app.setValue(10)
-                    })
+
+                    try {
+                        let result = await app.setValue(10)
+                        assert.equal(result.receipt.status, 0, 'should have failed status')
+                    } catch (e) {
+                        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                    }
                 })
 
                 it('can update app code and storage is preserved', async () => {
@@ -192,9 +222,13 @@ contract('Kernel apps', accounts => {
                 it('can update app code and removed functions throw', async () => {
                     await app.setValue(10)
                     await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode2.address)
-                    return assertRevert(async () => {
-                        await app.setValue(10)
-                    })
+
+                    try {
+                        let result = await app.setValue(10)
+                        assert.equal(result.receipt.status, 0, 'should have failed status')
+                    } catch (e) {
+                        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                    }
                 })
             })
         })
@@ -215,9 +249,13 @@ contract('Kernel apps', accounts => {
 
         it('fails if code hasnt been set on deploy', async () => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
-            return assertRevert(async () => {
-                await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
-            })
+
+            try {
+                let result = await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('is not upgradeable', async () => {
@@ -268,9 +306,13 @@ contract('Kernel apps', accounts => {
 
         it('fails if the given app base is different than the existing one', async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
-            return assertRevert(async () => {
-                await kernel.newAppInstance(appId, appCode2.address)
-            })
+
+            try {
+                let result = await kernel.newAppInstance(appId, appCode2.address)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
     })
 
@@ -308,9 +350,13 @@ contract('Kernel apps', accounts => {
 
         it('fails if the given app base is different than the existing one', async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
-            return assertRevert(async () => {
-                await kernel.newPinnedAppInstance(appId, appCode2.address)
-            })
+
+            try {
+                let result = await kernel.newPinnedAppInstance(appId, appCode2.address)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
     })
 })

@@ -1,5 +1,4 @@
 const { getBlockNumber } = require('./helpers/web3')
-const { assertRevert } = require('./helpers/assertThrow')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 
@@ -38,9 +37,12 @@ contract('MiniMeToken', accounts => {
             assert.equal(await token.totalSupplyAt(block - 1), 100, 'total supply should be 100 in previous block')
             assert.equal(await token.balanceOf(accounts[1]), 80, 'should have destroyed 20 tokens from orignal amount')
 
-            return assertRevert(async () => {
-                await token.destroyTokens(accounts[2], 100)
-            })
+            try {
+                let result = await token.destroyTokens(accounts[2], 100)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
     })
 
@@ -77,16 +79,24 @@ contract('MiniMeToken', accounts => {
         it('claim tokens', async () => {
             assert.ok(await token.claimTokens(0x0))
             assert.ok(await token.claimTokens(token.address))
-            return assertRevert(async () => {
-                await token.transfer(token.address, 5)
-            })
+
+            try {
+                let result = await token.transfer(token.address, 5)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('disable transfers', async () => {
             await token.enableTransfers(false)
-            return assertRevert(async () => {
-                await token.transfer(accounts[3], 5)
-            })
+
+            try {
+                let result = await token.transfer(accounts[3], 5)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('re-enable transfers', async () => {
@@ -104,9 +114,13 @@ contract('MiniMeToken', accounts => {
 
         it('refuse new allowances if transfer are disabled', async () => {
             await token.enableTransfers(false)
-            return assertRevert(async () => {
-                await token.approve(accounts[2], 10)
-            })
+
+            try {
+                let result = await token.approve(accounts[2], 10)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
     })
 

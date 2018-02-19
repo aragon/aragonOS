@@ -1,5 +1,3 @@
-const { assertRevert } = require('./helpers/assertThrow')
-
 const Repo = artifacts.require('Repo')
 const getContract = artifacts.require
 
@@ -29,9 +27,12 @@ contract('Repo', accounts => {
 
     // valid version as being a correct bump from 0.0.0
     it('cannot create invalid first version', async () => {
-        return assertRevert(async () => {
-            await repo.newVersion([1, 1, 0], '0x00', '0x00')
-        })
+        try {
+            let result = await repo.newVersion([1, 1, 0], '0x00', '0x00')
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     context('creating initial version', () => {
@@ -75,21 +76,31 @@ contract('Repo', accounts => {
         })
 
         it('fails when changing contract address in non major version', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 1, 0], accounts[2], initialContent)
-            })
+            try {
+                let result = await repo.newVersion([1, 1, 0], accounts[2], initialContent)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('fails when version bump is invalid', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 2, 0], initialCode, initialContent)
-            })
+            try {
+                let result = await repo.newVersion([1, 2, 0], initialCode, initialContent)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('fails if requesting version 0', async () => {
-            return assertRevert(async () => {
-                await repo.getByVersionId(0)
-            })
+            try {
+                let result = await repo.getByVersionId(0)
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                console.log(e)
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         context('adding new version', async () => {

@@ -1,6 +1,5 @@
 const { rawDecode } = require('ethereumjs-abi')
 
-const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
@@ -61,9 +60,12 @@ contract('EVM Script', accounts => {
     })
 
     it('fails if reinitializing registry', async () => {
-        return assertRevert(async () => {
-            await reg.initialize()
-        })
+        try {
+            let result = await reg.initialize()
+            assert.equal(result.receipt.status, 0, 'should have failed status')
+        } catch (e) {
+            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+        }
     })
 
     context('executor', () => {
@@ -74,23 +76,32 @@ contract('EVM Script', accounts => {
         })
 
         it('fails to execute if spec ID is 0', async () => {
-            return assertRevert(async () => {
-                await executor.execute('0x00000000')
-            })
+            try {
+                let result = await executor.execute('0x00000000')
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('fails to execute if spec ID is unknown', async () => {
-            return assertRevert(async () => {
-                await executor.execute('0x00000004')
-            })
+            try {
+                let result = await executor.execute('0x00000004')
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         it('can disable executors', async () => {
             await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
-            return assertRevert(async () => {
-                await executor.execute(encodeCallScript([]))
-            })
+            try {
+                let result = await executor.execute(encodeCallScript([]))
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } catch (e) {
+                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+            }
         })
 
         context('spec ID 1', () => {
@@ -107,9 +118,12 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
 
-                return assertRevert(async () => {
-                    await executor.executeWithBan(script, [executionTarget.address])
-                })
+                try {
+                    let result = await executor.executeWithBan(script, [executionTarget.address])
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('can execute if call doesnt cointain blacklist addresses', async () => {
@@ -159,9 +173,12 @@ contract('EVM Script', accounts => {
 
                 const script = encodeCallScript([action1, action2])
 
-                return assertRevert(async () => {
-                    await executor.execute(script)
-                })
+                try {
+                    let result = await executor.execute(script)
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('can execute empty script', async () => {
@@ -192,29 +209,41 @@ contract('EVM Script', accounts => {
             })
 
             it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
-                })
+                try {
+                    let result = await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if underlying call fails', async () => {
                 const failingDelegator = await FailingDelegator.new()
-                return assertRevert(async () => {
+                try {
                     // extra gas to avoid oog
-                    await executor.executeWithBan(encodeDelegate(failingDelegator.address), [], { gas: 2e6 })
-                })
+                    let result = await executor.executeWithBan(encodeDelegate(failingDelegator.address), [], { gas: 2e6 })
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if calling to non-contract', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate(accounts[0])) // addr is too small
-                })
+                try {
+                    let result = await executor.execute(encodeDelegate(accounts[0])) // addr is too small
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if payload is too small', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate('0x1234')) // addr is too small
-                })
+                try {
+                    let result = await executor.execute(encodeDelegate('0x1234')) // addr is too small
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
         })
 
@@ -243,40 +272,58 @@ contract('EVM Script', accounts => {
             })
 
             it('fails if deployment fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDeployment))
-                })
+                try {
+                    let result = await executor.execute(encodeDeploy(FailingDeployment))
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if deployed contract doesnt have exec function', async () => {
-                return assertRevert(async () => {
+                try {
                     // random contract without exec() func
-                    await executor.execute(encodeDeploy(ExecutionTarget))
-                })
+                    let result = await executor.execute(encodeDeploy(ExecutionTarget))
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if exec function fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDelegator))
-                })
+                try {
+                    let result = await executor.execute(encodeDeploy(FailingDelegator))
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
-                })
+                try {
+                    let result = await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if execution modifies kernel', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierKernel')))
-                })
+                try {
+                    let result = await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierKernel')))
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
 
             it('fails if execution modifies app id', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
-                })
+                try {
+                    let result = await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
+                    assert.equal(result.receipt.status, 0, 'should have failed status')
+                } catch (e) {
+                    assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+                }
             })
         })
     })

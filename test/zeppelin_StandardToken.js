@@ -1,5 +1,4 @@
 'use strict';
-const { assertRevert } = require('./helpers/assertThrow')
 
 var StandardTokenMock = artifacts.require('./helpers/StandardTokenMock.sol');
 
@@ -37,9 +36,13 @@ contract('StandardToken', function(accounts) {
 
   it('should throw an error when trying to transfer more than balance', async function() {
     let token = await StandardTokenMock.new(accounts[0], 100);
-    return assertRevert(async () => {
-      await token.transfer(accounts[1], 101);
-    })
+
+    try {
+        let result = await token.transfer(accounts[1], 101);
+        assert.equal(result.receipt.status, 0, 'should have failed status')
+    } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+    }
   });
 
   it('should return correct balances after transfering from another account', async function() {
@@ -59,17 +62,25 @@ contract('StandardToken', function(accounts) {
 
   it('should throw an error when trying to transfer more than allowed', async function() {
     await token.approve(accounts[1], 99);
-    return assertRevert(async () => {
-      await token.transferFrom(accounts[0], accounts[2], 100, {from: accounts[1]});
-    })
+
+    try {
+        let result = await token.transferFrom(accounts[0], accounts[2], 100, {from: accounts[1]});
+        assert.equal(result.receipt.status, 0, 'should have failed status')
+    } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+    }
   });
 
   it('should throw an error when trying to transferFrom more than _from has', async function() {
     let balance0 = await token.balanceOf(accounts[0]);
     await token.approve(accounts[1], 99);
-    return assertRevert(async () => {
-      await token.transferFrom(accounts[0], accounts[2], balance0+1, {from: accounts[1]});
-    })
+
+    try {
+        let result = await token.transferFrom(accounts[0], accounts[2], balance0+1, {from: accounts[1]});
+        assert.equal(result.receipt.status, 0, 'should have failed status')
+    } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+    }
   });
 
   describe('validating allowance updates to spender', function() {
@@ -100,17 +111,25 @@ contract('StandardToken', function(accounts) {
 
   it('should throw an error when trying to transfer to 0x0', async function() {
     let token = await StandardTokenMock.new(accounts[0], 100);
-    return assertRevert(async () => {
-      await token.transferFrom(accounts[0], accounts[2], balance0+1, {from: accounts[1]});
-    })
+
+    try {
+        let result = await token.transferFrom(accounts[0], accounts[2], balance0+1, {from: accounts[1]});
+        assert.equal(result.receipt.status, 0, 'should have failed status')
+    } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+    }
   });
 
   it('should throw an error when trying to transferFrom to 0x0', async function() {
     let token = await StandardTokenMock.new(accounts[0], 100);
     await token.approve(accounts[1], 100);
-    return assertRevert(async () => {
-      let transfer = await token.transferFrom(accounts[0], 0x0, 100, {from: accounts[1]});
-    })
+
+    try {
+        let result = await token.transferFrom(accounts[0], 0x0, 100, {from: accounts[1]});
+        assert.equal(result.receipt.status, 0, 'should have failed status')
+    } catch (e) {
+        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
+    }
   });
 
 });
