@@ -98,7 +98,6 @@ contract('Repo', accounts => {
                 let result = await repo.getByVersionId(0)
                 assert.equal(result.receipt.status, 0, 'should have failed status')
             } catch (e) {
-                console.log(e)
                 assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
             }
         })
