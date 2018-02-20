@@ -72,7 +72,11 @@ contract('Kernel ACL', accounts => {
         const newKernel = Kernel.at(newKernelProxy.address)
         try {
             let result = await newKernel.hasPermission(permissionsRoot, app, role, '0x00')
-            assert.equal(result.receipt.status, 0, 'should have failed status')
+            if (result.receipt) {
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } else {
+                assert.isFalse(result, 'should not have permission')
+            }
         } catch (e) {
             assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
         }

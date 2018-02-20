@@ -113,7 +113,7 @@ contract('StandardToken', function(accounts) {
     let token = await StandardTokenMock.new(accounts[0], 100);
 
     try {
-        let result = await token.transferFrom(accounts[0], accounts[2], balance0+1, {from: accounts[1]});
+        let result = await token.transfer(0x0, 100);
         assert.equal(result.receipt.status, 0, 'should have failed status')
     } catch (e) {
         assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')

@@ -41,7 +41,11 @@ contract('Kernel Upgrade', accounts => {
     it('fails when calling is upgraded on old version', async () => {
         try {
             let result = await UpgradedKernel.at(kernel.address).isUpgraded()
-            assert.equal(result.receipt.status, 0, 'should have failed status')
+            if (result.receipt) {
+                assert.equal(result.receipt.status, 0, 'should have failed status')
+            } else {
+                assert.isFalse(result, 'should not have upgraded')
+            }
         } catch (e) {
             assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
         }
