@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 import "../ScriptHelpers.sol";
 import "../IEVMScriptExecutor.sol";
@@ -51,7 +51,7 @@ contract DelegateScript is IEVMScriptExecutor {
     /**
     * @dev copies and returns last's call data
     */
-    function returnedData() internal view returns (bytes ret) {
+    function returnedData() internal view /* TODO /pure/? */ returns (bytes ret) {
         assembly {
             let size := returndatasize
             ret := mload(0x40) // free mem ptr get
