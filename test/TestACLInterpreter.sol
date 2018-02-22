@@ -109,7 +109,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, true);
     }
 
-    function testComplexCombination() {
+    function testComplexCombination() public {
         // if (oracle and block number > block number - 1) then arg 0 < 10 or oracle else false
         Param[] memory params = new Param[](7);
         params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
@@ -126,7 +126,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, arr(uint256(10)), false);
     }
 
-    function testParamOutOfBoundsFail() {
+    function testParamOutOfBoundsFail() public {
         Param[] memory params = new Param[](2);
 
         params[1] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 1);
@@ -136,7 +136,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, arr(uint256(10)), false);
     }
 
-    function testArgOutOfBoundsFail() {
+    function testArgOutOfBoundsFail() public {
         assertEval(arr(uint256(10), 11), 3, Op.EQ, 10, false);
     }
 

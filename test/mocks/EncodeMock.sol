@@ -7,11 +7,11 @@ contract EncodeMockInterface {
 contract EncodeMock {
     bytes public result;
 
-    function exec(bytes a, bytes b, address[] c) {
+    function exec(bytes a, bytes b, address[] c) public {
         EncodeMockInterface(this).gogo(a, b, c);
     }
 
-    function () {
+    function () public {
         result = msg.data;
     }
 }

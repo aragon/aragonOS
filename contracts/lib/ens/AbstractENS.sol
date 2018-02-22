@@ -1,14 +1,14 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 
 interface AbstractENS {
-    function owner(bytes32 _node) constant returns (address);
-    function resolver(bytes32 _node) constant returns (address);
-    function ttl(bytes32 _node) constant returns (uint64);
-    function setOwner(bytes32 _node, address _owner);
-    function setSubnodeOwner(bytes32 _node, bytes32 label, address _owner);
-    function setResolver(bytes32 _node, address _resolver);
-    function setTTL(bytes32 _node, uint64 _ttl);
+    function owner(bytes32 _node) public constant returns (address);
+    function resolver(bytes32 _node) public constant returns (address);
+    function ttl(bytes32 _node) public constant returns (uint64);
+    function setOwner(bytes32 _node, address _owner) public;
+    function setSubnodeOwner(bytes32 _node, bytes32 label, address _owner) public;
+    function setResolver(bytes32 _node, address _resolver) public;
+    function setTTL(bytes32 _node, uint64 _ttl) public;
 
     // Logged when the owner of a node assigns a new owner to a subnode.
     event NewOwner(bytes32 indexed _node, bytes32 indexed _label, address _owner);

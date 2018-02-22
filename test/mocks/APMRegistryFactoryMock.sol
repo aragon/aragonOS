@@ -1,3 +1,4 @@
+pragma solidity 0.4.18;
 // without all permissions
 // external ENS
 
