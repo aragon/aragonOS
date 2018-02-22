@@ -11,7 +11,7 @@ else
 fi
 
 PARITY_VERSION=v1.8.0
-GETH_VERSION=v1.7.3
+GETH_VERSION=v1.7.3-instantseal
 
 client_running() {
     nc -z localhost "$GETH_PORT"
