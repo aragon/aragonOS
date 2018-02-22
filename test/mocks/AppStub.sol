@@ -10,26 +10,26 @@ contract AppSt {
 contract AppStub is AragonApp, AppSt {
     bytes32 constant public ROLE = bytes32(1);
 
-    function initialize() onlyInit {
+    function initialize() onlyInit public {
         initialized();
         stringTest = "hola";
     }
 
-    function setValue(uint i) auth(ROLE) {
+    function setValue(uint i) auth(ROLE) public {
         a = i;
     }
 
-    function setValueParam(uint i) authP(ROLE, arr(i)) {
+    function setValueParam(uint i) authP(ROLE, arr(i)) public {
         a = i;
     }
 
-    function getValue() constant returns (uint) {
+    function getValue() public constant returns (uint) {
         return a;
     }
 }
 
 contract AppStub2 is AragonApp, AppSt {
-    function getValue() constant returns (uint){
+    function getValue() public constant returns (uint){
         return a * 2;
     }
 }

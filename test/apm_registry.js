@@ -21,6 +21,8 @@ contract('APMRegistry', accounts => {
     const rootNode = namehash('aragonpm.eth')
     const testNode = namehash('test.aragonpm.eth')
 
+    console.log("APMRegistry Contract")
+
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
         baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))

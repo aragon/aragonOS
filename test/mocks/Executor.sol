@@ -9,15 +9,15 @@ contract ExecutorStorage is AragonApp {
 
 // TODO: Rename
 contract Executor is ExecutorStorage {
-    function execute(bytes script) {
+    function execute(bytes script) public {
         runScript(script, new bytes(0), new address[](0));
     }
 
-    function executeWithBan(bytes script, address[] memory blacklist) {
+    function executeWithBan(bytes script, address[] memory blacklist) public {
         runScript(script, new bytes(0), blacklist);
     }
 
-    function executeWithIO(bytes script, bytes input, address[] memory blacklist) returns (bytes) {
+    function executeWithIO(bytes script, bytes input, address[] memory blacklist) public returns (bytes) {
         return runScript(script, input, blacklist);
     }
 
