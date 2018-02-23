@@ -1,3 +1,4 @@
+const { assertRevert } = require('./helpers/assertThrow')
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
@@ -72,30 +73,22 @@ contract('ENSSubdomainRegistrar', accounts => {
 
     it('fails if creating names twice', async () => {
         await registrar.createName(holalabel, apmOwner, { from: apmOwner })
-        try {
-            let result = await registrar.createName(holalabel, apmOwner, { from: apmOwner })
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+
+        return assertRevert(async () => {
+            return await registrar.createName(holalabel, apmOwner, { from: apmOwner })
+        })
     })
 
     it('fails if deleting name not yet created', async () => {
-        try {
-            let result = await registrar.deleteName(holalabel, { from: apmOwner })
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await registrar.deleteName(holalabel, { from: apmOwner })
+        })
     })
 
     it('fails if not authorized to create name', async () => {
-        try {
-            let result = await registrar.createName(holalabel, apmOwner, { from: notOwner })
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await registrar.createName(holalabel, apmOwner, { from: notOwner })
+        })
     })
 
     it('can delete names', async () => {
@@ -109,11 +102,8 @@ contract('ENSSubdomainRegistrar', accounts => {
         const reg = await ENSSubdomainRegistrar.new()
         const ens = await ENS.new()
 
-        try {
-            let result = await reg.initialize(ens.address, holanode)
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await reg.initialize(ens.address, holanode)
+        })
     })
 })

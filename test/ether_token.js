@@ -1,3 +1,4 @@
+const { assertRevert } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
 const EtherToken = artifacts.require('EtherToken')
 const ERC677Stub = artifacts.require('ERC677Stub')
@@ -13,12 +14,9 @@ contract('EtherToken', accounts => {
   })
 
   it('fails when wrapping 0', async () => {
-    try {
-        let result = await token.wrap({ value: 0 })
-        assert.equal(result.receipt.status, 0, 'should have failed status')
-    } catch (e) {
-        assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-    }
+      return assertRevert(async () => {
+          return await token.wrap({ value: 0 })
+      })
   })
 
   it('can wrap and call', async () => {
@@ -80,21 +78,15 @@ contract('EtherToken', accounts => {
       })
 
       it('fails when withdrawing more than balance', async () => {
-        try {
-            let result = await token.withdraw(withdrawAddr, value + 1)
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+          return assertRevert(async () => {
+              return await token.withdraw(withdrawAddr, value + 1)
+          })
       })
 
       it('fails when withdrawing 0', async () => {
-        try {
-            let result = await token.withdraw(withdrawAddr, 0)
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+          return assertRevert(async () => {
+              return await token.withdraw(withdrawAddr, 0)
+          })
       })
   })
 })

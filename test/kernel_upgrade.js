@@ -1,3 +1,4 @@
+const { assertRevert } = require('./helpers/assertThrow')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
@@ -30,12 +31,9 @@ contract('Kernel Upgrade', accounts => {
     })
 
     it('fails to upgrade kernel without permission', async () => {
-        try {
-            let result = await kernel.setApp(namespace, kernelId, accounts[0])
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await kernel.setApp(namespace, kernelId, accounts[0])
+        })
     })
 
     it('fails when calling is upgraded on old version', async () => {
@@ -67,11 +65,8 @@ contract('Kernel Upgrade', accounts => {
 
         const upgradedImpl = await UpgradedKernel.new()
 
-        try {
-            let result = await kernel.setApp(namespace, kernelId, '0x1234')
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await kernel.setApp(namespace, kernelId, '0x1234')
+        })
     })
 })

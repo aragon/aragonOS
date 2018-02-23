@@ -1,6 +1,6 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
-
+const { assertRevert } = require('./helpers/assertThrow')
 const ENS = artifacts.require('ENS')
 const Repo = artifacts.require('Repo')
 const APMRegistry = artifacts.require('APMRegistry')
@@ -60,30 +60,21 @@ contract('APMRegistry', accounts => {
     })
 
     it('fails to create empty repo name', async () => {
-        try {
-            let result = await registry.newRepo('', repoDev, { from: apmOwner })
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await registry.newRepo('', repoDev, { from: apmOwner })
+        })
     })
 
     it('fails if factory doesnt give permission to create permissions', async () => {
-        try {
-            let result = await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
+        })
     })
 
     it('fails if factory doesnt give permission to create names', async () => {
-        try {
-            let result = await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
+        })
     })
 
     it('inits with existing ENS deployment', async () => {
@@ -122,12 +113,9 @@ contract('APMRegistry', accounts => {
         })
 
         it('fails when creating repo with existing name', async () => {
-            try {
-                let result = await registry.newRepo('test', repoDev)
-                assert.equal(result.receipt.status, 0, 'should have failed status')
-            } catch (e) {
-                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-            }
+            return assertRevert(async () => {
+                return await registry.newRepo('test', repoDev)
+            })
         })
 
         it('repo dev can create versions', async () => {
@@ -153,21 +141,15 @@ contract('APMRegistry', accounts => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
             await acl.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
-            try {
-                let result = await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
-                assert.equal(result.receipt.status, 0, 'should have failed status')
-            } catch (e) {
-                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-            }
+            return assertRevert(async () => {
+                return await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
+            })
         })
 
         it('cannot create versions if not in ACL', async () => {
-            try {
-                let result = await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: notOwner })
-                assert.equal(result.receipt.status, 0, 'should have failed status')
-            } catch (e) {
-                assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-            }
+            return assertRevert(async () => {
+                return await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: notOwner })
+            })
         })
     })
 
@@ -179,11 +161,8 @@ contract('APMRegistry', accounts => {
     })
 
     it('cannot create repo if not in ACL', async () => {
-        try {
-            let result = await registry.newRepo('test', repoDev, { from: notOwner })
-            assert.equal(result.receipt.status, 0, 'should have failed status')
-        } catch (e) {
-            assert.isAbove(e.message.search('revert'), -1, 'should have failed with revert')
-        }
+        return assertRevert(async () => {
+            return await registry.newRepo('test', repoDev, { from: notOwner })
+        })
     })
 })

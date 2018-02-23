@@ -4,7 +4,8 @@ function assertError(error, s, message) {
 
 async function assertThrows(codeBlock, message, errorCode) {
     try {
-        await codeBlock()
+        const result = await codeBlock()
+        return assert.equal(result.receipt.status, 0, 'should have failed status')
     } catch (e) {
         return assertError(e, errorCode, message)
     }
