@@ -51,6 +51,9 @@ start_geth() {
     docker pull purta/geth-devnet:$GETH_VERSION
     # run the geth dev network container
     docker run -d -p 8545:8545 purta/geth-devnet:$GETH_VERSION
+
+    echo "Letting client warmup for 30 seconds..."
+    sleep 30
 }
 
 if client_running; then
