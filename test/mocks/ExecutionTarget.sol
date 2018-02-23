@@ -4,16 +4,16 @@ pragma solidity 0.4.18;
 contract ExecutionTarget {
     uint public counter;
 
-    function execute() {
+    function execute() public {
         counter += 1;
         Executed(counter);
     }
 
-    function failExecute() {
+    function failExecute() public pure {
         revert();
     }
 
-    function setCounter(uint x) {
+    function setCounter(uint x) public {
         counter = x;
     }
 

@@ -36,7 +36,7 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     /**
     * @dev copies and returns last's call data. Needs to ABI decode first
     */
-    function returnedDataDecoded() internal view returns (bytes ret) {
+    function returnedDataDecoded() internal pure returns (bytes ret) {
         assembly {
             let size := returndatasize
             switch size

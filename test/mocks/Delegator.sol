@@ -18,7 +18,7 @@ contract FailingDelegator is DelegateScriptTarget {
 
 
 contract FailingDeployment {
-    function FailingDeployment() { revert(); }
+    function FailingDeployment() public { revert(); }
 }
 
 
