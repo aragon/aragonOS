@@ -155,7 +155,7 @@ contract('Kernel apps', accounts => {
                         const value = '000000000000000000000000000000000000000000000000000000000005'  // 5
                         const param = new web3.BigNumber(argId + op + value)
 
-                        await acl.grantPermissionP(accounts[2], appProxy.address, r2, [param], { from: permissionsRoot })
+                        await acl.grantP(accounts[2], appProxy.address, r2, [param], { from: permissionsRoot })
                     })
 
                     it('parametrized app call fails if param eval fails', async () => {

@@ -59,10 +59,10 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         }
 
         // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+        acl.setManager(_root, dao, dao.APP_MANAGER_ROLE());
         acl.revoke(this, acl, permRole);
         acl.grant(_root, acl, permRole);
-        acl.setPermissionManager(_root, acl, permRole);
+        acl.setManager(_root, acl, permRole);
 
         // Initialize
         ens.setOwner(node, ensSub);

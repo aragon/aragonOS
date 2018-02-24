@@ -86,7 +86,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     function grant(address _entity, address _app, bytes32 _role)
         external
     {
-        grantPermissionP(_entity, _app, _role, new uint256[](0));
+        grantP(_entity, _app, _role, new uint256[](0));
     }
 
     /**
@@ -97,7 +97,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
-    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
+    function grantP(address _entity, address _app, bytes32 _role, uint256[] _params)
         onlyPermissionManager(_app, _role)
         public
     {
@@ -129,11 +129,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the permission management is being transferred
     * @param _role Identifier for the group of actions being transferred
     */
-    function setPermissionManager(address _newManager, address _app, bytes32 _role)
+    function setManager(address _newManager, address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
         external
     {
-        _setPermissionManager(_newManager, _app, _role);
+        _setManager(_newManager, _app, _role);
     }
 
     /**
@@ -192,7 +192,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         require(getPermissionManager(_app, _role) == address(0));
 
         _set(_entity, _app, _role, EMPTY_PARAM_HASH);
-        _setPermissionManager(_manager, _app, _role);
+        _setManager(_manager, _app, _role);
     }
 
     /**
@@ -327,7 +327,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     /**
     * @dev Internal function that sets management
     */
-    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
+    function _setManager(address _newManager, address _app, bytes32 _role) internal {
         permissionManager[roleHash(_app, _role)] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
     }

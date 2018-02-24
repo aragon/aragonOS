@@ -90,10 +90,10 @@ contract APMRegistryFactory is APMRegistryConstants {
         configureAPMPermissions(acl, apm, _root);
 
         // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+        acl.setManager(_root, dao, dao.APP_MANAGER_ROLE());
         acl.revoke(this, acl, permRole);
         acl.grant(_root, acl, permRole);
-        acl.setPermissionManager(_root, acl, permRole);
+        acl.setManager(_root, acl, permRole);
 
         return apm;
     }
@@ -105,6 +105,6 @@ contract APMRegistryFactory is APMRegistryConstants {
     // Factory can be subclassed and permissions changed
     function configureAPMPermissions(ACL _acl, APMRegistry _apm, address _root) internal {
         _acl.grant(_root, _apm, _apm.CREATE_REPO_ROLE());
-        _acl.setPermissionManager(_root, _apm, _apm.CREATE_REPO_ROLE());
+        _acl.setManager(_root, _apm, _apm.CREATE_REPO_ROLE());
     }
 }

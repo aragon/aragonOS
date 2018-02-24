@@ -38,7 +38,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         reg.addScriptExecutor(baseDeployDel); // spec 3 = DeployDelegateScript
 
         acl.revoke(this, reg, reg.REGISTRY_MANAGER_ROLE());
-        acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
+        acl.setManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
 
         return reg;
     }

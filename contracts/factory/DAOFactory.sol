@@ -51,8 +51,8 @@ contract DAOFactory {
             acl.revoke(regFactory, dao, appManagerRole);
             acl.grant(_root, acl, permRole);
 
-            acl.setPermissionManager(address(0), dao, appManagerRole);
-            acl.setPermissionManager(_root, acl, permRole);
+            acl.setManager(address(0), dao, appManagerRole);
+            acl.setManager(_root, acl, permRole);
         }
 
         DeployDAO(dao);

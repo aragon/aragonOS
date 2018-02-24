@@ -102,9 +102,9 @@ contract('Kernel ACL', accounts => {
             const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
             const param = new web3.BigNumber(argId + op + value)
 
-            const r1 = await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+            const r1 = await acl.grantP(accounts[3], app, role, [param], { from: granted })
             // grants again without re-saving params
-            const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
+            const r2 = await acl.grantP(accounts[4], app, role, [param], { from: granted })
 
             assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed, 'should have used less gas because of cache')
             // Allow setting code for namespace other than 0
@@ -188,7 +188,7 @@ contract('Kernel ACL', accounts => {
             const newManager = accounts[8]
 
             beforeEach(async () => {
-                const receipt = await acl.setPermissionManager(newManager, app, role, { from: granted })
+                const receipt = await acl.setManager(newManager, app, role, { from: granted })
                 assertEvent(receipt, 'ChangePermissionManager')
             })
 
