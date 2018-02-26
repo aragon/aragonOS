@@ -74,6 +74,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         // Give permissions to _dev
         ACL acl = ACL(kernel.acl());
         acl.revoke(this, repo, repo.CREATE_VERSION_ROLE());
+        acl.grant(_dev, repo, repo.CREATE_VERSION_ROLE());
         acl.setManager(_dev, repo, repo.CREATE_VERSION_ROLE());
         return repo;
     }

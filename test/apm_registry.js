@@ -154,11 +154,15 @@ contract('APMRegistry', accounts => {
         })
     })
 
-    it('can create repo with version', async () => {
+    it('can create repo with version and dev can create new versions', async () => {
         const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
-        const repoAddr = getRepoFromLog(receipt)
+        const repo = Repo.at(getRepoFromLog(receipt))
 
-        assert.equal(await Repo.at(repoAddr).getVersionsCount(), 1, 'should have created version')
+        assert.equal(await repo.getVersionsCount(), 1, 'should have created version')
+
+        await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
+
+        assert.equal(await repo.getVersionsCount(), 2, 'should have created version')
     })
 
     it('cannot create repo if not in ACL', async () => {
