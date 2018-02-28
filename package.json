@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.0.3",
+  "version": "3.0.5",
   "description": "Core contracts for Aragon",
   "scripts": {
     "test": "npm run ganache-cli:dev && truffle test --network rpc",
