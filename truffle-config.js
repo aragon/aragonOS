@@ -1,4 +1,4 @@
-var HDWalletProvider = require('truffle-hdwallet-provider')
+const HDWalletProvider = require('truffle-hdwallet-provider')
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
@@ -7,7 +7,12 @@ let ropstenProvider, kovanProvider, rinkebyProvider = {}
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
   kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
-  rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
+
+  try {
+    rinkebyProvider = new HDWalletProvider(...require(require('homedir')()+'/.secret-rinkeby'))
+  } catch (e) {
+    rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
+  }
 }
 
 const mochaGasSettings = {
@@ -42,6 +47,7 @@ module.exports = {
       network_id: 4,
       provider: rinkebyProvider,
       gas: 6.9e6,
+      gasPrice: 15000000001
     },
     coverage: {
       host: "localhost",
