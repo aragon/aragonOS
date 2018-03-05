@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.0.4",
+  "version": "3.0.6",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
@@ -15,7 +15,8 @@
     "migrate:dev:contracts": "truffle migrate --all --network rpc;",
     "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js",
     "deploy:devnet:ens": "truffle compile; truffle exec --network devnet scripts/deploy-beta-ens.js",
-    "deploy:devnet:apm": "truffle compile; truffle exec --network devnet scripts/deploy-beta-apm.js"
+    "deploy:devnet:apm": "truffle compile; truffle exec --network devnet scripts/deploy-beta-apm.js",
+    "prepublishOnly": "truffle compile --all"
   },
   "files": [
     "index.js",
