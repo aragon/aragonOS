@@ -33,6 +33,12 @@ module.exports = {
       port: 8545,
       gas: 6.9e6,
     },
+    devnet: {
+      network_id: 15,
+      host: 'devnet',
+      port: 8545,
+      gas: 6.9e6,
+    },
     ropsten: {
       network_id: 3,
       provider: ropstenProvider,
