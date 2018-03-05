@@ -1,8 +1,9 @@
 {
   "name": "@aragon/os",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "Core contracts for Aragon",
   "scripts": {
+    "compile": "truffle compile",
     "test": "npm run ganache-cli:dev && truffle test --network rpc",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
@@ -13,6 +14,8 @@
     "migrate:dev": "npm run ganache-cli:dev && npm run migrate:dev:contracts",
     "migrate:dev:contracts": "truffle migrate --all --network rpc;",
     "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js",
+    "deploy:devnet:ens": "truffle compile; truffle exec --network devnet scripts/deploy-beta-ens.js",
+    "deploy:devnet:apm": "truffle compile; truffle exec --network devnet scripts/deploy-beta-apm.js",
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
