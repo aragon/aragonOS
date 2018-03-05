@@ -5,8 +5,8 @@ const APMRegistryFactory = artifacts.require('APMRegistryFactory')
 const DAOFactory = artifacts.require('DAOFactory')
 const ENS = artifacts.require('ENS')
 
-const owner = '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
-const ens = '0xaa0ccb537289d226941745c4dd7a819a750897d0'
+const owner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const ens = process.env.ENS || '0xaa0ccb537289d226941745c4dd7a819a750897d0'
 
 const tld = namehash('eth')
 const label = '0x'+keccak256('aragonpm')
@@ -52,6 +52,7 @@ module.exports = async callback => {
   console.log('=========')
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
   console.log('deployed APM:', apmAddr)
+  console.log(apmAddr)
 }
 
 // Deployed APM: 0x8da0fe11ece85f48723d45c3d6767db9bd4f0b29
