@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.0.4",
+  "version": "3.0.6",
   "description": "Core contracts for Aragon",
   "scripts": {
     "test": "npm run ganache-cli:dev && truffle test --network rpc",
@@ -12,7 +12,8 @@
     "ganache-cli:coverage": "SOLIDITY_COVERAGE=true scripts/ganache-cli.sh",
     "migrate:dev": "npm run ganache-cli:dev && npm run migrate:dev:contracts",
     "migrate:dev:contracts": "truffle migrate --all --network rpc;",
-    "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js"
+    "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js",
+    "prepublishOnly": "truffle compile --all"
   },
   "files": [
     "index.js",
