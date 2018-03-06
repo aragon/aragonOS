@@ -45,5 +45,8 @@
     "truffle": "4.0.5",
     "truffle-config": "^1.0.4",
     "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "truffle-privatekey-provider": "0.0.5"
   }
 }
