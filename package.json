@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.0.5",
+  "version": "3.0.8",
   "description": "Core contracts for Aragon",
   "scripts": {
     "test": "npm run manage-nodes:dev && truffle test --network rpc",
@@ -12,10 +12,11 @@
     "console": "node_modules/.bin/truffle console",
     "manage-nodes:dev": "scripts/manage-nodes.sh",
     "manage-nodes:coverage": "SOLIDITY_COVERAGE=true scripts/manage-nodes.sh",
-    "migrate:dev": "npm run manage-nodes:dev && npm run migrate:dev:contracts",
-    "migrate:dev:contracts": "truffle migrate --all --network rpc;",
-    "generate:artifacts-dev": "npm run migrate:dev; truffle exec --network rpc scripts/generate_artifacts.js",
-    "cleanup:docker": "docker stop $(docker ps -aq)"
+    "migrate:dev": "npm run ganache-cli:dev && npm run migrate:dev:contracts",
+    "migrate:dev:contracts": "truffle migrate --all --network rpc",
+    "generate:artifacts-dev": "npm run migrate:dev && truffle exec --network rpc scripts/generate_artifacts.js",
+    "deploy:devnet:ens": "truffle compile && truffle exec --network devnet scripts/deploy-beta-ens.js",
+    "deploy:devnet:apm": "truffle compile && truffle exec --network devnet scripts/deploy-beta-apm.js",
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
@@ -45,5 +46,8 @@
     "truffle": "4.0.5",
     "truffle-config": "^1.0.4",
     "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "truffle-privatekey-provider": "0.0.5"
   }
 }

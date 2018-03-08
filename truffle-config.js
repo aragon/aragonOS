@@ -1,4 +1,5 @@
 const HDWalletProvider = require('truffle-hdwallet-provider')
+const PrivateKeyProvider = require('truffle-privatekey-provider')
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
@@ -9,7 +10,8 @@ if (process.env.LIVE_NETWORKS) {
   kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
 
   try {
-    rinkebyProvider = new HDWalletProvider(...require(require('homedir')()+'/.secret-rinkeby'))
+    const { rpc, key } = require(require('homedir')()+'/.rinkebykey.json')
+    rinkebyProvider = new PrivateKeyProvider(key, rpc)
   } catch (e) {
     rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
   }
@@ -19,7 +21,7 @@ const mochaGasSettings = {
   reporter: 'eth-gas-reporter',
   reporterOptions : {
     currency: 'USD',
-    gasPrice: 21
+    gasPrice: 3
   }
 }
 
@@ -32,6 +34,12 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       gas: 6.5e6,
+    },
+    devnet: {
+      network_id: 15,
+      host: 'devnet',
+      port: 8545,
+      gas: 6.9e6,
     },
     ropsten: {
       network_id: 3,
