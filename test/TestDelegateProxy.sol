@@ -60,7 +60,7 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function testFailIfReverts() {
-        TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
+        TestDelegateProxy(throwProxy).revertCall();
         throwProxy.assertThrows("should have reverted if call reverted");
     }
 
