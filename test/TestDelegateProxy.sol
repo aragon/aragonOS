@@ -30,15 +30,15 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function testMinReturn0WithoutReturn() {
-        delegateFwd(target, target.dontReturn.selector.toBytes(), 0);
+        delegatedFwd(target, target.dontReturn.selector.toBytes(), 0);
     }
 
     function testMinReturn0WithReturn() {
-        delegateFwd(target, target.returnSomething.selector.toBytes(), 0);
+        delegatedFwd(target, target.returnSomething.selector.toBytes(), 0);
     }
 
     function testMinReturn32WithReturn() {
-        delegateFwd(target, target.returnSomething.selector.toBytes(), 32);
+        delegatedFwd(target, target.returnSomething.selector.toBytes(), 32);
     }
 
     function testFailsIfReturnLessThanMin() {
@@ -47,7 +47,7 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function revertIfReturnLessThanMin() {
-        delegateFwd(target, target.dontReturn.selector.toBytes(), 32);
+        delegatedFwd(target, target.dontReturn.selector.toBytes(), 32);
     }
 
     function testSelfdestructIsRevertedWithMinReturn() {
@@ -56,7 +56,7 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function revertIfReturnLessThanMinAndDie() {
-        delegateFwd(target, target.die.selector.toBytes(), 32);
+        delegatedFwd(target, target.die.selector.toBytes(), 32);
     }
 
     function testFailIfReverts() {
@@ -65,11 +65,11 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function revertCall() {
-        delegateFwd(target, target.fail.selector.toBytes(), 0);
+        delegatedFwd(target, target.fail.selector.toBytes());
     }
 
     // keep as last test as it will kill this contract
     function testDieIfMinReturn0() {
-        delegateFwd(target, target.die.selector.toBytes(), 0);
+        delegatedFwd(target, target.die.selector.toBytes());
     }
 }

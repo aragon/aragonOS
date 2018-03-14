@@ -8,7 +8,7 @@ contract DelegateProxy {
     * @param _calldata Calldata for the delegatecall
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
-        delegateFwd(_dst, _calldata, 0);
+        delegatedFwd(_dst, _calldata, 0);
     }
 
     /**
@@ -17,7 +17,7 @@ contract DelegateProxy {
     * @param _calldata Calldata for the delegatecall
     * @param _minReturnSize Minimum size the call needs to return, if less than that it will revert
     */
-    function delegateFwd(address _dst, bytes _calldata, uint256 _minReturnSize) internal {
+    function delegatedFwd(address _dst, bytes _calldata, uint256 _minReturnSize) internal {
         require(isContract(_dst));
         uint256 size;
         uint256 result;
