@@ -15,4 +15,4 @@ module.exports = async callback => {
   console.log(ens)
 }
 
-// Deployed ENS: 0xaa0ccb537289d226941745c4dd7a819a750897d0
+// Rinkeby ENS: 0xfbae32d1cde62858bc45f51efc8cc4fa1415447e
