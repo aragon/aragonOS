@@ -128,21 +128,6 @@ contract('Kernel ACL', accounts => {
             assert.isTrue(await acl.hasPermission(accounts[6], app, role), 'should have perm')
         })
 
-        it('fails granting existing permission instance', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.grantPermission(accounts[8], app, role, { from: granted })
-            })
-        })
-
-        it('fails revoking non-granted permission', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
-            await acl.revokePermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.revokePermission(accounts[8], app, role, { from: granted })
-            })
-        })
-
         it('returns created permission', async () => {
             const allowed = await acl.hasPermission(granted, app, role)
             const manager = await acl.getPermissionManager(app, role)
