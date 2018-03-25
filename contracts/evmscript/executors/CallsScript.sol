@@ -44,5 +44,10 @@ contract CallsScript is IEVMScriptExecutor {
 
             location += (0x14 + 0x04 + calldataLength);
         }
+
+        bytes memory ret = new bytes(1);
+        ret[0] = 1;
+        
+        return ret;
     }
 }
