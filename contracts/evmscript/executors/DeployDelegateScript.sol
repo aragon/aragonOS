@@ -8,6 +8,7 @@ import "./DelegateScript.sol";
 contract DeployDelegateScript is DelegateScript {
     uint256 constant internal SCRIPT_START_LOCATION = 4;
 
+    uint256[2**254] private storageOffset;
     mapping (bytes32 => address) cache;
 
     /**
