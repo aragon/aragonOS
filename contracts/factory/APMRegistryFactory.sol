@@ -53,14 +53,13 @@ contract APMRegistryFactory is APMRegistryConstants {
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
+        // Set repo base app
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
+        dao.setApp(namespace, keccak256(node, keccak256(REPO_APP_NAME)), repoBase);
 
         // Deploy app proxies
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, keccak256(ENS_SUB_APP_NAME)), ensSubdomainRegistrarBase));
         APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, keccak256(APM_APP_NAME)), registryBase));
-
-        // APMRegistry controls Repos
-        dao.setApp(namespace, keccak256(node, keccak256(REPO_APP_NAME)), repoBase);
 
         DeployAPM(node, apm);
 
