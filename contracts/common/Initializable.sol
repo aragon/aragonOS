@@ -9,6 +9,11 @@ contract Initializable is AppStorage {
         _;
     }
 
+    modifier isInitialized {
+        require(initializationBlock > 0);
+        _;
+    }
+
     /**
     * @return Block number in which the contract was initialized
     */
