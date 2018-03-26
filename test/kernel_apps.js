@@ -165,7 +165,7 @@ contract('Kernel apps', accounts => {
                         const argId = '0x00' // arg 0
                         const op = '03'      // greater than
                         const value = '000000000000000000000000000000000000000000000000000000000005'  // 5
-                        const param = new web3.BigNumber(argId + op + value)
+                        const param = new web3.BigNumber(`${argId}${op}${value}`)
 
                         await acl.grantPermissionP(accounts[2], appProxy.address, r2, [param], { from: permissionsRoot })
                     })

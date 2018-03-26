@@ -100,7 +100,7 @@ contract('Kernel ACL', accounts => {
             const argId = '0x00' // arg 0
             const op = '02'      // not equal
             const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
-            const param = new web3.BigNumber(argId + op + value)
+            const param = new web3.BigNumber(`${argId}${op}${value}`)
 
             const r1 = await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
             // grants again without re-saving params
