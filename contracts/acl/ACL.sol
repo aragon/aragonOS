@@ -304,7 +304,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bool r2 = evalParam(_paramsHash, v2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
-            return (r1 && !r2) || (!r1 && r2);
+            return r1 != r2;
         }
 
         return r2; // both or and and depend on result of r2 after checks
