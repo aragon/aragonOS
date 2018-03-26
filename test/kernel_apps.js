@@ -132,10 +132,22 @@ contract('Kernel apps', accounts => {
                     await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
                 })
 
+                it('fails calling function with isInitialized (if it\'s not)', async () => {
+                    return assertRevert(async () => {
+                        await app.requiresInitialization()
+                    })
+                })
+
                 it('can initialize', async () => {
                     await app.initialize()
 
                     assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                })
+
+                it('allows calls with isInitialized modifier', async () => {
+                    await app.initialize()
+                    const result = await app.requiresInitialization()
+                    assert.equal(result, true, "Should return true")
                 })
 
                 it('app call works if sent from authed entity', async () => {
