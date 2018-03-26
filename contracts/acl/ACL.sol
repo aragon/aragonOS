@@ -332,13 +332,13 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bool ok = _oracleAddr.call(sig, bytes32(_who), bytes32(_where), _what);
 
         if (!ok) {
-          return false;
+            return false;
         }
 
         uint256 size;
         assembly { size := returndatasize }
         if (size != 32) {
-          return false;
+            return false;
         }
 
         bytes32 result = bytes32(0);
@@ -346,7 +346,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         Loga(result);
 
         assembly {
-          returndatacopy(result, 0, size)
+          returndatacopy(result, 0, size) // TODO: WHY IS IT NOT COPYING?!?!?
         }
 
         Loga(result);
