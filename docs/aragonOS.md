@@ -415,11 +415,24 @@ Script executors are contracts that take a script and an input and return an out
 
 #### 5.2.1 Script executors and EVMScriptRegistry
 
+EVMScriptExecutors must follow this interface:
+
+```solidity
+
+interface IEVMScriptExecutor {
+    function execScript(bytes script, bytes input, address[] blacklist) external returns (bytes);
+}
+```
+
+Because script executors get are called with a `delegatecall`, in order to prevent
+self-destructs, `IEVMScriptExecutor.execScript(...)` MUST return
+at least 32 bytes so in case an executor `selfdestruct`s it could be detected.
+
 ##### 5.2.1.1 CallsScript
 A simple way to concatenate multiple calls. It cancels the operation if any of the calls fail.
 
 - **Script body:** (See source code file for spec of the payload)
-- **Input: ** None
+- **Input:** None
 - **Output:** None.
 - **Blacklist:** Entire script reverts if a call to one of the addresses in the blacklist is performed.
 
@@ -427,7 +440,7 @@ A simple way to concatenate multiple calls. It cancels the operation if any of t
 `delegatecalls` into a given contract, which basically allows for any arbitrary computation within the EVM in the caller’s context.
 
 - **Script body:** Address of the contract to make the call to.
-- **Input: ** `calldata` for the `delegatecall` that will be performed.
+- **Input:** `calldata` for the `delegatecall` that will be performed.
 - **Output:** raw return data of the call.
 - **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
 
@@ -436,7 +449,7 @@ A simple way to concatenate multiple calls. It cancels the operation if any of t
 Is a superset of the DelegateScript, but it takes a contract’s initcode bytecode as its script body instead of just an address. On execution, it deploys the contract to the blockchain and executes it with a `delegatecall`.
 
 - **Script body:**: initcode for contract being created.
-- **Input: ** `calldata` for the `delegatecall` that will be performed after contract creation.
+- **Input:** `calldata` for the `delegatecall` that will be performed after contract creation.
 - **Output:** raw return data of the call.
 - **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
 
