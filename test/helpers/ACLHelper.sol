@@ -15,14 +15,14 @@ contract ACLHelper {
 
 
 contract AcceptOracle is ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool) {
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool) {
         return true;
     }
 }
 
 
 contract RejectOracle is ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool) {
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool) {
         return false;
     }
 }
