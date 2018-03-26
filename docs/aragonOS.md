@@ -1,11 +1,11 @@
 # aragonOS 3.0 alpha, developer documentation
 
 *Documentation for [aragonOS](https://github.com/aragon/aragonOS) 3.0 reference implementation.
-Updated Feb. 15th, 2018. (aragonOS v3.0.2 release)*
+Updated March 26th, 2018. (aragonOS v3.1.2 release)*
 
 This document provides a technical overview about the architecture and can be used
 as a specification and developer guide. For a less technically-oriented introduction
-to aragonOS 3.0, you can check the [alpha release blog post]().
+to aragonOS 3.0, you can check the [alpha release blog post](https://blog.aragon.one/introducing-aragonos-3-0-alpha-the-new-operating-system-for-protocols-and-dapps-348f7ac92cff).
 
 ## 0. Motivation
 
@@ -36,15 +36,15 @@ itself to a superior form of governance. Therefore we feel very strongly that
 **upgradeability** and **governance**, in the context of smart contract, are actually
 **two sides of the same coin**.
 
-At Aragon we are doing a lot of research in decentralized governance and the
+At Aragon we are doing research in decentralized governance and all the
 results of our research will be made aragonOS compatible, meaning that by using
 aragonOS, any protocol can take advantage of our extensive research on governance
 for upgradeability or any other aspect of the protocol or application.
 
 ## 1. General architecture and design philosophy
 
-Using aragonOS to build an application allows to **decouple** specific \*\*business
-logic\*\* of a protocol or application, from its **authentication logic**.
+Using aragonOS to build a system allows to **decouple** specific **business
+logic** of a protocol or application, from its **authentication logic**.
 
 It allows to code your application without thinking about authentication or
 governance at all, just by inheriting from the **AragonApp** base class and defining
@@ -61,7 +61,8 @@ decoupling the instance of a particular smart contract with the location of its 
 business logic. We call individual instances of contracts **Proxy** and the logic
 **base contracts**. A Proxy delegates all its logic on a base contract. Upgradeability
 is achieved because this link to the base contract can be modified, effectively
-updating the Proxy business logic.
+updating the Proxy business logic. We created [ERC897](https://github.com/ethereum/EIPs/pull/897) to standardize Proxy interfaces
+for better interoperability in the ecosystem.
 
 - **Forwarder:** A Forwarder is a contract that, given some conditions, will pass
 along a certain action to other contract(s).
@@ -69,7 +70,7 @@ Thanks to the fact that proxies allow a certain instance of a contract to never
 have to change its address even if its underlying logic changes, this allows to
 identify a concept such as that an action has been approved in a voting with a
 certain support by a group of holders of a token, just by checking that the
-action sender address is an instance of a Voting app with a particular address.
+action **sender address is an instance of a Voting app with a particular address**.
 This helps with the decoupling of authentication and logic explained before.
 
 ### 1.2 Architecture: Kernel and apps
@@ -87,33 +88,78 @@ This results in purely technical benefits such as testability, but it is also ve
 
 ### 1.4 Lifecycle of an aragonOS call
 
-![](https://github.com/aragon/aragonOS/raw/docs/docs/rsc/os3.gif)
+![](rsc/os3.gif)
 
 ## 2. Kernel
 ### 2.1 The app mapping
 
-At the core of the kernel lives a mapping, called the `app` mapping, which
+At the core of the kernel lives a mapping, called the `app` mapping, which is very
+critical.
 
 Modifying this mapping can have completely destructive consequences and can result in loss of funds. The permission to execute this action has to be well protected behind the ACL.
 
-`function setApp(bytes32 namespace, bytes appId, address app) public;
-`
+```solidity
+function setApp(bytes32 namespace, bytes appId, address app) public;
+```
+
 - **Namespace:** specifies what type of app record is being set.
-- **AppId:** used to identify what app is being setis the ENS `namehash` of the APM repo (e.g. `namehash('voting.aragonpm.eth')`).
+- **AppId:** used to identify what app is being set. It is the [ENS `namehash`](http://docs.ens.domains/en/latest/introduction.html#namehash) of the APM repo (e.g. `namehash('voting.aragonpm.eth')`).
 - **App:** Address of a contract that can have different meaning depending on the namespace.
 
 ### 2.2 Namespaces
 
-- Core namespace (`keccak256('core')`): in this namespace is where the core components of the kernel reside. The only thing in the core mapping is the reference to the kernel base contract.
-- Base namespace (`keccak256('base')`): keeps track of the base contracts for appIds.
-- App namespace (`keccak256('app')`): some apps use the app namespace as a way to reference other apps. For example this is used to store the reference to the ACL instance or the EVMScriptsRegistry.
+- **Core namespace** (`keccak256('core')`): in this namespace is where the core components of the kernel reside. The only thing in the core mapping is the reference to the kernel base contract.
+- **Base namespace** (`keccak256('base')`): keeps track of the base contracts for appIds.
+- **App namespace** (`keccak256('app')`): some apps use the app namespace as a way to reference other apps. For example this is used to store the reference to the ACL instance or the EVMScriptsRegistry.
 
-(Explained before, can skip)
 ## 3. Upgradeability
-### 3.1 DelegateProxies
-### 3.2 Kernel upgradeability
-### 3.3 AppProxies and upgradeability
-### 3.4 App sandbox
+
+Upgradeability of apps and the kernel is done by setting a new address for a
+specific key in the `apps` mapping in the kernel.
+
+### 3.1 Kernel upgradeability
+
+Kernel instances for different organizations can share the same implementation.
+Every Kernel instance is a KernelProxy . The logic for upgrading to a new implementation
+is in the implementation itself. An upgrade to the Kernel could render it un-upgradeable.
+
+Upgrading the kernel of an organization is done by changing the **Kernel appId**
+in the **Core namespace**
+
+```solidity
+kernel.setApp(kernel.CORE_NAMESPACE(), kernel.KERNEL_APP_ID(), newKernelCodeAddr)
+```
+
+### 3.2 AppProxies and upgradeability
+
+In a similar fashion to the Kernel, apps can share implementation code to save
+gas on deployment. AppProxies rely their upgradeability to the Kernel.
+
+Upgrading an app is done by setting a new app address for the **appId** for the
+**Base namespace** in the kernel.
+
+```solidity
+kernel.setApp(kernel.APP_BASES_NAMESPACE(), votingAppId, newVotingAppCodeAddr)
+```
+
+aragonOS provides two different types of App Proxies:
+
+- **UpgradeableAppProxy**: in every call to the proxy, it checks with the Kernel
+what the current code for that appId is and forwards the call.
+
+- **PinnedAppProxy**: on contract creation it checks and saves the app code currently
+in the Kernel. This cannot be upgraded unless the app code has explicit logic to
+change that storage slot.
+
+There is an extra function in the Kernel that allows for setting the app code and at
+the same time creating a new proxy. This function only sets the code the first time.
+
+```solidity
+kernel.newAppInstance(votingAppId, votingApp)
+kernel.newPinnedAppInstance(votingAppId, votingApp)
+```
+
+### 3.3 App sandbox (client side)
 
 It is of paramount importance that apps can not change the DOM of other apps in an attempt to mislead users. As such, all apps are sandboxed.
 
@@ -132,7 +178,7 @@ We refer to a **Permission Instance** as an entity holding a certain permission.
 ### 4.1 The ACL as an Aragon app, the Interface
 First of all, you need to define your base ACL instance for your kernel with:
 
-```
+```solidity
 acl = ACL(kernel.acl())
 ```
 
@@ -140,7 +186,7 @@ Then you can execute the following actions:
 
 #### Create Permission
 
-```
+```solidity
 acl.createPermission(address entity, address app, bytes32 role, address manager)
 ```
 
@@ -154,7 +200,7 @@ Note that creating permissions is made mandatory by the ACL: all actions requiri
 
 #### Grant Permission
 
-```
+```solidity
 acl.grantPermission(address entity, address app, bytes32 role)
 ```
 
@@ -164,7 +210,7 @@ The `grantPermission()` action doesn’t require protection with the ACL because
 
 #### Revoke Permission
 
-```
+```solidity
 acl.revokePermission(address entity, address app, bytes32 role)
 ```
 
@@ -200,7 +246,7 @@ As we have seen, when a permission is created, a **Permission Manager** is set f
 
 The Permission Manager can be changed with:
 
-```
+```solidity
 acl.setPermissionManager(address newManager, address app, bytes32 role)
 ```
 
@@ -212,7 +258,7 @@ The new permission manager replaces the old permission manager, resulting in the
 
 There's also a getter for the Permission Manager:
 
-```
+```solidity
 acl.getPermissionManager(address app, bytes32 role)
 ```
 
@@ -303,19 +349,19 @@ of the first parameter.
 To encode some logic operations (AND, OR, IF-ELSE) which link to other parameters, the following helpers are provided, where the function arguments always refer to parameter indexes in the `Param` array they belong to:
 
 #### If-Else (ternary) operation
-```
+```solidity
 encodeIfElse(uint condition, uint success, uint failure)
 ```
 
 #### Binary operations (And, Or)
-```
+```solidity
 encodeOperator(uint param1, uint param2)
 ```
 
 ### 4.8 Examples of rules
 The interpreter supports encoding complex rules in what would look almost like a programming language, for example let’s look at the following [test case](https://github.com/aragon/aragonOS/blob/63c4722b8629f78350586bcea7c0837ab5882a20/test/TestACLInterpreter.sol#L112-L126):
 
-```
+```solidity
     function testComplexCombination() {
         // if (oracle and block number > block number - 1) then arg 0 < 10 or oracle else false
         Param[] memory params = new Param[](7);
@@ -339,13 +385,13 @@ When assigned to a permission, this rule will **evaluate to true** (and therefor
 ### 4.9 Events
 [`createPermission()`](#create-permission), [`grantPermission()`](#grant-permission), and [`revokePermission()`](#revoke-permission) all fire the same `SetPermission` event that Aragon clients are expected to cache and process into a locally stored version of the ACL:
 
-```
+```solidity
 SetPermission(address indexed from, address indexed to, bytes32 indexed role, bool allowed)
 ```
 
 [`setPermissionManager()`](#set-permission-manager) fires the following event:
 
-```
+```solidity
 ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager)
 ```
 
@@ -434,11 +480,11 @@ After discovering an entity in the DAO by traversing the ACL that is an app (see
 section 2.3 *The apps of a DAO*), we can fetch its `app.appId()` and use ENS to
 resolve its Repo contract:
 
-```
+```solidity
 repo = Repo(Resolver(ens.resolver(appId)).addr(appId))
 ```
 or using ens.js:
-```
+```js
 repo = Repo.at(await ens.addr(appId))
 ```
 
@@ -494,13 +540,13 @@ its `appId` and `appCode` (See section *6.3.2.3 By latest contract address*)
 Repos offer multiple ways to fetch versions. By checking logs for the following
 event one can see all the versions ever created in a Repo:
 
-```
+```solidity
 (Repo) NewVersion(uint256 versionId, uint16[3] semanticVersion);
 ```
 
 All different methods for fetching versions return the following tuple:
 
-```
+```solidity
 repoVersion = (uint16[3] semanticVersion, address contractAddress, bytes contentURI)
 ```
 
@@ -508,19 +554,19 @@ repoVersion = (uint16[3] semanticVersion, address contractAddress, bytes content
 Every version can be fetched with its `versionId` (which starts in `1` and is
 increments by `1` each version).
 
-```
+```solidity
 repoVersion = repo.getByVersionId(versionId)
 ```
 
 The total count of versions created in a Repo can be queried with:
-```
+```solidity
 count = repo.getVersionsCount()
 lastVersionId = count - 1
 ```
 
 #### 6.3.2.2 By semantic version
 Providing the exact semantic version.
-```
+```solidity
 repoVersion = repo.getBySemanticVersion([major, minor, patch])
 ```
 
@@ -528,13 +574,13 @@ repoVersion = repo.getBySemanticVersion([major, minor, patch])
 Fetching the latest version by contract address allows clients to get the latest
 frontend package for an organization that may have not upgraded the smart contract
 code to the latest version.
-```
+```solidity
 repoVersion = repo.getLatestForContractAddress(contractCode)
 ```
 
 #### 6.3.2.4 Latest version
 Pretty self-describing.
-```
+```solidity
 repoVersion = repo.getLatest()
 ```
 
@@ -558,10 +604,10 @@ npm i -g truffle
 
 ### 7.2 Directory structure
 
-Next we initialise a new app using the CLI.
+Next we initialize a new app using the CLI.
 
 ```
-aragon-dev-cli init registry.aragonpm.eth bare
+aragon init registry.aragonpm.eth bare
 ```
 
 This will create a folder named `registry` in the current directory from the `bare` boilerplate. The `bare` boilerplate only includes the essentials: a directory structure, the manifest files and two dependencies; `@aragon/os` and `@aragon/client`.
@@ -583,7 +629,7 @@ To see what these files look like, check out our voting app's manifest files [he
 
 Our contract is a simple registry, so it has three operations: get, set and remove. Let's write it as a normal contract first, and plug in AragonOS afterwards to illustrate how simple it is.
 
-```js
+```solidity
 pragma solidity ^0.4.15;
 
 /**
@@ -642,7 +688,7 @@ contract RegistryApp {
 
 So, now we have a registry contract, but how do we make it upgradeable? You simply import the `AragonApp` interface and inherit it.
 
-```js
+```solidity
 // ...
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
@@ -673,7 +719,7 @@ This might sound a bit complex, but it's very simple to use.
 
 Let's try this for our registry. We define two roles, `ADD_ENTRY_ROLE` and `REMOVE_ENTRY_ROLE`:
 
-```js
+```solidity
 // ...
 
 contract RegistryApp is AragonApp {
@@ -685,7 +731,7 @@ contract RegistryApp is AragonApp {
 
 Next, we guard the `add` and `remove` functions with the `auth` modifier:
 
-```js
+```solidity
 // ...
 
 contract RegistryApp is AragonApp {
@@ -738,7 +784,7 @@ const app = new Aragon()
 app.store((state, event) => {
   // Define initial state
   if (state === null) state = []
-  
+
   // Reduce based on events
   switch (event.event) {
     case 'EntryAdded':
@@ -746,7 +792,7 @@ app.store((state, event) => {
     case 'EntryRemoved':
       return state.filter((entryId) => entryId !== event.returnValues.id))
   }
-  
+
   // Reducers **must** always return a state
   return state
 })
