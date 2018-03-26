@@ -14,7 +14,9 @@ contract AppProxyPinned is AppProxyBase {
              AppProxyBase(_kernel, _appId, _initializePayload) public
     {
         pinnedCode = getAppBase(appId);
-        require(pinnedCode != address(0));
+
+        // Make sure that the underlying app code is actually a contract
+        require(isContract(pinnedCode));
     }
 
     function getCode() public view returns (address) {
