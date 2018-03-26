@@ -15,7 +15,7 @@ const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 
 contract('Kernel apps', accounts => {
-    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}
+    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}, ERCProxy
 
     const permissionsRoot = accounts[0]
     const appId = hash('stub.aragonpm.test')
@@ -27,6 +27,7 @@ contract('Kernel apps', accounts => {
         factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
+        ERCProxy = await getContract('ERCProxy').new()
     })
 
     beforeEach(async () => {
@@ -75,7 +76,7 @@ contract('Kernel apps', accounts => {
                 const implementation = await appProxy.implementation()
                 assert.equal(implementation, appCode1.address, "App address should match")
                 const proxyType = await appProxy.proxyType()
-                assert.equal(proxyType, 2, "Proxy type should be 2 (upgradeable)")
+                assert.equal(proxyType, ERCProxy.UPGRADEABLE(), "Proxy type should be 2 (upgradeable)")
             })
 
             it('fails if kernel addr is not a kernel', async () => {
@@ -236,7 +237,7 @@ contract('Kernel apps', accounts => {
             const implementation = await appProxy.implementation()
             assert.equal(implementation, appCode1.address, "App address should match")
             const proxyType = await appProxy.proxyType()
-            assert.equal(proxyType, 1, "Proxy type should be 1 (forwarding)")
+            assert.equal(proxyType, ERCProxy.FORWARDING(), "Proxy type should be 1 (forwarding)")
         })
 
         it('fails if code hasnt been set on deploy', async () => {

@@ -7,7 +7,7 @@ const ACL = artifacts.require('ACL')
 const getContract = artifacts.require
 
 contract('Kernel Upgrade', accounts => {
-    let kernelBase, kernel, namespace, kernelId = {}, app
+    let kernelBase, kernel, namespace, kernelId = {}, app, ERCProxy
 
     const permissionsRoot = accounts[0]
 
@@ -15,6 +15,7 @@ contract('Kernel Upgrade', accounts => {
       kernelBase = await getContract('Kernel').new()
       const aclBase = await getContract('ACL').new()
       factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
+      ERCProxy = await getContract('ERCProxy').new()
     })
 
     beforeEach(async () => {
@@ -35,7 +36,7 @@ contract('Kernel Upgrade', accounts => {
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = await kernelProxy.proxyType()
-        assert.equal(proxyType, 2, "Proxy type should be 2 (upgradeable)")
+        assert.equal(proxyType, ERCProxy.UPGRADEABLE(), "Proxy type should be 2 (upgradeable)")
     })
 
     it('fails to upgrade kernel without permission', async () => {
