@@ -107,10 +107,10 @@ contract('Kernel ACL', accounts => {
             // retrieve the params back with the getters
             const numParams = await acl.getPermissionParamsLength(accounts[3], app, role)
             assert.equal(numParams, 1, 'There should be just 1 param')
-            const returnedParam = await acl.getPermissionParams(accounts[3], app, role, 0)
-            assert.equal(returnedParam[0].valueOf(), parseInt(argId), 'param id should match')
-            assert.equal(returnedParam[1].valueOf(), parseInt(op), 'param op should match')
-            assert.equal(returnedParam[2].valueOf(), parseInt(value), 'param value should match')
+            const returnedParam = await acl.getPermissionParam(accounts[3], app, role, 0)
+            assert.equal(returnedParam[0].valueOf(), parseInt(argId, 16), 'param id should match')
+            assert.equal(returnedParam[1].valueOf(), parseInt(op, 10), 'param op should match')
+            assert.equal(returnedParam[2].valueOf(), parseInt(value, 10), 'param value should match')
 
             // grants again without re-saving params
             const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
