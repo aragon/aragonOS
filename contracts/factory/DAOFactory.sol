@@ -53,7 +53,7 @@ contract DAOFactory {
             acl.revokePermission(this, acl, permRole);
             acl.grantPermission(_root, acl, permRole);
 
-            acl.setPermissionManager(address(0), dao, appManagerRole);
+            acl.removePermissionManager(dao, appManagerRole);
             acl.setPermissionManager(_root, acl, permRole);
         }
 

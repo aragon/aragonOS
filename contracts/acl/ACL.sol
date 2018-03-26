@@ -62,7 +62,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
+    * @dev Creates a permission that wasn't previously set and managed. Access is limited by the ACL.
     *      If a created permission is removed it is possible to reset it with createPermission.
     * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
@@ -130,6 +130,18 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         external
     {
         _setPermissionManager(_newManager, _app, _role);
+    }
+
+    /**
+    * @notice Removes the manager of the permission `_role` in `_app`
+    * @param _app Address of the app in which the permission is being unmanaged
+    * @param _role Identifier for the group of actions being unmanaged
+    */
+    function removePermissionManager(address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
+        external
+    {
+        _setPermissionManager(address(0), _app, _role);
     }
 
     /**
