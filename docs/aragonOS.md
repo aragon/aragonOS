@@ -473,7 +473,24 @@ This diagram tries to illustrate the architecture of an APM Registry DAO:
 
 ### 6.2 APMRegistry
 #### 6.2.1 ENSSubdomainRegistrar
+
+Ownership of the ENS name that the `APMRegistry` operates has to be transferred to
+the `ENSSubdomainRegistrar` app that is part of the DAO.
+
+The `APMRegistry` needs to have permission on the `ENSSubdomainRegistrar` to create
+new names, which is done every time a repo is created.
+
 #### 6.2.2 APMRegistry governance
+
+Each instance of an APMRegistry can have different governance. Governance of a
+registry is enforced directly using the DAO's ACL.
+
+By default a new repo will set the creator (or `dev` param) as the owner of the
+repo and it is the only address that can create new versions in the repo. However,
+as the permission manager, this account can grant permission to other entities to
+create versions. These entities can be anything from another dev, to a multisig or
+a full blown DAO.
+
 ### 6.3 Repos
 
 After discovering an entity in the DAO by traversing the ACL that is an app (see
@@ -810,5 +827,3 @@ app.state().subscribe((state) => console.log(state))
 ```
 
 Build your app using something like Webpack to bundle your scripts together so they can run in the browser. That's it!
-
-### 7.6 Publishing your app with `aragon-dev-cli`
