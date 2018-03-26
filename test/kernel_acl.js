@@ -103,6 +103,15 @@ contract('Kernel ACL', accounts => {
             const param = new web3.BigNumber(argId + op + value)
 
             const r1 = await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+
+            // retrieve the params back with the getters
+            const numParams = await acl.getPermissionParamsLength(accounts[3], app, role)
+            assert.equal(numParams, 1, 'There should be just 1 param')
+            const returnedParam = await acl.getPermissionParams(accounts[3], app, role, 0)
+            assert.equal(returnedParam[0].valueOf(), parseInt(argId), 'param id should match')
+            assert.equal(returnedParam[1].valueOf(), parseInt(op), 'param op should match')
+            assert.equal(returnedParam[2].valueOf(), parseInt(value), 'param value should match')
+
             // grants again without re-saving params
             const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
 
