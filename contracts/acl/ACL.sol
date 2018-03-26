@@ -101,8 +101,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
         public
     {
-        require(!hasPermission(_entity, _app, _role));
-
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(_entity, _app, _role, paramsHash);
     }
@@ -118,8 +116,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
         external
     {
-        require(hasPermission(_entity, _app, _role));
-
         _setPermission(_entity, _app, _role, bytes32(0));
     }
 
