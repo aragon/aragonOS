@@ -20,14 +20,12 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     function initialize(address _baseAcl, address _permissionsCreator) onlyInit public {
         initialized();
 
-        // Set the ACL app's base contract
-        _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
-
         IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
-        acl.initialize(_permissionsCreator);
 
-        // Set the ACL app's proxy contract
+        _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
         _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
+
+        acl.initialize(_permissionsCreator);
     }
 
     /**
@@ -104,9 +102,9 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
         id = keccak256(_namespace, _name);
 
         if (_app != address(0)) {
-            address installedApp = getApp(id);
-            if (installedApp != address(0)) {
-                require(installedApp == _app);
+            address app = getApp(id);
+            if (app != address(0)) {
+                require(app == _app);
             } else {
                 apps[id] = _app;
                 SetApp(_namespace, _name, id, _app);
