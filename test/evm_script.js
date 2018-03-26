@@ -1,4 +1,4 @@
-const { rawDecode } = require('ethereumjs-abi')
+const { rawEncode } = require('ethereumjs-abi')
 
 const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
@@ -311,6 +311,27 @@ contract('EVM Script', accounts => {
                 return assertRevert(async () => {
                     // passing some input makes executor to selfdestruct
                     await executor.executeWithIO('0x00000004', '0x0001', [])
+                })
+            })
+        })
+
+        context('script overflow', async () => {
+            const encodeCallScriptBad = actions => {
+                return actions.reduce((script, { to, calldata }) => {
+                    const addr = rawEncode(['address'], [to]).toString('hex')
+                    const length = rawEncode(['uint256'], [calldata.length]).toString('hex') // should be (calldata.length - 2) / 2
+
+                    // Remove 12 first 0s of padding for addr and 28 0s for uint32
+                    return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
+                }, '0x00000001') // spec 1
+            }
+
+            it('fails if data length is too big', async () => {
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const script = encodeCallScriptBad([action])
+
+                return assertRevert(async () => {
+                    await executor.execute(script)
                 })
             })
         })

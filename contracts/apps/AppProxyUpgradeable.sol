@@ -4,8 +4,6 @@ import "./AppProxyBase.sol";
 
 
 contract AppProxyUpgradeable is AppProxyBase {
-    address public pinnedCode;
-
     /**
     * @dev Initialize AppProxyUpgradeable (makes it an upgradeable Aragon app)
     * @param _kernel Reference to organization kernel for the app
