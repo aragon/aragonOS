@@ -20,6 +20,8 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 
+const getContract = artifacts.require
+
 contract('EVM Script', accounts => {
     let executor, executionTarget, dao, daoFact, reg, constants, acl = {}
 
@@ -29,7 +31,10 @@ contract('EVM Script', accounts => {
 
     before(async () => {
         const regFact = await EVMScriptRegistryFactory.new()
-        daoFact = await DAOFactory.new(regFact.address)
+
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
 
         constants = await EVMScriptRegistryConstants.new()
     })

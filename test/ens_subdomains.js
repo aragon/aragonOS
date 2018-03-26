@@ -14,7 +14,7 @@ const getContract = name => artifacts.require(name)
 
 // Using APMFactory in order to reuse it
 contract('ENSSubdomainRegistrar', accounts => {
-    let ens, apmFactory, registry, baseDeployed, dao, acl, registrar = {}
+    let ens, apmFactory, registry, baseDeployed, dao, acl, registrar, ensFactory, daoFactory = {}
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -29,14 +29,18 @@ contract('ENSSubdomainRegistrar', accounts => {
     before(async () => {
         const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
         baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))
-        const baseAddrs = baseDeployed.map(c => c.address)
 
-        const ensFactory = await getContract('ENSFactory').new()
-        apmFactory = await getContract('APMRegistryFactory').new(...baseAddrs, '0x0', ensFactory.address)
-        ens = ENS.at(await apmFactory.ens())
+        ensFactory = await getContract('ENSFactory').new()
+
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {
+        const baseAddrs = baseDeployed.map(c => c.address)
+        apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
+        ens = ENS.at(await apmFactory.ens())
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)

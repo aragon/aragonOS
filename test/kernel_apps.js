@@ -9,6 +9,7 @@ const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
 
 const getSig = x => web3.sha3(x).slice(0, 10)
+const getContract = artifacts.require
 
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
@@ -21,7 +22,9 @@ contract('Kernel apps', accounts => {
     const zeroAddr = '0x0000000000000000000000000000000000000000'
 
     before(async () => {
-        factory = await DAOFactory.new()
+        const kernelBase = await getContract('Kernel').new()
+        const aclBase = await getContract('ACL').new()
+        factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
     })
@@ -107,13 +110,14 @@ contract('Kernel apps', accounts => {
         })
 
         context('not initializing on proxy constructor', () => {
+            let r2 = {}
             beforeEach(async () => {
                 const initializationPayload = '0x' // dont initialize
                 appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload)
                 app = AppStub.at(appProxy.address)
 
                 // assign app permissions
-                const r2 = await appCode1.ROLE()
+                r2 = await appCode1.ROLE()
                 await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
             })
 
@@ -128,15 +132,53 @@ contract('Kernel apps', accounts => {
                     await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
                 })
 
+                it('fails calling function with isInitialized (if it\'s not)', async () => {
+                    return assertRevert(async () => {
+                        await app.requiresInitialization()
+                    })
+                })
+
                 it('can initialize', async () => {
                     await app.initialize()
 
                     assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
                 })
 
+                it('allows calls with isInitialized modifier', async () => {
+                    await app.initialize()
+                    const result = await app.requiresInitialization()
+                    assert.equal(result, true, "Should return true")
+                })
+
                 it('app call works if sent from authed entity', async () => {
                     await app.setValue(10)
                     assert.equal(await app.getValue(), 10, 'should have returned correct value')
+                })
+
+                it('parametrized app call works if no params', async () => {
+                    await app.setValueParam(11)
+                    assert.equal(await app.getValue(), 11, 'should have returned correct value')
+                })
+
+                context('parametrized calls', () => {
+                    beforeEach(async () => {
+                        const argId = '0x00' // arg 0
+                        const op = '03'      // greater than
+                        const value = '000000000000000000000000000000000000000000000000000000000005'  // 5
+                        const param = new web3.BigNumber(argId + op + value)
+
+                        await acl.grantPermissionP(accounts[2], appProxy.address, r2, [param], { from: permissionsRoot })
+                    })
+
+                    it('parametrized app call fails if param eval fails', async () => {
+                        return assertRevert(async () => {
+                            await app.setValueParam(4, { from: accounts[2]})
+                        })
+                    })
+
+                    it('parametrized app call succeeds if param eval succeeds', async () => {
+                        await app.setValueParam(6, { from: accounts[2]})
+                    })
                 })
 
                 it('fails when called by unauthorized entity', async () => {

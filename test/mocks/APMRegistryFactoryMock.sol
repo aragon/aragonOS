@@ -4,15 +4,15 @@
 import "../../contracts/factory/APMRegistryFactory.sol";
 
 contract APMRegistryFactoryMock is APMRegistryFactory {
-
     function APMRegistryFactoryMock(
+        DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
         ENSSubdomainRegistrar _ensSubBase,
         ENS _ens,
         ENSFactory _ensFactory
     )
-    APMRegistryFactory(_registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
+    APMRegistryFactory(_daoFactory, _registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
 
     function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {}
 
@@ -25,21 +25,19 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
             ens.setSubnodeOwner(tld, label, this);
         }
 
-        Kernel dao = newDAO(this);
+        Kernel dao = daoFactory.newDAO(this);
         ACL acl = ACL(dao.acl());
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
-        // App code for relevant apps
-        dao.setApp(namespace, APM_APP_ID, registryBase);
-        dao.setApp(namespace, REPO_APP_ID, repoBase);
-        dao.setApp(namespace, ENS_SUB_APP_ID, ensSubdomainRegistrarBase);
+        // Deploy app proxies
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase));
 
-        // Deploy proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(newAppProxy(dao, ENS_SUB_APP_ID));
-        APMRegistry apm = APMRegistry(newAppProxy(dao, APM_APP_ID));
+        // APMRegistry controls Repos
+        dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
 
         DeployAPM(node, apm);
 

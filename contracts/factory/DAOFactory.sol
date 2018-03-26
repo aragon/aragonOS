@@ -16,14 +16,14 @@ contract DAOFactory {
     event DeployDAO(address dao);
     event DeployEVMScriptRegistry(address reg);
 
-    function DAOFactory(address _regFactory) public {
+    function DAOFactory(address _baseKernel, address _baseACL, address _regFactory) public {
         // No need to init as it cannot be killed by devops199
-        baseKernel = address(new Kernel());
-        baseACL = address(new ACL());
-
         if (_regFactory != address(0)) {
             regFactory = EVMScriptRegistryFactory(_regFactory);
         }
+
+        baseKernel = _baseKernel;
+        baseACL = _baseACL;
     }
 
     /**

@@ -10,9 +10,10 @@ import "./Repo.sol";
 
 contract APMRegistryConstants {
     // Cant have a regular APM appId because it is used to build APM
-    bytes32 constant public APM_APP_ID = keccak256("apm.aragon");
-    bytes32 constant public REPO_APP_ID = keccak256("repo.aragon");
-    bytes32 constant public ENS_SUB_APP_ID = keccak256("enssub.aragon");
+    // TODO: recheck this
+    string constant public APM_APP_NAME = "apm-registry";
+    string constant public REPO_APP_NAME = "apm-repo";
+    string constant public ENS_SUB_APP_NAME = "apm-enssub";
 }
 
 
@@ -73,6 +74,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         // Give permissions to _dev
         ACL acl = ACL(kernel.acl());
         acl.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
+        acl.grantPermission(_dev, repo, repo.CREATE_VERSION_ROLE());
         acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
         return repo;
     }
@@ -94,6 +96,10 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     }
 
     function newClonedRepo() internal returns (Repo) {
-        return Repo(newAppProxy(kernel, REPO_APP_ID));
+        return Repo(newAppProxy(kernel, repoAppId()));
+    }
+
+    function repoAppId() internal view returns (bytes32) {
+        return keccak256(registrar.rootNode(), keccak256(REPO_APP_NAME));
     }
 }

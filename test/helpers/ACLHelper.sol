@@ -3,7 +3,7 @@ pragma solidity 0.4.18;
 import "../../contracts/acl/ACL.sol";
 
 
-contract ACLHelpers {
+contract ACLHelper {
     function encodeOperator(uint256 param1, uint256 param2) internal pure returns (uint240) {
         return encodeIfElse(param1, param2, 0);
     }
