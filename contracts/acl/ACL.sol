@@ -258,7 +258,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = ACLOracle(param.value).canPerform(_who, _where, _what) ? 1 : 0;
+            value = checkOracle(address(param.value), _who, _where, _what) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
@@ -322,6 +322,36 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
         if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
         return false;
+    }
+
+    event Loga(bytes32 a);
+    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what) internal view returns (bool) {
+        bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
+
+        // a raw call is required so we can return false if the call reverts, rather than reverting
+        bool ok = _oracleAddr.call(sig, bytes32(_who), bytes32(_where), _what);
+
+        if (!ok) {
+          return false;
+        }
+
+        uint256 size;
+        assembly { size := returndatasize }
+        if (size != 32) {
+          return false;
+        }
+
+        bytes32 result = bytes32(0);
+
+        Loga(result);
+
+        assembly {
+          returndatacopy(result, 0, size)
+        }
+
+        Loga(result);
+
+        return uint(result) > 0;
     }
 
     /**
