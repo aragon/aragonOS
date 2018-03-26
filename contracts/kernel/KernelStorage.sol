@@ -11,6 +11,9 @@ contract KernelConstants {
 
     bytes32 constant public ACL_APP_ID = keccak256("acl.aragonpm.eth");
     bytes32 constant public ACL_APP = keccak256(APP_ADDR_NAMESPACE, ACL_APP_ID);
+
+    uint256 constant public FORWARDING = 1;
+    uint256 constant public UPGRADEABLE = 2;
 }
 
 

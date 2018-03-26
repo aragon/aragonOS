@@ -71,6 +71,13 @@ contract('Kernel apps', accounts => {
                 app = AppStub.at(appProxy.address)
             })
 
+            it('checks ERC897 functions', async () => {
+                const implementation = await appProxy.implementation()
+                assert.equal(implementation, appCode1.address, "App address should match")
+                const proxyType = await appProxy.proxyType()
+                assert.equal(proxyType, 2, "Proxy type should be 2 (upgradeable)")
+            })
+
             it('fails if kernel addr is not a kernel', async () => {
                 return assertRevert(async () => {
                     await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
@@ -223,6 +230,13 @@ contract('Kernel apps', accounts => {
             // assign app permissions
             const r2 = await appCode1.ROLE()
             await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
+        })
+
+        it('checks ERC897 functions', async () => {
+            const implementation = await appProxy.implementation()
+            assert.equal(implementation, appCode1.address, "App address should match")
+            const proxyType = await appProxy.proxyType()
+            assert.equal(proxyType, 1, "Proxy type should be 1 (forwarding)")
         })
 
         it('fails if code hasnt been set on deploy', async () => {
