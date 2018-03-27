@@ -7,7 +7,9 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
 const Delegator = artifacts.require('Delegator')
 const FailingDelegator = artifacts.require('FailingDelegator')
+const DyingDelegator = artifacts.require('DyingDelegator')
 const FailingDeployment = artifacts.require('FailingDeployment')
+const MockDyingScriptExecutor = artifacts.require('MockDyingScriptExecutor')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -71,6 +73,8 @@ contract('EVM Script', accounts => {
             const receipt = await dao.newAppInstance(executorAppId, '0x0', { from: boss })
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
+
+            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
         })
 
         it('fails to execute if spec ID is 0', async () => {
@@ -86,7 +90,6 @@ contract('EVM Script', accounts => {
         })
 
         it('can disable executors', async () => {
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))
@@ -205,6 +208,14 @@ contract('EVM Script', accounts => {
                 })
             })
 
+            it('fails if underlying call selfdestructs', async () => {
+                const dyingDelegator = await DyingDelegator.new()
+                return assertRevert(async () => {
+                    // extra gas to avoid oog
+                    await executor.executeWithBan(encodeDelegate(dyingDelegator.address), [], { gas: 2e6 })
+                })
+            })
+
             it('fails if calling to non-contract', async () => {
                 return assertRevert(async () => {
                     await executor.execute(encodeDelegate(accounts[0])) // addr is too small
@@ -276,6 +287,30 @@ contract('EVM Script', accounts => {
             it('fails if execution modifies app id', async () => {
                 return assertRevert(async () => {
                     await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
+                })
+            })
+        })
+
+        context('adding mock dying executor', () => {
+            let dyingExecutor = null
+
+            beforeEach(async () => {
+                dyingExecutor = await MockDyingScriptExecutor.new()
+                await reg.addScriptExecutor(dyingExecutor.address, { from: boss })
+            })
+
+            it('registers new executor', async () => {
+                assert.equal(await reg.getScriptExecutor('0x00000004'), dyingExecutor.address)
+            })
+
+            it('executes mock executor', async () => {
+                await executor.execute('0x00000004')
+            })
+
+            it('fails when executor selfdestructs', async () => {
+                return assertRevert(async () => {
+                    // passing some input makes executor to selfdestruct
+                    await executor.executeWithIO('0x00000004', '0x0001', [])
                 })
             })
         })
