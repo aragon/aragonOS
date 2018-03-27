@@ -32,12 +32,12 @@ contract DAOFactory {
     function newDAO(address _root) public returns (Kernel dao) {
         dao = Kernel(new KernelProxy(baseKernel));
 
-        address initialRoot = address(regFactory) != address(0) ? this : _root;
-        dao.initialize(baseACL, initialRoot);
+        if (address(regFactory) == address(0)) {
+            dao.initialize(baseACL, _root);
+        } else {
+            dao.initialize(baseACL, this);
 
-        ACL acl = ACL(dao.acl());
-
-        if (address(regFactory) != address(0)) {
+            ACL acl = ACL(dao.acl());
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
             bytes32 appManagerRole = dao.APP_MANAGER_ROLE();
 
