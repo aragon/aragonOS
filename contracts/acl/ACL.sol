@@ -339,9 +339,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         bool result;
         assembly {
-          let ptr := mload(0x40)
-          returndatacopy(ptr, 0, size)
-          result := mload(ptr)
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, size)
+            result := mload(ptr)
+            mstore(ptr, 0)
         }
 
         return result;
