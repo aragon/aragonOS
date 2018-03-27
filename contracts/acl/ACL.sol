@@ -6,7 +6,7 @@ import "./IACL.sol";
 
 
 interface ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool);
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool);
 }
 
 
@@ -101,8 +101,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
         public
     {
-        require(!hasPermission(_entity, _app, _role));
-
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(_entity, _app, _role, paramsHash);
     }
@@ -118,8 +116,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
         external
     {
-        require(hasPermission(_entity, _app, _role));
-
         _setPermission(_entity, _app, _role, bytes32(0));
     }
 
@@ -258,7 +254,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = checkOracle(address(param.value), _who, _where, _what) ? 1 : 0;
+            value = checkOracle(address(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
