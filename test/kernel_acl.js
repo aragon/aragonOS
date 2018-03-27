@@ -167,19 +167,16 @@ contract('Kernel ACL', accounts => {
         })
 
         it('root cannot grant permission', async () => {
+            // Make sure grandchild doesn't have permission yet
+            assert.isFalse(await acl.hasPermission(child, app, role))
             return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
-            })
-        })
-
-        it('root cannot grant permission', async () => {
-            return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                await acl.grantPermission(child, app, role, { from: permissionsRoot })
             })
         })
 
         context('transferring managership', () => {
             const newManager = accounts[8]
+            assert.notEqual(newManager, granted, 'newManager should not be the same as granted')
 
             beforeEach(async () => {
                 const receipt = await acl.setPermissionManager(newManager, app, role, { from: granted })
@@ -197,6 +194,40 @@ contract('Kernel ACL', accounts => {
             })
 
             it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
+                return assertRevert(async () => {
+                    await acl.grantPermission(newManager, app, role, { from: granted })
+                })
+            })
+        })
+
+        context('removing managership', () => {
+            const newManager = accounts[4]
+            assert.notEqual(newManager, granted, 'newManager should not be the same as granted')
+
+            beforeEach(async () => {
+                const receipt = await acl.removePermissionManager(app, role, { from: granted })
+                assertEvent(receipt, 'ChangePermissionManager')
+            })
+
+            it('removes manager', async () => {
+                const noManager = await acl.getPermissionManager(app, role)
+                assert.equal('0x0000000000000000000000000000000000000000', noManager, 'manager should have been removed')
+            })
+
+            it('can recreate permission', async () => {
+                const createReceipt = await acl.createPermission(newManager, app, role, newManager, { from: permissionsRoot })
+                assertEvent(createReceipt, 'SetPermission')
+                assertEvent(createReceipt, 'ChangePermissionManager')
+
+                const grantReceipt = await acl.grantPermission(granted, app, role, { from: newManager })
+                assertEvent(grantReceipt, 'SetPermission')
+            })
+
+            it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
                 return assertRevert(async () => {
                     await acl.grantPermission(newManager, app, role, { from: granted })
                 })
@@ -236,8 +267,11 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child cannot re-grant permission', async () => {
+                const grandchild = accounts[7]
+                // Make sure grandchild doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(grandchild, app, role))
                 return assertRevert(async () => {
-                    await acl.grantPermission(accounts[7], app, role, { from: child })
+                    await acl.grantPermission(grandchild, app, role, { from: child })
                 })
             })
 
