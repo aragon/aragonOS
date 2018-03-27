@@ -324,7 +324,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return false;
     }
 
-    event Loga(bytes32 a);
     function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what) internal view returns (bool) {
         bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
 
@@ -341,17 +340,14 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return false;
         }
 
-        bytes32 result = bytes32(0);
-
-        Loga(result);
-
+        bool result;
         assembly {
-          returndatacopy(result, 0, size) // TODO: WHY IS IT NOT COPYING?!?!?
+          let ptr := mload(0x40)
+          returndatacopy(ptr, 0, size)
+          result := mload(ptr)
         }
 
-        Loga(result);
-
-        return uint(result) > 0;
+        return result;
     }
 
     /**
