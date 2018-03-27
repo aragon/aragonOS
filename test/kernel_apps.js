@@ -188,9 +188,8 @@ contract('Kernel apps', accounts => {
                 })
 
                 it('fails if updated app is not a contract', async () => {
-                    await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
                     return assertRevert(async () => {
-                        await app.setValue(10)
+                        await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
                     })
                 })
 
@@ -225,10 +224,9 @@ contract('Kernel apps', accounts => {
             await acl.createPermission(permissionsRoot, appProxy.address, r2, permissionsRoot)
         })
 
-        it('fails if code hasnt been set on deploy', async () => {
-            await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
+        it('fails if app set is not a contract', async () => {
             return assertRevert(async () => {
-                await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
+                await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
             })
         })
 
@@ -274,8 +272,9 @@ contract('Kernel apps', accounts => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
-            const appProxy = await kernel.newAppInstance(appId, '0x0')
-            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+            return assertRevert(async () => {
+                const appProxy = await kernel.newAppInstance(appId, '0x0')
+            })
         })
 
         it('fails if the given app base is different than the existing one', async() => {
@@ -314,8 +313,9 @@ contract('Kernel apps', accounts => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
-            const appProxy = await kernel.newPinnedAppInstance(appId, '0x0')
-            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+            return assertRevert(async () => {
+                const appProxy = await kernel.newPinnedAppInstance(appId, '0x0')
+            })
         })
 
         it('fails if the given app base is different than the existing one', async() => {

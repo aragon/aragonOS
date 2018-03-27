@@ -25,7 +25,7 @@ const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 const getContract = artifacts.require
 
 contract('EVM Script', accounts => {
-    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}
+    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}, baseExecutor
 
     const boss = accounts[1]
 
@@ -48,7 +48,7 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
-        const baseExecutor = await Executor.new()
+        baseExecutor = await Executor.new()
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
@@ -70,7 +70,7 @@ contract('EVM Script', accounts => {
 
     context('executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, '0x0', { from: boss })
+            const receipt = await dao.newAppInstance(executorAppId, baseExecutor.address, { from: boss })
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
 

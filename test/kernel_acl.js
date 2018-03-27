@@ -117,12 +117,13 @@ contract('Kernel ACL', accounts => {
 
             assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed, 'should have used less gas because of cache')
             // Allow setting code for namespace other than 0
-            const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
+            // acl is used here just to provide an address which is a contract
+            const receipt = await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[4] })
 
             assertEvent(receipt, 'SetApp')
             return assertRevert(async () => {
                 // Fail if setting code for appId 0
-                await kernel.setApp('0x0', '0x0', accounts[4], { from: accounts[3] })
+                await kernel.setApp('0x0', '0x0', acl.address, { from: accounts[3] })
             })
         })
 
@@ -131,9 +132,10 @@ contract('Kernel ACL', accounts => {
 
             await acl.grantPermission(anyEntity, app, role, { from: granted })
             // many entities can succesfully perform action
-            await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
-            await kernel.setApp('0x121212', '0x00', accounts[6], { from: accounts[6] })
-            await kernel.setApp('0x121212', '0x00', accounts[8], { from: accounts[8] })
+            // acl is used here just to provide an address which is a contract
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[4] })
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[6] })
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[8] })
             assert.isTrue(await acl.hasPermission(accounts[6], app, role), 'should have perm')
         })
 
@@ -150,7 +152,8 @@ contract('Kernel ACL', accounts => {
         })
 
         it('can execute action', async () => {
-            const receipt = await kernel.setApp('0x1234', '0x1234', accounts[0], { from: granted })
+            // acl is used here just to provide an address which is a contract
+            const receipt = await kernel.setApp('0x1234', '0x1234', acl.address, { from: granted })
             assertEvent(receipt, 'SetApp')
         })
 
