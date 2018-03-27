@@ -133,6 +133,32 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
+     * @notice Get parameters for permission array length
+     * @param _entity Address of the whitelisted entity that will be able to perform the role
+     * @param _app Address of the app
+     * @param _role Identifier for a group of actions in app
+     * @return Length of the array
+     */
+    function getPermissionParamsLength(address _entity, address _app, bytes32 _role) external view returns (uint) {
+        return permissionParams[permissions[permissionHash(_entity, _app, _role)]].length;
+    }
+
+    /**
+    * @notice Get parameter for permission
+    * @param _entity Address of the whitelisted entity that will be able to perform the role
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @param _index Index of parameter in the array
+    * @return Parameter (id, op, value)
+    */
+    function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index) external view returns (uint8 id, uint8 op, uint240 value) {
+        Param param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
+        id = param.id;
+        op = param.op;
+        value = param.value;
+    }
+
+    /**
     * @dev Get manager for permission
     * @param _app Address of the app
     * @param _role Identifier for a group of actions in app
@@ -180,6 +206,21 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return hasPermission(_who, _where, _what, empty);
     }
 
+    function evalParams(
+        bytes32 _paramsHash,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    ) public view returns (bool)
+    {
+        if (_paramsHash == EMPTY_PARAM_HASH) {
+            return true;
+        }
+
+        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
+    }
+
     /**
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
@@ -213,21 +254,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         }
 
         return paramHash;
-    }
-
-    function evalParams(
-        bytes32 _paramsHash,
-        address _who,
-        address _where,
-        bytes32 _what,
-        uint256[] _how
-    ) internal view returns (bool)
-    {
-        if (_paramsHash == EMPTY_PARAM_HASH) {
-            return true;
-        }
-
-        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
     }
 
     function evalParam(
