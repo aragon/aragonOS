@@ -320,11 +320,12 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return false;
     }
 
-    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what) internal view returns (bool) {
+    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
         bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = _oracleAddr.call(sig, bytes32(_who), bytes32(_where), _what);
+        bool ok = _oracleAddr.call(sig, bytes32(_who), bytes32(_where), _what, 0x80, _how.length, _how);
+        // 0x80 is the position where the array that goes there starts
 
         if (!ok) {
             return false;
