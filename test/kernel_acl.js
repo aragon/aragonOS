@@ -174,12 +174,6 @@ contract('Kernel ACL', accounts => {
             })
         })
 
-        it('root cannot grant permission', async () => {
-            return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
-            })
-        })
-
         context('transferring managership', () => {
             const newManager = accounts[8]
             assert.notEqual(newManager, granted, 'newManager should not be the same as granted')
