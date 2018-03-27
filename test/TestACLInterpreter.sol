@@ -84,6 +84,12 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RejectOracle()), false);
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false); // doesn't revert
         assertEval(arr(), ORACLE_PARAM_ID, Op.NEQ, uint256(new RejectOracle()), true);
+
+        // conditional oracle returns true if first param > 0
+        ConditionalOracle conditionalOracle = new ConditionalOracle();
+
+        assertEval(arr(uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), true);
+        assertEval(arr(uint256(0), uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), false);
     }
 
     function testReturn() public {

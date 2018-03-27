@@ -28,8 +28,13 @@ contract RejectOracle is ACLOracle {
 }
 
 contract RevertOracle is ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool) {
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool) {
         revert();
-        return false;
+    }
+}
+
+contract ConditionalOracle is ACLOracle {
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool) {
+        return how[0] > 0;
     }
 }
