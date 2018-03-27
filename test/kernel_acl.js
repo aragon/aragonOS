@@ -167,8 +167,10 @@ contract('Kernel ACL', accounts => {
         })
 
         it('root cannot grant permission', async () => {
+            // Make sure grandchild doesn't have permission yet
+            assert.isFalse(await acl.hasPermission(child, app, role))
             return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                await acl.grantPermission(child, app, role, { from: permissionsRoot })
             })
         })
 
@@ -198,6 +200,8 @@ contract('Kernel ACL', accounts => {
             })
 
             it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
                 return assertRevert(async () => {
                     await acl.grantPermission(newManager, app, role, { from: granted })
                 })
@@ -228,6 +232,8 @@ contract('Kernel ACL', accounts => {
             })
 
             it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
                 return assertRevert(async () => {
                     await acl.grantPermission(newManager, app, role, { from: granted })
                 })
@@ -267,8 +273,11 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child cannot re-grant permission', async () => {
+                const grandchild = accounts[7]
+                // Make sure grandchild doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(grandchild, app, role))
                 return assertRevert(async () => {
-                    await acl.grantPermission(accounts[7], app, role, { from: child })
+                    await acl.grantPermission(grandchild, app, role, { from: child })
                 })
             })
 
