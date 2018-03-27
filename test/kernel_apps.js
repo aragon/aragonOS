@@ -1,4 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
+const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')

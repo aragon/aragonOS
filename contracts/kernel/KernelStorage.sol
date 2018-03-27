@@ -16,4 +16,5 @@ contract KernelConstants {
 
 contract KernelStorage is KernelConstants {
     mapping (bytes32 => address) public apps;
+    bytes32 public defaultVaultId;
 }
