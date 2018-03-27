@@ -3,7 +3,7 @@ pragma solidity 0.4.18;
 import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
-import "../apps/IAppProxy.sol";
+import "../lib/misc/ERCProxy.sol";
 import "../common/Initializable.sol";
 import "../factory/AppProxyFactory.sol";
 
@@ -35,7 +35,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxy(this, _name);
     }
@@ -47,7 +47,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (IAppProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxyPinned(this, _name);
     }

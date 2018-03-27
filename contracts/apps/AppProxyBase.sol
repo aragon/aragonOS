@@ -1,13 +1,12 @@
 pragma solidity 0.4.18;
 
-import "./IAppProxy.sol";
 import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
 import "../kernel/KernelStorage.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
-contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants, ERCProxy {
+contract AppProxyBase is ERCProxy, AppStorage, DelegateProxy, KernelConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -33,26 +32,12 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants, 
         }
     }
 
-    /**
-     * @dev ERC897, whether it is a forwarding (1) or an upgradeable (2) proxy
-     */
-    function proxyType() public pure returns (uint256 proxyTypeId) {
-        return isUpgradeable() ? UPGRADEABLE : FORWARDING;
-    }
-
-    /**
-     * @dev ERC897, the address the proxy would delegate calls to
-     */
-    function implementation() public view returns (address) {
-        return getCode();
-    }
-
     function getAppBase(bytes32 _appId) internal view returns (address) {
         return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
     }
 
     function () payable public {
-        address target = getCode();
+        address target = implementation();
         require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }
