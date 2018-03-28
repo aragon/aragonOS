@@ -1,12 +1,11 @@
 pragma solidity 0.4.18;
 
-import "./IAppProxy.sol";
 import "./AppStorage.sol";
 import "../common/FundsProxy.sol";
 import "../kernel/KernelStorage.sol";
 
 
-contract AppProxyBase is IAppProxy, AppStorage, KernelConstants, FundsProxy {
+contract AppProxyBase is AppStorage, FundsProxy, KernelConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -40,9 +39,5 @@ contract AppProxyBase is IAppProxy, AppStorage, KernelConstants, FundsProxy {
 
     function getDefaultVault() internal returns (address) {
         return kernel.getDefaultVault();
-    }
-
-    function getTarget() internal returns (address) {
-        return getCode();
     }
 }

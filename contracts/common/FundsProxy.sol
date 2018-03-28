@@ -2,15 +2,15 @@ pragma solidity 0.4.18;
 
 import "./DelegateProxy.sol";
 import "../lib/zeppelin/token/ERC20.sol";
+import "../lib/misc/ERCProxy.sol";
 
 
-contract FundsProxy is DelegateProxy {
+contract FundsProxy is DelegateProxy, ERCProxy {
     address constant public ETH = 0x0;
 
     event ProxyDeposit(address sender, uint256 value);
 
     function getDefaultVault() internal returns (address);
-    function getTarget() internal returns (address);
 
     /**
      * @notice Send funds to default Vault. This contract should never receive funds,
@@ -32,7 +32,7 @@ contract FundsProxy is DelegateProxy {
     function () payable public {
         // all calls except for send or transfer
         if (msg.gas > 10000) {
-            address target = getTarget();
+            address target = implementation();
             require(target != 0); // if app code hasn't been set yet, don't call
             delegatedFwd(target, msg.data);
         }

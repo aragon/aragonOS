@@ -319,7 +319,9 @@ contract('EVM Script', accounts => {
             const encodeCallScriptBad = actions => {
                 return actions.reduce((script, { to, calldata }) => {
                     const addr = rawEncode(['address'], [to]).toString('hex')
-                    const length = rawEncode(['uint256'], [calldata.length]).toString('hex') // should be (calldata.length - 2) / 2
+                    // length should be (calldata.length - 2) / 2 instead of calldata.length
+                    // as this one is bigger, it would overflow and therefore must revert
+                    const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
 
                     // Remove 12 first 0s of padding for addr and 28 0s for uint32
                     return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
@@ -334,6 +336,22 @@ contract('EVM Script', accounts => {
                     await executor.execute(script)
                 })
             })
+        })
+    })
+
+    context('isContract tests', async () => {
+        let delegateScript
+
+        before(async () => {
+            delegateScript = await getContract('DelegateScriptWrapper').new()
+        })
+
+        it('fails if address is 0', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x0'), "should return false")
+        })
+
+        it('fails if dst is not a contract', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x1234'), "should return false")
         })
     })
 })

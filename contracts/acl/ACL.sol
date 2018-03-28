@@ -6,7 +6,7 @@ import "./IACL.sol";
 
 
 interface ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool);
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool);
 }
 
 
@@ -20,7 +20,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     // who is the manager of a permission
     mapping (bytes32 => address) permissionManager;
 
-    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, NOT, AND, OR, XOR, IF_ELSE, RET } // op types
+    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
 
     struct Param {
         uint8 id;
@@ -62,7 +62,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
+    * @dev Creates a permission that wasn't previously set and managed. Access is limited by the ACL.
     *      If a created permission is removed it is possible to reset it with createPermission.
     * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
@@ -130,6 +130,18 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         external
     {
         _setPermissionManager(_newManager, _app, _role);
+    }
+
+    /**
+    * @notice Removes the manager of the permission `_role` in `_app`
+    * @param _app Address of the app in which the permission is being unmanaged
+    * @param _role Identifier for the group of actions being unmanaged
+    */
+    function removePermissionManager(address _app, bytes32 _role)
+        onlyPermissionManager(_app, _role)
+        external
+    {
+        _setPermissionManager(address(0), _app, _role);
     }
 
     /**
@@ -280,7 +292,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = ACLOracle(param.value).canPerform(_who, _where, _what) ? 1 : 0;
+            value = checkOracle(address(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
@@ -344,6 +356,34 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
         if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
         return false;
+    }
+
+    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
+
+        // a raw call is required so we can return false if the call reverts, rather than reverting
+        bool ok = _oracleAddr.call(sig, _who, _where, _what, 0x80, _how.length, _how);
+        // 0x80 is the position where the array that goes there starts
+
+        if (!ok) {
+            return false;
+        }
+
+        uint256 size;
+        assembly { size := returndatasize }
+        if (size != 32) {
+            return false;
+        }
+
+        bool result;
+        assembly {
+            let ptr := mload(0x40)       // get next free memory ptr
+            returndatacopy(ptr, 0, size) // copy return from above `call`
+            result := mload(ptr)         // read data at ptr and set it to result
+            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
+        }
+
+        return result;
     }
 
     /**
