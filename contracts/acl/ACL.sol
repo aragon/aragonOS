@@ -324,7 +324,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = _oracleAddr.call(sig, bytes32(_who), bytes32(_where), _what, 0x80, _how.length, _how);
+        bool ok = _oracleAddr.call(sig, _who, _where, _what, 0x80, _how.length, _how);
         // 0x80 is the position where the array that goes there starts
 
         if (!ok) {
@@ -339,10 +339,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         bool result;
         assembly {
-            let ptr := mload(0x40)
-            returndatacopy(ptr, 0, size)
-            result := mload(ptr)
-            mstore(ptr, 0)
+            let ptr := mload(0x40)       // get next free memory ptr
+            returndatacopy(ptr, 0, size) // copy return from above `call`
+            result := mload(ptr)         // read data at ptr and set it to result
+            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
         }
 
         return result;
