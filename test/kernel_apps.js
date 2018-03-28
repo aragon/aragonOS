@@ -268,7 +268,7 @@ contract('Kernel apps', accounts => {
             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
         })
 
-        it("doesn't set the app base if not given", async() => {
+        it("fails if the app base is not given", async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
@@ -309,7 +309,7 @@ contract('Kernel apps', accounts => {
             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
         })
 
-        it("doesn't set the app base if not given", async() => {
+        it("fails if the app base is not given", async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
@@ -322,6 +322,14 @@ contract('Kernel apps', accounts => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             return assertRevert(async () => {
                 await kernel.newPinnedAppInstance(appId, appCode2.address)
+            })
+        })
+
+        it('fails if app id does not have code set to it yet', async () => {
+            const fakeAppId = hash('fake.aragonpm.test')
+            const appFact = await getContract('AppProxyFactory').new()
+            return assertRevert(async () => {
+                await appFact.newAppProxyPinned(kernel.address, fakeAppId, '')
             })
         })
     })
