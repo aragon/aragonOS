@@ -6,7 +6,7 @@ import "./IACL.sol";
 
 
 interface ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool);
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool);
 }
 
 
@@ -292,7 +292,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = ACLOracle(param.value).canPerform(_who, _where, _what) ? 1 : 0;
+            value = checkOracle(address(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
@@ -356,6 +356,34 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
         if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
         return false;
+    }
+
+    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
+
+        // a raw call is required so we can return false if the call reverts, rather than reverting
+        bool ok = _oracleAddr.call(sig, _who, _where, _what, 0x80, _how.length, _how);
+        // 0x80 is the position where the array that goes there starts
+
+        if (!ok) {
+            return false;
+        }
+
+        uint256 size;
+        assembly { size := returndatasize }
+        if (size != 32) {
+            return false;
+        }
+
+        bool result;
+        assembly {
+            let ptr := mload(0x40)       // get next free memory ptr
+            returndatacopy(ptr, 0, size) // copy return from above `call`
+            result := mload(ptr)         // read data at ptr and set it to result
+            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
+        }
+
+        return result;
     }
 
     /**
