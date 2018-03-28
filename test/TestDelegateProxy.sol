@@ -68,6 +68,17 @@ contract TestDelegateProxy is DelegateProxy {
         delegatedFwd(target, target.fail.selector.toBytes());
     }
 
+    function testIsContractZero() {
+        bool result = isContract(address(0));
+        Assert.isFalse(result, "should return false");
+    }
+
+    function testIsContractAddress() {
+        address nonContract = 0x1234;
+        bool result = isContract(nonContract);
+        Assert.isFalse(result, "should return false");
+    }
+
     // keep as last test as it will kill this contract
     function testDieIfMinReturn0() {
         delegatedFwd(target, target.die.selector.toBytes());

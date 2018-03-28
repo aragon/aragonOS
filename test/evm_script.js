@@ -336,4 +336,20 @@ contract('EVM Script', accounts => {
             })
         })
     })
+
+    context('isContract tests', async () => {
+        let delegateScript
+
+        before(async () => {
+            delegateScript = await getContract('DelegateScriptWrapper').new()
+        })
+
+        it('fails if address is 0', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x0'), "should return false")
+        })
+
+        it('fails if dst is not a contract', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x1234'), "should return false")
+        })
+    })
 })
