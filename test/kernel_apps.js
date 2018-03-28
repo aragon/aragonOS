@@ -15,7 +15,8 @@ const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 
 contract('Kernel apps', accounts => {
-    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}, ERCProxy
+    let factory, acl, kernel, app, appProxy, appCode1, appCode2 = {}
+    let UPGRADEABLE, FORWARDING
 
     const permissionsRoot = accounts[0]
     const appId = hash('stub.aragonpm.test')
@@ -27,7 +28,6 @@ contract('Kernel apps', accounts => {
         factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
         appCode1 = await AppStub.new()
         appCode2 = await AppStub2.new()
-        ERCProxy = await getContract('ERCProxy').new()
     })
 
     beforeEach(async () => {
@@ -70,13 +70,14 @@ contract('Kernel apps', accounts => {
                 const initializationPayload = appCode1.contract.initialize.getData()
                 appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
                 app = AppStub.at(appProxy.address)
+                UPGRADEABLE = (await appProxy.UPGRADEABLE()).toString()
             })
 
             it('checks ERC897 functions', async () => {
                 const implementation = await appProxy.implementation()
                 assert.equal(implementation, appCode1.address, "App address should match")
-                const proxyType = await appProxy.proxyType()
-                assert.equal(proxyType, ERCProxy.UPGRADEABLE(), "Proxy type should be upgradeable")
+                const proxyType = (await appProxy.proxyType()).toString()
+                assert.equal(proxyType, UPGRADEABLE, "Proxy type should be upgradeable")
             })
 
             it('fails if kernel addr is not a kernel', async () => {
@@ -103,7 +104,7 @@ contract('Kernel apps', accounts => {
             })
 
             it('is upgradeable', async () => {
-                assert.isEqual(await appProxy.proxyType.call(), ERCProxy.UPGRADEABLE(), 'appproxy should be upgradeable')
+                assert.equal((await appProxy.proxyType.call()).toString(), UPGRADEABLE, 'appproxy should be upgradeable')
             })
 
             it('cannot reinitialize', async () => {
@@ -227,6 +228,7 @@ contract('Kernel apps', accounts => {
             const initializationPayload = appCode1.contract.initialize.getData()
             appProxy = await AppProxyPinned.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
             app = AppStub.at(appProxy.address)
+            FORWARDING = (await appProxy.FORWARDING()).toString()
 
             // assign app permissions
             const r2 = await appCode1.ROLE()
@@ -236,8 +238,8 @@ contract('Kernel apps', accounts => {
         it('checks ERC897 functions', async () => {
             const implementation = await appProxy.implementation()
             assert.equal(implementation, appCode1.address, "App address should match")
-            const proxyType = await appProxy.proxyType()
-            assert.equal(proxyType, ERCProxy.FORWARDING(), "Proxy type should be forwarding")
+            const proxyType = (await appProxy.proxyType()).toString()
+            assert.equal(proxyType, FORWARDING, "Proxy type should be forwarding")
         })
 
         it('fails if code hasnt been set on deploy', async () => {
@@ -248,7 +250,7 @@ contract('Kernel apps', accounts => {
         })
 
         it('is not upgradeable', async () => {
-            assert.isEqual(await appProxy.proxyType.call(), ERCProxy.FORWARDING(), 'appproxy should not be upgradeable')
+            assert.equal((await appProxy.proxyType.call()).toString(), FORWARDING, 'appproxy should not be upgradeable')
         })
 
         it('can update app code and pinned proxy continues using former version', async () => {
@@ -267,7 +269,8 @@ contract('Kernel apps', accounts => {
         it('creates a new upgradeable app proxy instance', async () => {
             const receipt = await kernel.newAppInstance(appId, appCode1.address)
             const appProxy = AppProxyUpgradeable.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-            assert.isEqual(await appProxy.proxyType.call(), ERCProxy.UPGRADEABLE(), 'new appProxy instance should be upgradeable')
+            UPGRADEABLE = (await appProxy.UPGRADEABLE()).toString()
+            assert.equal((await appProxy.proxyType.call()).toString(), UPGRADEABLE, 'new appProxy instance should be upgradeable')
             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
             assert.equal(await appProxy.implementation(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
         })
@@ -307,7 +310,8 @@ contract('Kernel apps', accounts => {
         it('creates a new non upgradeable app proxy instance', async () => {
             const receipt = await kernel.newPinnedAppInstance(appId, appCode1.address)
             const appProxy = AppProxyPinned.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-            assert.isEqual(await appProxy.proxyType.call(), ERCProxy.FORWARDING(), 'new appProxy instance should be not upgradeable')
+            FORWARDING = (await appProxy.FORWARDING()).toString()
+            assert.equal((await appProxy.proxyType.call()).toString(), FORWARDING, 'new appProxy instance should be not upgradeable')
             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
             assert.equal(await appProxy.implementation(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
         })
