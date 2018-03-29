@@ -29,8 +29,4 @@ contract AppProxyUpgradeable is AppProxyBase {
     function proxyType() public pure returns (uint256 proxyTypeId) {
         return UPGRADEABLE;
     }
-
-    function isUpgradeable() public pure returns (bool) {
-        return true;
-    }
 }
