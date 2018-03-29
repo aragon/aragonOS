@@ -50,7 +50,7 @@ contract('Proxy funds', accounts => {
     const amount = 1
     const initialBalance = await getBalance(proxy.address)
     const initialVaultBalance = await getBalance(vault.address)
-    const r = await proxy.sendTransaction({ value: 1, gas: 25000 })
+    const r = await proxy.sendTransaction({ value: 1, gas: 31000 })
     assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(amount))
     await proxy.transferToVault(ETH)
     assert.equal((await getBalance(proxy.address)).valueOf(), 0)
@@ -74,7 +74,7 @@ contract('Proxy funds', accounts => {
     const vaultId = hash('vault.aragonpm.test')
     const initialBalance = await getBalance(proxy.address)
     await kernel.setApp(APP_BASE_NAMESPACE, vaultId, '0x0')
-    const r = await proxy.sendTransaction({ value: 1, gas: 25000 })
+    const r = await proxy.sendTransaction({ value: 1, gas: 31000 })
     assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
       await proxy.transferToVault(ETH)
