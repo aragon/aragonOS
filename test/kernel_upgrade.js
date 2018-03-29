@@ -34,8 +34,8 @@ contract('Kernel Upgrade', accounts => {
         const kernelProxy = KernelProxy.at(app)
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
-        const proxyType = await kernelProxy.proxyType()
-        assert.equal(proxyType.toString(), (await kernelProxy.UPGRADEABLE()).toString(), "Proxy type should be 2 (upgradeable)")
+        const proxyType = (await kernelProxy.proxyType.call()).toString()
+        assert.equal(proxyType, (await kernelProxy.UPGRADEABLE()).toString(), "Proxy type should be 2 (upgradeable)")
     })
 
     it('fails to upgrade kernel without permission', async () => {

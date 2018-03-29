@@ -40,7 +40,7 @@ contract('Proxy funds', accounts => {
     // app
     await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode.address)
     const initializationPayload = appCode.contract.initialize.getData()
-    appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
+    appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 6e6 })
     app = AppStub.at(appProxy.address)
 
     ETH = await appProxy.ETH()
