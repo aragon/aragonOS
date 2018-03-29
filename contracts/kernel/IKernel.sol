@@ -11,5 +11,5 @@ interface IKernel {
     function setApp(bytes32 namespace, bytes32 name, address app) public returns (bytes32 id);
     function getApp(bytes32 id) public view returns (address);
     function getDefaultVault() public view returns (address);
-    function setDefaultVaultId(bytes32 _namespace, bytes32 _name) public returns (bytes32);
+    function setDefaultVaultId(bytes32 _name) public;
 }

@@ -82,13 +82,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
 
     /**
     * @dev Set the resolving address of an app instance or base implementation
-    * @param _namespace App namespace to use
     * @param _name Name of the app
     * @return ID of app
     */
-    function setDefaultVaultId(bytes32 _namespace, bytes32 _name) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) kernelIntegrity public returns (bytes32) {
-        defaultVaultId = keccak256(_namespace, _name);
-        return defaultVaultId;
+    function setDefaultVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public {
+        defaultVaultId = keccak256(APP_BASES_NAMESPACE, _name);
     }
 
     /**

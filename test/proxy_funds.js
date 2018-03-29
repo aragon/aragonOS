@@ -88,7 +88,7 @@ contract('Proxy funds', accounts => {
       vault = await getContract('VaultMock').new()
       const vaultId = hash('vault.aragonpm.test')
       await kernel.setApp(APP_BASE_NAMESPACE, vaultId, vault.address)
-      await kernel.setDefaultVaultId(APP_BASE_NAMESPACE, vaultId)
+      await kernel.setDefaultVaultId(vaultId)
     })
 
     it('recovers ETH', async () => {
@@ -111,7 +111,7 @@ contract('Proxy funds', accounts => {
       vault = await getContract('VaultMock').new()
       const vaultId = hash('vault.aragonpm.test')
       await kernel.setApp(APP_BASE_NAMESPACE, vaultId, vault.address)
-      await kernel.setDefaultVaultId(APP_BASE_NAMESPACE, vaultId)
+      await kernel.setDefaultVaultId(vaultId)
     })
 
     it('recovers ETH', async() => {
