@@ -31,10 +31,6 @@ contract AppProxyPinned is AppProxyBase {
         return FORWARDING;
     }
 
-    function isUpgradeable() public pure returns (bool) {
-        return false;
-    }
-
     function () payable public {
         delegatedFwd(implementation(), msg.data);
     }
