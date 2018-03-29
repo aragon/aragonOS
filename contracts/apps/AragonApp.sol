@@ -6,6 +6,8 @@ import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
 
 
+// ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
+// that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Initializable, ACLSyntaxSugar, EVMScriptRunner {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)));
