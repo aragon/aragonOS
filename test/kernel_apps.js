@@ -55,12 +55,12 @@ contract('Kernel apps', accounts => {
     context('upgradeable proxies', () => {
         it('fails if code hasnt been set and initializes', async () => {
             return assertRevert(async () => {
-                await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 5e6 })
+                await AppProxyUpgradeable.new(kernel.address, appId, appCode1.contract.initialize.getData(), { gas: 6e6 })
             })
         })
 
         it('doesnt fail if code hasnt been set and doesnt initialize', async () => {
-            await AppProxyUpgradeable.new(kernel.address, appId, '0x', { gas: 5e6 })
+            await AppProxyUpgradeable.new(kernel.address, appId, '0x', { gas: 6e6 })
         })
 
         context('initializing on proxy constructor', () => {
@@ -68,7 +68,7 @@ contract('Kernel apps', accounts => {
                 await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
 
                 const initializationPayload = appCode1.contract.initialize.getData()
-                appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
+                appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 6e6 })
                 app = AppStub.at(appProxy.address)
                 UPGRADEABLE = (await appProxy.UPGRADEABLE()).toString()
             })
@@ -76,26 +76,26 @@ contract('Kernel apps', accounts => {
             it('checks ERC897 functions', async () => {
                 const implementation = await appProxy.implementation()
                 assert.equal(implementation, appCode1.address, "App address should match")
-                const proxyType = (await appProxy.proxyType()).toString()
+                const proxyType = (await appProxy.proxyType.call()).toString()
                 assert.equal(proxyType, UPGRADEABLE, "Proxy type should be upgradeable")
             })
 
             it('fails if kernel addr is not a kernel', async () => {
                 return assertRevert(async () => {
-                    await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 5e6 })
+                    await AppProxyUpgradeable.new('0x1234', appId, '0x', { gas: 6e6 })
                 })
             })
 
             it('fails if kernel addr is 0', async () => {
                 return assertRevert(async () => {
-                    await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 5e6 })
+                    await AppProxyUpgradeable.new('0x0', appId, '0x', { gas: 6e6 })
                 })
             })
 
             it('fails if init fails', async () => {
                 const badInit = '0x1234'
                 return assertRevert(async () => {
-                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 5e6 })
+                    await AppProxyUpgradeable.new(kernel.address, appId, badInit, { gas: 6e6 })
                 })
             })
 
@@ -197,9 +197,8 @@ contract('Kernel apps', accounts => {
                 })
 
                 it('fails if updated app is not a contract', async () => {
-                    await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
                     return assertRevert(async () => {
-                        await app.setValue(10)
+                        await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x1234')
                     })
                 })
 
@@ -226,7 +225,7 @@ contract('Kernel apps', accounts => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
 
             const initializationPayload = appCode1.contract.initialize.getData()
-            appProxy = await AppProxyPinned.new(kernel.address, appId, initializationPayload, { gas: 5e6 })
+            appProxy = await AppProxyPinned.new(kernel.address, appId, initializationPayload, { gas: 6e6 })
             app = AppStub.at(appProxy.address)
             FORWARDING = (await appProxy.FORWARDING()).toString()
 
@@ -238,14 +237,13 @@ contract('Kernel apps', accounts => {
         it('checks ERC897 functions', async () => {
             const implementation = await appProxy.implementation()
             assert.equal(implementation, appCode1.address, "App address should match")
-            const proxyType = (await appProxy.proxyType()).toString()
+            const proxyType = (await appProxy.proxyType.call()).toString()
             assert.equal(proxyType, FORWARDING, "Proxy type should be forwarding")
         })
 
-        it('fails if code hasnt been set on deploy', async () => {
-            await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
+        it('fails if app set is not a contract', async () => {
             return assertRevert(async () => {
-                await AppProxyPinned.new(kernel.address, appId, '0x', { gas: 5e6 })
+                await kernel.setApp(APP_BASE_NAMESPACE, appId, '0x0')
             })
         })
 
@@ -288,12 +286,13 @@ contract('Kernel apps', accounts => {
             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
         })
 
-        it("doesn't set the app base if not given", async() => {
+        it("fails if the app base is not given", async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
-            const appProxy = await kernel.newAppInstance(appId, '0x0')
-            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+            return assertRevert(async () => {
+                const appProxy = await kernel.newAppInstance(appId, '0x0')
+            })
         })
 
         it('fails if the given app base is different than the existing one', async() => {
@@ -329,18 +328,27 @@ contract('Kernel apps', accounts => {
             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
         })
 
-        it("doesn't set the app base if not given", async() => {
+        it("fails if the app base is not given", async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             assert.equal(appCode1.address, await kernel.getApp(appSetId))
 
-            const appProxy = await kernel.newPinnedAppInstance(appId, '0x0')
-            assert.equal(appCode1.address, await kernel.getApp(appSetId))
+            return assertRevert(async () => {
+                const appProxy = await kernel.newPinnedAppInstance(appId, '0x0')
+            })
         })
 
         it('fails if the given app base is different than the existing one', async() => {
             await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
             return assertRevert(async () => {
                 await kernel.newPinnedAppInstance(appId, appCode2.address)
+            })
+        })
+
+        it('fails if app id does not have code set to it yet', async () => {
+            const fakeAppId = hash('fake.aragonpm.test')
+            const appFact = await getContract('AppProxyFactory').new()
+            return assertRevert(async () => {
+                await appFact.newAppProxyPinned(kernel.address, fakeAppId, '')
             })
         })
     })

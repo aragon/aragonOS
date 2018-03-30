@@ -93,23 +93,34 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     }
 
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        require(isContract(_app));
         id = keccak256(_namespace, _name);
         apps[id] = _app;
         SetApp(_namespace, _name, id, _app);
     }
 
     function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+        require(isContract(_app));
+
         id = keccak256(_namespace, _name);
 
-        if (_app != address(0)) {
-            address app = getApp(id);
-            if (app != address(0)) {
-                require(app == _app);
-            } else {
-                apps[id] = _app;
-                SetApp(_namespace, _name, id, _app);
-            }
+        address app = getApp(id);
+        if (app != address(0)) {
+            require(app == _app);
+        } else {
+            apps[id] = _app;
+            SetApp(_namespace, _name, id, _app);
         }
+    }
+
+    function isContract(address _target) internal view returns (bool) {
+        if (_target == address(0)) {
+            return false;
+        }
+
+        uint256 size;
+        assembly { size := extcodesize(_target) }
+        return size > 0;
     }
 
     modifier auth(bytes32 _role, uint256[] memory params) {
