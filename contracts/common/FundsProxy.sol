@@ -22,7 +22,8 @@ contract FundsProxy is DelegateProxy, ERCProxy {
         require(isContract(vault));
 
         if (_token == ETH) {
-            vault.transfer(address(this).balance);
+            // solium-disable-next-line security/no-call-value
+            require(vault.call.value(address(this).balance)());
         } else {
             uint256 amount = ERC20(_token).balanceOf(this);
             ERC20(_token).transfer(vault, amount);
