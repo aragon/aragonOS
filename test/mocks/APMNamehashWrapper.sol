@@ -1,13 +1,13 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/apm/APMNameHash.sol";
+import "../../contracts/apm/APMNamehash.sol";
 
 
-contract APMNameHashWrapper is APMNameHash {
+contract APMNamehashWrapper is APMNamehash {
     event LogHash(string name, bytes32 hash);
 
-    function getAPMNameHash(string name) public returns (bytes32 hash) {
-        hash = apmNameHash(name);
+    function getAPMNamehash(string name) public returns (bytes32 hash) {
+        hash = apmNamehash(name);
         LogHash("eth node", ETH_NODE);
         LogHash("aragonpm.eth", APM_NODE);
         LogHash(name, hash);
