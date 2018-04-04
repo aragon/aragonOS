@@ -26,6 +26,8 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
         _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
 
         acl.initialize(_permissionsCreator);
+
+        defaultVaultId = keccak256(APP_BASES_NAMESPACE, apmNamehash('vault'));
     }
 
     /**

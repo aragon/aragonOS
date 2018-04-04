@@ -71,9 +71,9 @@ contract('Proxy funds', accounts => {
 
   const failWithoutVault = async (proxy, vault) => {
     const amount = 1
-    const vaultId = hash('vault.aragonpm.test')
+    const vaultId = hash('vaultfake.aragonpm.test')
     const initialBalance = await getBalance(proxy.address)
-    await kernel.setApp(APP_BASE_NAMESPACE, vaultId, '0x0')
+    await kernel.setDefaultVaultId(vaultId)
     const r = await proxy.sendTransaction({ value: 1, gas: 31000 })
     assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
