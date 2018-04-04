@@ -21,11 +21,8 @@ contract TestDelegateProxy is DelegateProxy {
     Target target;
     ThrowProxy throwProxy;
 
-    function beforeAll() {
-        target = new Target();
-    }
-
     function beforeEach() {
+        target = new Target();
         throwProxy = new ThrowProxy(address(this));
     }
 
@@ -50,13 +47,13 @@ contract TestDelegateProxy is DelegateProxy {
         delegatedFwd(target, target.dontReturn.selector.toBytes(), 32);
     }
 
-    function testSelfdestructIsRevertedWithMinReturn() {
-        TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
-        throwProxy.assertThrows("should have reverted to stop selfdestruct");
+    function testFailIfNoContract() {
+        TestDelegateProxy(throwProxy).noContract();
+        throwProxy.assertThrows("should have reverted if target is not a contract");
     }
 
-    function revertIfReturnLessThanMinAndDie() {
-        delegatedFwd(target, target.die.selector.toBytes(), 32);
+    function noContract() {
+        delegatedFwd(address(0x1234), target.dontReturn.selector.toBytes(), 0);
     }
 
     function testFailIfReverts() {
@@ -78,6 +75,17 @@ contract TestDelegateProxy is DelegateProxy {
         bool result = isContract(nonContract);
         Assert.isFalse(result, "should return false");
     }
+
+    /* TODO
+    function testSelfdestructIsRevertedWithMinReturn() {
+        TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
+        throwProxy.assertThrows("should have reverted to stop selfdestruct");
+    }
+
+    function revertIfReturnLessThanMinAndDie() {
+        delegatedFwd(target, target.die.selector.toBytes(), 32);
+    }
+    */
 
     // keep as last test as it will kill this contract
     function testDieIfMinReturn0() {
