@@ -353,4 +353,24 @@ contract('Kernel apps', accounts => {
             })
         })
     })
+
+    context('kernel integrity', async () => {
+        let kernelNoProxy
+
+        before(async () => {
+            kernelNoProxy = await getContract('Kernel').new()
+            // ACL
+            const aclBase = await getContract('ACL').new()
+            await kernelNoProxy.initialize(aclBase.address, permissionsRoot)
+            const kernelAcl = ACL.at(await kernelNoProxy.acl())
+            const r = await kernelNoProxy.APP_MANAGER_ROLE()
+            await kernelAcl.createPermission(permissionsRoot, kernelNoProxy.address, r, permissionsRoot)
+        })
+
+        it('fails trying to set app because of no proxy', async () => {
+            return assertRevert(async () => {
+                await kernelNoProxy.setApp(APP_BASE_NAMESPACE, appId, appCode1.address)
+            })
+        })
+    })
 })
