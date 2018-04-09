@@ -15,7 +15,7 @@ contract AppStub is AragonApp, AppSt {
         stringTest = "hola";
     }
 
-    function requiresInitialization() isInitialized view returns (bool) {
+    function requiresInitialization() isInitialized public view returns (bool) {
         return true;
     }
 
@@ -33,7 +33,7 @@ contract AppStub is AragonApp, AppSt {
 }
 
 contract AppStub2 is AragonApp, AppSt {
-    function getValue() public constant returns (uint){
+    function getValue() public constant returns (uint) {
         return a * 2;
     }
 }
