@@ -35,14 +35,22 @@ contract CallsScript is IEVMScriptExecutor {
             LogScriptCall(msg.sender, address(this), contractAddress);
 
             uint256 calldataLength = uint256(_script.uint32At(location + 0x14));
-            uint256 calldataStart = _script.locationOf(location + 0x14 + 0x04);
+            uint256 startOffset = location + 0x14 + 0x04;
+            uint256 calldataStart = _script.locationOf(startOffset);
+
+            // compute end of script / next location
+            location = startOffset + calldataLength;
+            require(location <= _script.length);
 
             assembly {
                 let success := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
                 switch success case 0 { revert(0, 0) }
             }
-
-            location += (0x14 + 0x04 + calldataLength);
         }
+
+        bytes memory ret = new bytes(1);
+        ret[0] = 1;
+        
+        return ret;
     }
 }

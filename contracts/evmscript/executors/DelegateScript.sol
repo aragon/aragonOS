@@ -5,7 +5,7 @@ import "../IEVMScriptExecutor.sol";
 
 
 interface DelegateScriptTarget {
-    function exec() public;
+    function exec() public returns (bool);
 }
 
 
@@ -35,10 +35,18 @@ contract DelegateScript is IEVMScriptExecutor {
     function delegate(address _addr, bytes memory _input) internal returns (bytes memory output) {
         require(isContract(_addr));
         require(_addr.delegatecall(_input.length > 0 ? _input : defaultInput()));
-        return returnedData();
+        bytes memory ret = returnedData();
+
+        require(ret.length > 0);
+
+        return ret;
     }
 
     function isContract(address _target) internal view returns (bool) {
+        if (_target == address(0)) {
+            return false;
+        }
+
         uint256 size;
         assembly { size := extcodesize(_target) }
         return size > 0;

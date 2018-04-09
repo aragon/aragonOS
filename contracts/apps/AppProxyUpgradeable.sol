@@ -4,8 +4,6 @@ import "./AppProxyBase.sol";
 
 
 contract AppProxyUpgradeable is AppProxyBase {
-    address public pinnedCode;
-
     /**
     * @dev Initialize AppProxyUpgradeable (makes it an upgradeable Aragon app)
     * @param _kernel Reference to organization kernel for the app
@@ -18,11 +16,17 @@ contract AppProxyUpgradeable is AppProxyBase {
 
     }
 
-    function getCode() public view returns (address) {
+    /**
+     * @dev ERC897, the address the proxy would delegate calls to
+     */
+    function implementation() public view returns (address) {
         return getAppBase(appId);
     }
 
-    function isUpgradeable() public pure returns (bool) {
-        return true;
+    /**
+     * @dev ERC897, whether it is a forwarding (1) or an upgradeable (2) proxy
+     */
+    function proxyType() public pure returns (uint256 proxyTypeId) {
+        return UPGRADEABLE;
     }
 }

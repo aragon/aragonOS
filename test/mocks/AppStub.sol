@@ -15,6 +15,10 @@ contract AppStub is AragonApp, AppSt {
         stringTest = "hola";
     }
 
+    function requiresInitialization() isInitialized view returns (bool) {
+        return true;
+    }
+
     function setValue(uint i) auth(ROLE) public {
         a = i;
     }

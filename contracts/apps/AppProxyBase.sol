@@ -1,12 +1,12 @@
 pragma solidity 0.4.18;
 
-import "./IAppProxy.sol";
 import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
 import "../kernel/KernelStorage.sol";
+import "../lib/misc/ERCProxy.sol";
 
 
-contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
+contract AppProxyBase is ERCProxy, AppStorage, DelegateProxy, KernelConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -37,7 +37,7 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
     }
 
     function () payable public {
-        address target = getCode();
+        address target = implementation();
         require(target != 0); // if app code hasn't been set yet, don't call
         delegatedFwd(target, msg.data);
     }

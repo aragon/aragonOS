@@ -100,20 +100,30 @@ contract('Kernel ACL', accounts => {
             const argId = '0x00' // arg 0
             const op = '02'      // not equal
             const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
-            const param = new web3.BigNumber(argId + op + value)
+            const param = new web3.BigNumber(`${argId}${op}${value}`)
 
             const r1 = await acl.grantPermissionP(accounts[3], app, role, [param], { from: granted })
+
+            // retrieve the params back with the getters
+            const numParams = await acl.getPermissionParamsLength(accounts[3], app, role)
+            assert.equal(numParams, 1, 'There should be just 1 param')
+            const returnedParam = await acl.getPermissionParam(accounts[3], app, role, 0)
+            assert.equal(returnedParam[0].valueOf(), parseInt(argId, 16), 'param id should match')
+            assert.equal(returnedParam[1].valueOf(), parseInt(op, 10), 'param op should match')
+            assert.equal(returnedParam[2].valueOf(), parseInt(value, 10), 'param value should match')
+
             // grants again without re-saving params
             const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
 
             assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed, 'should have used less gas because of cache')
             // Allow setting code for namespace other than 0
-            const receipt = await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
+            // acl is used here just to provide an address which is a contract
+            const receipt = await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[4] })
 
             assertEvent(receipt, 'SetApp')
             return assertRevert(async () => {
                 // Fail if setting code for appId 0
-                await kernel.setApp('0x0', '0x0', accounts[4], { from: accounts[3] })
+                await kernel.setApp('0x0', '0x0', acl.address, { from: accounts[3] })
             })
         })
 
@@ -122,25 +132,11 @@ contract('Kernel ACL', accounts => {
 
             await acl.grantPermission(anyEntity, app, role, { from: granted })
             // many entities can succesfully perform action
-            await kernel.setApp('0x121212', '0x00', accounts[4], { from: accounts[4] })
-            await kernel.setApp('0x121212', '0x00', accounts[6], { from: accounts[6] })
-            await kernel.setApp('0x121212', '0x00', accounts[8], { from: accounts[8] })
+            // acl is used here just to provide an address which is a contract
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[4] })
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[6] })
+            await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[8] })
             assert.isTrue(await acl.hasPermission(accounts[6], app, role), 'should have perm')
-        })
-
-        it('fails granting existing permission instance', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.grantPermission(accounts[8], app, role, { from: granted })
-            })
-        })
-
-        it('fails revoking non-granted permission', async () => {
-            await acl.grantPermission(accounts[8], app, role, { from: granted })
-            await acl.revokePermission(accounts[8], app, role, { from: granted })
-            return assertRevert(async () => {
-                await acl.revokePermission(accounts[8], app, role, { from: granted })
-            })
         })
 
         it('returns created permission', async () => {
@@ -156,7 +152,8 @@ contract('Kernel ACL', accounts => {
         })
 
         it('can execute action', async () => {
-            const receipt = await kernel.setApp('0x1234', '0x1234', accounts[0], { from: granted })
+            // acl is used here just to provide an address which is a contract
+            const receipt = await kernel.setApp('0x1234', '0x1234', acl.address, { from: granted })
             assertEvent(receipt, 'SetApp')
         })
 
@@ -173,19 +170,16 @@ contract('Kernel ACL', accounts => {
         })
 
         it('root cannot grant permission', async () => {
+            // Make sure grandchild doesn't have permission yet
+            assert.isFalse(await acl.hasPermission(child, app, role))
             return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
-            })
-        })
-
-        it('root cannot grant permission', async () => {
-            return assertRevert(async () => {
-                await acl.grantPermission(granted, app, role, { from: permissionsRoot })
+                await acl.grantPermission(child, app, role, { from: permissionsRoot })
             })
         })
 
         context('transferring managership', () => {
             const newManager = accounts[8]
+            assert.notEqual(newManager, granted, 'newManager should not be the same as granted')
 
             beforeEach(async () => {
                 const receipt = await acl.setPermissionManager(newManager, app, role, { from: granted })
@@ -203,6 +197,40 @@ contract('Kernel ACL', accounts => {
             })
 
             it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
+                return assertRevert(async () => {
+                    await acl.grantPermission(newManager, app, role, { from: granted })
+                })
+            })
+        })
+
+        context('removing managership', () => {
+            const newManager = accounts[4]
+            assert.notEqual(newManager, granted, 'newManager should not be the same as granted')
+
+            beforeEach(async () => {
+                const receipt = await acl.removePermissionManager(app, role, { from: granted })
+                assertEvent(receipt, 'ChangePermissionManager')
+            })
+
+            it('removes manager', async () => {
+                const noManager = await acl.getPermissionManager(app, role)
+                assert.equal('0x0000000000000000000000000000000000000000', noManager, 'manager should have been removed')
+            })
+
+            it('can recreate permission', async () => {
+                const createReceipt = await acl.createPermission(newManager, app, role, newManager, { from: permissionsRoot })
+                assertEvent(createReceipt, 'SetPermission')
+                assertEvent(createReceipt, 'ChangePermissionManager')
+
+                const grantReceipt = await acl.grantPermission(granted, app, role, { from: newManager })
+                assertEvent(grantReceipt, 'SetPermission')
+            })
+
+            it('old manager lost power', async () => {
+                // Make sure new manager doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(newManager, app, role))
                 return assertRevert(async () => {
                     await acl.grantPermission(newManager, app, role, { from: granted })
                 })
@@ -242,8 +270,11 @@ contract('Kernel ACL', accounts => {
             })
 
             it('child cannot re-grant permission', async () => {
+                const grandchild = accounts[7]
+                // Make sure grandchild doesn't have permission yet
+                assert.isFalse(await acl.hasPermission(grandchild, app, role))
                 return assertRevert(async () => {
-                    await acl.grantPermission(accounts[7], app, role, { from: child })
+                    await acl.grantPermission(grandchild, app, role, { from: child })
                 })
             })
 

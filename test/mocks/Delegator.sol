@@ -5,7 +5,7 @@ import "./Executor.sol";
 
 
 contract Delegator is ExecutorStorage, DelegateScriptTarget {
-    function exec() public {
+    function exec() public returns (bool) {
         randomNumber += 1234;
     }
 
@@ -13,7 +13,12 @@ contract Delegator is ExecutorStorage, DelegateScriptTarget {
 }
 
 contract FailingDelegator is DelegateScriptTarget {
-    function exec() public { revert(); }
+    function exec() public returns (bool) { revert(); }
+}
+
+
+contract DyingDelegator is DelegateScriptTarget {
+    function exec() public returns (bool) { selfdestruct(0); }
 }
 
 
@@ -23,14 +28,13 @@ contract FailingDeployment {
 
 
 contract ProtectionModifierKernel is ExecutorStorage, DelegateScriptTarget {
-    function exec() public {
+    function exec() public returns (bool) {
         kernel = IKernel(0x1234);
     }
 }
 
-
 contract ProtectionModifierAppId is ExecutorStorage, DelegateScriptTarget {
-    function exec() public {
+    function exec() public returns (bool) {
         appId = bytes32(123456);
     }
 }

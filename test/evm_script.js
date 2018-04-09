@@ -1,4 +1,4 @@
-const { rawDecode } = require('ethereumjs-abi')
+const { rawEncode } = require('ethereumjs-abi')
 
 const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
@@ -7,7 +7,9 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
 const Delegator = artifacts.require('Delegator')
 const FailingDelegator = artifacts.require('FailingDelegator')
+const DyingDelegator = artifacts.require('DyingDelegator')
 const FailingDeployment = artifacts.require('FailingDeployment')
+const MockDyingScriptExecutor = artifacts.require('MockDyingScriptExecutor')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -23,7 +25,7 @@ const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 const getContract = artifacts.require
 
 contract('EVM Script', accounts => {
-    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}
+    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}, baseExecutor
 
     const boss = accounts[1]
 
@@ -46,7 +48,7 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
-        const baseExecutor = await Executor.new()
+        baseExecutor = await Executor.new()
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
@@ -68,9 +70,11 @@ contract('EVM Script', accounts => {
 
     context('executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, '0x0', { from: boss })
+            const receipt = await dao.newAppInstance(executorAppId, baseExecutor.address, { from: boss })
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
+
+            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
         })
 
         it('fails to execute if spec ID is 0', async () => {
@@ -86,7 +90,6 @@ contract('EVM Script', accounts => {
         })
 
         it('can disable executors', async () => {
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))
@@ -205,6 +208,14 @@ contract('EVM Script', accounts => {
                 })
             })
 
+            it('fails if underlying call selfdestructs', async () => {
+                const dyingDelegator = await DyingDelegator.new()
+                return assertRevert(async () => {
+                    // extra gas to avoid oog
+                    await executor.executeWithBan(encodeDelegate(dyingDelegator.address), [], { gas: 2e6 })
+                })
+            })
+
             it('fails if calling to non-contract', async () => {
                 return assertRevert(async () => {
                     await executor.execute(encodeDelegate(accounts[0])) // addr is too small
@@ -278,6 +289,69 @@ contract('EVM Script', accounts => {
                     await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
                 })
             })
+        })
+
+        context('adding mock dying executor', () => {
+            let dyingExecutor = null
+
+            beforeEach(async () => {
+                dyingExecutor = await MockDyingScriptExecutor.new()
+                await reg.addScriptExecutor(dyingExecutor.address, { from: boss })
+            })
+
+            it('registers new executor', async () => {
+                assert.equal(await reg.getScriptExecutor('0x00000004'), dyingExecutor.address)
+            })
+
+            it('executes mock executor', async () => {
+                await executor.execute('0x00000004')
+            })
+
+            it('fails when executor selfdestructs', async () => {
+                return assertRevert(async () => {
+                    // passing some input makes executor to selfdestruct
+                    await executor.executeWithIO('0x00000004', '0x0001', [])
+                })
+            })
+        })
+
+        context('script overflow', async () => {
+            const encodeCallScriptBad = actions => {
+                return actions.reduce((script, { to, calldata }) => {
+                    const addr = rawEncode(['address'], [to]).toString('hex')
+                    // length should be (calldata.length - 2) / 2 instead of calldata.length
+                    // as this one is bigger, it would overflow and therefore must revert
+                    const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
+
+                    // Remove 12 first 0s of padding for addr and 28 0s for uint32
+                    return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
+                }, '0x00000001') // spec 1
+            }
+
+            it('fails if data length is too big', async () => {
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const script = encodeCallScriptBad([action])
+
+                return assertRevert(async () => {
+                    await executor.execute(script)
+                })
+            })
+        })
+    })
+
+    context('isContract tests', async () => {
+        let delegateScript
+
+        before(async () => {
+            delegateScript = await getContract('DelegateScriptWrapper').new()
+        })
+
+        it('fails if address is 0', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x0'), "should return false")
+        })
+
+        it('fails if dst is not a contract', async () => {
+            assert.isFalse(await delegateScript.isContractWrapper('0x1234'), "should return false")
         })
     })
 })

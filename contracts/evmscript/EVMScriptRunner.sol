@@ -20,7 +20,11 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
         require(executorAddr.delegatecall(sig, calldataArgs));
 
-        return returnedDataDecoded();
+        bytes memory ret = returnedDataDecoded();
+
+        require(ret.length > 0);
+
+        return ret;
     }
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
