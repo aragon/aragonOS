@@ -12,34 +12,34 @@ import "../acl/ACL.sol";
 
 
 contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants {
-    address public baseReg;
-    address public baseCalls;
-    address public baseDel;
-    address public baseDeployDel;
+  address public baseReg;
+  address public baseCalls;
+  address public baseDel;
+  address public baseDeployDel;
 
-    function EVMScriptRegistryFactory() public {
-        baseReg = address(new EVMScriptRegistry());
-        baseCalls = address(new CallsScript());
-        baseDel = address(new DelegateScript());
-        baseDeployDel = address(new DeployDelegateScript());
-    }
+  function EVMScriptRegistryFactory() public {
+    baseReg = address(new EVMScriptRegistry());
+    baseCalls = address(new CallsScript());
+    baseDel = address(new DelegateScript());
+    baseDeployDel = address(new DeployDelegateScript());
+  }
 
-    function newEVMScriptRegistry(Kernel _dao, address _root) public returns (EVMScriptRegistry reg) {
-        reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, baseReg));
-        reg.initialize();
+  function newEVMScriptRegistry(Kernel _dao, address _root) public returns (EVMScriptRegistry reg) {
+    reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, baseReg));
+    reg.initialize();
 
-        ACL acl = ACL(_dao.acl());
+    ACL acl = ACL(_dao.acl());
 
-        _dao.setApp(_dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, reg);
-        acl.createPermission(this, reg, reg.REGISTRY_MANAGER_ROLE(), this);
+    _dao.setApp(_dao.APP_ADDR_NAMESPACE(), EVMSCRIPT_REGISTRY_APP_ID, reg);
+    acl.createPermission(this, reg, reg.REGISTRY_MANAGER_ROLE(), this);
 
-        reg.addScriptExecutor(baseCalls);     // spec 1 = CallsScript
-        reg.addScriptExecutor(baseDel);       // spec 2 = DelegateScript
-        reg.addScriptExecutor(baseDeployDel); // spec 3 = DeployDelegateScript
+    reg.addScriptExecutor(baseCalls);   // spec 1 = CallsScript
+    reg.addScriptExecutor(baseDel);     // spec 2 = DelegateScript
+    reg.addScriptExecutor(baseDeployDel); // spec 3 = DeployDelegateScript
 
-        acl.revokePermission(this, reg, reg.REGISTRY_MANAGER_ROLE());
-        acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
+    acl.revokePermission(this, reg, reg.REGISTRY_MANAGER_ROLE());
+    acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
 
-        return reg;
-    }
+    return reg;
+  }
 }

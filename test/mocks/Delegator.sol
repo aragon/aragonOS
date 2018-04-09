@@ -5,36 +5,36 @@ import "./Executor.sol";
 
 
 contract Delegator is ExecutorStorage, DelegateScriptTarget {
-    function exec() public returns (bool) {
-        randomNumber += 1234;
-    }
+  function exec() public returns (bool) {
+    randomNumber += 1234;
+  }
 
-    function execReturnValue(uint i) public pure returns (uint) { return i; }
+  function execReturnValue(uint i) public pure returns (uint) { return i; }
 }
 
 contract FailingDelegator is DelegateScriptTarget {
-    function exec() public returns (bool) { revert(); }
+  function exec() public returns (bool) { revert(); }
 }
 
 
 contract DyingDelegator is DelegateScriptTarget {
-    function exec() public returns (bool) { selfdestruct(0); }
+  function exec() public returns (bool) { selfdestruct(0); }
 }
 
 
 contract FailingDeployment {
-    function FailingDeployment() { revert(); }
+  function FailingDeployment() { revert(); }
 }
 
 
 contract ProtectionModifierKernel is ExecutorStorage, DelegateScriptTarget {
-    function exec() public returns (bool) {
-        kernel = IKernel(0x1234);
-    }
+  function exec() public returns (bool) {
+    kernel = IKernel(0x1234);
+  }
 }
 
 contract ProtectionModifierAppId is ExecutorStorage, DelegateScriptTarget {
-    function exec() public returns (bool) {
-        appId = bytes32(123456);
-    }
+  function exec() public returns (bool) {
+    appId = bytes32(123456);
+  }
 }
