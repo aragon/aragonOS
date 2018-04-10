@@ -30,8 +30,4 @@ contract AppProxyPinned is AppProxyBase {
     function proxyType() public pure returns (uint256 proxyTypeId) {
         return FORWARDING;
     }
-
-    function () payable public {
-        delegatedFwd(implementation(), msg.data);
-    }
 }
