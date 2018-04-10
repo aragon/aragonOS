@@ -76,7 +76,7 @@ contract TestDelegateProxy is DelegateProxy {
         Assert.isFalse(result, "should return false");
     }
 
-    /* TODO
+    /* TODO: this test doesn't work with ganache. To be restablished when we use geth for tests
     function testSelfdestructIsRevertedWithMinReturn() {
         TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
         throwProxy.assertThrows("should have reverted to stop selfdestruct");

@@ -9,18 +9,18 @@ const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
 
 const getContract = artifacts.require
-
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 const keccak256 = require('js-sha3').keccak_256
-const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+const APP_BASES_NAMESPACE = '0x'+keccak256('base')
 
 contract('Proxy funds', accounts => {
-  let factory, acl, kernel, kernelProxy, app, appCode, appProxy, ETH
+  let factory, acl, kernel, kernelProxy, app, appCode, appProxy, ETH, vault
 
   const permissionsRoot = accounts[0]
   const appId = hash('stub.aragonpm.test')
   const zeroAddr = '0x0000000000000000000000000000000000000000'
 
-  before(async () => {
+  beforeEach(async () => {
     const kernelBase = await getContract('Kernel').new()
     const aclBase = await getContract('ACL').new()
     factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
@@ -28,7 +28,7 @@ contract('Proxy funds', accounts => {
     appCode = await AppStub.new()
 
     const receipt = await factory.newDAO(permissionsRoot)
-    const kernelAddress = receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao
+    const kernelAddress = getEvent(receipt, 'DeployDAO', 'dao')
 
     kernel = Kernel.at(kernelAddress)
     kernelProxy = getContract('KernelProxy').at(kernelAddress)
@@ -38,12 +38,20 @@ contract('Proxy funds', accounts => {
     await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
 
     // app
-    await kernel.setApp(APP_BASE_NAMESPACE, appId, appCode.address)
+    await kernel.setApp(APP_BASES_NAMESPACE, appId, appCode.address)
     const initializationPayload = appCode.contract.initialize.getData()
     appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 6e6 })
     app = AppStub.at(appProxy.address)
 
     ETH = await appProxy.ETH()
+
+    // vault
+    const vaultBase = await getContract('VaultMock').new()
+    const vaultId = hash('vault.aragonpm.test')
+    const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, true)
+    const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
+    vault = getContract('VaultMock').at(vaultProxyAddress)
+    await kernel.setDefaultVaultId(vaultId)
   })
 
   const recoverEth = async (proxy, vault) => {
@@ -82,15 +90,6 @@ contract('Proxy funds', accounts => {
   }
 
   context('App Proxy', async () => {
-    let vault
-    before(async () => {
-      // vault
-      vault = await getContract('VaultMock').new()
-      const vaultId = hash('vault.aragonpm.test')
-      await kernel.setApp(APP_BASE_NAMESPACE, vaultId, vault.address)
-      await kernel.setDefaultVaultId(vaultId)
-    })
-
     it('recovers ETH', async () => {
       await recoverEth(appProxy, vault)
     })
@@ -105,15 +104,6 @@ contract('Proxy funds', accounts => {
   })
 
   context('Kernel Proxy', async () => {
-    let vault
-    before(async () => {
-      // vault
-      vault = await getContract('VaultMock').new()
-      const vaultId = hash('vault.aragonpm.test')
-      await kernel.setApp(APP_BASE_NAMESPACE, vaultId, vault.address)
-      await kernel.setDefaultVaultId(vaultId)
-    })
-
     it('recovers ETH', async() => {
       await recoverEth(kernelProxy, vault)
     })

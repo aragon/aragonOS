@@ -2,6 +2,8 @@ pragma solidity 0.4.18;
 
 
 contract DelegateProxy {
+    uint256 constant public FWD_GAS_LIMIT = 10000;
+
     /**
     * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)
     * @param _dst Destination address to perform the delegatecall
@@ -21,9 +23,10 @@ contract DelegateProxy {
         require(isContract(_dst));
         uint256 size;
         uint256 result;
+        uint256 fwd_gas_limit = FWD_GAS_LIMIT;
 
         assembly {
-            result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
+            result := delegatecall(sub(gas, fwd_gas_limit), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
             size := returndatasize
         }
 

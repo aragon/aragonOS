@@ -3,11 +3,10 @@ pragma solidity 0.4.18;
 import "./DelegateProxy.sol";
 import "../lib/zeppelin/token/ERC20.sol";
 import "../lib/misc/ERCProxy.sol";
+import "../lib/misc/EtherToken.sol";
 
 
-contract FundsProxy is DelegateProxy, ERCProxy {
-    address constant public ETH = 0x0;
-
+contract FundsProxy is DelegateProxy, ERCProxy, EtherToken {
     event ProxyDeposit(address sender, uint256 value);
 
     function getDefaultVault() internal returns (address);
@@ -15,7 +14,7 @@ contract FundsProxy is DelegateProxy, ERCProxy {
     /**
      * @notice Send funds to default Vault. This contract should never receive funds,
      *         but in case it does, this function allows to recover them.
-     * @param _token Token balance to be sent to Vault. ETH(0x0) for ether.
+     * @param _token Token balance to be sent to Vault.
      */
     function transferToVault(address _token) external {
         address vault = getDefaultVault();
@@ -31,15 +30,13 @@ contract FundsProxy is DelegateProxy, ERCProxy {
     }
 
     function () payable public {
-        // all calls except for send or transfer
-        if (msg.gas > 10000) {
+        // send / transfer
+        if (msg.gas < FWD_GAS_LIMIT) {
+            require(msg.value > 0 && msg.data.length == 0);
+            ProxyDeposit(msg.sender, msg.value);
+        } else { // all calls except for send or transfer
             address target = implementation();
-            require(target != 0); // if app code hasn't been set yet, don't call
             delegatedFwd(target, msg.data);
         }
-
-        // send / transfer
-        require(msg.value > 0 && msg.data.length == 0);
-        ProxyDeposit(msg.sender, msg.value);
     }
 }

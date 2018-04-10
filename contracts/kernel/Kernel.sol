@@ -27,7 +27,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
 
         acl.initialize(_permissionsCreator);
 
-        defaultVaultId = keccak256(APP_BASES_NAMESPACE, apmNamehash('vault'));
+        defaultVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash('vault'));
     }
 
     /**
@@ -35,11 +35,17 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     *      implementation if it was not already set
     * @param _name Name of the app
     * @param _appBase Address of the app's base implementation
+    * @param _setDefault Whether the app proxy app is the default one.
+    *        Useful when the Kernel needs to know of an instance of a particular app,
+    *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxy(this, _name);
+        // By calling setApp directly and not the internal functions, we make sure the params are checked
+        // and it will only succeed if sender has permissions to set something to the namespace.
+        if (_setDefault) setApp(APP_ADDR_NAMESPACE, _name, appProxy);
     }
 
     /**
@@ -47,11 +53,17 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     *      its base implementation if it was not already set
     * @param _name Name of the app
     * @param _appBase Address of the app's base implementation
+    * @param _setDefault Whether the app proxy app is the default one.
+    *        Useful when the Kernel needs to know of an instance of a particular app,
+    *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxyPinned(this, _name);
+        // By calling setApp directly and not the internal functions, we make sure the params are checked
+        // and it will only succeed if sender has permissions to set something to the namespace.
+        if (_setDefault) setApp(APP_ADDR_NAMESPACE, _name, appProxy);
     }
 
     /**
@@ -83,12 +95,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     }
 
     /**
-    * @dev Set the resolving address of an app instance or base implementation
+    * @dev Set the default vault id for the escape hatch mechanism
     * @param _name Name of the app
-    * @return ID of app
     */
-    function setDefaultVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public {
-        defaultVaultId = keccak256(APP_BASES_NAMESPACE, _name);
+    function setDefaultVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) public {
+        defaultVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
     }
 
     /**

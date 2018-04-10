@@ -33,8 +33,8 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         bytes32 namespace = dao.APP_BASES_NAMESPACE();
 
         // Deploy app proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase));
-        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase));
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase, false));
+        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase, false));
 
         // APMRegistry controls Repos
         dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
