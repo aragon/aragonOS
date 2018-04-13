@@ -10,6 +10,7 @@ const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
 
 const getContract = name => artifacts.require(name)
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 contract('APMRegistry', accounts => {
     let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}
@@ -39,7 +40,9 @@ contract('APMRegistry', accounts => {
         ens = ENS.at(await apmFactory.ens())
 
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const apmAddr = getEvent(receipt, 'DeployAPM', 'apm')
+        const aclAddr = getEvent(receipt, 'DeployAPM', 'acl')
+        await apmFactory.createRepos(apmAddr, aclAddr, apmOwner)
         registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())
@@ -85,7 +88,9 @@ contract('APMRegistry', accounts => {
 
         await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
         const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const apmAddr = getEvent(receipt2, 'DeployAPM', 'apm')
+        const aclAddr = getEvent(receipt2, 'DeployAPM', 'acl')
+        await newFactory.createRepos(apmAddr, aclAddr, apmOwner)
         const resolver = PublicResolver.at(await ens2.resolver(rootNode))
 
         assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
