@@ -9,7 +9,7 @@ contract ExecutionTarget {
         Executed(counter);
     }
 
-    function failExecute() public pure {
+    function failExecute() public constant {
         revert();
     }
 

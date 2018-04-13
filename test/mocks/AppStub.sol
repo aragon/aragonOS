@@ -15,7 +15,7 @@ contract AppStub is AragonApp, AppSt {
         stringTest = "hola";
     }
 
-    function requiresInitialization() isInitialized public view returns (bool) {
+    function requiresInitialization() isInitialized public constant returns (bool) {
         return true;
     }
 
