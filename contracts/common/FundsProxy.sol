@@ -3,10 +3,10 @@ pragma solidity 0.4.18;
 import "./DelegateProxy.sol";
 import "../lib/zeppelin/token/ERC20.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../lib/misc/EtherToken.sol";
+import "../lib/misc/EtherTokenConstant.sol";
 
 
-contract FundsProxy is DelegateProxy, ERCProxy, EtherToken {
+contract FundsProxy is DelegateProxy, ERCProxy, EtherTokenConstant {
     event ProxyDeposit(address sender, uint256 value);
 
     function getDefaultVault() internal returns (address);
