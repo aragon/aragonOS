@@ -1,9 +1,9 @@
 pragma solidity 0.4.18;
 
 import "./DelegateProxy.sol";
+import "../common/EtherTokenConstant.sol";
 import "../lib/zeppelin/token/ERC20.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../lib/misc/EtherTokenConstant.sol";
 
 
 contract FundsProxy is DelegateProxy, ERCProxy, EtherTokenConstant {
