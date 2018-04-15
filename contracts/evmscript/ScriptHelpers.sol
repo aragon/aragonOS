@@ -106,7 +106,7 @@ library ScriptHelpers {
         return payload;
     }
 
-    function memcpy(uint _dest, uint _src, uint _len) public pure {
+    function memcpy(uint _dest, uint _src, uint _len) internal pure {
         uint256 src = _src;
         uint256 dest = _dest;
         uint256 len = _len;
