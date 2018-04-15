@@ -5,10 +5,11 @@ import "./KernelStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
 import "../common/Initializable.sol";
+import "../common/IsContract.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar {
     bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
 
     /**
@@ -141,16 +142,6 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
             apps[id] = _app;
             SetApp(_namespace, _name, id, _app);
         }
-    }
-
-    function isContract(address _target) internal view returns (bool) {
-        if (_target == address(0)) {
-            return false;
-        }
-
-        uint256 size;
-        assembly { size := extcodesize(_target) }
-        return size > 0;
     }
 
     modifier auth(bytes32 _role, uint256[] memory params) {

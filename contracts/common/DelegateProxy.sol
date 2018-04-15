@@ -1,9 +1,10 @@
 pragma solidity 0.4.18;
 
+import "../common/IsContract.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
-contract DelegateProxy is ERCProxy {
+contract DelegateProxy is ERCProxy, IsContract {
     uint256 constant public FWD_GAS_LIMIT = 10000;
 
     /**
@@ -43,15 +44,5 @@ contract DelegateProxy is ERCProxy {
             switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
-    }
-
-    function isContract(address _target) internal view returns (bool) {
-        if (_target == address(0)) {
-            return false;
-        }
-
-        uint256 size;
-        assembly { size := extcodesize(_target) }
-        return size > 0;
     }
 }
