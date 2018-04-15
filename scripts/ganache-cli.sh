@@ -24,8 +24,9 @@ start_testrpc() {
 }
 
 if testrpc_running; then
-  echo "Using existing testrpc instance at port $testrpc_port"
-else
-  echo "Starting our own testrpc instance at port $testrpc_port"
-  start_testrpc
+  echo "Killing testrpc instance at port $testrpc_port"
+  kill -9 $(lsof -i:$testrpc_port -t)
 fi
+
+echo "Starting our own testrpc instance at port $testrpc_port"
+start_testrpc
