@@ -8,7 +8,7 @@ import "../contracts/evmscript/ScriptHelpers.sol";
 
 
 contract Target {
-    function returnSomething() public pure returns (bool) { return true; }
+    function returnSomething() public constant returns (bool) { return true; }
     function dontReturn() {}
     function fail() { revert(); }
     function die() { selfdestruct(0); }

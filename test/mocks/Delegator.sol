@@ -9,8 +9,9 @@ contract Delegator is ExecutorStorage, DelegateScriptTarget {
         randomNumber += 1234;
     }
 
-    function execReturnValue(uint i) public pure returns (uint) { return i; }
+    function execReturnValue(uint i) public constant returns (uint) { return i; }
 }
+
 
 contract FailingDelegator is DelegateScriptTarget {
     function exec() public returns (bool) { revert(); }
@@ -23,7 +24,7 @@ contract DyingDelegator is DelegateScriptTarget {
 
 
 contract FailingDeployment {
-    function FailingDeployment() { revert(); }
+    function FailingDeployment() public { revert(); }
 }
 
 
@@ -32,6 +33,7 @@ contract ProtectionModifierKernel is ExecutorStorage, DelegateScriptTarget {
         kernel = IKernel(0x1234);
     }
 }
+
 
 contract ProtectionModifierAppId is ExecutorStorage, DelegateScriptTarget {
     function exec() public returns (bool) {
