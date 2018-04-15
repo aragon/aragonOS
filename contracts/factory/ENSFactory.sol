@@ -5,6 +5,8 @@ import "../lib/ens/PublicResolver.sol";
 import "../ens/ENSConstants.sol";
 
 
+// Note that this contract is NOT meant to be used in production.
+// Its only purpose is to easily create ENS instances for testing APM.
 contract ENSFactory is ENSConstants {
     event DeployENS(address ens);
 
