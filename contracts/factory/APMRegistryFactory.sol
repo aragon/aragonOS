@@ -16,7 +16,7 @@ contract APMRegistryFactory is APMRegistryConstants {
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
     ENS public ens;
 
-    event DeployAPM(bytes32 indexed node, address apm);
+    event DeployAPM(bytes32 indexed node, address apm, address acl);
 
     // Needs either one ENS or ENSFactory
     function APMRegistryFactory(
@@ -62,22 +62,27 @@ contract APMRegistryFactory is APMRegistryConstants {
         // APMRegistry controls Repos
         dao.setApp(namespace, keccak256(node, keccak256(REPO_APP_NAME)), repoBase);
 
-        DeployAPM(node, apm);
+        DeployAPM(node, apm, acl);
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
         acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
         acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
         // allow apm to create permissions for Repos in Kernel
-        bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
-
-        acl.grantPermission(apm, acl, permRole);
+        acl.grantPermission(apm, acl, acl.CREATE_PERMISSIONS_ROLE());
 
         // Initialize
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
         apm.initialize(ensSub);
 
+        // Permission transition to _root
+        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+
+        return apm;
+    }
+
+    function createRepos(APMRegistry apm, ACL acl, address _root) public {
         uint16[3] memory firstVersion;
         firstVersion[0] = 1;
 
@@ -90,12 +95,10 @@ contract APMRegistryFactory is APMRegistryConstants {
         configureAPMPermissions(acl, apm, _root);
 
         // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
+        bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
         acl.revokePermission(this, acl, permRole);
         acl.grantPermission(_root, acl, permRole);
         acl.setPermissionManager(_root, acl, permRole);
-
-        return apm;
     }
 
     function b(string memory x) internal pure returns (bytes memory y) {
