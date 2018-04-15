@@ -41,7 +41,7 @@ contract('ENSSubdomainRegistrar', accounts => {
         const baseAddrs = baseDeployed.map(c => c.address)
         apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
-        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, { gas: 7.8e6 })
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
 
