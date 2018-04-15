@@ -1,7 +1,9 @@
 pragma solidity 0.4.18;
 
+import "../lib/misc/ERCProxy.sol";
 
-contract DelegateProxy {
+
+contract DelegateProxy is ERCProxy {
     uint256 constant public FWD_GAS_LIMIT = 10000;
 
     /**
