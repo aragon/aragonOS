@@ -2,7 +2,7 @@ pragma solidity 0.4.18;
 
 import "../ScriptHelpers.sol";
 import "../IEVMScriptExecutor.sol";
-import "../common/IsContract.sol";
+import "../../common/IsContract.sol";
 
 
 interface DelegateScriptTarget {

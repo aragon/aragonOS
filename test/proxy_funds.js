@@ -14,7 +14,7 @@ const keccak256 = require('js-sha3').keccak_256
 const APP_BASES_NAMESPACE = '0x'+keccak256('base')
 
 contract('Proxy funds', accounts => {
-  let factory, acl, kernel, kernelProxy, app, appCode, appProxy, ETH, vault
+  let factory, acl, kernel, kernelProxy, app, appProxy, ETH, vault, target
 
   const permissionsRoot = accounts[0]
   const appId = hash('stub.aragonpm.test')
@@ -25,7 +25,7 @@ contract('Proxy funds', accounts => {
     const aclBase = await getContract('ACL').new()
     factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
 
-    appCode = await AppStub.new()
+    app = await AppStub.new()
 
     const receipt = await factory.newDAO(permissionsRoot)
     const kernelAddress = getEvent(receipt, 'DeployDAO', 'dao')
@@ -38,12 +38,11 @@ contract('Proxy funds', accounts => {
     await acl.createPermission(permissionsRoot, kernel.address, r, permissionsRoot)
 
     // app
-    await kernel.setApp(APP_BASES_NAMESPACE, appId, appCode.address)
-    const initializationPayload = appCode.contract.initialize.getData()
+    await kernel.setApp(APP_BASES_NAMESPACE, appId, app.address)
+    const initializationPayload = app.contract.initialize.getData()
     appProxy = await AppProxyUpgradeable.new(kernel.address, appId, initializationPayload, { gas: 6e6 })
-    app = AppStub.at(appProxy.address)
 
-    ETH = await appProxy.ETH()
+    ETH = await kernel.ETH()
 
     // vault
     const vaultBase = await getContract('VaultMock').new()
@@ -51,69 +50,113 @@ contract('Proxy funds', accounts => {
     const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, true)
     const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
     vault = getContract('VaultMock').at(vaultProxyAddress)
-    await kernel.setDefaultVaultId(vaultId)
+    await kernel.setRecoveryVaultId(vaultId)
   })
 
-  const recoverEth = async (proxy, vault) => {
+  const recoverEth = async (target, vault) => {
     const amount = 1
-    const initialBalance = await getBalance(proxy.address)
+    const initialBalance = await getBalance(target.address)
     const initialVaultBalance = await getBalance(vault.address)
-    const r = await proxy.sendTransaction({ value: 1, gas: 31000 })
-    assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(amount))
-    await proxy.transferToVault(ETH)
-    assert.equal((await getBalance(proxy.address)).valueOf(), 0)
+    const r = await target.sendTransaction({ value: 1, gas: 31000 })
+    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
+    await target.transferToVault(ETH)
+    assert.equal((await getBalance(target.address)).valueOf(), 0)
     assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount).valueOf())
   }
 
-  const recoverTokens = async (proxy, vault) => {
+  const recoverTokens = async (target, vault) => {
     const amount = 1
     const token = await getContract('StandardTokenMock').new(accounts[0], 1000)
-    const initialBalance = await token.balanceOf(proxy.address)
+    const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
-    await token.transfer(proxy.address, amount)
-    assert.equal((await token.balanceOf(proxy.address)).valueOf(), initialBalance.plus(amount))
-    await proxy.transferToVault(token.address)
-    assert.equal((await token.balanceOf(proxy.address)).valueOf(), 0)
+    await token.transfer(target.address, amount)
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+    await target.transferToVault(token.address)
+    assert.equal((await token.balanceOf(target.address)).valueOf(), 0)
     assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount).valueOf())
   }
 
-  const failWithoutVault = async (proxy, vault) => {
+  const failWithoutVault = async (target, vault) => {
     const amount = 1
     const vaultId = hash('vaultfake.aragonpm.test')
-    const initialBalance = await getBalance(proxy.address)
-    await kernel.setDefaultVaultId(vaultId)
-    const r = await proxy.sendTransaction({ value: 1, gas: 31000 })
-    assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(amount))
+    const initialBalance = await getBalance(target.address)
+    await kernel.setRecoveryVaultId(vaultId)
+    const r = await target.sendTransaction({ value: 1, gas: 31000 })
+    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
-      await proxy.transferToVault(ETH)
+      await target.transferToVault(ETH)
     })
   }
 
-  context('App Proxy', async () => {
-    it('recovers ETH', async () => {
-      await recoverEth(appProxy, vault)
+  context('App without proxy is not recoverable', async () => {
+    beforeEach(() => {
+      target = app
     })
 
-    it('recovers tokens', async () => {
-      await recoverTokens(appProxy, vault)
+    it('does not recover ETH', () => {
+      return assertRevert(() => {
+        return recoverEth(target, vault)
+      })
     })
 
-    it('fails if vault is not contract', async() => {
-      await failWithoutVault(appProxy, vault)
+    it('does not recover tokens', async () => {
+      return assertRevert(() => {
+        return recoverTokens(target, vault)
+      })
     })
   })
 
-  context('Kernel Proxy', async () => {
-    it('recovers ETH', async() => {
-      await recoverEth(kernelProxy, vault)
+  context('App Proxy recovers funds', async () => {
+    beforeEach(() => {
+      target = AppStub.at(appProxy.address)
+    })
+
+    it('recovers ETH', async () => {
+      await recoverEth(target, vault)
     })
 
     it('recovers tokens', async () => {
-      await recoverTokens(kernelProxy, vault)
+      await recoverTokens(target, vault)
     })
 
     it('fails if vault is not contract', async() => {
-      await failWithoutVault(kernelProxy, vault)
+      await failWithoutVault(target, vault)
+    })
+  })
+
+  context('Kernel without proxy recovers funds', async () => {
+    beforeEach(() => {
+      target = kernel
+    })
+
+    it('recovers ETH', async () => {
+      await recoverEth(target, vault)
+    })
+
+    it('recovers tokens', async () => {
+      await recoverTokens(target, vault)
+    })
+
+    it('fails if vault is not contract', async() => {
+      await failWithoutVault(target, vault)
+    })
+  })
+
+  context('Kernel Proxy recovers funds', async () => {
+    beforeEach(() => {
+      target = Kernel.at(kernelProxy.address)
+    })
+
+    it('recovers ETH', async () => {
+      await recoverEth(target, vault)
+    })
+
+    it('recovers tokens', async () => {
+      await recoverTokens(target, vault)
+    })
+
+    it('fails if vault is not contract', async() => {
+      await failWithoutVault(target, vault)
     })
   })
 })

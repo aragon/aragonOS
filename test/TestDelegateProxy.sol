@@ -22,11 +22,11 @@ contract TestDelegateProxy is DelegateProxy {
     ThrowProxy throwProxy;
 
     // Mock ERCProxy implementation
-    function implementation() public {
+    function implementation() public view returns (address) {
         return this;
     }
 
-    function proxyType() public {
+    function proxyType() public pure returns (uint256) {
         return FORWARDING;
     }
 
