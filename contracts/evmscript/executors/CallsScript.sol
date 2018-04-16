@@ -49,8 +49,8 @@ contract CallsScript is IEVMScriptExecutor {
         }
 
         bytes memory ret = new bytes(1);
-        ret[0] = 1;
-        
+        ret[0] = bytes1(1);
+
         return ret;
     }
 }
