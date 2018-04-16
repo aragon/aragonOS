@@ -30,7 +30,7 @@ module.exports = async (deployer, network, accounts, arts = null) => {
 
   console.log('Deploying APM...')
   const root = '0xffffffffffffffffffffffffffffffffffffffff' // public
-  const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root)
+  const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root, { gas: 7.8e6 })
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
   console.log('Deployed APM at:', apmAddr)
 

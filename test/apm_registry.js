@@ -38,7 +38,7 @@ contract('APMRegistry', accounts => {
         apmFactoryMock = await getContract('APMRegistryFactoryMock').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
 
-        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, { gas: 7.8e6 })
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
 
@@ -84,7 +84,7 @@ contract('APMRegistry', accounts => {
         const newFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
 
         await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
-        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, { gas: 7.8e6 })
         const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         const resolver = PublicResolver.at(await ens2.resolver(rootNode))
 
