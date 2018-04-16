@@ -88,7 +88,7 @@ contract('Proxy funds', accounts => {
     })
   }
 
-  context('App without proxy is not recoverable', async () => {
+  context('App without kernel does not recover funds', async () => {
     beforeEach(() => {
       target = app
     })
@@ -106,7 +106,7 @@ contract('Proxy funds', accounts => {
     })
   })
 
-  context('App Proxy recovers funds', async () => {
+  context('Proxied app with kernel recovers funds', async () => {
     beforeEach(() => {
       target = AppStub.at(appProxy.address)
     })
