@@ -11,6 +11,7 @@ const ACL = artifacts.require('ACL')
 const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 
 const getContract = name => artifacts.require(name)
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 // Using APMFactory in order to reuse it
 contract('ENSSubdomainRegistrar', accounts => {
@@ -42,7 +43,9 @@ contract('ENSSubdomainRegistrar', accounts => {
         apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const apmAddr = getEvent(receipt, 'DeployAPM', 'apm')
+        const aclAddr = getEvent(receipt, 'DeployAPM', 'acl')
+        await apmFactory.createRepos(apmAddr, aclAddr, apmOwner)
         registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())

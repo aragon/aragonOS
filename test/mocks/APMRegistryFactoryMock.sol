@@ -41,7 +41,7 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         // APMRegistry controls Repos
         dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
 
-        DeployAPM(node, apm);
+        DeployAPM(node, apm, acl);
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
 
