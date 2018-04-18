@@ -1,6 +1,8 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
+
 module.exports = async (deployer, network, accounts, arts = null) => {
   if (arts != null) artifacts = arts // allow running outside
 
@@ -30,8 +32,10 @@ module.exports = async (deployer, network, accounts, arts = null) => {
 
   console.log('Deploying APM...')
   const root = '0xffffffffffffffffffffffffffffffffffffffff' // public
-  const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root)
-  const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+  const receiptDao = await factory.newAPMDao(namehash('eth'), '0x'+keccak256('aragonpm'))
+  const daoAddr = getEvent(receiptDao, 'DeployAPMDao', 'dao')
+  const receipt = await factory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), root, daoAddr)
+  const apmAddr = getEvent(receipt, 'DeployAPM', 'apm')
   console.log('Deployed APM at:', apmAddr)
 
   const apm = getContract('APMRegistry').at(apmAddr)

@@ -16,7 +16,7 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
     )
     APMRegistryFactory(_daoFactory, _registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
 
-    function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {}
+    function newAPM(bytes32 tld, bytes32 label, address _root, address _dao) public returns (APMRegistry) {}
 
     function newBadAPM(bytes32 tld, bytes32 label, address _root, bool withoutACL) public returns (APMRegistry) {
         bytes32 node = keccak256(tld, label);
