@@ -17,7 +17,7 @@ start_testrpc() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
-    node_modules/.bin/ganache-cli -i 15 --gasLimit 50000000 > /dev/null &
+    node_modules/.bin/ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
   fi
 
   testrpc_pid=$!
@@ -30,3 +30,11 @@ fi
 
 echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
+sleep 5
+
+if [ "$SOLIDITY_COVERAGE" = true ]; then
+  ./node_modules/.bin/solidity-coverage "$@"
+elif [ "$TRUFFLE_TEST" = true ]; then
+  truffle test --network rpc "$@"
+fi
+kill -9 $testrpc_pid
