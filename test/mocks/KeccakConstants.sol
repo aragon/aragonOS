@@ -16,6 +16,8 @@ contract KeccakConstants {
     bytes32 constant public ACL_APP_ID = apmNamehash("acl");
     bytes32 constant public ACL_APP = keccak256(APP_ADDR_NAMESPACE, ACL_APP_ID);
 
+    bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+
     // ENS
     bytes32 constant public ENS_ROOT = bytes32(0);
     bytes32 constant public ETH_TLD_LABEL = keccak256("eth");
