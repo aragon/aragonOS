@@ -1,11 +1,11 @@
 pragma solidity 0.4.18;
 
 import "./AppStorage.sol";
-import "../common/FundsProxy.sol";
+import "../common/DepositableDelegateProxy.sol";
 import "../kernel/KernelStorage.sol";
 
 
-contract AppProxyBase is AppStorage, FundsProxy, KernelConstants {
+contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -33,11 +33,5 @@ contract AppProxyBase is AppStorage, FundsProxy, KernelConstants {
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
         return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
-    }
-
-    // FundsProxy implementation
-
-    function getDefaultVault() internal returns (address) {
-        return kernel.getDefaultVault();
     }
 }

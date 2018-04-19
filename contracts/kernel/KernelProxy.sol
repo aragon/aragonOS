@@ -1,10 +1,10 @@
 pragma solidity 0.4.18;
 
 import "./KernelStorage.sol";
-import "../common/FundsProxy.sol";
+import "../common/DepositableDelegateProxy.sol";
 
 
-contract KernelProxy is KernelStorage, FundsProxy {
+contract KernelProxy is KernelStorage, DepositableDelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
@@ -12,12 +12,6 @@ contract KernelProxy is KernelStorage, FundsProxy {
     */
     function KernelProxy(address _kernelImpl) public {
         apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
-    }
-
-    // FundsProxy implementation
-
-    function getDefaultVault() internal returns (address) {
-        return apps[defaultVaultId];
     }
 
     /**

@@ -2,6 +2,7 @@ pragma solidity 0.4.18;
 
 import "../ScriptHelpers.sol";
 import "../IEVMScriptExecutor.sol";
+import "../../common/IsContract.sol";
 
 
 interface DelegateScriptTarget {
@@ -9,7 +10,7 @@ interface DelegateScriptTarget {
 }
 
 
-contract DelegateScript is IEVMScriptExecutor {
+contract DelegateScript is IEVMScriptExecutor, IsContract {
     using ScriptHelpers for *;
 
     uint256 constant internal SCRIPT_START_LOCATION = 4;
@@ -40,16 +41,6 @@ contract DelegateScript is IEVMScriptExecutor {
         require(ret.length > 0);
 
         return ret;
-    }
-
-    function isContract(address _target) internal view returns (bool) {
-        if (_target == address(0)) {
-            return false;
-        }
-
-        uint256 size;
-        assembly { size := extcodesize(_target) }
-        return size > 0;
     }
 
     function defaultInput() internal pure returns (bytes) {

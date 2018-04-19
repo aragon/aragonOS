@@ -5,10 +5,12 @@ import "./KernelStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
 import "../common/Initializable.sol";
+import "../common/IsContract.sol";
+import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
     bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
 
     /**
@@ -27,7 +29,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
 
         acl.initialize(_permissionsCreator);
 
-        defaultVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
+        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
     }
 
     /**
@@ -87,19 +89,19 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
     }
 
     /**
-    * @dev Get the address of the default Vault instance (to recover funds)
+    * @dev Get the address of the recovery Vault instance (to recover funds)
     * @return Address of the Vault
     */
-    function getDefaultVault() public view returns (address) {
-        return apps[defaultVaultId];
+    function getRecoveryVault() public view returns (address) {
+        return apps[recoveryVaultId];
     }
 
     /**
     * @dev Set the default vault id for the escape hatch mechanism
     * @param _name Name of the app
     */
-    function setDefaultVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) public {
-        defaultVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
+    function setRecoveryVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) public {
+        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
     }
 
     /**
@@ -141,16 +143,6 @@ contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSy
             apps[id] = _app;
             SetApp(_namespace, _name, id, _app);
         }
-    }
-
-    function isContract(address _target) internal view returns (bool) {
-        if (_target == address(0)) {
-            return false;
-        }
-
-        uint256 size;
-        assembly { size := extcodesize(_target) }
-        return size > 0;
     }
 
     modifier auth(bytes32 _role, uint256[] memory params) {
