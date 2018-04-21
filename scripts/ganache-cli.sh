@@ -32,6 +32,8 @@ echo "Starting our own testrpc instance at port $testrpc_port"
 start_testrpc
 sleep 5
 
+# Exit error mode so the testrpc instance always gets killed
+set +e
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   ./node_modules/.bin/solidity-coverage "$@"
 elif [ "$TRUFFLE_TEST" = true ]; then
