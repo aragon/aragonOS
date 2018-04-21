@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
 import "../common/DelegateProxy.sol";
