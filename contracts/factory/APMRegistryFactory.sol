@@ -16,6 +16,7 @@ contract APMRegistryFactory is APMRegistryConstants {
     ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
     ENS public ens;
 
+    event DeployAPMDao(bytes32 indexed node, address dao);
     event DeployAPM(bytes32 indexed node, address apm);
 
     // Needs either one ENS or ENSFactory
@@ -39,7 +40,14 @@ contract APMRegistryFactory is APMRegistryConstants {
         ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
     }
 
-    function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
+    function newAPMDao(bytes32 _tld, bytes32 _label) public returns (Kernel) {
+        bytes32 node = keccak256(_tld, _label);
+        Kernel dao = daoFactory.newDAO(this);
+        DeployAPMDao(node, dao);
+        return dao;
+    }
+
+    function newAPM(bytes32 _tld, bytes32 _label, address _root, address _dao) public returns (APMRegistry) {
         bytes32 node = keccak256(_tld, _label);
 
         // Assume it is the test ENS
@@ -48,7 +56,7 @@ contract APMRegistryFactory is APMRegistryConstants {
             ens.setSubnodeOwner(_tld, _label, this);
         }
 
-        Kernel dao = daoFactory.newDAO(this);
+        Kernel dao = Kernel(_dao);
         ACL acl = ACL(dao.acl());
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);

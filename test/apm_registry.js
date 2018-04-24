@@ -10,6 +10,7 @@ const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
 
 const getContract = name => artifacts.require(name)
+const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 contract('APMRegistry', accounts => {
     let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}
@@ -38,8 +39,10 @@ contract('APMRegistry', accounts => {
         apmFactoryMock = await getContract('APMRegistryFactoryMock').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
 
-        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const receiptDao = await apmFactory.newAPMDao(namehash('eth'), '0x'+keccak256('aragonpm'))
+        const daoAddr = getEvent(receiptDao, 'DeployAPMDao', 'dao')
+        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, daoAddr)
+        const apmAddr = getEvent(receipt, 'DeployAPM', 'apm')
         registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())
@@ -84,8 +87,10 @@ contract('APMRegistry', accounts => {
         const newFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
 
         await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
-        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const receiptDao = await newFactory.newAPMDao(namehash('eth'), '0x'+keccak256('aragonpm'))
+        const daoAddr = getEvent(receiptDao, 'DeployAPMDao', 'dao')
+        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, daoAddr)
+        const apmAddr = getEvent(receipt2, 'DeployAPM', 'apm')
         const resolver = PublicResolver.at(await ens2.resolver(rootNode))
 
         assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
