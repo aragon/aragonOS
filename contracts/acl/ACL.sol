@@ -168,7 +168,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @return Parameter (id, op, value)
     */
     function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index) external view returns (uint8 id, uint8 op, uint240 value) {
-        Param param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
+        Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
         id = param.id;
         op = param.op;
         value = param.value;
