@@ -15,11 +15,10 @@
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
-    "index.js",
     "build/",
-    "artifacts/",
     "contracts/",
     "migrations/",
+    "scripts/",
     "truffle-config.js",
     "test/"
   ],
