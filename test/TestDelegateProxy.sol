@@ -8,10 +8,10 @@ import "../contracts/evmscript/ScriptHelpers.sol";
 
 
 contract Target {
-    function returnSomething() public pure returns (bool) { return true; }
-    function dontReturn() {}
-    function fail() { revert(); }
-    function die() { selfdestruct(0); }
+    function returnSomething() public constant returns (bool) { return true; }
+    function dontReturn() public {}
+    function fail() public { revert(); }
+    function die() public { selfdestruct(0); }
 }
 
 
@@ -31,74 +31,77 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     // Tests
-    function beforeEach() {
+    function beforeAll() public {
         target = new Target();
+    }
+
+    function beforeEach() public {
         throwProxy = new ThrowProxy(address(this));
     }
 
-    function testMinReturn0WithoutReturn() {
+    function testMinReturn0WithoutReturn() public {
         delegatedFwd(target, target.dontReturn.selector.toBytes(), 0);
     }
 
-    function testMinReturn0WithReturn() {
+    function testMinReturn0WithReturn() public {
         delegatedFwd(target, target.returnSomething.selector.toBytes(), 0);
     }
 
-    function testMinReturn32WithReturn() {
+    function testMinReturn32WithReturn() public {
         delegatedFwd(target, target.returnSomething.selector.toBytes(), 32);
     }
 
-    function testFailsIfReturnLessThanMin() {
+    function testFailsIfReturnLessThanMin() public {
         TestDelegateProxy(throwProxy).revertIfReturnLessThanMin();
         throwProxy.assertThrows("should have reverted if return data was less than min");
     }
 
-    function revertIfReturnLessThanMin() {
+    function revertIfReturnLessThanMin() public {
         delegatedFwd(target, target.dontReturn.selector.toBytes(), 32);
     }
 
-    function testFailIfNoContract() {
+    function testFailIfNoContract() public {
         TestDelegateProxy(throwProxy).noContract();
         throwProxy.assertThrows("should have reverted if target is not a contract");
     }
 
-    function noContract() {
+    function noContract() public {
         delegatedFwd(address(0x1234), target.dontReturn.selector.toBytes(), 0);
     }
 
-    function testFailIfReverts() {
+    function testFailIfReverts() public {
         TestDelegateProxy(throwProxy).revertCall();
         throwProxy.assertThrows("should have reverted if call reverted");
     }
 
-    function revertCall() {
+    function revertCall() public {
         delegatedFwd(target, target.fail.selector.toBytes());
     }
 
-    function testIsContractZero() {
+    function testIsContractZero() public {
         bool result = isContract(address(0));
         Assert.isFalse(result, "should return false");
     }
 
-    function testIsContractAddress() {
+    function testIsContractAddress() public {
         address nonContract = 0x1234;
         bool result = isContract(nonContract);
         Assert.isFalse(result, "should return false");
     }
 
     /* TODO: this test doesn't work with ganache. To be restablished when we use geth for tests
-    function testSelfdestructIsRevertedWithMinReturn() {
+    function testSelfdestructIsRevertedWithMinReturn() public {
         TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
         throwProxy.assertThrows("should have reverted to stop selfdestruct");
     }
 
-    function revertIfReturnLessThanMinAndDie() {
+    function revertIfReturnLessThanMinAndDie() public {
         delegatedFwd(target, target.die.selector.toBytes(), 32);
     }
     */
 
     // keep as last test as it will kill this contract
-    function testDieIfMinReturn0() {
+    function testDieIfMinReturn0() public {
         delegatedFwd(target, target.die.selector.toBytes());
     }
 }

@@ -486,7 +486,7 @@ contract MiniMeToken is Controlled {
     }
 
     /// @dev Helper function to return a min betwen the two uints
-    function min(uint a, uint b) internal returns (uint) {
+    function min(uint a, uint b) pure internal returns (uint) {
         return a < b ? a : b;
     }
 
@@ -507,7 +507,7 @@ contract MiniMeToken is Controlled {
     ///  sent tokens to this contract.
     /// @param _token The address of the token contract that you want to recover
     ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) onlyController  public {
+    function claimTokens(address _token) onlyController public {
         if (_token == 0x0) {
             controller.transfer(this.balance);
             return;

@@ -50,7 +50,7 @@ contract DelegateScript is IEVMScriptExecutor, IsContract {
     /**
     * @dev copies and returns last's call data
     */
-    function returnedData() internal view returns (bytes ret) {
+    function returnedData() internal pure returns (bytes ret) {
         assembly {
             let size := returndatasize
             ret := mload(0x40) // free mem ptr get

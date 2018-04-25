@@ -1,10 +1,10 @@
 pragma solidity ^0.4.18;
 
-import "../apps/AppStorage.sol";
+import "./ScriptHelpers.sol";
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
-import "./ScriptHelpers.sol";
+import "../apps/AppStorage.sol";
 
 
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
@@ -40,7 +40,7 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     /**
     * @dev copies and returns last's call data. Needs to ABI decode first
     */
-    function returnedDataDecoded() internal view returns (bytes ret) {
+    function returnedDataDecoded() internal pure returns (bytes ret) {
         assembly {
             let size := returndatasize
             switch size

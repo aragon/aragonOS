@@ -37,8 +37,8 @@ module.exports = {
     },
     devnet: {
       network_id: 15,
-      host: 'devnet',
-      port: 8545,
+      host: 'localhost',
+      port: 8535,
       gas: 6.9e6,
     },
     ropsten: {

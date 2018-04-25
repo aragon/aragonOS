@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
@@ -49,8 +49,8 @@ contract CallsScript is IEVMScriptExecutor {
         }
 
         bytes memory ret = new bytes(1);
-        ret[0] = 1;
-        
+        ret[0] = 0x01;
+
         return ret;
     }
 }

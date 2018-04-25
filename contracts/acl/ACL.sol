@@ -11,7 +11,9 @@ interface ACLOracle {
 
 
 contract ACL is IACL, AragonApp, ACLHelpers {
-    bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    // Hardcoded constant to save gas
+    //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
     // whether a certain entity has a permission
     mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id
@@ -38,7 +40,9 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     uint8 constant PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
-    bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
+    // Hardcoded constant to save gas
+    //bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
+    bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     address constant ANY_ENTITY = address(-1);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
@@ -164,7 +168,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @return Parameter (id, op, value)
     */
     function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index) external view returns (uint8 id, uint8 op, uint240 value) {
-        Param param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
+        Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
         id = param.id;
         op = param.op;
         value = param.value;
