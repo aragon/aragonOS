@@ -32,6 +32,10 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
     }
 
+    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+        newAppInstance(_name, _appBase, false);
+    }
+
     /**
     * @dev Create a new instance of an app linked to this kernel and set its base
     *      implementation if it was not already set
@@ -48,6 +52,10 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+    }
+
+    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+        newPinnedAppInstance(_name, _appBase, false);
     }
 
     /**
