@@ -70,7 +70,7 @@ contract('EVM Script', accounts => {
 
     context('executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, baseExecutor.address, false, { from: boss })
+            const receipt = await dao.newAppInstance(executorAppId, baseExecutor.address, { from: boss })
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
 

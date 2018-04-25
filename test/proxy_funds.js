@@ -47,7 +47,10 @@ contract('Proxy funds', accounts => {
     // vault
     const vaultBase = await getContract('VaultMock').new()
     const vaultId = hash('vault.aragonpm.test')
-    const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, true)
+    const kernelMock = await getContract('KernelMock').new(kernel.address)
+    await acl.grantPermission(kernelMock.address, kernel.address, r)
+    const vaultReceipt = await kernelMock.newAppInstance(vaultId, vaultBase.address, true)
+    await acl.revokePermission(kernelMock.address, kernel.address, r)
     const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
     vault = getContract('VaultMock').at(vaultProxyAddress)
     await kernel.setRecoveryVaultId(vaultId)
