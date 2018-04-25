@@ -14,6 +14,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     // Hardocde constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
+    bytes32 constant public DEFAULT_VAULT_ID = 0x4214e5fd6d0170d69ea641b5614f5093ebecc9928af51e95685c87617489800e;
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
@@ -31,7 +32,9 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
 
         acl.initialize(_permissionsCreator);
 
-        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
+        // Hardocde constant to save gas
+        //recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
+        recoveryVaultId = DEFAULT_VAULT_ID;
     }
 
     function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
