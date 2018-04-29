@@ -13,6 +13,7 @@ import "../factory/AppProxyFactory.sol";
 contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
     // Hardocde constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+    //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
     bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
     bytes32 constant public DEFAULT_VAULT_ID = 0x4214e5fd6d0170d69ea641b5614f5093ebecc9928af51e95685c87617489800e;
 
@@ -32,11 +33,15 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
 
         acl.initialize(_permissionsCreator);
 
-        // Hardocde constant to save gas
-        //recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
         recoveryVaultId = DEFAULT_VAULT_ID;
     }
 
+    /**
+    * @dev Create a new instance of an app linked to this kernel
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
+    */
     function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         newAppInstance(_name, _appBase, false);
     }
@@ -56,9 +61,17 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         appProxy = newAppProxy(this, _name);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
-        if (_setDefault) setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+        if (_setDefault) {
+            setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+        }
     }
 
+    /**
+    * @dev Create a new pinned instance of an app linked to this kernel
+    * @param _name Name of the app
+    * @param _appBase Address of the app's base implementation
+    * @return AppProxy instance
+    */
     function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
         newPinnedAppInstance(_name, _appBase, false);
     }
@@ -78,7 +91,9 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         appProxy = newAppProxyPinned(this, _name);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
-        if (_setDefault) setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+        if (_setDefault) {
+            setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+        }
     }
 
     /**

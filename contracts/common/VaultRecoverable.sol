@@ -17,8 +17,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         require(isContract(vault));
 
         if (_token == ETH) {
-            // solium-disable-next-line security/no-call-value
-            require(vault.call.value(address(this).balance)());
+            vault.transfer(this.balance);
         } else {
             uint256 amount = ERC20(_token).balanceOf(this);
             ERC20(_token).transfer(vault, amount);
