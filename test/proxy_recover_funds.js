@@ -5,6 +5,7 @@ const { hash } = require('eth-ens-namehash')
 const Kernel = artifacts.require('Kernel')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const AppStub = artifacts.require('AppStub')
+const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
 const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
 
@@ -124,6 +125,31 @@ contract('Proxy funds', accounts => {
 
     it('fails if vault is not contract', async() => {
       await failWithoutVault(target, vault)
+    })
+  })
+
+  context('Conditional fund recovery', async () => {
+    let conditionalRecoveryAppCode
+
+    before(async () => {
+      conditionalRecoveryAppCode = await AppStubConditionalRecovery.new()
+    })
+
+    beforeEach(async () => {
+      // upgrade app to stub with conditional recovery code
+      await kernel.setApp(APP_BASES_NAMESPACE, appId, conditionalRecoveryAppCode.address)
+      target = AppStub.at(appProxy.address)
+    })
+
+    it('doesnt allow to recovery ETH', async () => {
+      // conditional stub doesnt allow eth recoveries
+      return assertRevert(() => {
+        return recoverEth(target, vault)
+      })
+    })
+
+    it('allows to recover tokens', async () => {
+      await recoverTokens(target, vault)
     })
   })
 
