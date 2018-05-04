@@ -46,7 +46,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     address constant ANY_ENTITY = address(-1);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
-        require(msg.sender == getPermissionManager(_app, _role));
+        require(msg.sender == getManager(_app, _role));
         _;
     }
 
@@ -56,28 +56,28 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
     * @notice Initializes an ACL instance and sets `_permissionsCreator` as the entity that can create other permissions
-    * @param _permissionsCreator Entity that will be given permission over createPermission
+    * @param _permissionsCreator Entity that will be given permission over create
     */
     function initialize(address _permissionsCreator) onlyInit public {
         initialized();
         require(msg.sender == address(kernel));
 
-        _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
+        _create(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
 
     /**
     * @dev Creates a permission that wasn't previously set and managed. Access is limited by the ACL.
-    *      If a created permission is removed it is possible to reset it with createPermission.
+    *      If a created permission is removed it is possible to reset it with create.
     * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
-    function createPermission(address _entity, address _app, bytes32 _role, address _manager) external {
+    function create(address _entity, address _app, bytes32 _role, address _manager) external {
         require(hasPermission(msg.sender, address(this), CREATE_PERMISSIONS_ROLE));
 
-        _createPermission(_entity, _app, _role, _manager);
+        _create(_entity, _app, _role, _manager);
     }
 
     /**
@@ -87,10 +87,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     */
-    function grantPermission(address _entity, address _app, bytes32 _role)
+    function grant(address _entity, address _app, bytes32 _role)
         external
     {
-        grantPermissionP(_entity, _app, _role, new uint256[](0));
+        grantP(_entity, _app, _role, new uint256[](0));
     }
 
     /**
@@ -101,12 +101,12 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
-    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
+    function grantP(address _entity, address _app, bytes32 _role, uint256[] _params)
         onlyPermissionManager(_app, _role)
         public
     {
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
-        _setPermission(_entity, _app, _role, paramsHash);
+        _set(_entity, _app, _role, paramsHash);
     }
 
     /**
@@ -116,11 +116,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the role will be revoked
     * @param _role Identifier for the group of actions in app being revoked
     */
-    function revokePermission(address _entity, address _app, bytes32 _role)
+    function revoke(address _entity, address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
         external
     {
-        _setPermission(_entity, _app, _role, bytes32(0));
+        _set(_entity, _app, _role, bytes32(0));
     }
 
     /**
@@ -129,11 +129,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the permission management is being transferred
     * @param _role Identifier for the group of actions being transferred
     */
-    function setPermissionManager(address _newManager, address _app, bytes32 _role)
+    function setManager(address _newManager, address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
         external
     {
-        _setPermissionManager(_newManager, _app, _role);
+        _setManager(_newManager, _app, _role);
     }
 
     /**
@@ -141,11 +141,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the permission is being unmanaged
     * @param _role Identifier for the group of actions being unmanaged
     */
-    function removePermissionManager(address _app, bytes32 _role)
+    function removeManager(address _app, bytes32 _role)
         onlyPermissionManager(_app, _role)
         external
     {
-        _setPermissionManager(address(0), _app, _role);
+        _setManager(address(0), _app, _role);
     }
 
     /**
@@ -180,7 +180,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) public view returns (address) {
+    function getManager(address _app, bytes32 _role) public view returns (address) {
         return permissionManager[roleHash(_app, _role)];
     }
 
@@ -238,20 +238,20 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal createPermission for access inside the kernel (on instantiation)
+    * @dev Internal create for access inside the kernel (on instantiation)
     */
-    function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
+    function _create(address _entity, address _app, bytes32 _role, address _manager) internal {
         // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
+        require(getManager(_app, _role) == address(0));
 
-        _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
-        _setPermissionManager(_manager, _app, _role);
+        _set(_entity, _app, _role, EMPTY_PARAM_HASH);
+        _setManager(_manager, _app, _role);
     }
 
     /**
     * @dev Internal function called to actually save the permission
     */
-    function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
+    function _set(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
 
         SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
@@ -393,7 +393,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     /**
     * @dev Internal function that sets management
     */
-    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
+    function _setManager(address _newManager, address _app, bytes32 _role) internal {
         permissionManager[roleHash(_app, _role)] = _newManager;
         ChangePermissionManager(_app, _role, _newManager);
     }

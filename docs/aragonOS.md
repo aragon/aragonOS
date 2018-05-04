@@ -187,36 +187,36 @@ Then you can execute the following actions:
 #### Create Permission
 
 ```solidity
-acl.createPermission(address entity, address app, bytes32 role, address manager)
+acl.create(address entity, address app, bytes32 role, address manager)
 ```
 
-`createPermission()` will fail if that permission has pre-existing permission instances.
+`create()` will fail if that permission has pre-existing permission instances.
 
-This action is identical to [`grantPermission()`](#grant-permission) except it allows the creation of a new permission if it doesn’t exist yet.
+This action is identical to [`grant()`](#grant-permission) except it allows the creation of a new permission if it doesn’t exist yet.
 
-A role in the ACL protects access to `createPermission()` as this important function could be used in malicious ways. When the Kernel is initialized, it also creates the permission that grants the initializing address the ability to create new permissions.
+A role in the ACL protects access to `create()` as this important function could be used in malicious ways. When the Kernel is initialized, it also creates the permission that grants the initializing address the ability to create new permissions.
 
 Note that creating permissions is made mandatory by the ACL: all actions requiring yet-to-be-created permissions are disallowed by default. Any permission checks on non-existent permissions are failed automatically.
 
 #### Grant Permission
 
 ```solidity
-acl.grantPermission(address entity, address app, bytes32 role)
+acl.grant(address entity, address app, bytes32 role)
 ```
 
-Grants `role` in `app` for an `entity`. Only callable by the `manager` of a certain permission. This `entity` would then be allowed to call all actions that their `role` can perform on that particular `app` until the permission manager revokes their role with [`revokePermission()`](#revoke-permission).
+Grants `role` in `app` for an `entity`. Only callable by the `manager` of a certain permission. This `entity` would then be allowed to call all actions that their `role` can perform on that particular `app` until the permission manager revokes their role with [`revoke()`](#revoke-permission).
 
-The `grantPermission()` action doesn’t require protection with the ACL because an entity can only make changes to a permission if it is the permission's `manager`.
+The `grant()` action doesn’t require protection with the ACL because an entity can only make changes to a permission if it is the permission's `manager`.
 
 #### Revoke Permission
 
 ```solidity
-acl.revokePermission(address entity, address app, bytes32 role)
+acl.revoke(address entity, address app, bytes32 role)
 ```
 
 Revokes `role` in `app` for an `entity`. Only callable by the `manager` of a certain permission.
 
-The `revokePermission()` action doesn’t need to be protected by the ACL either, as an entity can only make changes if it is the `manager` for a given permission.
+The `revoke()` action doesn’t need to be protected by the ACL either, as an entity can only make changes if it is the `manager` for a given permission.
 
 #### Adding Permissions
 
@@ -228,13 +228,13 @@ As an example, the following steps show a complete flow for user "Root" to creat
 
 1. Deploy the Kernel and the ACL
 2. Executing `kernel.initialize(acl, rootAddress)` which in turns calls `acl.initialize(rootAddress)` creates the "permissions creator" permission under the hood:
-`createPermission(rootAddress, aclAddress, CREATE_PERMISSIONS_ROLE, rootAddress)`
+`create(rootAddress, aclAddress, CREATE_PERMISSIONS_ROLE, rootAddress)`
 3. Deploy the Voting app
-4. Grant the Voting app the ability to call `createPermission()`:
-`grantPermission(votingAppAddress, aclAddress, CREATE_PERMISSIONS_ROLE)` (must be executed by `rootAddress`)
+4. Grant the Voting app the ability to call `create()`:
+`grant(votingAppAddress, aclAddress, CREATE_PERMISSIONS_ROLE)` (must be executed by `rootAddress`)
 5. Deploy the Vault app, which has a action called `transferTokens()`
 6. Create a new vote via the Voting app to create the `TRANSFER_TOKENS_ROLE` permission
-`createPermission(votingAppAddress, vaultAppAddress, TRANSFER_TOKENS_ROLE, votingAppAddress)`
+`create(votingAppAddress, vaultAppAddress, TRANSFER_TOKENS_ROLE, votingAppAddress)`
 7. If the vote passes, the Voting app then has access to all actions in the Vault protected by `TRANSFER_TOKENS_ROLE`, which in this case is just `transferTokens()`
 8. Fund transfers from the Vault can now be controlled via votes from the Voting app. Each time a user wishes to transfer funds, they can create a new vote via the Voting app to propose an execution of the Vault's `transferTokens()` action. If, and only if, the vote passes, will the `transferTokens()` action be executed.
 
@@ -247,19 +247,19 @@ As we have seen, when a permission is created, a **Permission Manager** is set f
 The Permission Manager can be changed with:
 
 ```solidity
-acl.setPermissionManager(address newManager, address app, bytes32 role)
+acl.setManager(address newManager, address app, bytes32 role)
 ```
 
 Changes the permission manager to `newManager`. Only callable by the `manager` of a certain permission.
 
 The new permission manager replaces the old permission manager, resulting in the old manager losing any management power over that permission.
 
-[`createPermission()`](#create-permission) executes a special case of this action to set the initial manager for the newly created permission. From that point forward, the manager can only be changed with `setPermissionManager()`.
+[`create()`](#create-permission) executes a special case of this action to set the initial manager for the newly created permission. From that point forward, the manager can only be changed with `setManager()`.
 
 There's also a getter for the Permission Manager:
 
 ```solidity
-acl.getPermissionManager(address app, bytes32 role)
+acl.getManager(address app, bytes32 role)
 ```
 
 ### 4.4 Parameter interpretation
@@ -383,13 +383,13 @@ The interpreter supports encoding complex rules in what would look almost like a
 When assigned to a permission, this rule will **evaluate to true** (and therefore allow the action) if an oracle accepts it and the block number is greater than the previous block number, and either the oracle allows it (again! testing redundancy too) or the first parameter of the rule is lower than 10. The possibilities for customizing organizations/DApps governance model are truly endless, without the need to write any actual Solidity.
 
 ### 4.9 Events
-[`createPermission()`](#create-permission), [`grantPermission()`](#grant-permission), and [`revokePermission()`](#revoke-permission) all fire the same `SetPermission` event that Aragon clients are expected to cache and process into a locally stored version of the ACL:
+[`create()`](#create-permission), [`grant()`](#grant-permission), and [`revoke()`](#revoke-permission) all fire the same `SetPermission` event that Aragon clients are expected to cache and process into a locally stored version of the ACL:
 
 ```solidity
 SetPermission(address indexed from, address indexed to, bytes32 indexed role, bool allowed)
 ```
 
-[`setPermissionManager()`](#set-permission-manager) fires the following event:
+[`setManager()`](#set-permission-manager) fires the following event:
 
 ```solidity
 ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager)

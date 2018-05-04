@@ -41,20 +41,20 @@ contract DAOFactory {
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
             bytes32 appManagerRole = dao.APP_MANAGER_ROLE();
 
-            acl.grantPermission(regFactory, acl, permRole);
+            acl.grant(regFactory, acl, permRole);
 
-            acl.createPermission(regFactory, dao, appManagerRole, this);
+            acl.create(regFactory, dao, appManagerRole, this);
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
             DeployEVMScriptRegistry(address(reg));
 
-            acl.revokePermission(regFactory, dao, appManagerRole);
-            acl.revokePermission(regFactory, acl, permRole);
-            acl.revokePermission(this, acl, permRole);
-            acl.grantPermission(_root, acl, permRole);
+            acl.revoke(regFactory, dao, appManagerRole);
+            acl.revoke(regFactory, acl, permRole);
+            acl.revoke(this, acl, permRole);
+            acl.grant(_root, acl, permRole);
 
-            acl.removePermissionManager(dao, appManagerRole);
-            acl.setPermissionManager(_root, acl, permRole);
+            acl.removeManager(dao, appManagerRole);
+            acl.setManager(_root, acl, permRole);
         }
 
         DeployDAO(dao);

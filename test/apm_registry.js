@@ -47,7 +47,7 @@ contract('APMRegistry', accounts => {
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
-        await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+        await acl.create(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
     })
 
     it('aragonpm.eth should resolve to registry', async () => {
@@ -130,7 +130,7 @@ contract('APMRegistry', accounts => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
             const newOwner = accounts[8]
 
-            await acl.grantPermission(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.grant(newOwner, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: newOwner })
             await repo.newVersion([2, 1, 0], '0x00', '0x00', { from: repoDev }) // repoDev can still create them
@@ -140,7 +140,7 @@ contract('APMRegistry', accounts => {
 
         it('repo dev can no longer create versions if permission is removed', async () => {
             await repo.newVersion([1, 0, 0], '0x00', '0x00', { from: repoDev })
-            await acl.revokePermission(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
+            await acl.revoke(repoDev, repo.address, await repo.CREATE_VERSION_ROLE(), { from: repoDev })
 
             return assertRevert(async () => {
                 await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })

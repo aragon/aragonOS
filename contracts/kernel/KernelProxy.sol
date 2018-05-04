@@ -4,6 +4,7 @@ import "./KernelStorage.sol";
 import "../common/DelegateProxy.sol";
 import "../lib/misc/ERCProxy.sol";
 
+
 contract KernelProxy is KernelStorage, DelegateProxy, ERCProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation

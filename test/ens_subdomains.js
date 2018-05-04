@@ -52,8 +52,8 @@ contract('ENSSubdomainRegistrar', accounts => {
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
-        await acl.grantPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.CREATE_NAME_ROLE(), { from: apmOwner })
-        await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+        await acl.grant(apmOwner, await registry.registrar(), await subdomainRegistrar.CREATE_NAME_ROLE(), { from: apmOwner })
+        await acl.create(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
     })
 
     afterEach(async () => {

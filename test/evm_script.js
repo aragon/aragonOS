@@ -47,7 +47,7 @@ contract('EVM Script', accounts => {
         acl = ACL.at(await dao.acl())
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
-        await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
+        await acl.create(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
         baseExecutor = await Executor.new()
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
@@ -74,7 +74,7 @@ contract('EVM Script', accounts => {
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
 
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
+            await acl.grant(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
         })
 
         it('fails to execute if spec ID is 0', async () => {
