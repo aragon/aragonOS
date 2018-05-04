@@ -106,7 +106,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         public
     {
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
-        _set(_entity, _app, _role, paramsHash);
+        _setPermission(_entity, _app, _role, paramsHash);
     }
 
     /**
@@ -120,7 +120,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
         external
     {
-        _set(_entity, _app, _role, bytes32(0));
+        _setPermission(_entity, _app, _role, bytes32(0));
     }
 
     /**
@@ -244,14 +244,14 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         // only allow permission creation (or re-creation) when there is no manager
         require(getManager(_app, _role) == address(0));
 
-        _set(_entity, _app, _role, EMPTY_PARAM_HASH);
+        _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
         _setManager(_manager, _app, _role);
     }
 
     /**
     * @dev Internal function called to actually save the permission
     */
-    function _set(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
+    function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
 
         SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
