@@ -1,4 +1,5 @@
-# aragonOS <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/master.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/master.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragonOS?branch=master) [![npm](https://img.shields.io/npm/v/@aragon/os.svg?style=for-the-badge)](https://www.npmjs.com/package/@aragon/os)
+# aragonOS <img align="right" src="https://raw.githubusercontent.com/aragon/issues/master/logo.png" height="80px" /> [![Travis branch](https://img.shields.io/travis/aragon/aragonOS/master.svg?style=for-the-badge)](https://travis-ci.org/aragon/aragonOS) [![Coveralls branch](https://img.shields.io/coveralls/aragon/aragonOS/master.svg?style=for-the-badge)](https://coveralls.io/github/aragon/aragonOS?branch=master) [![npm](https://img.shields.io/npm/v/@aragon/os.svg?style=for-the-badge)](https://www.npmjs.com/package/@aragon/os)[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Faragon%2FaragonOS.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Faragon%2FaragonOS?ref=badge_shield)
+
 
 This repo contains Aragon's reference implementation for [aragonOS](https://wiki.aragon.one/dev/aragonOS_index/).
 
@@ -36,3 +37,7 @@ npm i --save-dev @aragon/os
 ## Contributing
 
 For details about how to contribute you can check the [contributing guide](https://wiki.aragon.one/dev/aragonOS_how_to_contribute/) on the wiki.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Faragon%2FaragonOS.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Faragon%2FaragonOS?ref=badge_large)
