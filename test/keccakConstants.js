@@ -28,6 +28,7 @@ contract('Constants', accounts => {
 
     const kernel = await getContract('Kernel').new()
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
+    assert.equal(await kernel.DEFAULT_VAULT_ID(), await keccakConstants.DEFAULT_VAULT_ID(), "default vault id doesn't match")
   })
 
   it('checks ENS constants', async () => {

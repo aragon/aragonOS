@@ -1,7 +1,7 @@
 // NOTE: Upgrading to solidity-coverage 0.4.x breaks our tests
 
 const libFiles = require('glob').sync('contracts/lib/**/*.sol').map(n => n.replace('contracts/', ''))
-const interfaces = ['common/IForwarder.sol', 'kernel/IKernel.sol', 'evmscript/IEVMScriptExecutor.sol', 'apps/IAppProxy.sol', 'acl/IACL.sol', 'acl/ACLSyntaxSugar.sol']
+const interfaces = ['common/IForwarder.sol', 'common/IVaultRecoverable.sol', 'kernel/IKernel.sol', 'evmscript/IEVMScriptExecutor.sol', 'apps/IAppProxy.sol', 'acl/IACL.sol', 'acl/ACLSyntaxSugar.sol']
 
 module.exports = {
     norpc: true,

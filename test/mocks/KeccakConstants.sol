@@ -18,6 +18,8 @@ contract KeccakConstants {
 
     bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
 
+    bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
+
     // ENS
     bytes32 constant public ENS_ROOT = bytes32(0);
     bytes32 constant public ETH_TLD_LABEL = keccak256("eth");
