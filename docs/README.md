@@ -4,7 +4,6 @@ These documents describe how to use Aragon.js for building front-ends for Aragon
 
 ## Guides
 
-- [Understanding the ACL](ACL.md)
 - [Writing A Simple App](APP_GUIDE.md)
 - [Writing A Forwarder (Governance Mechanism)](FORWARDER.md)
 
