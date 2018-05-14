@@ -11,10 +11,10 @@
     - [getRecoveryVault()](#getrecoveryvault-public-view)
     - [runScript(bytes script, bytes input, address\[\] blacklist) (*from EVMScriptRunner*)](#runscript-internal)
 - [IForwarder](#iforwarder)
-  - Methods
-    - isForwarder()
-    - canForward(address sender, bytes script)
-    - forward(bytes)
+  - [Methods](#methods-1)
+    - [isForwarder()](#isforwarder)
+    - [canForward(address sender, bytes script)](#canforward)
+    - [forward(bytes)](#forward)
 
 ## AragonApp
 
