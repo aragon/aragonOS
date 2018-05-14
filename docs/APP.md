@@ -151,7 +151,7 @@ A forwarder is a smart contract that can excecute transactions on another entity
 
 To learn more about implementing a forwarder and why, check out [the guide](FORWARDER.md).
 
-###Importing
+### Importing
 
 ```solidity
 import "@aragon/os/contracts/common/IForwarder.sol";
