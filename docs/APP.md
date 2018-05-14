@@ -5,11 +5,11 @@
 - [AragonApp](#aragonapp)
   - [Modifiers](#modifiers)
     - [auth(bytes32 role)](#auth)
-    - [authP(bytes32 role, uint256[\] params)](#authp)
+    - [authP(bytes32 role, uint256\[\] params)](#authp)
   - [Methods](#methods)
-    - [canPerform(address sender, bytes32 role, uint256[\] params)](#canperform-public-view)
+    - [canPerform(address sender, bytes32 role, uint256\[\] params)](#canperform-public-view)
     - [getRecoveryVault()](#getrecoveryvault-public-view)
-    - [runScript(bytes script, bytes input, address[\] blacklist) (*from EVMScriptRunner*)](#runscript-internal)
+    - [runScript(bytes script, bytes input, address\[\] blacklist) (*from EVMScriptRunner*)](#runscript-internal)
 
 ## AragonApp
 
