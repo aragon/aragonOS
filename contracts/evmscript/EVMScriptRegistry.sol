@@ -11,7 +11,8 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     using ScriptHelpers for bytes;
 
     // WARN: Manager can censor all votes and the like happening in an org
-    bytes32 constant public REGISTRY_MANAGER_ROLE = bytes32(1);
+    // bytes32 constant public REGISTRY_MANAGER_ROLE = keccak256("REGISTRY_MANAGER_ROLE");
+    bytes32 constant public REGISTRY_MANAGER_ROLE = 0xf7a450ef335e1892cb42c8ca72e7242359d7711924b75db5717410da3f614aa3;
 
     struct ExecutorEntry {
         address executor;
