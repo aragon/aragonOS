@@ -1,10 +1,9 @@
 pragma solidity ^0.4.18;
 
+import "../../contracts/apm/APMConstants.sol";
 
-contract APMNamehash {
-    bytes32 constant public ETH_NODE = keccak256(bytes32(0), keccak256("eth"));
-    bytes32 constant public APM_NODE = keccak256(ETH_NODE, keccak256("aragonpm"));
 
+contract APMNamehash is APMConstants {
     function apmNamehash(string name) internal pure returns (bytes32) {
         return keccak256(APM_NODE, keccak256(name));
     }
