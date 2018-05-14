@@ -2,14 +2,14 @@
 
 ## Contracts
 
-- AragonApp
-  - Modifiers
-    - auth(bytes32 role)
-    - authP(bytes32 role, uint256[] params)
-  - Methods
-    - canPerform(address sender, bytes32 role, uint256[] params)
-    - getRecoveryVault()
-    - runScript(bytes script, bytes input, address[] blacklist) (*from EVMScriptRunner*)
+- [AragonApp](#aragonapp)
+  - [Modifiers](#modifiers)
+    - [auth(bytes32 role)](#auth)
+    - [authP(bytes32 role, uint256[\] params)](#authp)
+  - [Methods](#methods)
+    - [canPerform(address sender, bytes32 role, uint256[\] params)](#canperform-public-view)
+    - [getRecoveryVault()](#getrecoveryvault-public-view)
+    - [runScript(bytes script, bytes input, address[\] blacklist) (*from EVMScriptRunner*)](#runscript-internal)
 
 ## AragonApp
 
@@ -130,10 +130,10 @@ This method is used to execute transactions on behalf of other entities ([read m
 
 **Parameters**
 
-1. `script` (`bytes`): The script to execute (see [EVM script reference](#) for format).
-2. `input` (`bytes`): The input of the execution (see [EVM script reference](#) for required input).
-3. `blacklist` (`address[]`): A blacklist of addresses for this execution (see [EVM script reference](#) for behaviour of blacklist).
+1. `script` (`bytes`): The script to execute (see [EVM script reference](EVM_SCRIPTS.md) for format).
+2. `input` (`bytes`): The input of the execution (see [EVM script reference](EVM_SCRIPTS.md) for required input).
+3. `blacklist` (`address[]`): A blacklist of addresses for this execution (see [EVM script reference](EVM_SCRIPTS.md) for behaviour of blacklist).
 
 **Return Values**
 
-1. `output` (`bytes`): The output of the execution (see [EVM script reference](#) for the format of the output).
+1. `output` (`bytes`): The output of the execution (see [EVM script reference](EVM_SCRIPTS.md) for the format of the output).
