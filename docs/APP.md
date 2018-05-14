@@ -10,6 +10,11 @@
     - [canPerform(address sender, bytes32 role, uint256\[\] params)](#canperform-public-view)
     - [getRecoveryVault()](#getrecoveryvault-public-view)
     - [runScript(bytes script, bytes input, address\[\] blacklist) (*from EVMScriptRunner*)](#runscript-internal)
+- [IForwarder](#iforwarder)
+  - Methods
+    - isForwarder()
+    - canForward(address sender, bytes script)
+    - forward(bytes)
 
 ## AragonApp
 
@@ -21,7 +26,7 @@ This contract provides helper methods for interacting with the ACL as well as ru
 
 ### Importing
 
-```
+```solidity
 import "@aragon/os/contracts/apps/AragonApp.sol";
 ```
 
@@ -137,3 +142,60 @@ This method is used to execute transactions on behalf of other entities ([read m
 **Return Values**
 
 1. `output` (`bytes`): The output of the execution (see [EVM script reference](EVM_SCRIPTS.md) for the format of the output).
+
+## IForwarder
+
+Contracts implementing this interface are *forwarders*.
+
+A forwarder is a smart contract that can excecute transactions on another entity's behalf. They are an integral part of transaction pathing (also called *permission escalation*).
+
+To learn more about implementing a forwarder and why, check out [the guide](FORWARDER.md).
+
+###Importing
+
+```solidity
+import "@aragon/os/contracts/common/IForwarder.sol";
+```
+
+### Methods
+
+#### isForwarder (*public pure*)
+
+This method should always return true as it is used as an interface detection mechanism in Aragon.js.
+
+**Parameters**
+
+None.
+
+**Return Values**
+
+1. `isForwarder` (`bool`): Should always return true. If the contract is not a forwarder, the call reverts.
+
+#### canForward (*public view*)
+
+This method should return true if the forwarder can forward the [EVM script](EVM_SCRIPTS.md) (`script`) on `sender`'s behalf, otherwise it should return false.
+
+**Parameters**
+
+1. `sender` (`address`): The entity that wants `script` forwarded
+2. `script` (`bytes`): The [EVM script](EVM_SCRIPTS.md) `sender` wants executed on their behalf
+
+**Return Values**
+
+1. `canForward` (`bool`): Should return true if `script` can be executed for `sender`, otherwise false.
+
+#### forward (*public*)
+
+This method should **eventually** execute the [EVM script](EVM_SCRIPTS.md) `script` for `msg.sender`.
+
+Note that there is no guarantee that `script` will be executed, as it is entirely up to the forwarder.
+
+This method is used to implement governance mechanisms. For example, a voting app might store `script` in a vote, and if the vote passes, it executes it on `msg.sender`'s behalf.
+
+**Parameters**
+
+1. `script` (`bytes`): The [EVM script](EVM_SCRIPTS.md) that `msg.sender` wants executed.
+
+**Return Values**
+
+None.
