@@ -127,11 +127,11 @@ None.
 
 #### runScript (*internal*)
 
-Runs an [EVM script](#).
+Runs an [EVM script](EVM_SCRIPTS.md).
 
-Refer to the [EVM script](#) reference for more information about the different types of EVM scripts.
+Refer to the [EVM script](EVM_SCRIPTS.md) reference for more information about the different types of EVM scripts.
 
-This method is used to execute transactions on behalf of other entities ([read more on forwarders](#)).
+This method is used to execute transactions on behalf of other entities ([read more on forwarders](FORWARDER.md)).
 
 **Parameters**
 
