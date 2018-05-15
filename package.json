@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
@@ -26,6 +26,7 @@
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>"
   ],
+  "repository": "https://github.com/aragon/aragonOS",
   "license": "GPL-3.0",
   "devDependencies": {
     "coveralls": "^2.13.3",
