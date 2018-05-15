@@ -40,6 +40,12 @@ contract('Constants', accounts => {
     assert.equal(await ensConstants.PUBLIC_RESOLVER_NODE(), await keccakConstants.PUBLIC_RESOLVER_NODE(), "public resolver node doesn't match")
   })
 
+  it('checks APMRegistry constants', async () => {
+    const apm = await getContract('APMRegistry').new()
+
+    assert.equal(await apm.CREATE_REPO_ROLE(), await keccakConstants.CREATE_REPO_ROLE(), "create repo role doesn't match")
+  })
+
   it('checks ACL constants', async () => {
     const acl = await getContract('ACL').new()
 
@@ -47,10 +53,30 @@ contract('Constants', accounts => {
     assert.equal(await acl.EMPTY_PARAM_HASH(), await keccakConstants.EMPTY_PARAM_HASH(), "empty param hash doesn't match")
   })
 
+  it('checks ENSSubdomainRegistrar constants', async () => {
+    const ensRegistrar = await getContract('ENSSubdomainRegistrar').new()
+
+    assert.equal(await ensRegistrar.CREATE_NAME_ROLE(), await keccakConstants.CREATE_NAME_ROLE(), "create name role doesn't match")
+    assert.equal(await ensRegistrar.DELETE_NAME_ROLE(), await keccakConstants.DELETE_NAME_ROLE(), "delete name role doesn't match")
+    assert.equal(await ensRegistrar.POINT_ROOTNODE_ROLE(), await keccakConstants.POINT_ROOTNODE_ROLE(), "point rootnode role doesn't match")
+  })
+
   it('checks EVM Script constants', async () => {
     const evmScriptConstants = await getContract('EVMScriptRegistryConstants').new()
 
     assert.equal(await evmScriptConstants.EVMSCRIPT_REGISTRY_APP_ID(), await keccakConstants.EVMSCRIPT_REGISTRY_APP_ID(), "app id doesn't match")
     assert.equal(await evmScriptConstants.EVMSCRIPT_REGISTRY_APP(), await keccakConstants.EVMSCRIPT_REGISTRY_APP(), "app doesn't match")
+  })
+
+  it('checks EVMScriptRegistry constants', async () => {
+    const evmScriptRegistry = await getContract('EVMScriptRegistry').new()
+
+    assert.equal(await evmScriptRegistry.REGISTRY_MANAGER_ROLE(), await keccakConstants.REGISTRY_MANAGER_ROLE(), "registry manager role doesn't match")
+  })
+
+  it('checks Repo constants', async () => {
+    const repo = await getContract('Repo').new()
+
+    assert.equal(await repo.CREATE_VERSION_ROLE(), await keccakConstants.CREATE_VERSION_ROLE(), "create version role doesn't match")
   })
 })

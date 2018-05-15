@@ -21,7 +21,8 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     AbstractENS ens;
     ENSSubdomainRegistrar public registrar;
 
-    bytes32 constant public CREATE_REPO_ROLE = bytes32(1);
+    // bytes32 constant public CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
+    bytes32 constant public CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
 
     event NewRepo(bytes32 id, string name, address repo);
 
