@@ -3,16 +3,16 @@
   "version": "3.1.5",
   "description": "Core contracts for Aragon",
   "scripts": {
-    "compile": "truffle compile",
+    "compile": "npx truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "console": "node_modules/.bin/truffle console",
+    "console": "npx truffle console",
     "ganache-cli:test": "scripts/ganache-cli.sh",
-    "deploy:devnet:ens": "truffle compile && truffle exec --network devnet scripts/deploy-beta-ens.js",
-    "deploy:devnet:apm": "truffle compile && truffle exec --network devnet scripts/deploy-beta-apm.js",
-    "prepublishOnly": "truffle compile --all"
+    "deploy:devnet:ens": "npx truffle compile && npx truffle exec --network devnet scripts/deploy-beta-ens.js",
+    "deploy:devnet:apm": "npx truffle compile && npx truffle exec --network devnet scripts/deploy-beta-apm.js",
+    "prepublishOnly": "npx truffle compile --all"
   },
   "files": [
     "build/",

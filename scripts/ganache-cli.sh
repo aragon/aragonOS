@@ -15,9 +15,9 @@ testrpc_running() {
 
 start_testrpc() {
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
+    npx testrpc-sc -i 16 --gasLimit 0xfffffffffff --port "$testrpc_port"  > /dev/null &
   else
-    node_modules/.bin/ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
+    npx ganache-cli -i 15 --gasLimit 50000000 --port "$testrpc_port" > /dev/null &
   fi
 
   testrpc_pid=$!
@@ -35,8 +35,8 @@ sleep 5
 # Exit error mode so the testrpc instance always gets killed
 set +e
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  ./node_modules/.bin/solidity-coverage "$@"
+  npx solidity-coverage "$@"
 elif [ "$TRUFFLE_TEST" = true ]; then
-  truffle test --network rpc "$@"
+  npx truffle test --network rpc "$@"
 fi
 kill -9 $testrpc_pid
