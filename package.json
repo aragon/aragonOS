@@ -6,7 +6,7 @@
     "compile": "npx truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
-    "lint": "solium --dir ./contracts",
+    "lint": "npx solium --dir ./contracts",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
     "console": "npx truffle console",
     "ganache-cli:test": "scripts/ganache-cli.sh",
