@@ -6,7 +6,7 @@ import "../../common/IsContract.sol";
 
 
 interface DelegateScriptTarget {
-    function exec() public returns (bool);
+    function exec() public;
 }
 
 
@@ -36,11 +36,7 @@ contract DelegateScript is IEVMScriptExecutor, IsContract {
     function delegate(address _addr, bytes memory _input) internal returns (bytes memory output) {
         require(isContract(_addr));
         require(_addr.delegatecall(_input.length > 0 ? _input : defaultInput()));
-        bytes memory ret = returnedData();
-
-        require(ret.length > 0);
-
-        return ret;
+        return returnedData();
     }
 
     function defaultInput() internal pure returns (bytes) {
