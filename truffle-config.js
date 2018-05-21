@@ -3,7 +3,7 @@ const PrivateKeyProvider = require('truffle-privatekey-provider')
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
-let ropstenProvider, kovanProvider, rinkebyProvider = {}
+let ropstenProvider, kovanProvider, rinkebyProvider, mainnetProvider = {}
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
@@ -12,6 +12,7 @@ if (process.env.LIVE_NETWORKS) {
   try {
     const { rpc, key } = require(require('homedir')()+'/.rinkebykey.json')
     rinkebyProvider = new PrivateKeyProvider(key, rpc)
+    mainnetProvider = new PrivateKeyProvider(key, 'https://mainnet.infura.io')
   } catch (e) {
     rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
   }
@@ -40,6 +41,12 @@ module.exports = {
       host: 'localhost',
       port: 8535,
       gas: 6.9e6,
+    },
+    mainnet: {
+      network_id: 1,
+      provider: mainnetProvider,
+      gas: 7.3e6, // Lower than network limit and higher than required gas
+      gasPrice: 19000000000, // 16 gwei -> May 21st 2018, 2 * safe low
     },
     ropsten: {
       network_id: 3,
