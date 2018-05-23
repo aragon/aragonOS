@@ -43,7 +43,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @return AppProxy instance
     */
     function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
-        newAppInstance(_name, _appBase, false);
+        return newAppInstance(_name, _appBase, false);
     }
 
     /**
@@ -73,7 +73,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @return AppProxy instance
     */
     function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
-        newPinnedAppInstance(_name, _appBase, false);
+        return newPinnedAppInstance(_name, _appBase, false);
     }
 
     /**
