@@ -47,7 +47,7 @@ contract('EVM Script', accounts => {
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
-    it('registered just 3 script executors', async () => {
+    it('factory registered just 1 script executor', async () => {
         const zeroAddr = '0x0000000000000000000000000000000000000000'
 
         assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
@@ -162,6 +162,29 @@ contract('EVM Script', accounts => {
             it('can execute empty script', async () => {
                 await executor.execute(encodeCallScript([]))
             })
+
+            context('script overflow', async () => {
+                const encodeCallScriptBad = actions => {
+                    return actions.reduce((script, { to, calldata }) => {
+                        const addr = rawEncode(['address'], [to]).toString('hex')
+                        // length should be (calldata.length - 2) / 2 instead of calldata.length
+                        // as this one is bigger, it would overflow and therefore must revert
+                        const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
+
+                        // Remove 12 first 0s of padding for addr and 28 0s for uint32
+                        return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
+                    }, '0x00000001') // spec 1
+                }
+
+                it('fails if data length is too big', async () => {
+                    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                    const script = encodeCallScriptBad([action])
+
+                    return assertRevert(async () => {
+                        await executor.execute(script)
+                    })
+                })
+          })
         })
     })
 })
