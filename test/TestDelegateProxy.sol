@@ -8,7 +8,6 @@ import "../contracts/evmscript/ScriptHelpers.sol";
 
 
 contract Target {
-    function returnSomething() public constant returns (bool) { return true; }
     function dontReturn() public {}
     function fail() public { revert(); }
     function die() public { selfdestruct(0); }
@@ -39,34 +38,13 @@ contract TestDelegateProxy is DelegateProxy {
         throwProxy = new ThrowProxy(address(this));
     }
 
-    function testMinReturn0WithoutReturn() public {
-        delegatedFwd(target, target.dontReturn.selector.toBytes(), 0);
-    }
-
-    function testMinReturn0WithReturn() public {
-        delegatedFwd(target, target.returnSomething.selector.toBytes(), 0);
-    }
-
-    function testMinReturn32WithReturn() public {
-        delegatedFwd(target, target.returnSomething.selector.toBytes(), 32);
-    }
-
-    function testFailsIfReturnLessThanMin() public {
-        TestDelegateProxy(throwProxy).revertIfReturnLessThanMin();
-        throwProxy.assertThrows("should have reverted if return data was less than min");
-    }
-
-    function revertIfReturnLessThanMin() public {
-        delegatedFwd(target, target.dontReturn.selector.toBytes(), 32);
-    }
-
     function testFailIfNoContract() public {
         TestDelegateProxy(throwProxy).noContract();
         throwProxy.assertThrows("should have reverted if target is not a contract");
     }
 
     function noContract() public {
-        delegatedFwd(address(0x1234), target.dontReturn.selector.toBytes(), 0);
+        delegatedFwd(address(0x1234), target.dontReturn.selector.toBytes());
     }
 
     function testFailIfReverts() public {
@@ -88,17 +66,6 @@ contract TestDelegateProxy is DelegateProxy {
         bool result = isContract(nonContract);
         Assert.isFalse(result, "should return false");
     }
-
-    /* TODO: this test doesn't work with ganache. To be restablished when we use geth for tests
-    function testSelfdestructIsRevertedWithMinReturn() public {
-        TestDelegateProxy(throwProxy).revertIfReturnLessThanMinAndDie();
-        throwProxy.assertThrows("should have reverted to stop selfdestruct");
-    }
-
-    function revertIfReturnLessThanMinAndDie() public {
-        delegatedFwd(target, target.die.selector.toBytes(), 32);
-    }
-    */
 
     // keep as last test as it will kill this contract
     function testDieIfMinReturn0() public {

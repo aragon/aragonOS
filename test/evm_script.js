@@ -1,13 +1,10 @@
 const { rawEncode } = require('ethereumjs-abi')
 
 const { assertRevert } = require('./helpers/assertThrow')
-const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
+const { encodeCallScript } = require('./helpers/evmScript')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
-const Delegator = artifacts.require('Delegator')
-const FailingDelegator = artifacts.require('FailingDelegator')
-const FailingDeployment = artifacts.require('FailingDeployment')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -55,9 +52,7 @@ contract('EVM Script', accounts => {
 
         assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
         assert.notEqual(await reg.getScriptExecutor('0x00000001'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000002'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000003'), zeroAddr)
-        assert.equal(await reg.getScriptExecutor('0x00000004'), zeroAddr)
+        assert.equal(await reg.getScriptExecutor('0x00000002'), zeroAddr)
     })
 
     it('fails if reinitializing registry', async () => {
@@ -166,117 +161,6 @@ contract('EVM Script', accounts => {
 
             it('can execute empty script', async () => {
                 await executor.execute(encodeCallScript([]))
-            })
-        })
-
-        const delegatorResultNumber = 1234
-
-        context('spec ID 2', () => {
-            let delegator = {}
-            before(async () => {
-                delegator = await Delegator.new()
-            })
-
-            it('can execute delegated action', async () => {
-                await executor.executeWithBan(encodeDelegate(delegator.address), [])
-
-                assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
-            })
-
-            it('can execute action with input and output', async () => {
-                const value = 101
-                const input = delegator.contract.execReturnValue.getData(value)
-                const output = await executor.executeWithIO.call(encodeDelegate(delegator.address), input, [])
-
-                assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
-            })
-
-            it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
-                })
-            })
-
-            it('fails if underlying call fails', async () => {
-                const failingDelegator = await FailingDelegator.new()
-                return assertRevert(async () => {
-                    // extra gas to avoid oog
-                    await executor.executeWithBan(encodeDelegate(failingDelegator.address), [], { gas: 2e6 })
-                })
-            })
-
-            it('fails if calling to non-contract', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate(accounts[0])) // addr is too small
-                })
-            })
-
-            it('fails if payload is too small', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate('0x1234')) // addr is too small
-                })
-            })
-        })
-
-        context('spec ID 3', () => {
-            it('can deploy and execute', async () => {
-                await executor.execute(encodeDeploy(Delegator))
-
-                assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
-            })
-
-            it('can deploy action with input and output', async () => {
-                const value = 102
-                const delegator = await Delegator.new()
-                const input = delegator.contract.execReturnValue.getData(value)
-                const output = await executor.executeWithIO.call(encodeDeploy(Delegator), input, [])
-
-                assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
-            })
-
-            it('caches deployed contract and reuses it', async () => {
-                const r1 = await executor.execute(encodeDeploy(Delegator))
-                const r2 = await executor.execute(encodeDeploy(Delegator))
-
-                assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed / 2, 'should have used less than half the gas because of cache')
-                assert.equal(await executor.randomNumber(), delegatorResultNumber * 2, 'should have executed correctly twice')
-            })
-
-            it('fails if deployment fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDeployment))
-                })
-            })
-
-            it('fails if deployed contract doesnt have exec function', async () => {
-                return assertRevert(async () => {
-                    // random contract without exec() func
-                    await executor.execute(encodeDeploy(ExecutionTarget))
-                })
-            })
-
-            it('fails if exec function fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDelegator))
-                })
-            })
-
-            it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
-                })
-            })
-
-            it('fails if execution modifies kernel', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierKernel')))
-                })
-            })
-
-            it('fails if execution modifies app id', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
-                })
             })
         })
     })
