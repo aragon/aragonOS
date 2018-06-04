@@ -8,7 +8,7 @@
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "console": "node_modules/.bin/truffle console",
+    "console": "truffle console",
     "ganache-cli:test": "scripts/ganache-cli.sh",
     "deploy:devnet:ens": "truffle compile && truffle exec --network devnet scripts/deploy-beta-ens.js",
     "deploy:devnet:apm": "truffle compile && truffle exec --network devnet scripts/deploy-beta-apm.js",
