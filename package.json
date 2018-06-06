@@ -27,7 +27,7 @@
     "Jorge Izquierdo <jorge@aragon.one>"
   ],
   "repository": "https://github.com/aragon/aragonOS",
-  "license": "GPL-3.0",
+  "license": "(GPL-3.0-or-later OR MIT)",
   "devDependencies": {
     "coveralls": "^2.13.3",
     "eth-ens-namehash": "^2.0.8",
