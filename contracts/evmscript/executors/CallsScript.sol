@@ -47,10 +47,5 @@ contract CallsScript is IEVMScriptExecutor {
                 switch success case 0 { revert(0, 0) }
             }
         }
-
-        bytes memory ret = new bytes(1);
-        ret[0] = 0x01;
-
-        return ret;
     }
 }

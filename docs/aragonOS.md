@@ -436,23 +436,6 @@ A simple way to concatenate multiple calls. It cancels the operation if any of t
 - **Output:** None.
 - **Blacklist:** Entire script reverts if a call to one of the addresses in the blacklist is performed.
 
-##### 5.2.1.1 DelegateScript
-`delegatecalls` into a given contract, which basically allows for any arbitrary computation within the EVM in the caller’s context.
-
-- **Script body:** Address of the contract to make the call to.
-- **Input:** `calldata` for the `delegatecall` that will be performed.
-- **Output:** raw return data of the call.
-- **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
-
-##### 5.2.1.3 DeployDelegateScript
-
-Is a superset of the DelegateScript, but it takes a contract’s initcode bytecode as its script body instead of just an address. On execution, it deploys the contract to the blockchain and executes it with a `delegatecall`.
-
-- **Script body:**: initcode for contract being created.
-- **Input:** `calldata` for the `delegatecall` that will be performed after contract creation.
-- **Output:** raw return data of the call.
-- **Blacklist:** impossible to enforce. If there are any addresses in the blacklist the script will revert as it is not possible to check whether a particular address will be called.
-
 
 ### 5.3 Making an app a Forwarder
 

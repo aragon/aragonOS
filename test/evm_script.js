@@ -1,15 +1,10 @@
 const { rawEncode } = require('ethereumjs-abi')
 
 const { assertRevert } = require('./helpers/assertThrow')
-const { encodeCallScript, encodeDelegate, encodeDeploy } = require('./helpers/evmScript')
+const { encodeCallScript } = require('./helpers/evmScript')
 
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const Executor = artifacts.require('Executor')
-const Delegator = artifacts.require('Delegator')
-const FailingDelegator = artifacts.require('FailingDelegator')
-const DyingDelegator = artifacts.require('DyingDelegator')
-const FailingDeployment = artifacts.require('FailingDeployment')
-const MockDyingScriptExecutor = artifacts.require('MockDyingScriptExecutor')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -52,14 +47,12 @@ contract('EVM Script', accounts => {
         await dao.setApp(APP_BASE_NAMESPACE, executorAppId, baseExecutor.address, { from: boss })
     })
 
-    it('registered just 3 script executors', async () => {
+    it('factory registered just 1 script executor', async () => {
         const zeroAddr = '0x0000000000000000000000000000000000000000'
 
         assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
         assert.notEqual(await reg.getScriptExecutor('0x00000001'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000002'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000003'), zeroAddr)
-        assert.equal(await reg.getScriptExecutor('0x00000004'), zeroAddr)
+        assert.equal(await reg.getScriptExecutor('0x00000002'), zeroAddr)
     })
 
     it('fails if reinitializing registry', async () => {
@@ -73,8 +66,6 @@ contract('EVM Script', accounts => {
             const receipt = await dao.newAppInstance(executorAppId, baseExecutor.address, { from: boss })
             executor = Executor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             executionTarget = await ExecutionTarget.new()
-
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
         })
 
         it('fails to execute if spec ID is 0', async () => {
@@ -90,6 +81,7 @@ contract('EVM Script', accounts => {
         })
 
         it('can disable executors', async () => {
+            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))
@@ -170,188 +162,29 @@ contract('EVM Script', accounts => {
             it('can execute empty script', async () => {
                 await executor.execute(encodeCallScript([]))
             })
-        })
 
-        const delegatorResultNumber = 1234
+            context('script overflow', async () => {
+                const encodeCallScriptBad = actions => {
+                    return actions.reduce((script, { to, calldata }) => {
+                        const addr = rawEncode(['address'], [to]).toString('hex')
+                        // length should be (calldata.length - 2) / 2 instead of calldata.length
+                        // as this one is bigger, it would overflow and therefore must revert
+                        const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
 
-        context('spec ID 2', () => {
-            let delegator = {}
-            before(async () => {
-                delegator = await Delegator.new()
-            })
+                        // Remove 12 first 0s of padding for addr and 28 0s for uint32
+                        return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
+                    }, '0x00000001') // spec 1
+                }
 
-            it('can execute delegated action', async () => {
-                await executor.executeWithBan(encodeDelegate(delegator.address), [])
+                it('fails if data length is too big', async () => {
+                    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                    const script = encodeCallScriptBad([action])
 
-                assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
-            })
-
-            it('can execute action with input and output', async () => {
-                const value = 101
-                const input = delegator.contract.execReturnValue.getData(value)
-                const output = await executor.executeWithIO.call(encodeDelegate(delegator.address), input, [])
-
-                assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
-            })
-
-            it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDelegate(delegator.address), ['0x12'])
+                    return assertRevert(async () => {
+                        await executor.execute(script)
+                    })
                 })
-            })
-
-            it('fails if underlying call fails', async () => {
-                const failingDelegator = await FailingDelegator.new()
-                return assertRevert(async () => {
-                    // extra gas to avoid oog
-                    await executor.executeWithBan(encodeDelegate(failingDelegator.address), [], { gas: 2e6 })
-                })
-            })
-
-            it('fails if underlying call selfdestructs', async () => {
-                const dyingDelegator = await DyingDelegator.new()
-                return assertRevert(async () => {
-                    // extra gas to avoid oog
-                    await executor.executeWithBan(encodeDelegate(dyingDelegator.address), [], { gas: 2e6 })
-                })
-            })
-
-            it('fails if calling to non-contract', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate(accounts[0])) // addr is too small
-                })
-            })
-
-            it('fails if payload is too small', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDelegate('0x1234')) // addr is too small
-                })
-            })
-        })
-
-        context('spec ID 3', () => {
-            it('can deploy and execute', async () => {
-                await executor.execute(encodeDeploy(Delegator))
-
-                assert.equal(await executor.randomNumber(), delegatorResultNumber, 'should have executed correctly')
-            })
-
-            it('can deploy action with input and output', async () => {
-                const value = 102
-                const delegator = await Delegator.new()
-                const input = delegator.contract.execReturnValue.getData(value)
-                const output = await executor.executeWithIO.call(encodeDeploy(Delegator), input, [])
-
-                assert.equal(new web3.BigNumber(output), value, 'return value should be correct')
-            })
-
-            it('caches deployed contract and reuses it', async () => {
-                const r1 = await executor.execute(encodeDeploy(Delegator))
-                const r2 = await executor.execute(encodeDeploy(Delegator))
-
-                assert.isBelow(r2.receipt.gasUsed, r1.receipt.gasUsed / 2, 'should have used less than half the gas because of cache')
-                assert.equal(await executor.randomNumber(), delegatorResultNumber * 2, 'should have executed correctly twice')
-            })
-
-            it('fails if deployment fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDeployment))
-                })
-            })
-
-            it('fails if deployed contract doesnt have exec function', async () => {
-                return assertRevert(async () => {
-                    // random contract without exec() func
-                    await executor.execute(encodeDeploy(ExecutionTarget))
-                })
-            })
-
-            it('fails if exec function fails', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(FailingDelegator))
-                })
-            })
-
-            it('fails to execute if it has blacklist addresses', async () => {
-                return assertRevert(async () => {
-                    await executor.executeWithBan(encodeDeploy(Delegator), ['0x1234'])
-                })
-            })
-
-            it('fails if execution modifies kernel', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierKernel')))
-                })
-            })
-
-            it('fails if execution modifies app id', async () => {
-                return assertRevert(async () => {
-                    await executor.execute(encodeDeploy(artifacts.require('ProtectionModifierAppId')))
-                })
-            })
-        })
-
-        context('adding mock dying executor', () => {
-            let dyingExecutor = null
-
-            beforeEach(async () => {
-                dyingExecutor = await MockDyingScriptExecutor.new()
-                await reg.addScriptExecutor(dyingExecutor.address, { from: boss })
-            })
-
-            it('registers new executor', async () => {
-                assert.equal(await reg.getScriptExecutor('0x00000004'), dyingExecutor.address)
-            })
-
-            it('executes mock executor', async () => {
-                await executor.execute('0x00000004')
-            })
-
-            it('fails when executor selfdestructs', async () => {
-                return assertRevert(async () => {
-                    // passing some input makes executor to selfdestruct
-                    await executor.executeWithIO('0x00000004', '0x0001', [])
-                })
-            })
-        })
-
-        context('script overflow', async () => {
-            const encodeCallScriptBad = actions => {
-                return actions.reduce((script, { to, calldata }) => {
-                    const addr = rawEncode(['address'], [to]).toString('hex')
-                    // length should be (calldata.length - 2) / 2 instead of calldata.length
-                    // as this one is bigger, it would overflow and therefore must revert
-                    const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
-
-                    // Remove 12 first 0s of padding for addr and 28 0s for uint32
-                    return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
-                }, '0x00000001') // spec 1
-            }
-
-            it('fails if data length is too big', async () => {
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                const script = encodeCallScriptBad([action])
-
-                return assertRevert(async () => {
-                    await executor.execute(script)
-                })
-            })
-        })
-    })
-
-    context('isContract tests', async () => {
-        let delegateScript
-
-        before(async () => {
-            delegateScript = await getContract('DelegateScriptWrapper').new()
-        })
-
-        it('fails if address is 0', async () => {
-            assert.isFalse(await delegateScript.isContractWrapper('0x0'), "should return false")
-        })
-
-        it('fails if dst is not a contract', async () => {
-            assert.isFalse(await delegateScript.isContractWrapper('0x1234'), "should return false")
+          })
         })
     })
 })
