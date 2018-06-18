@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "./APMNamehash.sol";
+import "../../contracts/apm/APMNamehash.sol";
 
 
 contract KeccakConstants is APMNamehash {
