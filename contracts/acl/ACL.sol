@@ -43,7 +43,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
     bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
-    address constant ANY_ENTITY = address(-1);
+    address constant public ANY_ENTITY = address(-1);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
