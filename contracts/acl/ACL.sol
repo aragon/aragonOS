@@ -16,11 +16,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
     // whether a certain entity has a permission
-    mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id
-    mapping (bytes32 => Param[]) public permissionParams;
+    mapping (bytes32 => bytes32) internal permissions; // 0 for no permission, or parameters id
+    mapping (bytes32 => Param[]) internal permissionParams;
 
     // who is the manager of a permission
-    mapping (bytes32 => address) permissionManager;
+    mapping (bytes32 => address) internal permissionManager;
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
 
