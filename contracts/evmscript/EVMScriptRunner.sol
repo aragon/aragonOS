@@ -14,7 +14,9 @@ import "../apps/AppStorage.sol";
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
 
-    function runScript(bytes _script, bytes _input, address[] _blacklist) protectState internal returns (bytes output) {
+    event ScriptResult(bytes script, bytes input, bytes returnData);
+
+    function runScript(bytes _script, bytes _input, address[] _blacklist) internal protectState returns (bytes output) {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         address executorAddr = getExecutor(_script);
         require(executorAddr != address(0));
@@ -24,7 +26,9 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
         require(executorAddr.delegatecall(sig, calldataArgs));
 
-        return returnedDataDecoded();
+        output = returnedDataDecoded();
+
+        ScriptResult(_script, _input, output);
     }
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {

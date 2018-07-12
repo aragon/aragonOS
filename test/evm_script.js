@@ -93,9 +93,16 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
 
-                await executor.execute(script)
+                const receipt = await executor.execute(script)
 
                 assert.equal(await executionTarget.counter(), 1, 'should have executed action')
+
+                // Check logs
+                // The Executor always uses 0x for the input and callscripts always have 0x returns
+                const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
+                assert.equal(scriptResult.args.script, script)
+                assert.equal(scriptResult.args.input, '0x')
+                assert.equal(scriptResult.args.returnData, '0x')
             })
 
             it('fails to execute if has blacklist addresses being called', async () => {
