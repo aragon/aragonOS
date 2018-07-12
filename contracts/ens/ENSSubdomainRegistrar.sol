@@ -1,3 +1,6 @@
+/* solium-disable function-order */
+// Allow public initialize() to be first
+
 pragma solidity 0.4.18;
 
 import "../lib/ens/AbstractENS.sol";

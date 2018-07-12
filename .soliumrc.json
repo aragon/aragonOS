@@ -6,7 +6,7 @@
         "security/no-inline-assembly": "off",
         "emit": "off",
         "error-reason": "off",
-        "function-order": "off",
+        "function-order": 1,
         "imports-on-top": 1,
         "variable-declarations": 1,
         "array-declarations": 1,
