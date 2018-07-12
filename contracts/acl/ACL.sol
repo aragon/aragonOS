@@ -399,11 +399,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     function roleHash(address _where, bytes32 _what) pure internal returns (bytes32) {
-        return keccak256(uint256(1), _where, _what);
+        return keccak256("ROLE", _where, _what);
     }
 
     function permissionHash(address _who, address _where, bytes32 _what) pure internal returns (bytes32) {
-        return keccak256(uint256(2), _who, _where, _what);
+        return keccak256("PERMISSION", _who, _where, _what);
     }
 
     function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members
