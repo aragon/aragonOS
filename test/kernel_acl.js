@@ -85,6 +85,8 @@ contract('Kernel ACL', accounts => {
       const createPermissionRole = await acl.CREATE_PERMISSIONS_ROLE()
       const num = await acl.numAuthorized(permissionsRoot, acl.address, createPermissionRole);
       assert.equal(num, 1, "There should be only 1 person");
+      const kernelNum = await kernel.numAuthorized(permissionsRoot, acl.address, createPermissionRole);
+      assert.equal(num, 1, "There should be only 1 person");
     })
 
     it('cannot create permissions without permission', async () => {
