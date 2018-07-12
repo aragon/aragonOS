@@ -14,7 +14,7 @@ import "../apps/AppStorage.sol";
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
 
-    function runScript(bytes _script, bytes _input, address[] _blacklist) protectState internal returns (bytes output) {
+    function runScript(bytes _script, bytes _input, address[] _blacklist) internal returns (bytes output) {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         address executorAddr = getExecutor(_script);
         require(executorAddr != address(0));
@@ -52,13 +52,5 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
             }
         }
         return ret;
-    }
-
-    modifier protectState {
-        address preKernel = kernel;
-        bytes32 preAppId = appId;
-        _; // exec
-        require(kernel == preKernel);
-        require(appId == preAppId);
     }
 }
