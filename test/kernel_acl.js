@@ -79,6 +79,8 @@ contract('Kernel ACL', accounts => {
     it('create permission action can be performed by root by default', async () => {
         const createPermissionRole = await acl.CREATE_PERMISSIONS_ROLE()
         assert.isTrue(await acl.hasPermission(permissionsRoot, acl.address, createPermissionRole))
+        const num = await acl.numAuthorized(permissionsRoot, acl.address, createPermissionRole);
+        assert.equal(num, 1, "There should be only 1 person");
     })
 
     it('cannot create permissions without permission', async () => {

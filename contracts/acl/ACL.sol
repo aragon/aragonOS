@@ -17,6 +17,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     // whether a certain entity has a permission
     mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id
+    // Number of people authorized with a permission
+    mapping (bytes32 => uint256) numberOfAuthorized;
     mapping (bytes32 => Param[]) public permissionParams;
 
     // who is the manager of a permission
@@ -222,6 +224,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return hasPermission(_who, _where, _what, empty);
     }
 
+    function numAuthorized(address _who, address _where, bytes32 _what) public view returns (uint) {
+        return numberOfAuthorized[permissionHash(_who, _where, _what)];
+    }
+
     function evalParams(
         bytes32 _paramsHash,
         address _who,
@@ -253,6 +259,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
+        if (_paramsHash != bytes32(0)) {
+            numberOfAuthorized[permissionHash(_entity, _app, _role)] += 1;
+        } else {
+            numberOfAuthorized[permissionHash(_entity, _app, _role)] -= 1;
+        }
 
         SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
     }

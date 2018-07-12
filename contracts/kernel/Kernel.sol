@@ -152,6 +152,17 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         return acl().hasPermission(_who, _where, _what, _how);
     }
 
+    /**
+    * @dev Function called by apps to check number of addresses that have a permission
+    * @param _who Sender of the original call
+    * @param _where Address of the app
+    * @param _what Identifier for a group of actions in app
+    * @return uint256 indicating how many addresses are given this permission
+    */
+    function numAuthorized(address _who, address _where, bytes32 _what) public view returns (uint256) {
+        return acl().numAuthorized(_who, _where, _what);
+    }
+
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
         require(isContract(_app));
         id = keccak256(_namespace, _name);

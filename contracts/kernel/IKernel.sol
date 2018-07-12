@@ -14,6 +14,7 @@ contract IKernel is IVaultRecoverable {
 
     function acl() public view returns (IACL);
     function hasPermission(address who, address where, bytes32 what, bytes how) public view returns (bool);
+    function numAuthorized(address who, address where, bytes32 what) public view returns (uint256);
 
     function setApp(bytes32 namespace, bytes32 name, address app) public returns (bytes32 id);
     function getApp(bytes32 id) public view returns (address);
