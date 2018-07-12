@@ -21,7 +21,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     event NewName(bytes32 indexed node, bytes32 indexed label);
     event DeleteName(bytes32 indexed node, bytes32 indexed label);
 
-    function initialize(AbstractENS _ens, bytes32 _rootNode) onlyInit public {
+    function initialize(AbstractENS _ens, bytes32 _rootNode) public onlyInit {
         initialized();
 
         // We need ownership to create subnodes
@@ -31,16 +31,16 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         rootNode = _rootNode;
     }
 
-    function createName(bytes32 _label, address _owner) auth(CREATE_NAME_ROLE) external returns (bytes32 node) {
+    function createName(bytes32 _label, address _owner) external auth(CREATE_NAME_ROLE) returns (bytes32 node) {
         return _createName(_label, _owner);
     }
 
-    function createNameAndPoint(bytes32 _label, address _target) auth(CREATE_NAME_ROLE) external returns (bytes32 node) {
+    function createNameAndPoint(bytes32 _label, address _target) external auth(CREATE_NAME_ROLE) returns (bytes32 node) {
         node = _createName(_label, this);
         _pointToResolverAndResolve(node, _target);
     }
 
-    function deleteName(bytes32 _label) auth(DELETE_NAME_ROLE) external {
+    function deleteName(bytes32 _label) external auth(DELETE_NAME_ROLE) {
         bytes32 node = keccak256(rootNode, _label);
 
         address currentOwner = ens.owner(node);
@@ -57,7 +57,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         DeleteName(node, _label);
     }
 
-    function pointRootNode(address _target) auth(POINT_ROOTNODE_ROLE) external {
+    function pointRootNode(address _target) external auth(POINT_ROOTNODE_ROLE) {
         _pointToResolverAndResolve(rootNode, _target);
     }
 

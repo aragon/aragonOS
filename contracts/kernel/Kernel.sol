@@ -11,7 +11,7 @@ import "../factory/AppProxyFactory.sol";
 
 
 contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
-    // Hardocde constant to save gas
+    // Hardcode constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
     bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
@@ -23,7 +23,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _baseAcl Address of base ACL app
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _baseAcl, address _permissionsCreator) onlyInit public {
+    function initialize(address _baseAcl, address _permissionsCreator) public onlyInit {
         initialized();
 
         IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
@@ -42,7 +42,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newAppInstance(bytes32 _name, address _appBase)
+        public
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        returns (ERCProxy appProxy)
+    {
         return newAppInstance(_name, _appBase, false);
     }
 
@@ -56,7 +60,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault)
+        public
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        returns (ERCProxy appProxy)
+    {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxy(this, _name);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
@@ -72,7 +80,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase)
+        public
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        returns (ERCProxy appProxy)
+    {
         return newPinnedAppInstance(_name, _appBase, false);
     }
 
@@ -86,7 +98,11 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault)
+        public
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        returns (ERCProxy appProxy)
+    {
         _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
         appProxy = newAppProxyPinned(this, _name);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
@@ -103,7 +119,12 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _app Address of the app
     * @return ID of app
     */
-    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) kernelIntegrity public returns (bytes32 id) {
+    function setApp(bytes32 _namespace, bytes32 _name, address _app)
+        public
+        auth(APP_MANAGER_ROLE, arr(_namespace, _name))
+        kernelIntegrity
+        returns (bytes32 id)
+    {
         return _setApp(_namespace, _name, _app);
     }
 
@@ -128,7 +149,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @dev Set the default vault id for the escape hatch mechanism
     * @param _name Name of the app
     */
-    function setRecoveryVaultId(bytes32 _name) auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) public {
+    function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
         recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
     }
 
