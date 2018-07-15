@@ -129,6 +129,14 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     }
 
     /**
+    * @dev Set the default vault id for the escape hatch mechanism
+    * @param _name Name of the app
+    */
+    function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
+        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
+    }
+
+    /**
     * @dev Get the address of an app instance or base implementation
     * @param _id App identifier
     * @return Address of the app
@@ -143,14 +151,6 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     */
     function getRecoveryVault() public view returns (address) {
         return apps[recoveryVaultId];
-    }
-
-    /**
-    * @dev Set the default vault id for the escape hatch mechanism
-    * @param _name Name of the app
-    */
-    function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
-        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
     }
 
     /**
