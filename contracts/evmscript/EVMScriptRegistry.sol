@@ -1,10 +1,11 @@
 pragma solidity 0.4.18;
 
+import "../apps/AragonApp.sol";
+import "../kernel/IKernel.sol";
+
 import "./ScriptHelpers.sol";
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
-
-import "../apps/AragonApp.sol";
 
 
 contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
@@ -20,6 +21,12 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     }
 
     ExecutorEntry[] public executors;
+
+    /**
+    * @dev Constructor that allows a deployer to choose if the base instance should be connected to
+    *      a kernel or petrified immediately.
+    */
+    function EVMScriptRegistry(IKernel _kernel) AragonApp(_kernel) public {}
 
     function initialize() onlyInit public {
         initialized();

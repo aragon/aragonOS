@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
 import "../apps/AragonApp.sol";
+import "../kernel/IKernel.sol";
 
 
 contract Repo is AragonApp {
@@ -18,6 +19,12 @@ contract Repo is AragonApp {
     bytes32 constant public CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
 
     event NewVersion(uint256 versionId, uint16[3] semanticVersion);
+
+    /**
+    * @dev Constructor that allows a deployer to choose if the base instance should be connected to
+    *      a kernel or petrified immediately.
+    */
+    function Repo(IKernel _kernel) AragonApp(_kernel) public {}
 
     /**
     * @notice Create new version for repo

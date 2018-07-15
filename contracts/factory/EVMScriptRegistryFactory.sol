@@ -5,6 +5,7 @@ import "../evmscript/EVMScriptRegistry.sol";
 import "../evmscript/executors/CallsScript.sol";
 
 import "./AppProxyFactory.sol";
+import "../kernel/IKernel.sol";
 import "../kernel/Kernel.sol";
 import "../acl/ACL.sol";
 
@@ -14,7 +15,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
     address public baseCalls;
 
     function EVMScriptRegistryFactory() public {
-        baseReg = address(new EVMScriptRegistry());
+        baseReg = address(new EVMScriptRegistry(IKernel(0))); // Immediately petrify this base instance
         baseCalls = address(new CallsScript());
     }
 

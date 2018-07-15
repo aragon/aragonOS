@@ -18,6 +18,16 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, AppProxyFact
     bytes32 constant public DEFAULT_VAULT_ID = 0x4214e5fd6d0170d69ea641b5614f5093ebecc9928af51e95685c87617489800e;
 
     /**
+    * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
+    * @param _shouldPetrify Immediately petrify this instance so that it can never be initialized
+    */
+    function Kernel(bool _shouldPetrify) public {
+        if (_shouldPetrify) {
+            petrify();
+        }
+    }
+
+    /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
     * @notice Initializes a kernel instance along with its ACL and sets `_permissionsCreator` as the entity that can create other permissions
     * @param _baseAcl Address of base ACL app

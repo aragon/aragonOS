@@ -4,6 +4,7 @@ import "../lib/ens/AbstractENS.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 import "../factory/AppProxyFactory.sol";
 import "../apps/AragonApp.sol";
+import "../kernel/IKernel.sol";
 import "../acl/ACL.sol";
 import "./Repo.sol";
 
@@ -25,6 +26,12 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     bytes32 constant public CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
 
     event NewRepo(bytes32 id, string name, address repo);
+
+    /**
+    * @dev Constructor that allows a deployer to choose if the base instance should be connected to
+    *      a kernel or petrified immediately.
+    */
+    function APMRegistry(IKernel _kernel) AragonApp(_kernel) public {}
 
     /**
     * NEEDS CREATE_NAME_ROLE and POINT_ROOTNODE_ROLE permissions on registrar
