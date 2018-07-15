@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/acl/ACL.sol";
+import "../../contracts/acl/IACLOracle.sol";
 
 
 contract ACLHelper {
@@ -14,28 +14,28 @@ contract ACLHelper {
 }
 
 
-contract AcceptOracle is ACLOracle {
+contract AcceptOracle is IACLOracle {
     function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
         return true;
     }
 }
 
 
-contract RejectOracle is ACLOracle {
+contract RejectOracle is IACLOracle {
     function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
         return false;
     }
 }
 
 
-contract RevertOracle is ACLOracle {
+contract RevertOracle is IACLOracle {
     function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
         revert();
     }
 }
 
 
-contract ConditionalOracle is ACLOracle {
+contract ConditionalOracle is IACLOracle {
     function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
         return how[0] > 0;
     }

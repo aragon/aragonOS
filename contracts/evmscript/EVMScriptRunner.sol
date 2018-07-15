@@ -16,13 +16,13 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
     function runScript(bytes _script, bytes _input, address[] _blacklist) protectState internal returns (bytes output) {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
-        address executorAddr = getExecutor(_script);
-        require(executorAddr != address(0));
+        IEVMScriptExecutor executorAddr = getExecutor(_script);
+        require(address(executorAddr) != address(0));
 
         bytes memory calldataArgs = _script.encode(_input, _blacklist);
-        bytes4 sig = IEVMScriptExecutor(0).execScript.selector;
+        bytes4 sig = executorAddr.execScript.selector;
 
-        require(executorAddr.delegatecall(sig, calldataArgs));
+        require(address(executorAddr).delegatecall(sig, calldataArgs));
 
         return returnedDataDecoded();
     }

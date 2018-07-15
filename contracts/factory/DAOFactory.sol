@@ -1,25 +1,27 @@
 pragma solidity 0.4.18;
 
+import "../kernel/IKernel.sol";
 import "../kernel/Kernel.sol";
 import "../kernel/KernelProxy.sol";
 
+import "../acl/IACL.sol";
 import "../acl/ACL.sol";
 
 import "./EVMScriptRegistryFactory.sol";
 
 
 contract DAOFactory {
-    address public baseKernel;
-    address public baseACL;
+    IKernel public baseKernel;
+    IACL public baseACL;
     EVMScriptRegistryFactory public regFactory;
 
     event DeployDAO(address dao);
     event DeployEVMScriptRegistry(address reg);
 
-    function DAOFactory(address _baseKernel, address _baseACL, address _regFactory) public {
+    function DAOFactory(IKernel _baseKernel, IACL _baseACL, EVMScriptRegistryFactory _regFactory) public {
         // No need to init as it cannot be killed by devops199
-        if (_regFactory != address(0)) {
-            regFactory = EVMScriptRegistryFactory(_regFactory);
+        if (address(_regFactory) != address(0)) {
+            regFactory = _regFactory;
         }
 
         baseKernel = _baseKernel;
