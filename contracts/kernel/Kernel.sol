@@ -4,13 +4,13 @@ import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../common/Initializable.sol";
 import "../common/IsContract.sol";
+import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
+contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
     // Hardocde constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));

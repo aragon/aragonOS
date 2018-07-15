@@ -5,7 +5,7 @@
 pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
-import "../common/Initializable.sol";
+import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -13,7 +13,7 @@ import "../acl/ACLSyntaxSugar.sol";
 
 // ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
 // that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Initializable, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
+contract AragonApp is AppStorage, Petrifiable, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)));
         _;

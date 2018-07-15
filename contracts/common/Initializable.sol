@@ -14,7 +14,7 @@ contract Initializable is AppStorage {
     }
 
     modifier isInitialized {
-        require(initializationBlock > 0);
+        require(initializationBlock != 0 && getBlockNumber() >= initializationBlock);
         _;
     }
 
@@ -30,6 +30,14 @@ contract Initializable is AppStorage {
     */
     function initialized() internal onlyInit {
         initializationBlock = getBlockNumber();
+    }
+
+    /**
+    * @dev Function to be called by top level contract after initialization to enable the contract
+    *      at a future block number rather than immediately.
+    */
+    function initializedAt(uint256 blockNumber) internal onlyInit {
+        initializationBlock = blockNumber;
     }
 
     /**
