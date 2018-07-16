@@ -14,10 +14,10 @@ contract DelegateProxy is ERCProxy, IsContract {
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
         require(isContract(_dst));
-        uint256 fwd_gas_limit = FWD_GAS_LIMIT;
+        uint256 fwdGasLimit = FWD_GAS_LIMIT;
 
         assembly {
-            let result := delegatecall(sub(gas, fwd_gas_limit), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
+            let result := delegatecall(sub(gas, fwdGasLimit), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
             let size := returndatasize
             let ptr := mload(0x40)
             returndatacopy(ptr, 0, size)
