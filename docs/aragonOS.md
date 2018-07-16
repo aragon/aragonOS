@@ -291,8 +291,6 @@ are some *special Argument IDs*:
 	- `TIMESTAMP_PARAM_ID` (`id = 201`): Sets comparison value to the timestamp of the
 	current block at the time of execution. This allows for setting up timelocks
 	on time.
-	- `SENDER_PARAM_ID` (`id = 202`): Sets comparison value to the sender of the call.
-	(Currently useless because of [this issue]())
 	- `ORACLE_PARAM_ID` (`id = 203`): Checks with an oracle at the address in the
 	*argument value* and returns whether it returned true or false (no comparison with arg).
 	- `LOGIC_OP_PARAM_ID` (`id = 204`): Evaluates a logical operation and returns

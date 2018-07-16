@@ -34,10 +34,9 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
     uint8 constant TIMESTAMP_PARAM_ID    = 201;
-    uint8 constant SENDER_PARAM_ID       = 202;
-    uint8 constant ORACLE_PARAM_ID       = 203;
-    uint8 constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 constant PARAM_VALUE_PARAM_ID  = 205;
+    uint8 constant ORACLE_PARAM_ID       = 202;
+    uint8 constant LOGIC_OP_PARAM_ID     = 203;
+    uint8 constant PARAM_VALUE_PARAM_ID  = 204;
     // TODO: Add execution times param type?
 
     // Hardcoded constant to save gas
@@ -302,8 +301,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             value = blockN();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
-        } else if (param.id == SENDER_PARAM_ID) {
-            value = uint256(msg.sender);
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
