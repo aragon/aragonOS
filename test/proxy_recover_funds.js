@@ -1,5 +1,4 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const skipCoverage = require('./helpers/skipCoverage')
 const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
@@ -13,9 +12,9 @@ const ACL = artifacts.require('ACL')
 const getContract = artifacts.require
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 const keccak256 = require('js-sha3').keccak_256
-const APP_BASES_NAMESPACE = '0x'+keccak256('base')
 
 contract('Proxy funds', accounts => {
+  let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE
   let factory, acl, kernel, kernelProxy, app, appProxy, ETH, vault, target
 
   const permissionsRoot = accounts[0]
@@ -25,6 +24,10 @@ contract('Proxy funds', accounts => {
   beforeEach(async () => {
     const kernelBase = await getContract('Kernel').new()
     const aclBase = await getContract('ACL').new()
+
+    APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
+    APP_ADDR_NAMESPACE = await kernelBase.APP_ADDR_NAMESPACE()
+
     factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
 
     app = await AppStub.new()
@@ -47,14 +50,10 @@ contract('Proxy funds', accounts => {
     ETH = await kernel.ETH()
 
     // vault
-    const vaultBase = await getContract('VaultMock').new()
+    // register it without a proxy to avoid running into gas issues during coverage
+    vault = await getContract('VaultMock').new()
     const vaultId = hash('vault.aragonpm.test')
-    const kernelMock = await getContract('KernelMock').new(kernel.address)
-    await acl.grantPermission(kernelMock.address, kernel.address, r)
-    const vaultReceipt = await kernelMock.newAppInstance(vaultId, vaultBase.address, true)
-    await acl.revokePermission(kernelMock.address, kernel.address, r)
-    const vaultProxyAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
-    vault = getContract('VaultMock').at(vaultProxyAddress)
+    await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, vault.address)
     await kernel.setRecoveryVaultId(vaultId)
   })
 
@@ -116,9 +115,9 @@ contract('Proxy funds', accounts => {
       target = AppStub.at(appProxy.address)
     })
 
-    it('recovers ETH', skipCoverage(async () => {
+    it('recovers ETH', async () => {
       await recoverEth(target, vault)
-    }))
+    })
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
@@ -159,9 +158,9 @@ contract('Proxy funds', accounts => {
       target = kernel
     })
 
-    it('recovers ETH', skipCoverage(async () => {
+    it('recovers ETH', async () => {
       await recoverEth(target, vault)
-    }))
+    })
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
@@ -177,9 +176,9 @@ contract('Proxy funds', accounts => {
       target = Kernel.at(kernelProxy.address)
     })
 
-    it('recovers ETH', skipCoverage(async () => {
+    it('recovers ETH', async () => {
       await recoverEth(target, vault)
-    }))
+    })
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
