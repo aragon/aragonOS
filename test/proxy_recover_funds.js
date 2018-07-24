@@ -1,4 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
+const skipCoverage = require('./helpers/skipCoverage')
 const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
@@ -115,9 +116,9 @@ contract('Proxy funds', accounts => {
       target = AppStub.at(appProxy.address)
     })
 
-    it('recovers ETH', async () => {
+    it('recovers ETH', skipCoverage(async () => {
       await recoverEth(target, vault)
-    })
+    }))
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
@@ -158,9 +159,9 @@ contract('Proxy funds', accounts => {
       target = kernel
     })
 
-    it('recovers ETH', async () => {
+    it('recovers ETH', skipCoverage(async () => {
       await recoverEth(target, vault)
-    })
+    }))
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
@@ -176,9 +177,9 @@ contract('Proxy funds', accounts => {
       target = Kernel.at(kernelProxy.address)
     })
 
-    it('recovers ETH', async () => {
+    it('recovers ETH', skipCoverage(async () => {
       await recoverEth(target, vault)
-    })
+    }))
 
     it('recovers tokens', async () => {
       await recoverTokens(target, vault)
