@@ -101,7 +101,8 @@ contract('Kernel apps', accounts => {
             })
 
             it('was initialized on constructor', async () => {
-                assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                const initializationBlock = await app.getInitializationBlock()
+                assert.isAbove(initializationBlock.toNumber(), 0, 'app should have been initialized')
             })
 
             it('is upgradeable', async () => {
@@ -150,8 +151,8 @@ contract('Kernel apps', accounts => {
 
                 it('can initialize', async () => {
                     await app.initialize()
-
-                    assert.isAbove(await app.getInitializationBlock(), 0, 'app should have been initialized')
+                    const initializationBlock = await app.getInitializationBlock()
+                    assert.isAbove(initializationBlock.toNumber(), 0, 'app should have been initialized')
                 })
 
                 it('allows calls with isInitialized modifier', async () => {
