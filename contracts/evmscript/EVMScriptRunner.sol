@@ -31,7 +31,6 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
         return returnedDataDecoded();
     }
 
-    // TODO: Internal
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
         return IEVMScriptRegistry(registryAddr);

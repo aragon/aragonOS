@@ -1,6 +1,3 @@
-/* solium-disable function-order */
-// Allow public initialize() to be first
-
 pragma solidity 0.4.18;
 
 import "../lib/ens/AbstractENS.sol";
@@ -10,6 +7,8 @@ import "./ENSConstants.sol";
 import "../apps/AragonApp.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     // bytes32 constant public CREATE_NAME_ROLE = keccak256("CREATE_NAME_ROLE");
     // bytes32 constant public DELETE_NAME_ROLE = keccak256("DELETE_NAME_ROLE");

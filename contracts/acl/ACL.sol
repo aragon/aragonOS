@@ -1,6 +1,3 @@
-/* solium-disable function-order */
-// Allow public initialize() to be first
-
 pragma solidity 0.4.18;
 
 import "../apps/AragonApp.sol";
@@ -13,6 +10,8 @@ interface ACLOracle {
 }
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract ACL is IACL, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");

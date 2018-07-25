@@ -1,6 +1,3 @@
-/* solium-disable function-order */
-// Allow public initialize() to be first
-
 pragma solidity 0.4.18;
 
 import "./ScriptHelpers.sol";
@@ -10,6 +7,8 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
