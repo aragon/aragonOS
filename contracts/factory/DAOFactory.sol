@@ -48,7 +48,7 @@ contract DAOFactory {
             acl.createPermission(regFactory, dao, appManagerRole, this);
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
-            DeployEVMScriptRegistry(reg);
+            DeployEVMScriptRegistry(address(reg));
 
             acl.revokePermission(regFactory, dao, appManagerRole);
             acl.revokePermission(regFactory, acl, permRole);
@@ -59,6 +59,6 @@ contract DAOFactory {
             acl.setPermissionManager(_root, acl, permRole);
         }
 
-        DeployDAO(dao);
+        DeployDAO(address(dao));
     }
 }

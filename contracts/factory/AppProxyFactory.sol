@@ -13,7 +13,7 @@ contract AppProxyFactory {
 
     function newAppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyUpgradeable) {
         AppProxyUpgradeable proxy = new AppProxyUpgradeable(_kernel, _appId, _initializePayload);
-        NewAppProxy(proxy, true, _appId);
+        NewAppProxy(address(proxy), true, _appId);
         return proxy;
     }
 
@@ -23,7 +23,7 @@ contract AppProxyFactory {
 
     function newAppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyPinned) {
         AppProxyPinned proxy = new AppProxyPinned(_kernel, _appId, _initializePayload);
-        NewAppProxy(proxy, false, _appId);
+        NewAppProxy(address(proxy), false, _appId);
         return proxy;
     }
 }

@@ -373,7 +373,7 @@ contract MiniMeToken is Controlled {
         cloneToken.changeController(msg.sender);
 
         // An event to make the token easy to find on the blockchain
-        NewCloneToken(cloneToken, snapshot);
+        NewCloneToken(address(cloneToken), snapshot);
         return cloneToken;
     }
 
