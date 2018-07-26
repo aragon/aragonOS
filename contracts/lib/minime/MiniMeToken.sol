@@ -493,7 +493,7 @@ contract MiniMeToken is Controlled {
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
-    function ()  payable  public {
+    function () external payable {
         require(isContract(controller));
         // Adding the ` == true` makes the linter shut up so...
         require(ITokenController(controller).proxyPayment.value(msg.value)(msg.sender) == true);
