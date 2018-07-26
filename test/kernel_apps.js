@@ -28,6 +28,15 @@ for (const kernelType of ['Kernel', 'KernelProxy']) {
 
         const permissionsRoot = accounts[0]
 
+        const withAppManagerPermission = async (contractAddr, fn) => {
+            const r = await kernel.APP_MANAGER_ROLE()
+            await acl.grantPermission(contractAddr, kernel.address, r)
+            const ret = await fn()
+            await acl.revokePermission(contractAddr, kernel.address, r)
+
+            return ret
+        }
+
         before(async () => {
             // We can reuse the same kernel base for the proxies
             kernelBase = await Kernel.new()
@@ -330,6 +339,22 @@ for (const kernelType of ['Kernel', 'KernelProxy']) {
                     await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appCode1.address)
                     const receipt = await kernel[newInstanceFn](APP_ID, appCode1.address)
                     assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
+                })
+
+                it("also sets the default app when using the overloaded version", async () => {
+                    let appProxyAddr
+
+                    // Create KernelMock instance so we can use the overloaded version
+                    const kernelMock = await KernelMock.new(kernel.address)
+
+                    await withAppManagerPermission(kernelMock.address, async () => {
+                        const receipt = await kernelMock[newInstanceFn](APP_ID, appCode1.address, true)
+                        appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
+                    })
+
+                    // Check that both the app base and default app are set
+                    assert.equal(await kernel.getApp(APP_SET_ID), appCode1.address)
+                    assert.equal(await kernel.getApp(APP_DEFAULT_ID), appProxyAddr)
                 })
 
                 it("fails if the app base is not given", async() => {
