@@ -5,7 +5,6 @@ const interfaces = [
   'acl/IACL.sol',
   'acl/IACLOracle.sol',
   'acl/ACLSyntaxSugar.sol'
-  'apps/IAppProxy.sol',
   'evmscript/IEVMScriptExecutor.sol',
   'common/IForwarder.sol',
   'common/IVaultRecoverable.sol',
