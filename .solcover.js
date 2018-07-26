@@ -4,10 +4,10 @@ const libFiles = require('glob').sync('contracts/lib/**/*.sol').map(n => n.repla
 const interfaces = [
   'acl/IACL.sol',
   'acl/IACLOracle.sol',
-  'acl/ACLSyntaxSugar.sol'
-  'evmscript/IEVMScriptExecutor.sol',
+  'acl/ACLSyntaxSugar.sol',
   'common/IForwarder.sol',
   'common/IVaultRecoverable.sol',
+  'evmscript/IEVMScriptExecutor.sol',
   'kernel/IKernel.sol',
 ]
 
