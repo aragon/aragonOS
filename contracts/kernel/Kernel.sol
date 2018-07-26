@@ -104,7 +104,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _app Address of the app
     * @return ID of app
     */
-    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) kernelIntegrity public returns (bytes32 id) {
+    function setApp(bytes32 _namespace, bytes32 _name, address _app) auth(APP_MANAGER_ROLE, arr(_namespace, _name)) public returns (bytes32 id) {
         return _setApp(_namespace, _name, _app);
     }
 
@@ -184,13 +184,5 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         // Params is invalid from this point fwd
         require(hasPermission(msg.sender, address(this), _role, how));
         _;
-    }
-
-    modifier kernelIntegrity {
-        _; // After execution check integrity
-        address kernel = getApp(KERNEL_APP);
-        uint256 size;
-        assembly { size := extcodesize(kernel) }
-        require(size > 0);
     }
 }
