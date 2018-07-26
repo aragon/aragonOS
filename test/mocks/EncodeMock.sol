@@ -11,7 +11,7 @@ contract EncodeMock {
         EncodeMockInterface(this).gogo(a, b, c);
     }
 
-    function () public {
+    function () external {
         result = msg.data;
     }
 }

@@ -3,11 +3,7 @@ pragma solidity 0.4.18;
 import "../apps/AragonApp.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
-
-
-interface ACLOracle {
-    function canPerform(address who, address where, bytes32 what, uint256[] how) public view returns (bool);
-}
+import "./IACLOracle.sol";
 
 
 /* solium-disable function-order */
@@ -302,7 +298,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = checkOracle(address(param.value), _who, _where, _what, _how) ? 1 : 0;
+            value = checkOracle(IACLOracle(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = blockN();
@@ -372,11 +368,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return false;
     }
 
-    function checkOracle(address _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
-        bytes4 sig = ACLOracle(_oracleAddr).canPerform.selector;
+    function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        bytes4 sig = _oracleAddr.canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = _oracleAddr.call(sig, _who, _where, _what, 0x80, _how.length, _how);
+        bool ok = address(_oracleAddr).call(sig, _who, _where, _what, 0x80, _how.length, _how);
         // 0x80 is the position where the array that goes there starts
 
         if (!ok) {

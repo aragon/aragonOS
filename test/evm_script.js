@@ -20,7 +20,7 @@ const APP_BASE_NAMESPACE = '0x'+keccak256('base')
 const getContract = artifacts.require
 
 contract('EVM Script', accounts => {
-    let executor, executionTarget, dao, daoFact, reg, constants, acl = {}, baseExecutor
+    let executor, executionTarget, dao, daoFact, reg, constants, acl, baseExecutor
 
     const boss = accounts[1]
 
@@ -93,9 +93,17 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
 
-                await executor.execute(script)
+                const receipt = await executor.execute(script)
 
                 assert.equal(await executionTarget.counter(), 1, 'should have executed action')
+
+                // Check logs
+                // The Executor always uses 0x for the input and callscripts always have 0x returns
+                const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
+                assert.equal(scriptResult.args.executor, await reg.getScriptExecutor('0x00000001'), 'should log the same executor')
+                assert.equal(scriptResult.args.script, script, 'should log the same script')
+                assert.equal(scriptResult.args.input, '0x', 'should log the same input')
+                assert.equal(scriptResult.args.returnData, '0x', 'should log the return data')
             })
 
             it('fails to execute if has blacklist addresses being called', async () => {

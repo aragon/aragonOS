@@ -4,6 +4,8 @@
 
 pragma solidity ^0.4.18;
 
+import "./IEVMScriptExecutor.sol";
+
 
 contract EVMScriptRegistryConstants {
     /* Hardcoded constants to save gas
@@ -18,8 +20,8 @@ contract EVMScriptRegistryConstants {
 
 
 interface IEVMScriptRegistry {
-    function addScriptExecutor(address executor) external returns (uint id);
+    function addScriptExecutor(IEVMScriptExecutor executor) external returns (uint id);
     function disableScriptExecutor(uint256 executorId) external;
 
-    function getScriptExecutor(bytes script) public view returns (address);
+    function getScriptExecutor(bytes script) public view returns (IEVMScriptExecutor);
 }

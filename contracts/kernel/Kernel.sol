@@ -2,6 +2,7 @@ pragma solidity 0.4.18;
 
 import "./IKernel.sol";
 import "./KernelStorage.sol";
+import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
 import "../common/Initializable.sol";
@@ -23,7 +24,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _baseAcl Address of base ACL app
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _baseAcl, address _permissionsCreator) public onlyInit {
+    function initialize(IACL _baseAcl, address _permissionsCreator) public onlyInit {
         initialized();
 
         IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
@@ -122,7 +123,6 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     function setApp(bytes32 _namespace, bytes32 _name, address _app)
         public
         auth(APP_MANAGER_ROLE, arr(_namespace, _name))
-        kernelIntegrity
         returns (bytes32 id)
     {
         return _setApp(_namespace, _name, _app);
@@ -204,13 +204,5 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
         // Params is invalid from this point fwd
         require(hasPermission(msg.sender, address(this), _role, how));
         _;
-    }
-
-    modifier kernelIntegrity {
-        _; // After execution check integrity
-        address kernel = getApp(KERNEL_APP);
-        uint256 size;
-        assembly { size := extcodesize(kernel) }
-        require(size > 0);
     }
 }

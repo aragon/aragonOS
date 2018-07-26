@@ -6,7 +6,7 @@ import "./DelegateProxy.sol";
 contract DepositableDelegateProxy is DelegateProxy {
     event ProxyDeposit(address sender, uint256 value);
 
-    function () public payable {
+    function () external payable {
         // send / transfer
         if (msg.gas < FWD_GAS_LIMIT) {
             require(msg.value > 0 && msg.data.length == 0);
