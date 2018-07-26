@@ -2,6 +2,7 @@ pragma solidity 0.4.18;
 
 import "./IKernel.sol";
 import "./KernelStorage.sol";
+import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
 import "../common/Initializable.sol";
@@ -23,7 +24,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _baseAcl Address of base ACL app
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _baseAcl, address _permissionsCreator) onlyInit public {
+    function initialize(IACL _baseAcl, address _permissionsCreator) onlyInit public {
         initialized();
 
         IACL acl = IACL(newAppProxy(this, ACL_APP_ID));

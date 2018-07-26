@@ -1,5 +1,6 @@
 pragma solidity 0.4.18;
 
+import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
 
@@ -10,7 +11,7 @@ contract KernelProxy is KernelStorage, DepositableDelegateProxy {
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
-    function KernelProxy(address _kernelImpl) public {
+    function KernelProxy(IKernel _kernelImpl) public {
         apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
     }
 
