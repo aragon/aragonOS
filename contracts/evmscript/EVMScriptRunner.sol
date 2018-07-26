@@ -28,7 +28,7 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
         output = returnedDataDecoded();
 
-        ScriptResult(executorAddr, _script, _input, output);
+        ScriptResult(address(executor), _script, _input, output);
     }
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
