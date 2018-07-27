@@ -1,6 +1,7 @@
 const { assertRevert } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
+const { soliditySha3 } = require('web3-utils')
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
@@ -12,8 +13,6 @@ const AppProxyFactory = artifacts.require('AppProxyFactory')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
 const KernelMock = artifacts.require('KernelMock')
-
-const getSig = x => web3.sha3(x).slice(0, 10)
 
 const APP_ID = hash('stub.aragonpm.test')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -48,9 +47,8 @@ for (const kernelType of ['Kernel', 'KernelProxy']) {
             APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
             APP_ADDR_NAMESPACE = await kernelBase.APP_ADDR_NAMESPACE()
 
-            APP_SET_ID = web3.sha3(APP_BASES_NAMESPACE.substring(2) + APP_ID.substring(2), { encoding: 'hex' })
-            APP_DEFAULT_ID = web3.sha3(APP_ADDR_NAMESPACE.substring(2) + APP_ID.substring(2), { encoding: 'hex' })
-
+            APP_SET_ID = soliditySha3(APP_BASES_NAMESPACE, APP_ID)
+            APP_DEFAULT_ID = soliditySha3(APP_ADDR_NAMESPACE, APP_ID)
         })
 
         beforeEach(async () => {
