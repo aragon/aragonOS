@@ -7,6 +7,8 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
@@ -21,7 +23,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
 
     ExecutorEntry[] public executors;
 
-    function initialize() onlyInit public {
+    function initialize() public onlyInit {
         initialized();
         // Create empty record to begin executor IDs at 1
         executors.push(ExecutorEntry(IEVMScriptExecutor(0), false));

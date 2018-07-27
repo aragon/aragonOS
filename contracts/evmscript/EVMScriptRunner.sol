@@ -16,6 +16,10 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
 
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
+    function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
+        return IEVMScriptExecutor(getExecutorRegistry().getScriptExecutor(_script));
+    }
+
     function runScript(bytes _script, bytes _input, address[] _blacklist) internal protectState returns (bytes output) {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         IEVMScriptExecutor executor = getExecutor(_script);
@@ -31,11 +35,6 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
         ScriptResult(address(executor), _script, _input, output);
     }
 
-    function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
-        return IEVMScriptExecutor(getExecutorRegistry().getScriptExecutor(_script));
-    }
-
-    // TODO: Internal
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
         return IEVMScriptRegistry(registryAddr);

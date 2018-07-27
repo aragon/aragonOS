@@ -6,16 +6,18 @@ import "./IACL.sol";
 import "./IACLOracle.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract ACL is IACL, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
-    // whether a certain entity has a permission
-    mapping (bytes32 => bytes32) internal permissions; // 0 for no permission, or parameters id
-    mapping (bytes32 => Param[]) internal permissionParams;
+    // Whether someone has a permission
+    mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
+    mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
 
-    // who is the manager of a permission
+    // Who is the manager of a permission
     mapping (bytes32 => address) internal permissionManager;
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
@@ -54,7 +56,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @notice Initializes an ACL instance and sets `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _permissionsCreator) onlyInit public {
+    function initialize(address _permissionsCreator) public onlyInit {
         initialized();
         require(msg.sender == address(kernel));
 
@@ -98,8 +100,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _params Permission parameters
     */
     function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
-        onlyPermissionManager(_app, _role)
         public
+        onlyPermissionManager(_app, _role)
     {
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(_entity, _app, _role, paramsHash);
@@ -113,8 +115,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app being revoked
     */
     function revokePermission(address _entity, address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
+        onlyPermissionManager(_app, _role)
     {
         _setPermission(_entity, _app, _role, bytes32(0));
     }
@@ -126,8 +128,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions being transferred
     */
     function setPermissionManager(address _newManager, address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
+        onlyPermissionManager(_app, _role)
     {
         _setPermissionManager(_newManager, _app, _role);
     }
@@ -138,8 +140,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions being unmanaged
     */
     function removePermissionManager(address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
+        onlyPermissionManager(_app, _role)
     {
         _setPermissionManager(address(0), _app, _role);
     }
@@ -163,7 +165,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _index Index of parameter in the array
     * @return Parameter (id, op, value)
     */
-    function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index) external view returns (uint8 id, uint8 op, uint240 value) {
+    function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index)
+        external
+        view
+        returns (uint8 id, uint8 op, uint240 value)
+    {
         Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
         id = param.id;
         op = param.op;
@@ -316,7 +322,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
+        internal
+        view
+        returns (bool)
+    {
         if (Op(_param.op) == Op.IF_ELSE) {
             var (condition, success, failure) = decodeParamsList(uint256(_param.value));
             bool result = evalParam(_paramsHash, condition, _who, _where, _what, _how);
@@ -394,11 +404,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         ChangePermissionManager(_app, _role, _newManager);
     }
 
-    function roleHash(address _where, bytes32 _what) pure internal returns (bytes32) {
+    function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
         return keccak256(uint256(1), _where, _what);
     }
 
-    function permissionHash(address _who, address _where, bytes32 _what) pure internal returns (bytes32) {
+    function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
         return keccak256(uint256(2), _who, _where, _what);
     }
 

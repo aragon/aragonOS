@@ -29,7 +29,7 @@ contract Repo is AragonApp {
         uint16[3] _newSemanticVersion,
         address _contractAddress,
         bytes _contentURI
-    ) auth(CREATE_VERSION_ROLE) public
+    ) public auth(CREATE_VERSION_ROLE)
     {
         address contractAddress = _contractAddress;
         if (versions.length > 0) {
@@ -57,11 +57,19 @@ contract Repo is AragonApp {
         return getByVersionId(versions.length - 1);
     }
 
-    function getLatestForContractAddress(address _contractAddress) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
+    function getLatestForContractAddress(address _contractAddress)
+        public
+        view
+        returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI)
+    {
         return getByVersionId(latestVersionIdForContract[_contractAddress]);
     }
 
-    function getBySemanticVersion(uint16[3] _semanticVersion) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
+    function getBySemanticVersion(uint16[3] _semanticVersion)
+        public
+        view
+        returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI)
+    {
         return getByVersionId(versionIdForSemantic[semanticVersionHash(_semanticVersion)]);
     }
 

@@ -12,7 +12,7 @@ contract KernelProxy is KernelStorage, DepositableDelegateProxy {
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
     function KernelProxy(IKernel _kernelImpl) public {
-        apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
+        apps[KERNEL_APP] = _kernelImpl;
     }
 
     /**
