@@ -18,7 +18,7 @@ contract APMRegistryConstants {
 
 
 contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
-    AbstractENS ens;
+    AbstractENS public ens;
     ENSSubdomainRegistrar public registrar;
 
     // bytes32 constant public CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
@@ -30,7 +30,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     * NEEDS CREATE_NAME_ROLE and POINT_ROOTNODE_ROLE permissions on registrar
     * @param _registrar ENSSubdomainRegistrar instance that holds registry root node ownership
     */
-    function initialize(ENSSubdomainRegistrar _registrar) onlyInit public {
+    function initialize(ENSSubdomainRegistrar _registrar) public onlyInit {
         initialized();
 
         registrar = _registrar;
@@ -49,7 +49,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     * @param _name Repo name, must be ununsed
     * @param _dev Address that will be given permission to create versions
     */
-    function newRepo(string _name, address _dev) auth(CREATE_REPO_ROLE) public returns (Repo) {
+    function newRepo(string _name, address _dev) public auth(CREATE_REPO_ROLE) returns (Repo) {
         return _newRepo(_name, _dev);
     }
 
@@ -67,7 +67,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         uint16[3] _initialSemanticVersion,
         address _contractAddress,
         bytes _contentURI
-    ) auth(CREATE_REPO_ROLE) public returns (Repo)
+    ) public auth(CREATE_REPO_ROLE) returns (Repo)
     {
         Repo repo = _newRepo(_name, this); // need to have permissions to create version
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);

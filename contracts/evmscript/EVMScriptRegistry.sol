@@ -7,6 +7,8 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
@@ -15,19 +17,19 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     bytes32 constant public REGISTRY_MANAGER_ROLE = 0xf7a450ef335e1892cb42c8ca72e7242359d7711924b75db5717410da3f614aa3;
 
     struct ExecutorEntry {
-        address executor;
+        IEVMScriptExecutor executor;
         bool enabled;
     }
 
     ExecutorEntry[] public executors;
 
-    function initialize() onlyInit public {
+    function initialize() public onlyInit {
         initialized();
         // Create empty record to begin executor IDs at 1
-        executors.push(ExecutorEntry(address(0), false));
+        executors.push(ExecutorEntry(IEVMScriptExecutor(0), false));
     }
 
-    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
+    function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
         return executors.push(ExecutorEntry(_executor, true));
     }
 
@@ -35,14 +37,14 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         executors[_executorId].enabled = false;
     }
 
-    function getScriptExecutor(bytes _script) public view returns (address) {
+    function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 
         if (id == 0 || id >= executors.length) {
-            return address(0);
+            return IEVMScriptExecutor(0);
         }
 
         ExecutorEntry storage entry = executors[id];
-        return entry.enabled ? entry.executor : address(0);
+        return entry.enabled ? entry.executor : IEVMScriptExecutor(0);
     }
 }

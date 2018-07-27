@@ -14,8 +14,6 @@ contract('Constants', accounts => {
   it('checks kernel constants', async () => {
     const kernelConstants = await getContract('KernelConstants').new()
 
-    assert.equal(await kernelConstants.ETH_NODE(), await keccakConstants.ETH_NODE(), "ETH node doesn't match")
-    assert.equal(await kernelConstants.APM_NODE(), await keccakConstants.APM_NODE(), "APM node doesn't match")
     assert.equal(await kernelConstants.CORE_NAMESPACE(), await keccakConstants.CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernelConstants.APP_BASES_NAMESPACE(), await keccakConstants.APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernelConstants.APP_ADDR_NAMESPACE(), await keccakConstants.APP_ADDR_NAMESPACE(), "app namespace doesn't match")

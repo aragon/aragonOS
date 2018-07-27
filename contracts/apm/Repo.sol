@@ -10,9 +10,9 @@ contract Repo is AragonApp {
         bytes contentURI;
     }
 
-    Version[] versions;
-    mapping (bytes32 => uint256) versionIdForSemantic;
-    mapping (address => uint256) latestVersionIdForContract;
+    Version[] public versions;
+    mapping (bytes32 => uint256) internal versionIdForSemantic;
+    mapping (address => uint256) internal latestVersionIdForContract;
 
     // bytes32 constant public CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
     bytes32 constant public CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
@@ -29,7 +29,7 @@ contract Repo is AragonApp {
         uint16[3] _newSemanticVersion,
         address _contractAddress,
         bytes _contentURI
-    ) auth(CREATE_VERSION_ROLE) public
+    ) public auth(CREATE_VERSION_ROLE)
     {
         address contractAddress = _contractAddress;
         if (versions.length > 0) {
@@ -57,11 +57,19 @@ contract Repo is AragonApp {
         return getByVersionId(versions.length - 1);
     }
 
-    function getLatestForContractAddress(address _contractAddress) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
+    function getLatestForContractAddress(address _contractAddress)
+        public
+        view
+        returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI)
+    {
         return getByVersionId(latestVersionIdForContract[_contractAddress]);
     }
 
-    function getBySemanticVersion(uint16[3] _semanticVersion) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
+    function getBySemanticVersion(uint16[3] _semanticVersion)
+        public
+        view
+        returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI)
+    {
         return getByVersionId(versionIdForSemantic[semanticVersionHash(_semanticVersion)]);
     }
 
