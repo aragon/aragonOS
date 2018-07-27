@@ -51,7 +51,8 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         _;
     }
 
-    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed, bool hasParams);
+    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
+    event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     /**
@@ -257,7 +258,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bool hasPermission = _paramsHash != NO_PERMISSION;
         bool hasParams = hasPermission && _paramsHash != EMPTY_PARAM_HASH;
 
-        SetPermission(_entity, _app, _role, hasPermission, hasParams);
+        SetPermission(_entity, _app, _role, hasPermission);
+        if (hasParams) {
+            SetPermissionParams(_entity, _app, _role, _paramsHash);
+        }
     }
 
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
