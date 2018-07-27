@@ -16,7 +16,6 @@ const StandardTokenMock = artifacts.require('StandardTokenMock')
 const VaultMock = artifacts.require('VaultMock')
 
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
-const keccak256 = require('js-sha3').keccak_256
 
 contract('Proxy funds', accounts => {
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE
