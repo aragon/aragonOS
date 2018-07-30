@@ -44,6 +44,6 @@
   "dependencies": {
     "homedir": "^0.6.0",
     "truffle-hdwallet-provider": "0.0.3",
-    "truffle-hdwallet-provider-privkey": "^0.2.1"
+    "truffle-hdwallet-provider-privkey": "0.3.0"
   }
 }
