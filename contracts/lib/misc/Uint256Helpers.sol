@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 
-library Uint64Helpers {
+library Uint256Helpers {
     uint256 public constant MAX_UINT64 = uint64(-1);
 
     function toUint64(uint256 a) internal pure returns (uint64) {
