@@ -5,7 +5,7 @@
 pragma solidity ^0.4.18;
 
 import "../apps/AppStorage.sol";
-import "../lib/misc/TimeHelpers.sol";
+import "../common/TimeHelpers.sol";
 
 
 contract Initializable is AppStorage, TimeHelpers {
