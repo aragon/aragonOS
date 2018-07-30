@@ -4,14 +4,12 @@
 
 pragma solidity ^0.4.18;
 
-import "../kernel/IKernel.sol";
+import "../common/UnstructuredStorage.sol";
 
 
-contract AppStorage {
-    IKernel public kernel;
-    bytes32 public appId;
-    address internal pinnedCode; // used by Proxy Pinned
-    uint256 internal initializationBlock; // used by Initializable
-    uint256[95] private storageOffset; // forces App storage to start at after 100 slots
-    uint256 private offset;
+contract AppStorage is UnstructuredStorage {
+    bytes32 public constant kernelPosition = keccak256("IKernel.kernel");
+    bytes32 public constant appIdPosition = keccak256("bytes32.appIdPosition");
+    bytes32 internal constant pinnedCodePosition = keccak256("address.pinnedCode"); // used by Proxy Pinned
+    bytes32 internal constant initializationBlockPosition = keccak256("uint256.initializationBlock"); // used by Initializable
 }

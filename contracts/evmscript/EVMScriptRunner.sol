@@ -9,7 +9,7 @@ import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
 import "../apps/AppStorage.sol";
-
+import "../kernel/IKernel.sol";
 
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
@@ -36,6 +36,7 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
+        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
         address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
         return IEVMScriptRegistry(registryAddr);
     }
@@ -58,10 +59,10 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     }
 
     modifier protectState {
-        address preKernel = kernel;
-        bytes32 preAppId = appId;
+        address preKernel = getStorageAddress(kernelPosition);
+        bytes32 preAppId = getStorageBytes32(appIdPosition);
         _; // exec
-        require(kernel == preKernel);
-        require(appId == preAppId);
+        require(getStorageAddress(kernelPosition) == preKernel);
+        require(getStorageBytes32(appIdPosition) == preAppId);
     }
 }

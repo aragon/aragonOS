@@ -14,15 +14,15 @@ contract AppProxyPinned is AppProxyBase {
         AppProxyBase(_kernel, _appId, _initializePayload)
         public // solium-disable-line visibility-first
     {
-        pinnedCode = getAppBase(appId);
-        require(pinnedCode != address(0));
+        setStorageAddress(pinnedCodePosition, getAppBase(_appId));
+        require(getStorageAddress(pinnedCodePosition) != address(0));
     }
 
     /**
      * @dev ERC897, the address the proxy would delegate calls to
      */
     function implementation() public view returns (address) {
-        return pinnedCode;
+        return getStorageAddress(pinnedCodePosition);
     }
 
     /**

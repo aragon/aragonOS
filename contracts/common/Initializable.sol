@@ -9,12 +9,12 @@ import "../apps/AppStorage.sol";
 
 contract Initializable is AppStorage {
     modifier onlyInit {
-        require(initializationBlock == 0);
+        require(getStorageUint256(initializationBlockPosition) == 0);
         _;
     }
 
     modifier isInitialized {
-        require(initializationBlock > 0);
+        require(getStorageUint256(initializationBlockPosition) > 0);
         _;
     }
 
@@ -22,14 +22,14 @@ contract Initializable is AppStorage {
     * @return Block number in which the contract was initialized
     */
     function getInitializationBlock() public view returns (uint256) {
-        return initializationBlock;
+        return getStorageUint256(initializationBlockPosition);
     }
 
     /**
     * @dev Function to be called by top level contract after initialization has finished.
     */
     function initialized() internal onlyInit {
-        initializationBlock = getBlockNumber();
+        setStorageUint256(initializationBlockPosition, getBlockNumber());
     }
 
     /**
