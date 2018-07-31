@@ -1,5 +1,7 @@
 pragma solidity 0.4.18;
 
+import "../common/UnstructuredStorage.sol";
+
 
 contract KernelConstants {
     /*
@@ -26,7 +28,7 @@ contract KernelConstants {
 }
 
 
-contract KernelStorage is KernelConstants {
+contract KernelStorage is KernelConstants, UnstructuredStorage {
     mapping (bytes32 => address) public apps;
-    bytes32 public recoveryVaultId;
+    bytes32 public constant recoveryVaultIdPosition = keccak256("bytes32.recoveryVaultId");
 }

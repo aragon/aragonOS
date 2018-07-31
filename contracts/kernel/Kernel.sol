@@ -34,7 +34,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
 
         acl.initialize(_permissionsCreator);
 
-        recoveryVaultId = DEFAULT_VAULT_ID;
+        setStorageBytes32(recoveryVaultIdPosition, DEFAULT_VAULT_ID);
     }
 
     /**
@@ -133,7 +133,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _name Name of the app
     */
     function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
-        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
+        setStorageBytes32(recoveryVaultIdPosition, keccak256(APP_ADDR_NAMESPACE, _name));
     }
 
     /**
@@ -150,7 +150,7 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @return Address of the Vault
     */
     function getRecoveryVault() public view returns (address) {
-        return apps[recoveryVaultId];
+        return apps[getStorageBytes32(recoveryVaultIdPosition)];
     }
 
     /**
