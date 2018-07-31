@@ -4,8 +4,12 @@
 
 pragma solidity ^0.4.18;
 
+import "../lib/misc/Uint256Helpers.sol";
+
 
 contract TimeHelpers {
+    using Uint256Helpers for uint256;
+
     /**
     * @dev Returns the current block number.
     *      Using a function rather than `block.number` allows us to easily mock the block number in
@@ -21,7 +25,7 @@ contract TimeHelpers {
     *      tests.
     */
     function getBlockNumber64() internal view returns (uint64) {
-        return uint64(block.number);
+        return block.number.toUint64();
     }
 
     /**
@@ -39,6 +43,6 @@ contract TimeHelpers {
     *      tests.
     */
     function getTimestamp64() internal view returns (uint64) {
-        return uint64(now);
+        return now.toUint64();
     }
 }
