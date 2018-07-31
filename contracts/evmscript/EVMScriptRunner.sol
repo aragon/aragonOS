@@ -9,9 +9,10 @@ import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
 import "../apps/AppStorage.sol";
+import "../common/Initializable.sol";
 
 
-contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
+contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;
 
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
@@ -20,7 +21,12 @@ contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
         return IEVMScriptExecutor(getExecutorRegistry().getScriptExecutor(_script));
     }
 
-    function runScript(bytes _script, bytes _input, address[] _blacklist) internal protectState returns (bytes output) {
+    function runScript(bytes _script, bytes _input, address[] _blacklist)
+        internal
+        isInitialized
+        protectState
+        returns (bytes output)
+    {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         IEVMScriptExecutor executor = getExecutor(_script);
         require(address(executor) != address(0));
