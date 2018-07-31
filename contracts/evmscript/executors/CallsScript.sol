@@ -3,10 +3,10 @@ pragma solidity 0.4.18;
 // Inspired by https://github.com/reverendus/tx-manager
 
 import "../ScriptHelpers.sol";
-import "../IEVMScriptExecutor.sol";
+import "./BaseEVMScriptExecutor.sol";
 
 
-contract CallsScript is IEVMScriptExecutor {
+contract CallsScript is BaseEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
     uint256 constant internal SCRIPT_START_LOCATION = 4;
@@ -21,7 +21,7 @@ contract CallsScript is IEVMScriptExecutor {
     * @param _blacklist Addresses the script cannot call to, or will revert.
     * @return always returns empty byte array
     */
-    function execScript(bytes _script, bytes _input, address[] _blacklist) external returns (bytes) {
+    function execScript(bytes _script, bytes _input, address[] _blacklist) external isInitialized returns (bytes) {
         uint256 location = SCRIPT_START_LOCATION; // first 32 bits are spec id
         while (location < _script.length) {
             address contractAddress = _script.addressAt(location);
