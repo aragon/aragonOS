@@ -5,25 +5,18 @@
 pragma solidity ^0.4.18;
 
 import "./AppStorage.sol";
-import "../common/Petrifiable.sol";
+import "../common/Autopetrified.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
 
 
+// Contracts inheriting from AragonApp will, by default, be immediately petrified upon deployment
+// so that it can never be initialized.
+// Unless overriden, this behaviour enforces those apps to only be usable when behind an AppProxy.
 // ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
 // that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Petrifiable, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
-    /**
-    * @dev Contracts inheriting from AragonApp will, by default, be immediately petrified upon
-    *      deployment so that it can never be initialized.
-    *      Unless overriden, this behaviour enforces those apps to only be usable when behind an
-    *      AppProxy.
-    */
-    function AragonApp() public {
-        petrify();
-    }
-
+contract AragonApp is AppStorage, Autopetrified, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)));
         _;
