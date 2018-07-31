@@ -14,7 +14,7 @@ contract Initializable is AppStorage {
     }
 
     modifier isInitialized {
-        require(initializationBlock != 0 && getBlockNumber() >= initializationBlock);
+        require(hasInitialized());
         _;
     }
 
@@ -23,6 +23,13 @@ contract Initializable is AppStorage {
     */
     function getInitializationBlock() public view returns (uint256) {
         return initializationBlock;
+    }
+
+    /**
+    * @return Whether the contract has been initialized by the time of the current block
+    */
+    function hasInitialized() public view returns (bool) {
+        return initializationBlock != 0 && getBlockNumber() >= initializationBlock;
     }
 
     /**

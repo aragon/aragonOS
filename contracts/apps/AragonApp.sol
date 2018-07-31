@@ -38,6 +38,10 @@ contract AragonApp is AppStorage, Petrifiable, ACLSyntaxSugar, VaultRecoverable,
     }
 
     function canPerform(address _sender, bytes32 _role, uint256[] params) public view returns (bool) {
+        if (!hasInitialized()) {
+            return false;
+        }
+
         bytes memory how; // no need to init memory as it is never used
         if (params.length > 0) {
             uint256 byteLength = params.length * 32;
