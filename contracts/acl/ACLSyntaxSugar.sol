@@ -28,6 +28,10 @@ contract ACLSyntaxSugar {
         return arr(uint256(_a), _b, _c);
     }
 
+    function arr(address _a, uint256 _b, uint256 _c, uint256 _d) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _b, _c, _d);
+    }
+
     function arr(address _a, uint256 _b) internal pure returns (uint256[] r) {
         return arr(uint256(_a), uint256(_b));
     }
