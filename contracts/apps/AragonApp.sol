@@ -15,16 +15,13 @@ import "../acl/ACLSyntaxSugar.sol";
 // that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Petrifiable, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
     /**
-    * @dev If no kernel is provided when deploying the app, this instance is immediately petrified
-    *      so that it can never be initialized.
-    * @param _kernel Kernel to connect the deployed app to
+    * @dev Contracts inheriting from AragonApp will, by default, be immediately petrified upon
+    *      deployment so that it can never be initialized.
+    *      Unless overriden, this behaviour enforces those apps to only be usable when behind an
+    *      AppProxy.
     */
-    function AragonApp(IKernel _kernel) public {
-        if (_kernel == address(0)) {
-            petrify();
-        } else {
-            kernel = _kernel;
-        }
+    function AragonApp() public {
+        petrify();
     }
 
     modifier auth(bytes32 _role) {

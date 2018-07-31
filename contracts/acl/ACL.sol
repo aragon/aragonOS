@@ -1,7 +1,6 @@
 pragma solidity 0.4.18;
 
 import "../apps/AragonApp.sol";
-import "../kernel/IKernel.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
@@ -51,12 +50,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
-
-    /**
-    * @dev Constructor that allows a deployer to choose if the base instance should be connected to
-    *      a kernel or petrified immediately.
-    */
-    function ACL(IKernel _kernel) AragonApp(_kernel) public {}
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
