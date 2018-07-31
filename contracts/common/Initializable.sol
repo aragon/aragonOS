@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 import "../apps/AppStorage.sol";
 
 
-contract Initializable is AppStorage {
+contract Initializable is UnstructuredStorage {
     modifier onlyInit {
         require(getStorageUint256(initializationBlockPosition) == 0);
         _;

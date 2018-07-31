@@ -6,6 +6,8 @@ pragma solidity ^0.4.18;
 
 
 contract UnstructuredStorage {
+    bytes32 internal constant initializationBlockPosition = keccak256("uint256.initializationBlock"); // used by Initializable
+
     function setStorageAddress(bytes32 position, address data) internal {
         assembly { sstore(position, data) }
     }
