@@ -124,8 +124,8 @@ contract MiniMeToken is Controlled {
     /// @param _tokenSymbol Token Symbol for the new token
     /// @param _transfersEnabled If true, tokens will be able to be transferred
     function MiniMeToken(
-        address _tokenFactory,
-        address _parentToken,
+        MiniMeTokenFactory _tokenFactory,
+        MiniMeToken _parentToken,
         uint _parentSnapShotBlock,
         string _tokenName,
         uint8 _decimalUnits,
@@ -133,11 +133,11 @@ contract MiniMeToken is Controlled {
         bool _transfersEnabled
     )  public
     {
-        tokenFactory = MiniMeTokenFactory(_tokenFactory);
+        tokenFactory = _tokenFactory;
         name = _tokenName;                                 // Set the name
         decimals = _decimalUnits;                          // Set the decimals
         symbol = _tokenSymbol;                             // Set the symbol
-        parentToken = MiniMeToken(_parentToken);
+        parentToken = _parentToken;
         parentSnapShotBlock = _parentSnapShotBlock;
         transfersEnabled = _transfersEnabled;
         creationBlock = block.number;
@@ -265,10 +265,10 @@ contract MiniMeToken is Controlled {
     /// @param _spender The address of the contract able to transfer the tokens
     /// @param _amount The amount of tokens to be approved for transfer
     /// @return True if the function call was successful
-    function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
+    function approveAndCall(ApproveAndCallFallBack _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
         require(approve(_spender, _amount));
 
-        ApproveAndCallFallBack(_spender).receiveApproval(
+        _spender.receiveApproval(
             msg.sender,
             _amount,
             this,
@@ -357,7 +357,7 @@ contract MiniMeToken is Controlled {
         string _cloneTokenSymbol,
         uint _snapshotBlock,
         bool _transfersEnabled
-    ) public returns(address)
+    ) public returns(MiniMeToken)
     {
         uint256 snapshot = _snapshotBlock == 0 ? block.number - 1 : _snapshotBlock;
 
@@ -374,7 +374,7 @@ contract MiniMeToken is Controlled {
 
         // An event to make the token easy to find on the blockchain
         NewCloneToken(address(cloneToken), snapshot);
-        return address(cloneToken);
+        return cloneToken;
     }
 
 ////////////////
@@ -493,7 +493,7 @@ contract MiniMeToken is Controlled {
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
-    function ()  payable  public {
+    function () external payable {
         require(isContract(controller));
         // Adding the ` == true` makes the linter shut up so...
         require(ITokenController(controller).proxyPayment.value(msg.value)(msg.sender) == true);
@@ -554,7 +554,7 @@ contract MiniMeTokenFactory {
     /// @param _transfersEnabled If true, tokens will be able to be transferred
     /// @return The address of the new token contract
     function createCloneToken(
-        address _parentToken,
+        MiniMeToken _parentToken,
         uint _snapshotBlock,
         string _tokenName,
         uint8 _decimalUnits,

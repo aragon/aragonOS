@@ -32,27 +32,38 @@ contract AragonApp is AppStorage, Petrifiable, ACLSyntaxSugar, VaultRecoverable,
         _;
     }
 
-    modifier authP(bytes32 _role, uint256[] params) {
-        require(canPerform(msg.sender, _role, params));
+    modifier authP(bytes32 _role, uint256[] _params) {
+        require(canPerform(msg.sender, _role, _params));
         _;
     }
 
-    function canPerform(address _sender, bytes32 _role, uint256[] params) public view returns (bool) {
+    /**
+    * @dev Check whether an action can be performed by a sender for a particular role on this app
+    * @param _sender Sender of the call
+    * @param _role Role on this app
+    * @param _params Permission params for the role
+    * @return Boolean indicating whether the sender has the permissions to perform the action
+    */
+    function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
         if (!hasInitialized()) {
             return false;
         }
 
         bytes memory how; // no need to init memory as it is never used
-        if (params.length > 0) {
-            uint256 byteLength = params.length * 32;
+        if (_params.length > 0) {
+            uint256 byteLength = _params.length * 32;
             assembly {
-                how := params // forced casting
+                how := _params // forced casting
                 mstore(how, byteLength)
             }
         }
         return address(kernel) == 0 || kernel.hasPermission(_sender, address(this), _role, how);
     }
 
+    /**
+    * @dev Get the recovery vault for the app
+    * @return Recovery vault address for the app
+    */
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         require(address(kernel) != 0);

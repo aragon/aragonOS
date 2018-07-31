@@ -11,7 +11,8 @@ contract AppProxyUpgradeable is AppProxyBase {
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
     function AppProxyUpgradeable(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
-             AppProxyBase(_kernel, _appId, _initializePayload) public
+        AppProxyBase(_kernel, _appId, _initializePayload)
+        public // solium-disable-line visibility-first
     {
 
     }
