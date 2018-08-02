@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.18;
 
-import "../lib/misc/Uint256Helpers.sol";
+import "./Uint256Helpers.sol";
 
 
 contract TimeHelpers {
@@ -25,7 +25,7 @@ contract TimeHelpers {
     *      tests.
     */
     function getBlockNumber64() internal view returns (uint64) {
-        return block.number.toUint64();
+        return getBlockNumber().toUint64();
     }
 
     /**
@@ -43,6 +43,6 @@ contract TimeHelpers {
     *      tests.
     */
     function getTimestamp64() internal view returns (uint64) {
-        return now.toUint64();
+        return getTimestamp().toUint64();
     }
 }
