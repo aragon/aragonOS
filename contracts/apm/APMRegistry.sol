@@ -39,8 +39,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         registrar.pointRootNode(this);
 
         // Check APM has all permissions it needss
-        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
-        ACL acl = ACL(kernel.acl());
+        ACL acl = ACL(kernel().acl());
         require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()));
         require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()));
     }
@@ -74,8 +73,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);
 
         // Give permissions to _dev
-        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
-        ACL acl = ACL(kernel.acl());
+        ACL acl = ACL(kernel().acl());
         acl.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
         acl.grantPermission(_dev, repo, repo.CREATE_VERSION_ROLE());
         acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
@@ -87,8 +85,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         Repo repo = newClonedRepo();
 
-        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
-        ACL(kernel.acl()).createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
+        ACL(kernel().acl()).createPermission(_dev, repo, repo.CREATE_VERSION_ROLE(), _dev);
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists
@@ -100,8 +97,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     }
 
     function newClonedRepo() internal returns (Repo) {
-        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
-        return Repo(newAppProxy(kernel, repoAppId()));
+        return Repo(newAppProxy(kernel(), repoAppId()));
     }
 
     function repoAppId() internal view returns (bytes32) {

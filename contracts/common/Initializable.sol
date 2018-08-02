@@ -8,13 +8,16 @@ import "../apps/AppStorage.sol";
 
 
 contract Initializable is UnstructuredStorage {
+    // keccak256("aragonOS.initializable.initializationBlock")
+    bytes32 internal constant initializationBlockPosition = 0xebb05b386a8d34882b8711d156f463690983dc47815980fb82aeeff1aa43579e;
+
     modifier onlyInit {
-        require(getStorageUint256(initializationBlockPosition) == 0);
+        require(getInitializationBlock() == 0);
         _;
     }
 
     modifier isInitialized {
-        require(getStorageUint256(initializationBlockPosition) > 0);
+        require(getInitializationBlock() > 0);
         _;
     }
 

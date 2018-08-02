@@ -14,8 +14,8 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
     function AppProxyBase(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
-        setStorageAddress(kernelPosition, address(_kernel));
-        setStorageBytes32(appIdPosition, _appId);
+        setKernel(_kernel);
+        setAppId(_appId);
 
         // Implicit check that kernel is actually a Kernel
         // The EVM doesn't actually provide a way for us to make sure, but we can force a revert to
@@ -33,7 +33,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        IKernel kernel = IKernel(getStorageAddress(kernelPosition));
-        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
+        return kernel().getApp(keccak256(APP_BASES_NAMESPACE, _appId));
     }
 }

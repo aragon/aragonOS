@@ -58,7 +58,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function initialize(address _permissionsCreator) public onlyInit {
         initialized();
-        require(msg.sender == getStorageAddress(kernelPosition));
+        require(msg.sender == address(kernel()));
 
         _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }

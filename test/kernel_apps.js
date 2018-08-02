@@ -276,7 +276,7 @@ for (kernelType of ['Kernel', 'KernelProxy']) {
                 const appProxy = AppProxyUpgradeable.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                 UPGRADEABLE = (await appProxy.UPGRADEABLE()).toString()
                 assert.equal((await appProxy.proxyType.call()).toString(), UPGRADEABLE, 'new appProxy instance should be upgradeable')
-                assert.equal(await appProxy.getStorageAddress(await appProxy.kernelPosition()), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
+                assert.equal(await appProxy.kernel.call(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
                 assert.equal(await appProxy.implementation(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
             })
 
@@ -318,7 +318,7 @@ for (kernelType of ['Kernel', 'KernelProxy']) {
                 const appProxy = AppProxyPinned.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                 FORWARDING = (await appProxy.FORWARDING()).toString()
                 assert.equal((await appProxy.proxyType.call()).toString(), FORWARDING, 'new appProxy instance should be not upgradeable')
-                assert.equal(await appProxy.getStorageAddress(await appProxy.kernelPosition()), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
+                assert.equal(await appProxy.kernel.call(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
                 assert.equal(await appProxy.implementation(), appCode1.address, 'new appProxy instance should be resolving to implementation address')
             })
 

@@ -47,9 +47,9 @@ contract KeccakConstants is APMNamehash {
     bytes32 constant public CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
 
     // Unstructured storage
-    bytes32 public constant initializationBlockPosition = keccak256("uint256.initializationBlock");
-    bytes32 public constant kernelPosition = keccak256("IKernel.kernel");
-    bytes32 public constant appIdPosition = keccak256("bytes32.appIdPosition");
-    bytes32 public constant pinnedCodePosition = keccak256("address.pinnedCode");
+    bytes32 public constant initializationBlockPosition = keccak256("aragonOS.initializable.initializationBlock");
+    bytes32 public constant kernelPosition = keccak256("aragonOS.appStorage.kernel");
+    bytes32 public constant appIdPosition = keccak256("aragonOS.appStorage.appId");
+    bytes32 public constant pinnedCodePosition = keccak256("aragonOS.appStorage.pinnedCode");
 
 }
