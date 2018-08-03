@@ -9,7 +9,7 @@ import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
 import "../apps/AppStorage.sol";
-import "../kernel/IKernel.sol";
+
 
 contract EVMScriptRunner is AppStorage, EVMScriptRegistryConstants {
     using ScriptHelpers for bytes;

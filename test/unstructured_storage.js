@@ -1,6 +1,6 @@
 const getContract = name => artifacts.require(name)
 
-contract('Constants', accounts => {
+contract('Unstructured storage', accounts => {
   let app, kernel
 
   beforeEach(async () => {
@@ -8,23 +8,26 @@ contract('Constants', accounts => {
     kernel = await getContract('Kernel').new()
   })
 
-  it('test', async () => {
-    const appId = '0x1234000000000000000000000000000000000000000000000000000000000000'
-    const pinnedCode = '0x1200000000000000000000000000000000005678'
-
+  it('tests init block', async () => {
     // set values
     await app.initialize()
-    await app.setKernelExt(kernel.address)
-    await app.setAppIdExt(appId)
-    await app.setPinnedCodeExt(pinnedCode)
-
+    const blockNumber = web3.eth.blockNumber
     //checks
+    assert.equal(
+      parseInt(await web3.eth.getStorageAt(app.address, (await app.getInitializationBlockPosition())), 16),
+      blockNumber,
+      'Init block should match'
+    )
     assert.equal(
       parseInt(await web3.eth.getStorageAt(app.address, (await app.getInitializationBlockPosition())), 16),
       (await app.getInitializationBlock.call()).toString(),
       'Init block should match'
     )
-    // kernel
+  })
+
+  it('tests Kernel storage', async () => {
+    await app.setKernelExt(kernel.address)
+    //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getKernelPosition())),
       (await app.kernel.call()).toString(),
@@ -35,7 +38,12 @@ contract('Constants', accounts => {
       kernel.address,
       'Kernel original value should match'
     )
-    // app id
+  })
+
+  it('tests appID storage', async () => {
+    const appId = '0x1234000000000000000000000000000000000000000000000000000000000000'
+    await app.setAppIdExt(appId)
+    //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getAppIdPosition())),
       (await app.appId.call()).toString(),
@@ -46,7 +54,12 @@ contract('Constants', accounts => {
       appId,
       'appId original value should match'
     )
-    // pinned code
+  })
+
+  it('tests pinnedCode storage', async () => {
+    const pinnedCode = '0x1200000000000000000000000000000000005678'
+    await app.setPinnedCodeExt(pinnedCode)
+    //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getPinnedCodePosition())),
       (await app.pinnedCodeExt.call()).toString(),
