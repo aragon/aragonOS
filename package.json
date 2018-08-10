@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.1.9",
+  "version": "3.1.10",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
@@ -45,6 +45,6 @@
   "dependencies": {
     "homedir": "^0.6.0",
     "truffle-hdwallet-provider": "0.0.3",
-    "truffle-privatekey-provider": "0.0.6"
+    "truffle-hdwallet-provider-privkey": "0.3.0"
   }
 }
