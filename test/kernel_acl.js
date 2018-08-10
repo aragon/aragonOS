@@ -1,15 +1,11 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const Kernel = artifacts.require('Kernel')
-const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
 const assertEvent = require('./helpers/assertEvent')
 
 const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
-
-const getContract = artifacts.require
-
-const getSig = x => web3.sha3(x).slice(0, 10)
+const Kernel = artifacts.require('Kernel')
+const KernelProxy = artifacts.require('KernelProxy')
 
 contract('Kernel ACL', accounts => {
     let kernel, app, factory, acl = {}
@@ -21,8 +17,8 @@ contract('Kernel ACL', accounts => {
     let role = null
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new()
-        const aclBase = await getContract('ACL').new()
+        const kernelBase = await Kernel.new()
+        const aclBase = await ACL.new()
         factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
