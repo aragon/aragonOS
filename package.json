@@ -39,7 +39,6 @@
     "solidity-coverage": "^0.3.5",
     "solium": "^1.1.8",
     "truffle": "4.0.5",
-    "truffle-config": "^1.0.4",
     "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
