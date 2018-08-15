@@ -1,9 +1,15 @@
 pragma solidity 0.4.18;
 
+import "../common/UnstructuredStorage.sol";
 import "./AppProxyBase.sol";
 
 
 contract AppProxyPinned is AppProxyBase {
+    using UnstructuredStorage for bytes32;
+
+    // keccak256("aragonOS.appStorage.pinnedCode"), used by Proxy Pinned
+    bytes32 internal constant PINNED_CODE_POSITION = 0xdee64df20d65e53d7f51cb6ab6d921a0a6a638a91e942e1d8d02df28e31c038e;
+
     /**
     * @dev Initialize AppProxyPinned (makes it an un-upgradeable Aragon app)
     * @param _kernel Reference to organization kernel for the app
@@ -30,5 +36,13 @@ contract AppProxyPinned is AppProxyBase {
      */
     function proxyType() public pure returns (uint256 proxyTypeId) {
         return FORWARDING;
+    }
+
+    function setPinnedCode(address _pinnedCode) internal {
+        PINNED_CODE_POSITION.setStorageAddress(_pinnedCode);
+    }
+
+    function pinnedCode() internal view returns (address) {
+        return PINNED_CODE_POSITION.getStorageAddress();
     }
 }

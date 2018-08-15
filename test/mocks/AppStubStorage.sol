@@ -4,8 +4,6 @@ import "../../contracts/apps/AragonApp.sol";
 
 
 contract AppStubStorage is AragonApp {
-    bytes32 constant public ROLE = bytes32(1);
-
     function initialize() onlyInit public {
         initialized();
     }
@@ -18,10 +16,6 @@ contract AppStubStorage is AragonApp {
         setAppId(_appId);
     }
 
-    function setPinnedCodeExt(address _pinnedCode) public {
-        setPinnedCode(_pinnedCode);
-    }
-
     function getKernelPosition() public view returns (bytes32) {
         return KERNEL_POSITION;
     }
@@ -30,15 +24,7 @@ contract AppStubStorage is AragonApp {
         return APP_ID_POSITION;
     }
 
-    function getPinnedCodePosition() public view returns (bytes32) {
-        return PINNED_CODE_POSITION;
-    }
-
     function getInitializationBlockPosition() public view returns (bytes32) {
         return INITIALIZATION_BLOCK_POSITION;
-    }
-
-    function pinnedCodeExt() public view returns (address) {
-        return pinnedCode();
     }
 }

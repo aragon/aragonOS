@@ -33,12 +33,4 @@ contract AppStorage {
     function setAppId(bytes32 _appId) internal {
         APP_ID_POSITION.setStorageBytes32(_appId);
     }
-
-    function setPinnedCode(address _pinnedCode) internal {
-        PINNED_CODE_POSITION.setStorageAddress(_pinnedCode);
-    }
-
-    function pinnedCode() internal view returns (address) {
-        return PINNED_CODE_POSITION.getStorageAddress();
-    }
 }

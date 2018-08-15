@@ -78,12 +78,17 @@ contract('Constants', accounts => {
     assert.equal(await repo.CREATE_VERSION_ROLE(), await keccakConstants.CREATE_VERSION_ROLE(), "create version role doesn't match")
   })
 
-  it('checks Unstructured Storage constants', async () => {
+  it('checks AppStorage unstructured storage constants', async () => {
     const app = await getContract('AppStubStorage').new()
 
     assert.equal(await app.getKernelPosition(), await keccakConstants.kernelPosition(), "kernelPosition doesn't match")
     assert.equal(await app.getAppIdPosition(), await keccakConstants.appIdPosition(), "appIdPosition doesn't match")
-    assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
     assert.equal(await app.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
+  })
+
+  it('checks AppProxyPinned unstructured storage constants', async () => {
+    const app = await getContract('AppStubPinnedStorage').new()
+
+    assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
   })
 })
