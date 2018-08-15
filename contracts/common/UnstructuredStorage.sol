@@ -5,16 +5,16 @@
 pragma solidity ^0.4.18;
 
 
-contract UnstructuredStorage {
-    function getStorageAddress(bytes32 position) public view returns (address data) {
+library UnstructuredStorage {
+    function getStorageAddress(bytes32 position) internal view returns (address data) {
         assembly { data := sload(position) }
     }
 
-    function getStorageBytes32(bytes32 position) public view returns (bytes32 data) {
+    function getStorageBytes32(bytes32 position) internal view returns (bytes32 data) {
         assembly { data := sload(position) }
     }
 
-    function getStorageUint256(bytes32 position) public view returns (uint256 data) {
+    function getStorageUint256(bytes32 position) internal view returns (uint256 data) {
         assembly { data := sload(position) }
     }
 
