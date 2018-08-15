@@ -67,4 +67,3 @@ library SafeMath8 {
         return a % b;
     }
 }
-
