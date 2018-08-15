@@ -6,7 +6,7 @@ pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath8
- * @dev Math operations with safety checks that revert on error
+ * @dev Math operations for uint8 with safety checks that revert on error
  */
 library SafeMath8 {
 

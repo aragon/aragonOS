@@ -6,7 +6,7 @@ pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath64
- * @dev Math operations with safety checks that revert on error
+ * @dev Math operations for uint64 with safety checks that revert on error
  */
 library SafeMath64 {
 
