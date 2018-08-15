@@ -20,7 +20,7 @@ contract('Unstructured storage', accounts => {
     )
     assert.equal(
       parseInt(await web3.eth.getStorageAt(app.address, (await app.getInitializationBlockPosition())), 16),
-      (await app.getInitializationBlock.call()).toString(),
+      (await app.getInitializationBlock()).toString(),
       'Init block should match'
     )
   })
@@ -30,7 +30,7 @@ contract('Unstructured storage', accounts => {
     //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getKernelPosition())),
-      (await app.kernel.call()).toString(),
+      (await app.kernel()).toString(),
       'Kernel should match'
     )
     assert.equal(
@@ -46,7 +46,7 @@ contract('Unstructured storage', accounts => {
     //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getAppIdPosition())),
-      (await app.appId.call()).toString(),
+      (await app.appId()).toString(),
       'appId should match'
     )
     assert.equal(
@@ -62,7 +62,7 @@ contract('Unstructured storage', accounts => {
     //checks
     assert.equal(
       await web3.eth.getStorageAt(app.address, (await app.getPinnedCodePosition())),
-      (await app.pinnedCodeExt.call()).toString(),
+      (await app.pinnedCodeExt()).toString(),
       'Pinned Code should match'
     )
     assert.equal(

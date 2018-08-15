@@ -36,7 +36,7 @@ module.exports = function (deployer, network, accounts, arts = null) {
     console.log('Deployed APM at:', apmAddr)
 
     const apm = getContract('APMRegistry').at(apmAddr)
-    console.log('Kernel:', await apm.kernel.call())
+    console.log('Kernel:', await apm.kernel())
 
     const ensSub = getContract('ENSSubdomainRegistrar').at(await apm.registrar())
     console.log('ENS:', await ensSub.ens())
