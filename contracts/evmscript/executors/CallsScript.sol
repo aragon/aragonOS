@@ -9,8 +9,6 @@ import "./BaseEVMScriptExecutor.sol";
 contract CallsScript is BaseEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
-    uint256 constant internal SCRIPT_START_LOCATION = 4;
-
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     /**
