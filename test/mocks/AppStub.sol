@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../../contracts/apps/AragonApp.sol";
 import "../../contracts/apps/UnsafeAragonApp.sol";

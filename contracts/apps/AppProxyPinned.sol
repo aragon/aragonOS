@@ -16,7 +16,7 @@ contract AppProxyPinned is AppProxyBase {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
+    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
         AppProxyBase(_kernel, _appId, _initializePayload)
         public // solium-disable-line visibility-first
     {

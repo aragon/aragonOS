@@ -13,7 +13,7 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxyBase(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
+    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
         setKernel(_kernel);
         setAppId(_appId);
 

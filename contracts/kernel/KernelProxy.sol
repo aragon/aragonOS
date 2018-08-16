@@ -11,7 +11,7 @@ contract KernelProxy is KernelStorage, DepositableDelegateProxy {
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
-    function KernelProxy(IKernel _kernelImpl) public {
+    constructor(IKernel _kernelImpl) public {
         apps[KERNEL_APP] = _kernelImpl;
     }
 
