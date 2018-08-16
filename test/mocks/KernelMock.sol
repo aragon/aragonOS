@@ -13,13 +13,19 @@ contract KernelMock {
 
     event NewAppProxy(address proxy);
 
-    function KernelMock(address _kernel) {
+    function KernelMock(address _kernel) public {
         kernel = Kernel(_kernel);
     }
 
     //function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
     function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
         appProxy = kernel.newAppInstance(_name, _appBase, _setDefault);
+        NewAppProxy(appProxy);
+    }
+
+    // function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
+        appProxy = kernel.newPinnedAppInstance(_name, _appBase, _setDefault);
         NewAppProxy(appProxy);
     }
 }
