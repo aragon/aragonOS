@@ -178,7 +178,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @param _what Identifier for a group of actions in app
     * @param _how Extra data for ACL auth
     * @return Boolean indicating whether the ACL allows the role or not.
-    *         Always returns false if the kernel has not been initialized yet.
+    *         Always returns false if the kernel hasn't been initialized yet.
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
         return hasInitialized() && acl().hasPermission(_who, _where, _what, _how);

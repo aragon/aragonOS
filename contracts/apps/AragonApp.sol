@@ -32,7 +32,8 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
     * @param _sender Sender of the call
     * @param _role Role on this app
     * @param _params Permission params for the role
-    * @return Boolean indicating whether the sender has the permissions to perform the action
+    * @return Boolean indicating whether the sender has the permissions to perform the action.
+    *         Always returns false if the app hasn't been initialized yet.
     */
     function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
         if (!hasInitialized()) {
