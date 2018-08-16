@@ -2,10 +2,13 @@ pragma solidity 0.4.18;
 
 import "./AppStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
+import "../common/IsContract.sol";
 import "../kernel/KernelStorage.sol";
 
 
 contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
+    using IsContract for address;
+
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -24,7 +27,7 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
 
         // If initialize payload is provided, it will be executed
         if (_initializePayload.length > 0) {
-            require(isContract(appCode));
+            require(appCode.isContract());
             // Cannot make delegatecall as a delegateproxy.delegatedFwd as it
             // returns ending execution context and halts contract deployment
             require(appCode.delegatecall(_initializePayload));
