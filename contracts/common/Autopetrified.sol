@@ -9,8 +9,8 @@ import "./Petrifiable.sol";
 
 contract Autopetrified is Petrifiable {
     function Autopetrified() public {
-        // Petrify deployed (non-proxy) instances of subclasses from Autopetrified.
-        // This renders the base deployments uninitializable (and unusable without a proxy).
+        // Immediately petrify base (non-proxy) instances of inherited contracts on deploy.
+        // This renders them uninitializable (and unusable without a proxy).
         petrify();
     }
 }
