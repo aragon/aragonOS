@@ -11,7 +11,9 @@ import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
+contract Kernel is IKernel, KernelStorage, Initializable, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
+    using IsContract for address;
+
     // Hardcode constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
@@ -174,14 +176,14 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     }
 
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
-        require(isContract(_app));
+        require(_app.isContract());
         id = keccak256(_namespace, _name);
         apps[id] = _app;
         SetApp(_namespace, _name, id, _app);
     }
 
     function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
-        require(isContract(_app));
+        require(_app.isContract());
 
         id = keccak256(_namespace, _name);
 

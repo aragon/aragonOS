@@ -4,6 +4,7 @@ import "truffle/Assert.sol";
 import "./helpers/ThrowProxy.sol";
 
 import "../contracts/common/DelegateProxy.sol";
+import "../contracts/common/IsContract.sol";
 import "../contracts/evmscript/ScriptHelpers.sol";
 
 
@@ -15,6 +16,7 @@ contract Target {
 
 
 contract TestDelegateProxy is DelegateProxy {
+    using IsContract for address;
     using ScriptHelpers for *;
 
     Target target;
@@ -57,13 +59,13 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function testIsContractZero() public {
-        bool result = isContract(address(0));
+        bool result = address(0).isContract();
         Assert.isFalse(result, "should return false");
     }
 
     function testIsContractAddress() public {
         address nonContract = 0x1234;
-        bool result = isContract(nonContract);
+        bool result = nonContract.isContract();
         Assert.isFalse(result, "should return false");
     }
 

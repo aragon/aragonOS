@@ -10,7 +10,9 @@ import "./IVaultRecoverable.sol";
 import "../lib/zeppelin/token/ERC20.sol";
 
 
-contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
+contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant {
+    using IsContract for address;
+
     /**
      * @notice Send funds to recovery Vault. This contract should never receive funds,
      *         but in case it does, this function allows one to recover them.
@@ -19,7 +21,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
     function transferToVault(address _token) external {
         require(allowRecoverability(_token));
         address vault = getRecoveryVault();
-        require(isContract(vault));
+        require(vault.isContract());
 
         if (_token == ETH) {
             vault.transfer(this.balance);

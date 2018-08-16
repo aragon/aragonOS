@@ -4,7 +4,9 @@ import "../common/IsContract.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
-contract DelegateProxy is ERCProxy, IsContract {
+contract DelegateProxy is ERCProxy {
+    using IsContract for address;
+
     uint256 constant public FWD_GAS_LIMIT = 10000;
 
     /**
@@ -13,7 +15,7 @@ contract DelegateProxy is ERCProxy, IsContract {
     * @param _calldata Calldata for the delegatecall
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
-        require(isContract(_dst));
+        require(_dst.isContract());
         uint256 fwdGasLimit = FWD_GAS_LIMIT;
 
         assembly {
