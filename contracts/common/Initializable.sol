@@ -5,9 +5,10 @@
 pragma solidity ^0.4.18;
 
 import "../apps/AppStorage.sol";
+import "../common/TimeHelpers.sol";
 
 
-contract Initializable is AppStorage {
+contract Initializable is AppStorage, TimeHelpers {
     modifier onlyInit {
         require(initializationBlock == 0);
         _;
@@ -45,14 +46,5 @@ contract Initializable is AppStorage {
     */
     function initializedAt(uint256 blockNumber) internal onlyInit {
         initializationBlock = blockNumber;
-    }
-
-    /**
-    * @dev Returns the current block number.
-    *      Using a function rather than `block.number` allows us to easily mock the block number in
-    *      tests.
-    */
-    function getBlockNumber() internal view returns (uint256) {
-        return block.number;
     }
 }

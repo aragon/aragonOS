@@ -1,15 +1,12 @@
 const { assertRevert } = require('./helpers/assertThrow')
-const Kernel = artifacts.require('Kernel')
-const KernelProxy = artifacts.require('KernelProxy')
 const { getBlockNumber } = require('./helpers/web3')
+const { soliditySha3 } = require('web3-utils')
 const assertEvent = require('./helpers/assertEvent')
 
 const DAOFactory = artifacts.require('DAOFactory')
 const ACL = artifacts.require('ACL')
-
-const getContract = artifacts.require
-
-const getSig = x => web3.sha3(x).slice(0, 10)
+const Kernel = artifacts.require('Kernel')
+const KernelProxy = artifacts.require('KernelProxy')
 
 contract('Kernel ACL', accounts => {
     let kernel, app, factory, acl = {}
@@ -21,8 +18,8 @@ contract('Kernel ACL', accounts => {
     let role = null
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new()
-        const aclBase = await getContract('ACL').new()
+        const kernelBase = await Kernel.new()
+        const aclBase = await ACL.new()
         factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
@@ -91,6 +88,7 @@ contract('Kernel ACL', accounts => {
         beforeEach(async () => {
             const receipt = await acl.createPermission(granted, app, role, granted, { from: permissionsRoot })
             assertEvent(receipt, 'SetPermission')
+            assertEvent(receipt, 'SetPermissionParams', 0) // should not have emitted this
             assertEvent(receipt, 'ChangePermissionManager')
         })
 
@@ -112,6 +110,12 @@ contract('Kernel ACL', accounts => {
             assert.equal(returnedParam[1].valueOf(), parseInt(op, 10), 'param op should match')
             assert.equal(returnedParam[2].valueOf(), parseInt(value, 10), 'param value should match')
 
+            // Assert that the right events have been emitted with the right args
+            assertEvent(r1, 'SetPermission')
+            assertEvent(r1, 'SetPermissionParams')
+            const setParamsHash = r1.logs.filter(l => l.event == 'SetPermissionParams')[0].args.paramsHash
+            assert.equal(setParamsHash, soliditySha3(param))
+
             // grants again without re-saving params
             const r2 = await acl.grantPermissionP(accounts[4], app, role, [param], { from: granted })
 
@@ -130,7 +134,10 @@ contract('Kernel ACL', accounts => {
         it('can grant a public permission', async () => {
             const anyEntity = "0xffffffffffffffffffffffffffffffffffffffff"
 
-            await acl.grantPermission(anyEntity, app, role, { from: granted })
+            const receipt = await acl.grantPermission(anyEntity, app, role, { from: granted })
+            assertEvent(receipt, 'SetPermission')
+            assertEvent(receipt, 'SetPermissionParams', 0) // should not have emitted this
+
             // many entities can succesfully perform action
             // acl is used here just to provide an address which is a contract
             await kernel.setApp('0x121212', '0x00', acl.address, { from: accounts[4] })

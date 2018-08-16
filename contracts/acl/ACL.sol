@@ -41,6 +41,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
     bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
+    bytes32 constant public NO_PERMISSION = bytes32(0);
     address constant public ANY_ENTITY = address(-1);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
@@ -49,6 +50,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
+    event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     /**
@@ -118,7 +120,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         external
         onlyPermissionManager(_app, _role)
     {
-        _setPermission(_entity, _app, _role, bytes32(0));
+        _setPermission(_entity, _app, _role, NO_PERMISSION);
     }
 
     /**
@@ -207,12 +209,12 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     function hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) public view returns (bool) {
         bytes32 whoParams = permissions[permissionHash(_who, _where, _what)];
-        if (whoParams != bytes32(0) && evalParams(whoParams, _who, _where, _what, _how)) {
+        if (whoParams != NO_PERMISSION && evalParams(whoParams, _who, _where, _what, _how)) {
             return true;
         }
 
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, _where, _what)];
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
+        if (anyParams != NO_PERMISSION && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
             return true;
         }
 
@@ -255,8 +257,13 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
+        bool hasPermission = _paramsHash != NO_PERMISSION;
+        bool hasParams = hasPermission && _paramsHash != EMPTY_PARAM_HASH;
 
-        SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
+        SetPermission(_entity, _app, _role, hasPermission);
+        if (hasParams) {
+            SetPermissionParams(_entity, _app, _role, _paramsHash);
+        }
     }
 
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
