@@ -11,9 +11,9 @@ import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
 
 
-// Contracts inheriting from AragonApp will, by default, be immediately petrified upon deployment
-// so that it can never be initialized.
-// Unless overriden, this behaviour enforces those apps to only be usable when behind an AppProxy.
+// Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
+// that they can never be initialized.
+// Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
 // ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
 // that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, ACLSyntaxSugar, VaultRecoverable, EVMScriptRunner {
