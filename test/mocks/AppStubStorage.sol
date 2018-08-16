@@ -23,19 +23,19 @@ contract AppStubStorage is AragonApp {
     }
 
     function getKernelPosition() public view returns (bytes32) {
-        return kernelPosition;
+        return KERNEL_POSITION;
     }
 
     function getAppIdPosition() public view returns (bytes32) {
-        return appIdPosition;
+        return APP_ID_POSITION;
     }
 
     function getPinnedCodePosition() public view returns (bytes32) {
-        return pinnedCodePosition;
+        return PINNED_CODE_POSITION;
     }
 
     function getInitializationBlockPosition() public view returns (bytes32) {
-        return initializationBlockPosition;
+        return INITIALIZATION_BLOCK_POSITION;
     }
 
     function pinnedCodeExt() public view returns (address) {
