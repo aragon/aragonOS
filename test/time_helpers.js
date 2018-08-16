@@ -10,7 +10,7 @@ contract('TimeHelpers test', accounts => {
     assert.equal((await timeHelpersMock.getBlockNumberExt.call()).toString(), (await timeHelpersMock.getBlockNumberDirect.call()).toString(), web3.eth.blockNumber, "block number should match with real one", "block number should match with real one")
   })
 
-  it.only('checks time stamp', async () => {
+  it('checks time stamp', async () => {
     const timestamp = await timeHelpersMock.getTimestampExt.call()
     const timestamp64 = await timeHelpersMock.getTimestamp64Ext.call()
     const timestampReal = await timeHelpersMock.getTimestampDirect.call()
