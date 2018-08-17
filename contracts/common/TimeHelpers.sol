@@ -34,7 +34,7 @@ contract TimeHelpers {
     *      tests.
     */
     function getTimestamp() internal view returns (uint256) {
-        return now; // solium-disable-line security/no-block-members
+        return block.timestamp; // solium-disable-line security/no-block-members
     }
 
     /**
