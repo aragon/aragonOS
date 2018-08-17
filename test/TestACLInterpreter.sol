@@ -242,7 +242,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
     function assertEval(Param[] memory params, uint256[] memory args, bool expected) internal {
         bytes32 paramHash = encodeAndSaveParams(params);
-        bool allow = evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
+        bool allow = _evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
     }
