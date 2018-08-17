@@ -382,8 +382,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bytes4 sig = _oracleAddr.canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = address(_oracleAddr).call(sig, _who, _where, _what, 0x80, _how.length, _how);
-        // 0x80 is the position where the array that goes there starts
+        bool ok = address(_oracleAddr).call(abi.encodeWithSelector(sig, _who, _where, _what, _how));
 
         if (!ok) {
             return false;
