@@ -4,6 +4,7 @@
 
 pragma solidity ^0.4.18;
 
+import "../common/UnstructuredStorage.sol";
 import "./AragonApp.sol";
 
 
@@ -14,8 +15,10 @@ import "./AragonApp.sol";
 // In particular, it allows you to:
 //   - Use deployed base contracts as apps directly, without a proxy
 contract UnsafeAragonApp is AragonApp {
+    using UnstructuredStorage for bytes32;
+
     function UnsafeAragonApp() public {
-        // Removes auto petrifying
-        delete initializationBlock;
+        // Removes auto petrifying; simulates a delete at INITIALIZATION_BLOCK_POSITION
+        INITIALIZATION_BLOCK_POSITION.setStorageUint256(0);
     }
 }
