@@ -25,7 +25,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         internal
         isInitialized
         protectState
-        returns (bytes output)
+        returns (bytes)
     {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         IEVMScriptExecutor executor = getExecutor(_script);
@@ -36,9 +36,11 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
 
         require(address(executor).delegatecall(sig, calldataArgs));
 
-        output = returnedDataDecoded();
+        bytes memory output = returnedDataDecoded();
 
-        ScriptResult(address(executor), _script, _input, output);
+        emit ScriptResult(address(executor), _script, _input, output);
+
+        return output;
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {

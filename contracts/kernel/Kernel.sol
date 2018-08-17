@@ -143,7 +143,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @param _name Name of the app
     */
     function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
-        recoveryVaultId = keccak256(APP_ADDR_NAMESPACE, _name);
+        recoveryVaultId = keccak256(abi.encodePacked(APP_ADDR_NAMESPACE, _name));
     }
 
     /**
@@ -188,22 +188,22 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
         require(isContract(_app));
-        id = keccak256(_namespace, _name);
+        id = keccak256(abi.encodePacked(_namespace, _name));
         apps[id] = _app;
-        SetApp(_namespace, _name, id, _app);
+        emit SetApp(_namespace, _name, id, _app);
     }
 
     function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
         require(isContract(_app));
 
-        id = keccak256(_namespace, _name);
+        id = keccak256(abi.encodePacked(_namespace, _name));
 
         address app = getApp(id);
         if (app != address(0)) {
             require(app == _app);
         } else {
             apps[id] = _app;
-            SetApp(_namespace, _name, id, _app);
+            emit SetApp(_namespace, _name, id, _app);
         }
     }
 

@@ -43,7 +43,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     }
 
     function deleteName(bytes32 _label) external auth(DELETE_NAME_ROLE) {
-        bytes32 node = keccak256(rootNode, _label);
+        bytes32 node = getNodeForLabel(_label);
 
         address currentOwner = ens.owner(node);
 
@@ -56,7 +56,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         ens.setResolver(node, address(0)); // remove resolver so it ends resolving
         ens.setOwner(node, address(0));
 
-        DeleteName(node, _label);
+        emit DeleteName(node, _label);
     }
 
     function pointRootNode(address _target) external auth(POINT_ROOTNODE_ROLE) {
@@ -64,12 +64,14 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     }
 
     function _createName(bytes32 _label, address _owner) internal returns (bytes32 node) {
-        node = keccak256(rootNode, _label);
+        node = getNodeForLabel(_label);
         require(ens.owner(node) == address(0)); // avoid name reset
 
         ens.setSubnodeOwner(rootNode, _label, _owner);
 
-        NewName(node, _label);
+        emit NewName(node, _label);
+
+        return node;
     }
 
     function _pointToResolverAndResolve(bytes32 _node, address _target) internal {
@@ -82,5 +84,9 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     function getAddr(bytes32 node) internal view returns (address) {
         address resolver = ens.resolver(node);
         return PublicResolver(resolver).addr(node);
+    }
+
+    function getNodeForLabel(bytes32 _label) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(rootNode, _label));
     }
 }

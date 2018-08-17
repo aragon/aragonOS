@@ -89,9 +89,9 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         // Creates [name] subdomain in the rootNode and sets registry as resolver
         // This will fail if repo name already exists
-        bytes32 node = registrar.createNameAndPoint(keccak256(_name), repo);
+        bytes32 node = registrar.createNameAndPoint(keccak256(abi.encodePacked(_name)), repo);
 
-        NewRepo(node, _name, repo);
+        emit NewRepo(node, _name, repo);
 
         return repo;
     }
@@ -102,6 +102,6 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     }
 
     function repoAppId() internal view returns (bytes32) {
-        return keccak256(registrar.rootNode(), keccak256(REPO_APP_NAME));
+        return keccak256(abi.encodePacked(registrar.rootNode(), keccak256(abi.encodePacked(REPO_APP_NAME))));
     }
 }

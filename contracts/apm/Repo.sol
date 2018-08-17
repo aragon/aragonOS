@@ -60,7 +60,7 @@ contract Repo is AragonApp {
         versionIdForSemantic[semanticVersionHash(_newSemanticVersion)] = versionId;
         latestVersionIdForContract[contractAddress] = versionId;
 
-        NewVersion(versionId, _newSemanticVersion);
+        emit NewVersion(versionId, _newSemanticVersion);
     }
 
     function getLatest() public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
@@ -114,6 +114,6 @@ contract Repo is AragonApp {
     }
 
     function semanticVersionHash(uint16[3] version) internal pure returns (bytes32) {
-        return keccak256(version[0], version[1], version[2]);
+        return keccak256(abi.encodePacked(version[0], version[1], version[2]));
     }
 }

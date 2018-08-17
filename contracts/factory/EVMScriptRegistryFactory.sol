@@ -14,7 +14,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
     EVMScriptRegistry public baseReg;
     IEVMScriptExecutor public baseCallScript;
 
-    function EVMScriptRegistryFactory() public {
+    constructor() public {
         baseReg = new EVMScriptRegistry();
         baseCallScript = IEVMScriptExecutor(new CallsScript());
     }

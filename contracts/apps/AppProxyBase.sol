@@ -33,6 +33,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        return kernel().getApp(keccak256(APP_BASES_NAMESPACE, _appId));
+        return kernel().getApp(keccak256(abi.encodePacked(APP_BASES_NAMESPACE, _appId)));
     }
 }

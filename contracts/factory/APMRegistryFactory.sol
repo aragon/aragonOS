@@ -20,7 +20,7 @@ contract APMRegistryFactory is APMRegistryConstants {
     event DeployAPM(bytes32 indexed node, address apm);
 
     // Needs either one ENS or ENSFactory
-    function APMRegistryFactory(
+    constructor(
         DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
@@ -41,7 +41,7 @@ contract APMRegistryFactory is APMRegistryConstants {
     }
 
     function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
-        bytes32 node = keccak256(_tld, _label);
+        bytes32 node = keccak256(abi.encodePacked(_tld, _label));
 
         // Assume it is the test ENS
         if (ens.owner(node) != address(this)) {
@@ -54,28 +54,27 @@ contract APMRegistryFactory is APMRegistryConstants {
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
-        bytes32 namespace = dao.APP_BASES_NAMESPACE();
-
         // Deploy app proxies
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(
             dao.newAppInstance(
-                keccak256(node, keccak256(ENS_SUB_APP_NAME)),
+                keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(ENS_SUB_APP_NAME)))),
                 ensSubdomainRegistrarBase,
                 false
             )
         );
         APMRegistry apm = APMRegistry(
             dao.newAppInstance(
-                keccak256(node, keccak256(APM_APP_NAME)),
+                keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(APM_APP_NAME)))),
                 registryBase,
                 false
             )
         );
 
         // APMRegistry controls Repos
-        dao.setApp(namespace, keccak256(node, keccak256(REPO_APP_NAME)), repoBase);
+        bytes32 repoAppId = keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(REPO_APP_NAME))));
+        dao.setApp(dao.APP_BASES_NAMESPACE(), repoAppId, repoBase);
 
-        DeployAPM(node, apm);
+        emit DeployAPM(node, apm);
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
         acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);

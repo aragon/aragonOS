@@ -22,7 +22,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         require(isContract(vault));
 
         if (_token == ETH) {
-            vault.transfer(this.balance);
+            vault.transfer(address(this).balance);
         } else {
             uint256 amount = ERC20(_token).balanceOf(this);
             ERC20(_token).transfer(vault, amount);
