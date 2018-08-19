@@ -1,9 +1,10 @@
 pragma solidity 0.4.18;
 
-import "../../contracts/apps/AragonApp.sol";
+import "../../contracts/apps/UnsafeAragonApp.sol";
 
 
-contract AppStubStorage is AragonApp {
+// Need to use UnsafeAragonApp to allow initialization
+contract AppStubStorage is UnsafeAragonApp {
     function initialize() onlyInit public {
         initialized();
     }
