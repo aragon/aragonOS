@@ -2,6 +2,7 @@ pragma solidity 0.4.18;
 
 
 import "../apm/APMRegistry.sol";
+import "../apm/Repo.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
 
 import "./DAOFactory.sol";

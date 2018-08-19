@@ -96,8 +96,9 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
         return repo;
     }
 
-    function newClonedRepo() internal returns (Repo) {
-        return Repo(newAppProxy(kernel, repoAppId()));
+    function newClonedRepo() internal returns (Repo repo) {
+        repo = Repo(newAppProxy(kernel(), repoAppId()));
+        repo.initialize();
     }
 
     function repoAppId() internal view returns (bytes32) {
