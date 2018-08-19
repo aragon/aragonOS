@@ -1,6 +1,6 @@
 pragma solidity 0.4.18;
 
-// without all permissions
+// Mock that doesn't grant enough permissions
 // external ENS
 
 import "../../contracts/factory/APMRegistryFactory.sol";

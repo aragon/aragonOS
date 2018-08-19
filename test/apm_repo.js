@@ -1,13 +1,14 @@
 const { assertRevert } = require('./helpers/assertThrow')
 
-const Repo = artifacts.require('Repo')
-const getContract = artifacts.require
+
+const Repo = artifacts.require('UnsafeRepo')
 
 contract('Repo', accounts => {
-    let repo = {}
+    let repo
 
     beforeEach(async () => {
         repo = await Repo.new()
+        repo.initialize();
     })
 
     it('computes correct valid bumps', async () => {

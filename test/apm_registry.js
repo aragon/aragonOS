@@ -3,16 +3,24 @@ const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
 const ENS = artifacts.require('ENS')
-const Repo = artifacts.require('Repo')
-const APMRegistry = artifacts.require('APMRegistry')
+const ENSFactory = artifacts.require('ENSFactory')
 const PublicResolver = artifacts.require('PublicResolver')
+
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
+const DAOFactory = artifacts.require('DAOFactory')
 
-const getContract = name => artifacts.require(name)
+const APMRegistry = artifacts.require('APMRegistry')
+const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
+const Repo = artifacts.require('Repo')
+const APMRegistryFactory = artifacts.require('APMRegistryFactory')
+
+const APMRegistryFactoryMock = artifacts.require('APMRegistryFactoryMock')
+
+const getRepoFromLog = receipt => receipt.logs.filter(x => x.event == 'NewRepo')[0].args.repo
 
 contract('APMRegistry', accounts => {
-    let ensFactory, ens, apmFactory, apmFactoryMock, registry, baseDeployed, baseAddrs, dao, acl, daoFactory = {}
+    let baseDeployed, baseAddrs, ensFactory, apmFactory, daoFactory, ens, registry, acl
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -22,32 +30,44 @@ contract('APMRegistry', accounts => {
     const testNode = namehash('test.aragonpm.eth')
 
     before(async () => {
-        const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
-        baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))
+        const bases = [APMRegistry, Repo, ENSSubdomainRegistrar]
+        baseDeployed = await Promise.all(bases.map(base => base.new()))
         baseAddrs = baseDeployed.map(c => c.address)
 
-        ensFactory = await getContract('ENSFactory').new()
+        ensFactory = await ENSFactory.new()
 
-        const kernelBase = await getContract('Kernel').new()
-        const aclBase = await getContract('ACL').new()
-        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
+        const kernelBase = await Kernel.new(true) // petrify immediately
+        const aclBase = await ACL.new()
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {
-        apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
-        apmFactoryMock = await getContract('APMRegistryFactoryMock').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
+        apmFactory = await APMRegistryFactory.new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
 
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
 
-        dao = Kernel.at(await registry.kernel())
+        const dao = Kernel.at(await registry.kernel())
         acl = ACL.at(await dao.acl())
         const subdomainRegistrar = baseDeployed[2]
 
         // Get permission to delete names after each test case
         await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
+    })
+
+    it('inits with existing ENS deployment', async () => {
+        const receipt = await ensFactory.newENS(accounts[0])
+        const ens2 = ENS.at(receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens)
+        const newFactory = await APMRegistryFactory.new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
+
+        await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
+        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const resolver = PublicResolver.at(await ens2.resolver(rootNode))
+
+        assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
     })
 
     it('aragonpm.eth should resolve to registry', async () => {
@@ -60,38 +80,28 @@ contract('APMRegistry', accounts => {
         assert.equal(await ens.owner(rootNode), await registry.registrar(), 'rootnode should be owned correctly')
     })
 
+    it('can create repo with version and dev can create new versions', async () => {
+        const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
+        const repo = Repo.at(getRepoFromLog(receipt))
+
+        assert.equal(await repo.getVersionsCount(), 1, 'should have created version')
+
+        await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
+
+        assert.equal(await repo.getVersionsCount(), 2, 'should have created version')
+    })
+
     it('fails to create empty repo name', async () => {
         return assertRevert(async () => {
             await registry.newRepo('', repoDev, { from: apmOwner })
         })
     })
 
-    it('fails if factory doesnt give permission to create permissions', async () => {
+    it('fails to create repo if not in ACL', async () => {
         return assertRevert(async () => {
-            await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
+            await registry.newRepo('test', repoDev, { from: notOwner })
         })
     })
-
-    it('fails if factory doesnt give permission to create names', async () => {
-        return assertRevert(async () => {
-            await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
-        })
-    })
-
-    it('inits with existing ENS deployment', async () => {
-        const receipt = await ensFactory.newENS(accounts[0])
-        const ens2 = ENS.at(receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens)
-        const newFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
-
-        await ens2.setSubnodeOwner(namehash('eth'), '0x'+keccak256('aragonpm'), newFactory.address)
-        const receipt2 = await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt2.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
-        const resolver = PublicResolver.at(await ens2.resolver(rootNode))
-
-        assert.equal(await resolver.addr(rootNode), apmAddr, 'rootnode should be resolve')
-    })
-
-    const getRepoFromLog = receipt => receipt.logs.filter(x => x.event == 'NewRepo')[0].args.repo
 
     context('creating test.aragonpm.eth repo', () => {
         let repo = {}
@@ -154,20 +164,23 @@ contract('APMRegistry', accounts => {
         })
     })
 
-    it('can create repo with version and dev can create new versions', async () => {
-        const receipt = await registry.newRepoWithVersion('test', repoDev, [1, 0, 0], '0x00', '0x00', { from: apmOwner })
-        const repo = Repo.at(getRepoFromLog(receipt))
+    context('APMRegistry created with lacking permissions', () => {
+        let apmFactoryMock
 
-        assert.equal(await repo.getVersionsCount(), 1, 'should have created version')
+        before(async () => {
+            apmFactoryMock = await APMRegistryFactoryMock.new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
+        })
 
-        await repo.newVersion([2, 0, 0], '0x00', '0x00', { from: repoDev })
+        it('fails if factory doesnt give permission to create permissions', async () => {
+            return assertRevert(async () => {
+                await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
+            })
+        })
 
-        assert.equal(await repo.getVersionsCount(), 2, 'should have created version')
-    })
-
-    it('cannot create repo if not in ACL', async () => {
-        return assertRevert(async () => {
-            await registry.newRepo('test', repoDev, { from: notOwner })
+        it('fails if factory doesnt give permission to create names', async () => {
+            return assertRevert(async () => {
+                await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
+            })
         })
     })
 })
