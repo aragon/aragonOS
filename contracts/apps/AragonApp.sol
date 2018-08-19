@@ -40,6 +40,11 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
             return false;
         }
 
+        IKernel linkedKernel = kernel();
+        if (address(linkedKernel) == address(0)) {
+            return false;
+        }
+
         bytes memory how; // no need to init memory as it is never used
         if (_params.length > 0) {
             uint256 byteLength = _params.length * 32;
@@ -48,7 +53,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
                 mstore(how, byteLength)
             }
         }
-        return address(kernel) == 0 || kernel.hasPermission(_sender, address(this), _role, how);
+        return linkedKernel.hasPermission(_sender, address(this), _role, how);
     }
 
     /**
