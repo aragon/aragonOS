@@ -14,4 +14,4 @@ scTopics
 
 # truffle build artifacts
 build/
-abis.json
+bytecode_new/
