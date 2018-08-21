@@ -42,7 +42,7 @@
     "solidity-coverage": "^0.3.5",
     "solium": "^1.1.8",
     "truffle": "4.0.5",
-    "truffle-bytecode-manager": "^1.1.0",
+    "truffle-bytecode-manager": "^1.1.1",
     "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
