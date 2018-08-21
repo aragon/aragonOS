@@ -45,7 +45,7 @@ contract('ENSSubdomainRegistrar', accounts => {
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         registry = APMRegistry.at(apmAddr)
 
-        dao = Kernel.at(await registry.kernel.call())
+        dao = Kernel.at(await registry.kernel())
         acl = ACL.at(await dao.acl())
 
         registrar = getContract('ENSSubdomainRegistrar').at(await registry.registrar())
