@@ -9,6 +9,9 @@ import "../IEVMScriptExecutor.sol";
 contract CallsScript is IEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
+    // bytes32 constant internal EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
+    bytes32 constant internal EXECUTOR_TYPE = 0x2dc858a00f3e417be1394b87c07158e989ec681ce8cc68a9093680ac1a870302;
+
     uint256 constant internal SCRIPT_START_LOCATION = 4;
 
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
@@ -47,5 +50,9 @@ contract CallsScript is IEVMScriptExecutor {
                 switch success case 0 { revert(0, 0) }
             }
         }
+    }
+
+    function executorType() external pure returns (bytes32) {
+        return EXECUTOR_TYPE;
     }
 }

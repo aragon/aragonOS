@@ -4,17 +4,24 @@
 
 pragma solidity ^0.4.18;
 
+import "./UnstructuredStorage.sol";
 import "../apps/AppStorage.sol";
+import "../common/TimeHelpers.sol";
 
 
-contract Initializable is AppStorage {
+contract Initializable is TimeHelpers {
+    using UnstructuredStorage for bytes32;
+
+    // keccak256("aragonOS.initializable.initializationBlock")
+    bytes32 internal constant INITIALIZATION_BLOCK_POSITION = 0xebb05b386a8d34882b8711d156f463690983dc47815980fb82aeeff1aa43579e;
+
     modifier onlyInit {
-        require(initializationBlock == 0);
+        require(getInitializationBlock() == 0);
         _;
     }
 
     modifier isInitialized {
-        require(initializationBlock > 0);
+        require(getInitializationBlock() > 0);
         _;
     }
 
@@ -22,22 +29,13 @@ contract Initializable is AppStorage {
     * @return Block number in which the contract was initialized
     */
     function getInitializationBlock() public view returns (uint256) {
-        return initializationBlock;
+        return INITIALIZATION_BLOCK_POSITION.getStorageUint256();
     }
 
     /**
     * @dev Function to be called by top level contract after initialization has finished.
     */
     function initialized() internal onlyInit {
-        initializationBlock = getBlockNumber();
-    }
-
-    /**
-    * @dev Returns the current block number.
-    *      Using a function rather than `block.number` allows us to easily mock the block number in
-    *      tests.
-    */
-    function getBlockNumber() internal view returns (uint256) {
-        return block.number;
+        INITIALIZATION_BLOCK_POSITION.setStorageUint256(getBlockNumber());
     }
 }

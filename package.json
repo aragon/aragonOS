@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "3.1.9",
+  "version": "3.1.12",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
@@ -37,13 +37,13 @@
     "glob": "^7.1.2",
     "mocha-lcov-reporter": "^1.3.0",
     "solidity-coverage": "^0.3.5",
-    "solium": "^1.1.2",
+    "solium": "^1.1.8",
     "truffle": "4.0.5",
-    "truffle-config": "^1.0.4"
+    "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
     "homedir": "^0.6.0",
     "truffle-hdwallet-provider": "0.0.3",
-    "truffle-privatekey-provider": "0.0.6"
+    "truffle-hdwallet-provider-privkey": "0.3.0"
   }
 }

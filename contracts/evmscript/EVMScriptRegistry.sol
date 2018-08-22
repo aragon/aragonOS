@@ -7,6 +7,8 @@ import "./IEVMScriptRegistry.sol";
 import "../apps/AragonApp.sol";
 
 
+/* solium-disable function-order */
+// Allow public initialize() to be first
 contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, AragonApp {
     using ScriptHelpers for bytes;
 
@@ -15,34 +17,41 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     bytes32 constant public REGISTRY_MANAGER_ROLE = 0xf7a450ef335e1892cb42c8ca72e7242359d7711924b75db5717410da3f614aa3;
 
     struct ExecutorEntry {
-        address executor;
+        IEVMScriptExecutor executor;
         bool enabled;
     }
 
     ExecutorEntry[] public executors;
 
-    function initialize() onlyInit public {
+    event EnableExecutor(uint256 indexed executorId, address indexed executorAddress);
+    event DisableExecutor(uint256 indexed executorId, address indexed executorAddress);
+
+    function initialize() public onlyInit {
         initialized();
         // Create empty record to begin executor IDs at 1
-        executors.push(ExecutorEntry(address(0), false));
+        executors.push(ExecutorEntry(IEVMScriptExecutor(0), false));
     }
 
-    function addScriptExecutor(address _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint id) {
-        return executors.push(ExecutorEntry(_executor, true));
+    function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint256 id) {
+        uint256 executorId = executors.push(ExecutorEntry(_executor, true));
+        EnableExecutor(executorId, _executor);
+        return executorId;
     }
 
     function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {
-        executors[_executorId].enabled = false;
+        ExecutorEntry storage executorEntry = executors[_executorId];
+        executorEntry.enabled = false;
+        DisableExecutor(_executorId, executorEntry.executor);
     }
 
-    function getScriptExecutor(bytes _script) public view returns (address) {
+    function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 
         if (id == 0 || id >= executors.length) {
-            return address(0);
+            return IEVMScriptExecutor(0);
         }
 
         ExecutorEntry storage entry = executors[id];
-        return entry.enabled ? entry.executor : address(0);
+        return entry.enabled ? entry.executor : IEVMScriptExecutor(0);
     }
 }

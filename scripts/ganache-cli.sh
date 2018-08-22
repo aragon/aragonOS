@@ -34,9 +34,15 @@ sleep 5
 
 # Exit error mode so the testrpc instance always gets killed
 set +e
+result=0
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   npx solidity-coverage "$@"
+  result=$?
 elif [ "$TRUFFLE_TEST" = true ]; then
   npx truffle test --network rpc "$@"
+  result=$?
 fi
+
 kill -9 $testrpc_pid
+
+exit $result

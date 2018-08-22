@@ -1,6 +1,7 @@
 pragma solidity 0.4.18;
 
 import "truffle/Assert.sol";
+import "../contracts/acl/ACL.sol";
 import "./helpers/ACLHelper.sol";
 
 
@@ -60,11 +61,6 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(uint256(10), 11), 0, Op.LTE, 9, false);
         assertEval(arr(uint256(9), 11), 0, Op.LTE, 10, true);
         assertEval(arr(uint256(10), 11), 1, Op.LTE, 11, true);
-    }
-
-    function testSender() public {
-        assertEval(arr(), SENDER_PARAM_ID, Op.EQ, uint256(msg.sender), true);
-        assertEval(arr(), SENDER_PARAM_ID, Op.EQ, uint256(0x1234), false);
     }
 
     function testTimestamp() public {
