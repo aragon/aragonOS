@@ -12,7 +12,7 @@ contract Petrifiable is Initializable {
     uint256 constant internal PETRIFIED_BLOCK = uint256(-1);
 
     function isPetrified() public view returns (bool) {
-        return initializationBlock == PETRIFIED_BLOCK;
+        return getInitializationBlock() == PETRIFIED_BLOCK;
     }
 
     /**

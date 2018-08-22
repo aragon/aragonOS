@@ -36,6 +36,7 @@ contract Initializable is TimeHelpers {
     * @return Whether the contract has been initialized by the time of the current block
     */
     function hasInitialized() public view returns (bool) {
+        uint256 initializationBlock = getInitializationBlock();
         return initializationBlock != 0 && getBlockNumber() >= initializationBlock;
     }
 
@@ -50,7 +51,7 @@ contract Initializable is TimeHelpers {
     * @dev Function to be called by top level contract after initialization to enable the contract
     *      at a future block number rather than immediately.
     */
-    function initializedAt(uint256 blockNumber) internal onlyInit {
-        initializationBlock = blockNumber;
+    function initializedAt(uint256 _blockNumber) internal onlyInit {
+        INITIALIZATION_BLOCK_POSITION.setStorageUint256(_blockNumber);
     }
 }
