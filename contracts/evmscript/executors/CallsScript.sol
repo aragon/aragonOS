@@ -51,7 +51,7 @@ contract CallsScript is IEVMScriptExecutor {
         }
     }
 
-    function executorType() external returns (bytes32) {
+    function executorType() external pure returns (bytes32) {
         return EXECUTOR_TYPE;
     }
 }
