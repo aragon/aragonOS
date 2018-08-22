@@ -21,7 +21,7 @@ module.exports = function (deployer, network, accounts, arts = null) {
     const APMRegistryFactory = getContract('APMRegistryFactory')
     const ensAddr = '0x0' // so ensfactory creates one
 
-    const kernelBase = await getContract('Kernel').new()
+    const kernelBase = await getContract('Kernel').new(true) // immediately petrify
     const aclBase = await getContract('ACL').new()
     const daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
 

@@ -3,18 +3,21 @@ const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
 const ENS = artifacts.require('ENS')
-const Repo = artifacts.require('Repo')
-const APMRegistry = artifacts.require('APMRegistry')
+const ENSFactory = artifacts.require('ENSFactory')
 const PublicResolver = artifacts.require('PublicResolver')
+
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
-const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 
-const getContract = name => artifacts.require(name)
+const APMRegistry = artifacts.require('APMRegistry')
+const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
+const Repo = artifacts.require('Repo')
+const APMRegistryFactory = artifacts.require('APMRegistryFactory')
+const DAOFactory = artifacts.require('DAOFactory')
 
 // Using APMFactory in order to reuse it
 contract('ENSSubdomainRegistrar', accounts => {
-    let ens, apmFactory, registry, baseDeployed, dao, acl, registrar, ensFactory, daoFactory = {}
+    let baseDeployed, apmFactory, ensFactory, daoFactory, ens, registrar
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -27,42 +30,33 @@ contract('ENSSubdomainRegistrar', accounts => {
     const zeroAddr = '0x0000000000000000000000000000000000000000'
 
     before(async () => {
-        const bases = ['APMRegistry', 'Repo', 'ENSSubdomainRegistrar']
-        baseDeployed = await Promise.all(bases.map(c => getContract(c).new()))
+        const bases = [APMRegistry, Repo, ENSSubdomainRegistrar]
+        baseDeployed = await Promise.all(bases.map(base => base.new()))
 
-        ensFactory = await getContract('ENSFactory').new()
+        ensFactory = await ENSFactory.new()
 
-        const kernelBase = await getContract('Kernel').new()
-        const aclBase = await getContract('ACL').new()
-        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, '0x00')
+        const kernelBase = await Kernel.new(true) // petrify immediately
+        const aclBase = await ACL.new()
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
     })
 
     beforeEach(async () => {
         const baseAddrs = baseDeployed.map(c => c.address)
-        apmFactory = await getContract('APMRegistryFactory').new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
+        apmFactory = await APMRegistryFactory.new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
+
         const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
-        registry = APMRegistry.at(apmAddr)
+        const registry = APMRegistry.at(apmAddr)
 
-        dao = Kernel.at(await registry.kernel())
-        acl = ACL.at(await dao.acl())
+        const dao = Kernel.at(await registry.kernel())
+        const acl = ACL.at(await dao.acl())
 
-        registrar = getContract('ENSSubdomainRegistrar').at(await registry.registrar())
+        registrar = ENSSubdomainRegistrar.at(await registry.registrar())
         const subdomainRegistrar = baseDeployed[2]
 
-        // Get permission to delete names after each test case
         await acl.grantPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.CREATE_NAME_ROLE(), { from: apmOwner })
         await acl.createPermission(apmOwner, await registry.registrar(), await subdomainRegistrar.DELETE_NAME_ROLE(), apmOwner, { from: apmOwner })
-    })
-
-    afterEach(async () => {
-        // Clean up test.aragonpm.eth if was set
-        if (await ens.owner(holanode) == zeroAddr) return
-
-        // Free test name so it can be used on next test
-        await registrar.deleteName(holalabel, { from: apmOwner })
-        assert.equal(await ens.owner(holanode), zeroAddr, 'should have cleaned up')
     })
 
     it('can create name', async () => {
@@ -92,6 +86,13 @@ contract('ENSSubdomainRegistrar', accounts => {
 
     it('can delete names', async () => {
         await registrar.createName(holalabel, apmOwner, { from: apmOwner })
+        await registrar.deleteName(holalabel, { from: apmOwner })
+
+        assert.equal(await ens.owner(holanode), zeroAddr, 'should have reset name')
+    })
+
+    it('can delete names registered to itself', async () => {
+        await registrar.createName(holalabel, registrar.address, { from: apmOwner })
         await registrar.deleteName(holalabel, { from: apmOwner })
 
         assert.equal(await ens.owner(holanode), zeroAddr, 'should have reset name')

@@ -8,7 +8,7 @@ contract('Unstructured storage', accounts => {
   beforeEach(async () => {
     app = await AppStubStorage.new()
     appPinned = await AppStubPinnedStorage.new()
-    kernel = await Kernel.new()
+    kernel = await Kernel.new(true)
   })
 
   it('tests init block', async () => {
