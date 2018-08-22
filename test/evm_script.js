@@ -95,7 +95,7 @@ contract('EVM Script', accounts => {
             it('is the correct executor type', async () => {
                 const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
                 const executor = IEVMScriptExecutor.at(await reg.getScriptExecutor('0x00000001'))
-                assert.equal(await executor.executorType(), CALLS_SCRIPT_TYPE)
+                assert.equal(await executor.executorType.call(), CALLS_SCRIPT_TYPE)
             })
 
             it('executes single action script', async () => {

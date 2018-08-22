@@ -69,7 +69,7 @@ contract('Constants', accounts => {
   it('checks EVM Script executor types', async () => {
     const callsScriptExecutor = await getContract('CallsScript').new()
 
-    assert.equal(await callsScriptExecutor.executorType(), await keccakConstants.EVMSCRIPT_EXECUTOR_CALLS_SCRIPT(), "callscript executor type doesn't match")
+    assert.equal(await callsScriptExecutor.executorType.call(), await keccakConstants.EVMSCRIPT_EXECUTOR_CALLS_SCRIPT(), "callscript executor type doesn't match")
   })
 
   it('checks EVMScriptRegistry constants', async () => {
