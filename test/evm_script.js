@@ -1,4 +1,5 @@
 const { rawEncode } = require('ethereumjs-abi')
+const { soliditySha3 } = require('web3-utils')
 
 const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript } = require('./helpers/evmScript')
@@ -16,6 +17,8 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
 
 const getContract = artifacts.require
 
@@ -48,11 +51,9 @@ contract('EVM Script', accounts => {
     })
 
     it('factory registered just 1 script executor', async () => {
-        const zeroAddr = '0x0000000000000000000000000000000000000000'
-
-        assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000001'), zeroAddr)
-        assert.equal(await reg.getScriptExecutor('0x00000002'), zeroAddr)
+        assert.equal(await reg.getScriptExecutor('0x00000000'), ZERO_ADDR)
+        assert.notEqual(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR)
+        assert.equal(await reg.getScriptExecutor('0x00000002'), ZERO_ADDR)
     })
 
     it('fails if reinitializing registry', async () => {
@@ -83,12 +84,20 @@ contract('EVM Script', accounts => {
         it('can disable executors', async () => {
             await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
             await reg.disableScriptExecutor(1, { from: boss })
+
+            assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR)
             return assertRevert(async () => {
                 await executor.execute(encodeCallScript([]))
             })
         })
 
         context('spec ID 1', () => {
+            it('is the correct executor type', async () => {
+                const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
+                const executor = IEVMScriptExecutor.at(await reg.getScriptExecutor('0x00000001'))
+                assert.equal(await executor.executorType(), CALLS_SCRIPT_TYPE)
+            })
+
             it('executes single action script', async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
