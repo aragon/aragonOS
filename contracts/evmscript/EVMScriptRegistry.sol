@@ -44,6 +44,12 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         DisableExecutor(_executorId, executorEntry.executor);
     }
 
+    function enableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {
+        ExecutorEntry storage executorEntry = executors[_executorId];
+        executorEntry.enabled = true;
+        EnableExecutor(_executorId, executorEntry.executor);
+    }
+
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 

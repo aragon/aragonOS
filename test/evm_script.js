@@ -1,5 +1,6 @@
 const { rawEncode } = require('ethereumjs-abi')
 
+const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
 const { encodeCallScript } = require('./helpers/evmScript')
 
@@ -16,6 +17,7 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 const keccak256 = require('js-sha3').keccak_256
 const APP_BASE_NAMESPACE = '0x'+keccak256('base')
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const getContract = artifacts.require
 
@@ -48,11 +50,9 @@ contract('EVM Script', accounts => {
     })
 
     it('factory registered just 1 script executor', async () => {
-        const zeroAddr = '0x0000000000000000000000000000000000000000'
-
-        assert.equal(await reg.getScriptExecutor('0x00000000'), zeroAddr)
-        assert.notEqual(await reg.getScriptExecutor('0x00000001'), zeroAddr)
-        assert.equal(await reg.getScriptExecutor('0x00000002'), zeroAddr)
+        assert.equal(await reg.getScriptExecutor('0x00000000'), ZERO_ADDR)
+        assert.notEqual(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR)
+        assert.equal(await reg.getScriptExecutor('0x00000002'), ZERO_ADDR)
     })
 
     it('fails if reinitializing registry', async () => {
@@ -77,14 +77,6 @@ contract('EVM Script', accounts => {
         it('fails to execute if spec ID is unknown', async () => {
             return assertRevert(async () => {
                 await executor.execute('0x00000004')
-            })
-        })
-
-        it('can disable executors', async () => {
-            await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
-            await reg.disableScriptExecutor(1, { from: boss })
-            return assertRevert(async () => {
-                await executor.execute(encodeCallScript([]))
             })
         })
 
@@ -192,7 +184,42 @@ contract('EVM Script', accounts => {
                         await executor.execute(script)
                     })
                 })
-          })
+            })
+
+            context('registry', () => {
+                it('can be disabled', async () => {
+                    await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
+                    const receipt = await reg.disableScriptExecutor(1, { from: boss })
+                    const isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
+
+                    assertEvent(receipt, 'DisableExecutor')
+                    assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting disabled executor should return zero addr')
+                    assert.isFalse(isEnabled, 'executor should be disabled')
+                    return assertRevert(async () => {
+                        await executor.execute(encodeCallScript([]))
+                    })
+                })
+
+                it('can be re-enabled', async () => {
+                    let isEnabled
+                    await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
+
+                    // First, disable the executor
+                    await reg.disableScriptExecutor(1, { from: boss })
+                    isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
+                    assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting disabled executor should return zero addr')
+                    assert.isFalse(isEnabled, 'executor should be disabled')
+
+                    // Then re-enable it
+                    const receipt = await reg.enableScriptExecutor(1, { from: boss })
+                    isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
+
+                    assertEvent(receipt, 'EnableExecutor')
+                    assert.notEqual(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting enabled executor should be non-zero addr')
+                    assert.isTrue(isEnabled, 'executor should be enabled')
+                    await executor.execute(encodeCallScript([]))
+                })
+            })
         })
     })
 })
