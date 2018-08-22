@@ -25,12 +25,12 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
 
         ACL acl = ACL(_dao.acl());
 
-        acl.createPermission(this, reg, reg.REGISTRY_MANAGER_ROLE(), this);
+        acl.createPermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE(), this);
 
         reg.addScriptExecutor(baseCallScript);     // spec 1 = CallsScript
 
-        acl.revokePermission(this, reg, reg.REGISTRY_MANAGER_ROLE());
-        acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
+        acl.revokePermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        acl.setPermissionManager(_root, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
 
         return reg;
     }

@@ -69,6 +69,7 @@ contract('Constants', accounts => {
   it('checks EVMScriptRegistry constants', async () => {
     const evmScriptRegistry = await getContract('EVMScriptRegistry').new()
 
+    assert.equal(await evmScriptRegistry.REGISTRY_ADD_EXECUTOR_ROLE(), await keccakConstants.REGISTRY_ADD_EXECUTOR_ROLE(), "registry add executor role doesn't match")
     assert.equal(await evmScriptRegistry.REGISTRY_MANAGER_ROLE(), await keccakConstants.REGISTRY_MANAGER_ROLE(), "registry manager role doesn't match")
   })
 

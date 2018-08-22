@@ -188,7 +188,7 @@ contract('EVM Script', accounts => {
 
             context('registry', () => {
                 it('can be disabled', async () => {
-                    await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
+                    await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
                     const receipt = await reg.disableScriptExecutor(1, { from: boss })
                     const isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
 
@@ -202,7 +202,7 @@ contract('EVM Script', accounts => {
 
                 it('can be re-enabled', async () => {
                     let isEnabled
-                    await acl.grantPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), { from: boss })
+                    await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
 
                     // First, disable the executor
                     await reg.disableScriptExecutor(1, { from: boss })

@@ -41,6 +41,7 @@ contract KeccakConstants is APMNamehash {
     // EVMScriptRegistry
     bytes32 constant public EVMSCRIPT_REGISTRY_APP_ID = apmNamehash("evmreg");
     bytes32 constant public EVMSCRIPT_REGISTRY_APP = keccak256(APP_ADDR_NAMESPACE, EVMSCRIPT_REGISTRY_APP_ID);
+    bytes32 constant public REGISTRY_ADD_EXECUTOR_ROLE = keccak256("REGISTRY_ADD_EXECUTOR_ROLE");
     bytes32 constant public REGISTRY_MANAGER_ROLE = keccak256("REGISTRY_MANAGER_ROLE");
 
     // Repo
