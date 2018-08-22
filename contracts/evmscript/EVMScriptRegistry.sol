@@ -1,10 +1,9 @@
 pragma solidity 0.4.18;
 
+import "../apps/AragonApp.sol";
 import "./ScriptHelpers.sol";
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
-
-import "../apps/AragonApp.sol";
 
 
 /* solium-disable function-order */

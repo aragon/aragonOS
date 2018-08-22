@@ -21,7 +21,7 @@ contract Initializable is TimeHelpers {
     }
 
     modifier isInitialized {
-        require(getInitializationBlock() > 0);
+        require(hasInitialized());
         _;
     }
 
@@ -33,9 +33,25 @@ contract Initializable is TimeHelpers {
     }
 
     /**
+    * @return Whether the contract has been initialized by the time of the current block
+    */
+    function hasInitialized() public view returns (bool) {
+        uint256 initializationBlock = getInitializationBlock();
+        return initializationBlock != 0 && getBlockNumber() >= initializationBlock;
+    }
+
+    /**
     * @dev Function to be called by top level contract after initialization has finished.
     */
     function initialized() internal onlyInit {
         INITIALIZATION_BLOCK_POSITION.setStorageUint256(getBlockNumber());
+    }
+
+    /**
+    * @dev Function to be called by top level contract after initialization to enable the contract
+    *      at a future block number rather than immediately.
+    */
+    function initializedAt(uint256 _blockNumber) internal onlyInit {
+        INITIALIZATION_BLOCK_POSITION.setStorageUint256(_blockNumber);
     }
 }

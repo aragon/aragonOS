@@ -238,7 +238,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return true;
         }
 
-        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
+        return _evalParam(_paramsHash, 0, _who, _where, _what, _how);
     }
 
     /**
@@ -281,7 +281,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return paramHash;
     }
 
-    function evalParam(
+    function _evalParam(
         bytes32 _paramsHash,
         uint32 _paramId,
         address _who,
@@ -297,7 +297,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         Param memory param = permissionParams[_paramsHash][_paramId];
 
         if (param.id == LOGIC_OP_PARAM_ID) {
-            return evalLogic(param, _paramsHash, _who, _where, _what, _how);
+            return _evalLogic(param, _paramsHash, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -327,20 +327,20 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
     {
         if (Op(_param.op) == Op.IF_ELSE) {
             var (condition, success, failure) = decodeParamsList(uint256(_param.value));
-            bool result = evalParam(_paramsHash, condition, _who, _where, _what, _how);
+            bool result = _evalParam(_paramsHash, condition, _who, _where, _what, _how);
 
-            return evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
+            return _evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
         }
 
         var (v1, v2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = evalParam(_paramsHash, v1, _who, _where, _what, _how);
+        bool r1 = _evalParam(_paramsHash, v1, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -354,7 +354,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return false;
         }
 
-        bool r2 = evalParam(_paramsHash, v2, _who, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, v2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
             return r1 != r2;

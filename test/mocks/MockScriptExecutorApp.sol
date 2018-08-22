@@ -3,12 +3,12 @@ pragma solidity 0.4.18;
 import "../../contracts/apps/AragonApp.sol";
 
 
-contract ExecutorStorage is AragonApp {
-    uint256 public randomNumber;
-}
+contract MockScriptExecutorApp is AragonApp {
+    // Initialization is required to access any of the real executors
+    function initialize() public {
+        initialized();
+    }
 
-// TODO: Rename
-contract Executor is ExecutorStorage {
     function execute(bytes script) public {
         runScript(script, new bytes(0), new address[](0));
     }

@@ -1,6 +1,8 @@
 pragma solidity 0.4.18;
 
 import "../../contracts/apps/AragonApp.sol";
+import "../../contracts/apps/UnsafeAragonApp.sol";
+import "../../contracts/kernel/IKernel.sol";
 
 contract AppSt {
     uint a;
@@ -8,7 +10,7 @@ contract AppSt {
 }
 
 contract AppStub is AragonApp, AppSt {
-    bytes32 constant public ROLE = bytes32(1);
+    bytes32 constant public ROLE = keccak256("ROLE");
 
     function initialize() onlyInit public {
         initialized();
@@ -35,5 +37,11 @@ contract AppStub is AragonApp, AppSt {
 contract AppStub2 is AragonApp, AppSt {
     function getValue() public constant returns (uint) {
         return a * 2;
+    }
+}
+
+contract UnsafeAppStub is AppStub, UnsafeAragonApp {
+    function UnsafeAppStub(IKernel _kernel) {
+        setKernel(_kernel);
     }
 }
