@@ -40,7 +40,7 @@ contract AragonApp is AppStorage, Initializable, ACLSyntaxSugar, VaultRecoverabl
                 mstore(how, byteLength)
             }
         }
-        return address(kernel) == 0 || kernel.hasPermission(_sender, address(this), _role, how);
+        return address(kernel()) == address(0) || kernel().hasPermission(_sender, address(this), _role, how);
     }
 
     /**
@@ -49,7 +49,7 @@ contract AragonApp is AppStorage, Initializable, ACLSyntaxSugar, VaultRecoverabl
     */
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
-        require(address(kernel) != 0);
-        return kernel.getRecoveryVault();
+        require(address(kernel()) != address(0));
+        return kernel().getRecoveryVault();
     }
 }
