@@ -29,8 +29,9 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
 
         reg.addScriptExecutor(baseCallScript);     // spec 1 = CallsScript
 
+        // Clean up the permissions
         acl.revokePermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
-        acl.setPermissionManager(_root, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        acl.removePermissionManager(reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
 
         return reg;
     }
