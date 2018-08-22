@@ -17,7 +17,7 @@ contract('Kernel lifecycle', accounts => {
   let ACL_APP_ID, APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
 
   const testUnaccessibleFunctionalityWhenUninitialized = async (kernel) => {
-    // hasPermission should always return false when unintialized
+    // hasPermission should always return false when uninitialized
     assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
     assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
 

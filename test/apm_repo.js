@@ -93,7 +93,7 @@ contract('Repo', accounts => {
             })
         })
 
-        context('adding new version', async () => {
+        context('adding new version', () => {
             const newCode = accounts[9] // random addr, irrelevant
             const newContent = '0x13'
 

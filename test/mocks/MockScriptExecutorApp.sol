@@ -3,7 +3,7 @@ pragma solidity 0.4.18;
 import "../../contracts/apps/AragonApp.sol";
 
 
-contract EVMScriptExecutor is AragonApp {
+contract MockScriptExecutorApp is AragonApp {
     // Initialization is required to access any of the real executors
     function initialize() public {
         initialized();

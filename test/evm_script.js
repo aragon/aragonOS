@@ -14,7 +14,7 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 // Mocks
 const ExecutionTarget = artifacts.require('ExecutionTarget')
-const EVMScriptExecutor = artifacts.require('EVMScriptExecutor')
+const MockScriptExecutorApp = artifacts.require('MockScriptExecutorApp')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
@@ -44,7 +44,7 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
-        executorBase = await EVMScriptExecutor.new()
+        executorBase = await MockScriptExecutorApp.new()
         await dao.setApp(APP_BASES_NAMESPACE, executorAppId, executorBase.address, { from: boss })
     })
 
@@ -65,13 +65,13 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        assertRevert(() => callsScriptBase.execScript(script, '0x', []))
+        await assertRevert(() => callsScriptBase.execScript(script, '0x', []))
     })
 
     context('> Uninitialized executor', () => {
         beforeEach(async () => {
             const receipt = await dao.newAppInstance(executorAppId, executorBase.address, { from: boss })
-            executor = EVMScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            executor = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             // Explicitly don't initialize the executor
             executionTarget = await ExecutionTarget.new()
         })
@@ -87,7 +87,7 @@ contract('EVM Script', accounts => {
     context('> Executor', () => {
         beforeEach(async () => {
             const receipt = await dao.newAppInstance(executorAppId, executorBase.address, { from: boss })
-            executor = EVMScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            executor = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             await executor.initialize()
             executionTarget = await ExecutionTarget.new()
         })
@@ -203,7 +203,7 @@ contract('EVM Script', accounts => {
                 await executor.execute(encodeCallScript([]))
             })
 
-            context('> Script overflow', async () => {
+            context('> Script overflow', () => {
                 const encodeCallScriptBad = actions => {
                     return actions.reduce((script, { to, calldata }) => {
                         const addr = rawEncode(['address'], [to]).toString('hex')

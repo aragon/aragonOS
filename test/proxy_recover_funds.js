@@ -106,8 +106,11 @@ contract('Proxy funds', accounts => {
       // Test both the Vault itself and when it's behind a proxy to make sure their recovery behaviours are the same
       for (const vaultType of ['Vault', 'VaultProxy']) {
         const skipCoverageIfVaultProxy = test => {
-          // The VaultMock isn't instrumented during coverage, but the AppProxy is, and so transferring
-          // to the fallback fails when we're testing with the proxy
+          // The VaultMock isn't instrumented during coverage, but the AppProxy is, and so
+          // transferring to the fallback fails when we're testing with the proxy.
+          // Native transfers (either .send() or .transfer()) fail under coverage because they're
+          // limited to 2.3k gas, and the injected instrumentation from coverage makes these
+          // operations cost more than that limit.
           return vaultType === 'VaultProxy' ? skipCoverage(test) : test
         }
 
@@ -131,9 +134,9 @@ contract('Proxy funds', accounts => {
           })
 
           onlyBaseKernel(() => {
-            context('> Base kernel', async () => {
+            context('> Base kernel', () => {
               it('cannot receive ETH', skipCoverageIfVaultProxy(async () =>
-                assertRevert(
+                await assertRevert(
                   () => kernel.sendTransaction({ value: 1, gas: 31000 })
                 )
               ))
@@ -145,7 +148,7 @@ contract('Proxy funds', accounts => {
           })
 
           onlyKernelProxy(() => {
-            context('> KernelProxy', async () => {
+            context('> KernelProxy', () => {
               beforeEach(() => {
                 target = kernel
               })
@@ -164,25 +167,25 @@ contract('Proxy funds', accounts => {
             })
           })
 
-          context('> App without kernel', async () => {
+          context('> App without kernel', () => {
             beforeEach(async () => {
               target = await AppStub.new()
             })
 
-            it('does not recover ETH', skipCoverageIfVaultProxy(() =>
-              assertRevert(
+            it('does not recover ETH', skipCoverageIfVaultProxy(async () =>
+              await assertRevert(
                 () => recoverEth(target, vault)
               )
             ))
 
-            it('does not recover tokens', () =>
-              assertRevert(
+            it('does not recover tokens', async () =>
+              await assertRevert(
                 () => recoverTokens(target, vault)
               )
             )
           })
 
-          context('> Proxied app with kernel', async () => {
+          context('> Proxied app with kernel', () => {
             beforeEach(async () => {
               // Setup app
               const receipt = await kernel.newAppInstance(APP_ID, appBase.address)
@@ -215,7 +218,7 @@ contract('Proxy funds', accounts => {
             })
           })
 
-          context('> Conditional fund recovery', async () => {
+          context('> Conditional fund recovery', () => {
             beforeEach(async () => {
               // Setup app with conditional recovery code
               const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address)
