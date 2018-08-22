@@ -9,7 +9,8 @@ import "../IEVMScriptExecutor.sol";
 contract CallsScript is IEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
-    bytes32 constant internal EXECUTOR_TYPE = keccak256("CALLSCRIPT");
+    // bytes32 constant internal EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
+    bytes32 constant internal EXECUTOR_TYPE = 0x2dc858a00f3e417be1394b87c07158e989ec681ce8cc68a9093680ac1a870302;
 
     uint256 constant internal SCRIPT_START_LOCATION = 4;
 
