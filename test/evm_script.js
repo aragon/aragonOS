@@ -1,4 +1,5 @@
 const { rawEncode } = require('ethereumjs-abi')
+const { soliditySha3 } = require('web3-utils')
 
 const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
@@ -81,6 +82,12 @@ contract('EVM Script', accounts => {
         })
 
         context('spec ID 1', () => {
+            it('is the correct executor type', async () => {
+                const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
+                const executor = IEVMScriptExecutor.at(await reg.getScriptExecutor('0x00000001'))
+                assert.equal(await executor.executorType.call(), CALLS_SCRIPT_TYPE)
+            })
+
             it('executes single action script', async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
