@@ -283,21 +283,20 @@ addresses and bytes32 (in the case of comparing hashes, losing 2 bytes of precis
 shouldn't be a dealbreaker if the hash algorithm is secure). The only problem is
 when
 - **Argument ID** (`uint8`): Determines how the comparison value is fetched. From
-0 to 200 it refers to the argument index number passed to the role. After 200, there
+0 to 199 it refers to the argument index number passed to the role. From 200, there
 are some *special Argument IDs*:
-	- `BLOCK_NUMBER_PARAM_ID` (`id = 200`): Sets comparison value to the block number
+	- `id = 200` (`BLOCK_NUMBER_PARAM_ID`): Sets comparison value to the block number
 	at the time of execution. This allows for setting up timelocks depending
 	on blocks.
-	- `TIMESTAMP_PARAM_ID` (`id = 201`): Sets comparison value to the timestamp of the
+	- `id = 201` (`TIMESTAMP_PARAM_ID`): Sets comparison value to the timestamp of the
 	current block at the time of execution. This allows for setting up timelocks
 	on time.
-	- `SENDER_PARAM_ID` (`id = 202`): Sets comparison value to the sender of the call.
-	(Currently useless because of [this issue]())
-	- `ORACLE_PARAM_ID` (`id = 203`): Checks with an oracle at the address in the
+    - `id = 202`: Currently unused
+	- `id = 203` (`ORACLE_PARAM_ID`): Checks with an oracle at the address in the
 	*argument value* and returns whether it returned true or false (no comparison with arg).
-	- `LOGIC_OP_PARAM_ID` (`id = 204`): Evaluates a logical operation and returns
+	- `id = 204` (`LOGIC_OP_PARAM_ID`): Evaluates a logical operation and returns
 	true or false depending on its result (no comparison with arg).
-	- `PARAM_VALUE_PARAM_ID` (`id = 205`): Uses value as return. Commonly used with
+	- `id = 205` (`PARAM_VALUE_PARAM_ID`): Uses value as return. Commonly used with
 	the `RET` operation, to just return a value. If the value in the param is greater
 	than 0, it will evaluate to true, otherwise it will return false.
 - **Operation type** (`uint8`): Determines what operation is made to compare the
