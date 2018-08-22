@@ -66,6 +66,12 @@ contract('Constants', accounts => {
     assert.equal(await evmScriptConstants.EVMSCRIPT_REGISTRY_APP(), await keccakConstants.EVMSCRIPT_REGISTRY_APP(), "app doesn't match")
   })
 
+  it('checks EVM Script executor types', async () => {
+    const callsScriptExecutor = await getContract('CallsScript').new()
+
+    assert.equal(await callsScriptExecutor.executorType.call(), await keccakConstants.EVMSCRIPT_EXECUTOR_CALLS_SCRIPT(), "callscript executor type doesn't match")
+  })
+
   it('checks EVMScriptRegistry constants', async () => {
     const evmScriptRegistry = await getContract('EVMScriptRegistry').new()
 
@@ -76,5 +82,19 @@ contract('Constants', accounts => {
     const repo = await getContract('Repo').new()
 
     assert.equal(await repo.CREATE_VERSION_ROLE(), await keccakConstants.CREATE_VERSION_ROLE(), "create version role doesn't match")
+  })
+
+  it('checks AppStorage unstructured storage constants', async () => {
+    const app = await getContract('AppStubStorage').new()
+
+    assert.equal(await app.getKernelPosition(), await keccakConstants.kernelPosition(), "kernelPosition doesn't match")
+    assert.equal(await app.getAppIdPosition(), await keccakConstants.appIdPosition(), "appIdPosition doesn't match")
+    assert.equal(await app.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
+  })
+
+  it('checks AppProxyPinned unstructured storage constants', async () => {
+    const app = await getContract('AppStubPinnedStorage').new()
+
+    assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
   })
 })

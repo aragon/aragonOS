@@ -32,7 +32,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
     uint8 constant TIMESTAMP_PARAM_ID    = 201;
-    uint8 constant SENDER_PARAM_ID       = 202;
+    // 202 is unused
     uint8 constant ORACLE_PARAM_ID       = 203;
     uint8 constant LOGIC_OP_PARAM_ID     = 204;
     uint8 constant PARAM_VALUE_PARAM_ID  = 205;
@@ -60,7 +60,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function initialize(address _permissionsCreator) public onlyInit {
         initialized();
-        require(msg.sender == address(kernel));
+        require(msg.sender == address(kernel()));
 
         _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
@@ -311,8 +311,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             value = blockN();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
-        } else if (param.id == SENDER_PARAM_ID) {
-            value = uint256(msg.sender);
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
@@ -412,11 +410,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(uint256(1), _where, _what);
+        return keccak256("ROLE", _where, _what);
     }
 
     function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(uint256(2), _who, _where, _what);
+        return keccak256("PERMISSION", _who, _where, _what);
     }
 
     function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members

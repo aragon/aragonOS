@@ -42,7 +42,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
-        address registryAddr = kernel.getApp(EVMSCRIPT_REGISTRY_APP);
+        address registryAddr = kernel().getApp(EVMSCRIPT_REGISTRY_APP);
         return IEVMScriptRegistry(registryAddr);
     }
 
@@ -64,10 +64,10 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     modifier protectState {
-        address preKernel = kernel;
-        bytes32 preAppId = appId;
+        address preKernel = address(kernel());
+        bytes32 preAppId = appId();
         _; // exec
-        require(kernel == preKernel);
-        require(appId == preAppId);
+        require(address(kernel()) == preKernel);
+        require(appId() == preAppId);
     }
 }

@@ -9,6 +9,9 @@ import "./BaseEVMScriptExecutor.sol";
 contract CallsScript is BaseEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
+    // bytes32 constant internal EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
+    bytes32 constant internal EXECUTOR_TYPE = 0x2dc858a00f3e417be1394b87c07158e989ec681ce8cc68a9093680ac1a870302;
+
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     /**
@@ -45,5 +48,9 @@ contract CallsScript is BaseEVMScriptExecutor {
                 switch success case 0 { revert(0, 0) }
             }
         }
+    }
+
+    function executorType() external pure returns (bytes32) {
+        return EXECUTOR_TYPE;
     }
 }
