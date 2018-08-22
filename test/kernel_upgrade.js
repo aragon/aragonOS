@@ -5,6 +5,8 @@ const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
 
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
 // Only applicable to KernelProxy instances
 contract('Kernel upgrade', accounts => {
     let aclBase, kernelBase, upgradedBase, kernelAddr, kernel, acl
@@ -37,6 +39,18 @@ contract('Kernel upgrade', accounts => {
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = (await kernelProxy.proxyType.call()).toString()
         assert.equal(proxyType, (await kernelProxy.UPGRADEABLE()).toString(), "Proxy type should be 2 (upgradeable)")
+    })
+
+    it('fails to create a KernelProxy if the base is 0', async () => {
+        return assertRevert(async () => {
+            await KernelProxy.new(ZERO_ADDR)
+        })
+    })
+
+    it('fails to create a KernelProxy if the base is not a contract', async () => {
+        return assertRevert(async () => {
+            await KernelProxy.new('0x1234')
+        })
     })
 
     it('fails to upgrade kernel without permission', async () => {
