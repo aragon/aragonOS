@@ -93,7 +93,10 @@ contract('Constants', accounts => {
   })
 
   it('checks AppProxyPinned unstructured storage constants', async () => {
-    const app = await getContract('AppStubPinnedStorage').new()
+    // Set up AppStubPinnedStorage
+    const fakeApp = await getContract('AppStub').new()
+    const kernelMock = await getContract('KernelPinnedStorageMock').new(fakeApp.address)
+    const app = await getContract('AppStubPinnedStorage').new(kernelMock.address)
 
     assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
   })
