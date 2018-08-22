@@ -181,7 +181,9 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     *         Always returns false if the kernel hasn't been initialized yet.
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
-        return hasInitialized() && acl().hasPermission(_who, _where, _what, _how);
+        IACL defaultAcl = acl();
+        return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
+            defaultAcl.hasPermission(_who, _where, _what, _how);
     }
 
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
