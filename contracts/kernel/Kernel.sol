@@ -22,7 +22,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
     * @param _shouldPetrify Immediately petrify this instance so that it can never be initialized
     */
-    function Kernel(bool _shouldPetrify) public {
+    constructor(bool _shouldPetrify) public {
         if (_shouldPetrify) {
             petrify();
         }

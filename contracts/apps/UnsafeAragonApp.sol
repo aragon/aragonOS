@@ -17,7 +17,7 @@ import "./AragonApp.sol";
 contract UnsafeAragonApp is AragonApp {
     using UnstructuredStorage for bytes32;
 
-    function UnsafeAragonApp() public {
+    constructor() public {
         // Removes auto petrifying; simulates a delete at INITIALIZATION_BLOCK_POSITION
         INITIALIZATION_BLOCK_POSITION.setStorageUint256(0);
     }
