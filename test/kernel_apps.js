@@ -14,7 +14,7 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
-const KernelMock = artifacts.require('KernelMock')
+const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 
 const APP_ID = hash('stub.aragonpm.test')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -145,8 +145,8 @@ contract('Kernel apps', accounts => {
                     it("also sets the default app when using the overloaded version", async () => {
                         let appProxyAddr
 
-                        // Create KernelMock instance so we can use the overloaded version
-                        const kernelMock = await KernelMock.new(kernel.address)
+                        // Create KernelOverloadMock instance so we can use the overloaded version
+                        const kernelMock = await KernelOverloadMock.new(kernel.address)
 
                         await withAppManagerPermission(kernelMock.address, async () => {
                             const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, true)

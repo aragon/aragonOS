@@ -1,14 +1,22 @@
+const AppStub = artifacts.require('AppStub')
 const AppStubStorage = artifacts.require('AppStubStorage')
 const AppStubPinnedStorage = artifacts.require('AppStubPinnedStorage')
 const Kernel = artifacts.require('Kernel')
+
+// Mocks
+const KernelPinnedStorageMock = artifacts.require('KernelPinnedStorageMock')
 
 contract('Unstructured storage', accounts => {
   let app, kernel
 
   beforeEach(async () => {
     app = await AppStubStorage.new()
-    appPinned = await AppStubPinnedStorage.new()
     kernel = await Kernel.new(true)
+
+    // Set up AppStubPinnedStorage
+    const fakeApp = await AppStub.new()
+    const kernelMock = await KernelPinnedStorageMock.new(fakeApp.address)
+    appPinned = await AppStubPinnedStorage.new(kernelMock.address)
   })
 
   it('tests init block', async () => {

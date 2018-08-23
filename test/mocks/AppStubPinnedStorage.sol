@@ -2,21 +2,29 @@ pragma solidity 0.4.18;
 
 import "../../contracts/apps/AppProxyPinned.sol";
 import "../../contracts/kernel/IKernel.sol";
+import "../../contracts/kernel/Kernel.sol";
 
 
-contract AppStubPinnedStorage is AppProxyPinned {
+contract FakeAppConstants {
     bytes32 constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
-    address constant FAKE_APP_ADDR = address(1);
+}
 
-    // Allow the mock to be created without any arguments
-    function AppStubPinnedStorage()
-        AppProxyPinned(IKernel(0), FAKE_APP_ID, new bytes(0))
+contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
+    bytes32 constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
+    function KernelPinnedStorageMock(address _fakeApp) Kernel(false) public {
+        _setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, _fakeApp);
+    }
+}
+
+
+// Testing this contract is a bit of a pain... we can't overload anything to make the contract check
+// pass in the constructor, so we're forced to initialize this with a mocked Kernel that already
+// sets a contract for the fake app.
+contract AppStubPinnedStorage is AppProxyPinned, FakeAppConstants {
+    function AppStubPinnedStorage(KernelPinnedStorageMock _mockKernel)
+        AppProxyPinned(IKernel(_mockKernel), FAKE_APP_ID, new bytes(0))
         public // solium-disable-line visibility-first
-    {}
-
-    // Overload base to return our own fake address
-    function getAppBase(bytes32 _appId) internal view returns (address) {
-        return FAKE_APP_ADDR;
+    {
     }
 
     function setPinnedCodeExt(address _pinnedCode) public {

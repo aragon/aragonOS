@@ -8,12 +8,12 @@ import "../../contracts/lib/misc/ERCProxy.sol";
  * https://github.com/trufflesuite/truffle/issues/569
  * https://github.com/trufflesuite/truffle/issues/737
  */
-contract KernelMock {
+contract KernelOverloadMock {
     Kernel kernel;
 
     event NewAppProxy(address proxy);
 
-    function KernelMock(address _kernel) public {
+    function KernelOverloadMock(address _kernel) public {
         kernel = Kernel(_kernel);
     }
 
