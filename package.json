@@ -36,9 +36,9 @@
     "ganache-cli": "^6.1.0",
     "glob": "^7.1.2",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "^0.5.7",
+    "solidity-coverage": "0.5.7",
     "solium": "^1.1.8",
-    "truffle": "^4.1.13",
+    "truffle": "4.1.14",
     "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
