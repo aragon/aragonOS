@@ -32,7 +32,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
     uint8 constant TIMESTAMP_PARAM_ID    = 201;
-    uint8 constant SENDER_PARAM_ID       = 202;
+    // 202 is unused
     uint8 constant ORACLE_PARAM_ID       = 203;
     uint8 constant LOGIC_OP_PARAM_ID     = 204;
     uint8 constant PARAM_VALUE_PARAM_ID  = 205;
@@ -60,7 +60,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function initialize(address _permissionsCreator) public onlyInit {
         initialized();
-        require(msg.sender == address(kernel));
+        require(msg.sender == address(kernel()));
 
         _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
@@ -238,7 +238,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return true;
         }
 
-        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
+        return _evalParam(_paramsHash, 0, _who, _where, _what, _how);
     }
 
     /**
@@ -281,7 +281,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return paramHash;
     }
 
-    function evalParam(
+    function _evalParam(
         bytes32 _paramsHash,
         uint32 _paramId,
         address _who,
@@ -297,7 +297,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         Param memory param = permissionParams[_paramsHash][_paramId];
 
         if (param.id == LOGIC_OP_PARAM_ID) {
-            return evalLogic(param, _paramsHash, _who, _where, _what, _how);
+            return _evalLogic(param, _paramsHash, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -311,8 +311,6 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             value = blockN();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
             value = time();
-        } else if (param.id == SENDER_PARAM_ID) {
-            value = uint256(msg.sender);
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
@@ -329,20 +327,20 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
     {
         if (Op(_param.op) == Op.IF_ELSE) {
             var (condition, success, failure) = decodeParamsList(uint256(_param.value));
-            bool result = evalParam(_paramsHash, condition, _who, _where, _what, _how);
+            bool result = _evalParam(_paramsHash, condition, _who, _where, _what, _how);
 
-            return evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
+            return _evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
         }
 
         var (v1, v2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = evalParam(_paramsHash, v1, _who, _where, _what, _how);
+        bool r1 = _evalParam(_paramsHash, v1, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -356,7 +354,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return false;
         }
 
-        bool r2 = evalParam(_paramsHash, v2, _who, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, v2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
             return r1 != r2;
@@ -412,11 +410,11 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(uint256(1), _where, _what);
+        return keccak256("ROLE", _where, _what);
     }
 
     function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(uint256(2), _who, _where, _what);
+        return keccak256("PERMISSION", _who, _where, _what);
     }
 
     function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members

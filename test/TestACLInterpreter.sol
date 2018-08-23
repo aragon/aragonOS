@@ -63,11 +63,6 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(uint256(10), 11), 1, Op.LTE, 11, true);
     }
 
-    function testSender() public {
-        assertEval(arr(), SENDER_PARAM_ID, Op.EQ, uint256(msg.sender), true);
-        assertEval(arr(), SENDER_PARAM_ID, Op.EQ, uint256(0x1234), false);
-    }
-
     function testTimestamp() public {
         assertEval(arr(), TIMESTAMP_PARAM_ID, Op.EQ, uint256(block.timestamp), true);
         assertEval(arr(), TIMESTAMP_PARAM_ID, Op.EQ, uint256(1), false);
@@ -247,7 +242,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
     function assertEval(Param[] memory params, uint256[] memory args, bool expected) internal {
         bytes32 paramHash = encodeAndSaveParams(params);
-        bool allow = evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
+        bool allow = _evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
     }

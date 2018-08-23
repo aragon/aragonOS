@@ -7,7 +7,7 @@ module.exports = function (deployer, network, accounts, arts = null) {
     const DAOFactory = artifacts.require('DAOFactory')
     const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-    const kernelBase = await getContract('Kernel').new()
+    const kernelBase = await getContract('Kernel').new(true) // immediately petrify
     const aclBase = await getContract('ACL').new()
 
     const regFact = await EVMScriptRegistryFactory.new()

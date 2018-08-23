@@ -1,37 +1,38 @@
 const { assertRevert } = require('./helpers/assertThrow')
+
+const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
-const DAOFactory = artifacts.require('DAOFactory')
-const ACL = artifacts.require('ACL')
-const getContract = artifacts.require
 
-contract('Kernel Upgrade', accounts => {
-    let kernelBase, factory, kernel, acl, namespace, kernelId = {}, app
+// Only applicable to KernelProxy instances
+contract('Kernel upgrade', accounts => {
+    let aclBase, kernelBase, upgradedBase, kernelAddr, kernel, acl
+    let APP_MANAGER_ROLE, CORE_NAMESPACE, KERNEL_APP_ID
 
     const permissionsRoot = accounts[0]
 
     before(async () => {
-      kernelBase = await getContract('Kernel').new()
-      const aclBase = await getContract('ACL').new()
-      factory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
+        kernelBase = await Kernel.new(true) // petrify immediately
+        upgradedBase = await UpgradedKernel.new(true) // petrify immediately
+
+        aclBase = await ACL.new()
+
+        // Setup constants
+        APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+        CORE_NAMESPACE = await kernelBase.CORE_NAMESPACE()
+        KERNEL_APP_ID = await kernelBase.KERNEL_APP_ID()
     })
 
     beforeEach(async () => {
-        const receipt = await factory.newDAO(permissionsRoot)
-        app = receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao
-
-        kernel = Kernel.at(app)
+        kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+        await kernel.initialize(aclBase.address, permissionsRoot)
         acl = ACL.at(await kernel.acl())
-
-        const r = await kernel.APP_MANAGER_ROLE()
-
-        namespace = await kernel.CORE_NAMESPACE()
-        kernelId = await kernel.KERNEL_APP_ID()
+        kernelAddr = kernel.address
     })
 
     it('checks ERC897 functions', async () => {
-        const kernelProxy = KernelProxy.at(app)
+        const kernelProxy = KernelProxy.at(kernelAddr)
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = (await kernelProxy.proxyType.call()).toString()
@@ -40,34 +41,29 @@ contract('Kernel Upgrade', accounts => {
 
     it('fails to upgrade kernel without permission', async () => {
         return assertRevert(async () => {
-            await kernel.setApp(namespace, kernelId, accounts[0])
+            await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[0])
         })
     })
 
-    it('fails when calling is upgraded on old version', async () => {
+    it('fails when calling upgraded functionality on old version', async () => {
         return assertRevert(async () => {
-            await UpgradedKernel.at(kernel.address).isUpgraded()
+            await UpgradedKernel.at(kernelAddr).isUpgraded()
         })
     })
 
     it('successfully upgrades kernel', async () => {
-        const role = await kernel.APP_MANAGER_ROLE()
-        await acl.createPermission(permissionsRoot, kernel.address, role, permissionsRoot, { from: permissionsRoot })
+        await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
 
-        const upgradedImpl = await UpgradedKernel.new()
-        await kernel.setApp(namespace, kernelId, upgradedImpl.address)
+        await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, upgradedBase.address)
 
-        assert.isTrue(await UpgradedKernel.at(kernel.address).isUpgraded(), 'kernel should have been upgraded')
+        assert.isTrue(await UpgradedKernel.at(kernelAddr).isUpgraded(), 'kernel should have been upgraded')
     })
 
     it('fails if upgrading to kernel that is not a contract', async () => {
-        const role = await kernel.APP_MANAGER_ROLE()
-        await acl.createPermission(permissionsRoot, kernel.address, role, permissionsRoot, { from: permissionsRoot })
-
-        const upgradedImpl = await UpgradedKernel.new()
+        await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
 
         return assertRevert(async () => {
-            await kernel.setApp(namespace, kernelId, '0x1234')
+            await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, '0x1234')
         })
     })
 })

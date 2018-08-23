@@ -8,4 +8,4 @@ contract AppStubConditionalRecovery is AragonApp {
 		// Doesn't allow to recover ether
 		return token != address(0);
 	}
-} 
+}

@@ -5,18 +5,28 @@ import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../common/Initializable.sol";
 import "../common/IsContract.sol";
+import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFactory, ACLSyntaxSugar, VaultRecoverable {
+contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
     bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
     bytes32 constant public DEFAULT_VAULT_ID = 0x4214e5fd6d0170d69ea641b5614f5093ebecc9928af51e95685c87617489800e;
+
+    /**
+    * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
+    * @param _shouldPetrify Immediately petrify this instance so that it can never be initialized
+    */
+    function Kernel(bool _shouldPetrify) public {
+        if (_shouldPetrify) {
+            petrify();
+        }
+    }
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
@@ -167,10 +177,13 @@ contract Kernel is IKernel, KernelStorage, Initializable, IsContract, AppProxyFa
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app
     * @param _how Extra data for ACL auth
-    * @return boolean indicating whether the ACL allows the role or not
+    * @return Boolean indicating whether the ACL allows the role or not.
+    *         Always returns false if the kernel hasn't been initialized yet.
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
-        return acl().hasPermission(_who, _where, _what, _how);
+        IACL defaultAcl = acl();
+        return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
+            defaultAcl.hasPermission(_who, _where, _what, _how);
     }
 
     function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
