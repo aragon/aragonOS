@@ -12,6 +12,9 @@
     "ganache-cli:test": "scripts/ganache-cli.sh",
     "deploy:devnet:ens": "truffle compile && truffle exec --network devnet scripts/deploy-beta-ens.js",
     "deploy:devnet:apm": "truffle compile && truffle exec --network devnet scripts/deploy-beta-apm.js",
+    "bytecode:extract": "truffle-bytecode extract -o bytecode",
+    "bytecode:extract:new": "truffle-bytecode extract -o bytecode_new",
+    "bytecode:compare": "npm run bytecode:extract:new && truffle-bytecode compare bytecode bytecode_new",
     "prepublishOnly": "truffle compile --all"
   },
   "files": [
@@ -39,6 +42,7 @@
     "solidity-coverage": "0.5.7",
     "solium": "^1.1.8",
     "truffle": "4.1.14",
+    "truffle-bytecode-manager": "^1.1.1",
     "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
