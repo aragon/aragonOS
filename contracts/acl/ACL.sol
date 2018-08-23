@@ -43,6 +43,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 constant public NO_PERMISSION = bytes32(0);
     address constant public ANY_ENTITY = address(-1);
+    uint256 constant ORACLE_CHECK_GAS = 30000;
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
@@ -382,7 +383,13 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bytes4 sig = _oracleAddr.canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = address(_oracleAddr).call(abi.encodeWithSelector(sig, _who, _where, _what, _how));
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
+        uint256 oracleCheckGas = ORACLE_CHECK_GAS;
+
+        bool ok;
+        assembly {
+            ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+        }
 
         if (!ok) {
             return false;
@@ -397,7 +404,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bool result;
         assembly {
             let ptr := mload(0x40)       // get next free memory ptr
-            returndatacopy(ptr, 0, size) // copy return from above `call`
+            returndatacopy(ptr, 0, size) // copy return from above `staticcall`
             result := mload(ptr)         // read data at ptr and set it to result
             mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
         }

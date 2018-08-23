@@ -78,8 +78,14 @@ contract TestACLInterpreter is ACL, ACLHelper {
     function testOracle() public {
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new AcceptOracle()), true);
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RejectOracle()), false);
-        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false); // doesn't revert
         assertEval(arr(), ORACLE_PARAM_ID, Op.NEQ, uint256(new RejectOracle()), true);
+
+        // doesn't revert even if oracle reverts
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false);
+        // the staticcall will error as the oracle tries to modify state, so a no is returned
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
+        // if returned data size is not correct, returns false
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new EmptyDataReturnOracle()), false);
 
         // conditional oracle returns true if first param > 0
         ConditionalOracle conditionalOracle = new ConditionalOracle();

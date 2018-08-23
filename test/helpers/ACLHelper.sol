@@ -34,6 +34,22 @@ contract RevertOracle is IACLOracle {
     }
 }
 
+contract StateModifyingOracle is IACLOracle {
+    bool modifyState;
+
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
+        modifyState = true;
+        return true;
+    }
+}
+
+contract EmptyDataReturnOracle is IACLOracle {
+    function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
+        assembly {
+            return(0, 0)
+        }
+    }
+}
 
 contract ConditionalOracle is IACLOracle {
     function canPerform(address who, address where, bytes32 what, uint256[] how) public constant returns (bool) {
