@@ -24,7 +24,7 @@ contract('Constants', accounts => {
     assert.equal(await kernelConstants.ACL_APP_ID(), await keccakConstants.ACL_APP_ID(), "acl app id doesn't match")
     assert.equal(await kernelConstants.ACL_APP(), await keccakConstants.ACL_APP(), "acl app doesn't match")
 
-    const kernel = await getContract('Kernel').new()
+    const kernel = await getContract('Kernel').new(false)
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
     assert.equal(await kernel.DEFAULT_VAULT_ID(), await keccakConstants.DEFAULT_VAULT_ID(), "default vault id doesn't match")
   })
