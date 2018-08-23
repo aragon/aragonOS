@@ -7,6 +7,6 @@ contract VaultMock is AragonApp {
     event LogFund(address sender, uint256 amount);
 
     function () external payable {
-        LogFund(msg.sender, msg.value);
+        emit LogFund(msg.sender, msg.value);
     }
 }

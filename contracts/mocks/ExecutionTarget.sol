@@ -6,10 +6,10 @@ contract ExecutionTarget {
 
     function execute() public {
         counter += 1;
-        Executed(counter);
+        emit Executed(counter);
     }
 
-    function failExecute() public constant {
+    function failExecute() public pure {
         revert();
     }
 

@@ -42,7 +42,7 @@ contract AppStub2 is AragonApp, AppSt {
 }
 
 contract UnsafeAppStub is AppStub, UnsafeAragonApp {
-    function UnsafeAppStub(IKernel _kernel) {
+    constructor(IKernel _kernel) public {
         setKernel(_kernel);
     }
 }

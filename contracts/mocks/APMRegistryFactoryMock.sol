@@ -6,7 +6,7 @@ pragma solidity 0.4.24;
 import "../factory/APMRegistryFactory.sol";
 
 contract APMRegistryFactoryMock is APMRegistryFactory {
-    function APMRegistryFactoryMock(
+    constructor(
         DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,

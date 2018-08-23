@@ -8,9 +8,9 @@ contract APMNamehashWrapper is APMNamehash {
 
     function getAPMNamehash(string name) public returns (bytes32 hash) {
         hash = apmNamehash(name);
-        LogHash("eth node", ETH_TLD_NODE);
-        LogHash("aragonpm.eth", APM_NODE);
-        LogHash(name, hash);
+        emit LogHash("eth node", ETH_TLD_NODE);
+        emit LogHash("aragonpm.eth", APM_NODE);
+        emit LogHash(name, hash);
         return hash;
     }
 }
