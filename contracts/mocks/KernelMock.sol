@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/kernel/Kernel.sol";
-import "../../contracts/lib/misc/ERCProxy.sol";
+import "../kernel/Kernel.sol";
+import "../lib/misc/ERCProxy.sol";
 
 
 /** Ugly hack to work around this issue:

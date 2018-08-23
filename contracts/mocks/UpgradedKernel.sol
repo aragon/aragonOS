@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/kernel/Kernel.sol";
+import "../kernel/Kernel.sol";
 
 
 contract UpgradedKernel is Kernel {

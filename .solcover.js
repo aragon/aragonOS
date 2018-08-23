@@ -9,6 +9,7 @@ const interfaces = [
   'common/IVaultRecoverable.sol',
   'evmscript/IEVMScriptExecutor.sol',
   'kernel/IKernel.sol',
+  'mocks',
 ]
 
 module.exports = {

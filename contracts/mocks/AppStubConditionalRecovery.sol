@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/apps/AragonApp.sol";
+import "../apps/AragonApp.sol";
 
 
 contract AppStubConditionalRecovery is AragonApp {

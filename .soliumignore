@@ -1,2 +1,3 @@
 node_modules
 contracts/lib
+contracts/mocks
