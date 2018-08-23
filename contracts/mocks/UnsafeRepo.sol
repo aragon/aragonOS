@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/apm/Repo.sol";
-import "../../contracts/apps/UnsafeAragonApp.sol";
+import "../apm/Repo.sol";
+import "../apps/UnsafeAragonApp.sol";
 
 
 // Allows Repo to be used without a proxy or access controls

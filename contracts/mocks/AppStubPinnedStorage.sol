@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/apps/AppProxyPinned.sol";
-import "../../contracts/kernel/IKernel.sol";
+import "../apps/AppProxyPinned.sol";
+import "../kernel/IKernel.sol";
 
 
 contract AppStubPinnedStorage is AppProxyPinned {
