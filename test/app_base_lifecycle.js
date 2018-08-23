@@ -34,11 +34,11 @@ contract('App base lifecycle', accounts => {
     })
 
     it('is not initialized', async () => {
-      assert.isFalse(await app.hasInitialized(), 'should not be initialized')
+      assert.isFalse(await app.hasInitialized.call(), 'should not be initialized')
     })
 
     it('is petrified', async () => {
-      assert.isTrue(await app.isPetrified(), 'should be petrified')
+      assert.isTrue(await app.isPetrified.call(), 'should be petrified')
     })
 
     it('does not have initialization function', async () => {
@@ -46,7 +46,7 @@ contract('App base lifecycle', accounts => {
     })
 
     it('should not be usable', async () => {
-      assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+      assert.isFalse(await app.canPerform.call(permissionsRoot, FAKE_ROLE, []))
     })
   })
 
