@@ -50,12 +50,15 @@ contract DAOFactory {
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
             emit DeployEVMScriptRegistry(address(reg));
 
+            // Clean up permissions
+            // First, completely reset the APP_MANAGER_ROLE
             acl.revokePermission(regFactory, dao, appManagerRole);
+            acl.removePermissionManager(dao, appManagerRole);
+
+            // Then, make root the only holder and manager of CREATE_PERMISSIONS_ROLE
             acl.revokePermission(regFactory, acl, permRole);
             acl.revokePermission(this, acl, permRole);
             acl.grantPermission(_root, acl, permRole);
-
-            acl.removePermissionManager(dao, appManagerRole);
             acl.setPermissionManager(_root, acl, permRole);
         }
 
