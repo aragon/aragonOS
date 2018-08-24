@@ -6,14 +6,14 @@ contract('TimeHelpers test', accounts => {
   })
 
   it('checks block number', async () => {
-    assert.equal((await timeHelpersMock.getBlockNumberExt.call()).toString(), (await timeHelpersMock.getBlockNumber64Ext.call()).toString(), "block numbers should match")
-    assert.equal((await timeHelpersMock.getBlockNumberExt.call()).toString(), (await timeHelpersMock.getBlockNumberDirect.call()).toString(), web3.eth.blockNumber, "block number should match with real one", "block number should match with real one")
+    assert.equal((await timeHelpersMock.getBlockNumberExt()).toString(), (await timeHelpersMock.getBlockNumber64Ext()).toString(), "block numbers should match")
+    assert.equal((await timeHelpersMock.getBlockNumberExt()).toString(), (await timeHelpersMock.getBlockNumberDirect()).toString(), web3.eth.blockNumber, "block number should match with real one", "block number should match with real one")
   })
 
   it('checks time stamp', async () => {
-    const timestamp = await timeHelpersMock.getTimestampExt.call()
-    const timestamp64 = await timeHelpersMock.getTimestamp64Ext.call()
-    const timestampReal = await timeHelpersMock.getTimestampDirect.call()
+    const timestamp = await timeHelpersMock.getTimestampExt()
+    const timestamp64 = await timeHelpersMock.getTimestamp64Ext()
+    const timestampReal = await timeHelpersMock.getTimestampDirect()
 
     const timestamp64Diff = timestamp64.minus(timestamp)
     const timestampRealDiff = timestampReal.minus(timestamp)

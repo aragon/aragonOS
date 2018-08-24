@@ -37,7 +37,7 @@ contract('Kernel upgrade', accounts => {
         const kernelProxy = KernelProxy.at(kernelAddr)
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
-        const proxyType = (await kernelProxy.proxyType.call()).toString()
+        const proxyType = (await kernelProxy.proxyType()).toString()
         assert.equal(proxyType, (await kernelProxy.UPGRADEABLE()).toString(), "Proxy type should be 2 (upgradeable)")
     })
 

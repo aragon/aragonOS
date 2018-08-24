@@ -73,7 +73,7 @@ contract('App proxy', accounts => {
           const implementation = await proxy.implementation()
           assert.equal(implementation, appBase1.address, 'app address should match base')
 
-          const proxyType = (await proxy.proxyType.call()).toString()
+          const proxyType = (await proxy.proxyType()).toString()
 
           if (appProxyType === 'AppProxyUpgradeable') {
             assert.equal(proxyType, UPGRADEABLE, 'proxy type should be upgradeable')
@@ -85,12 +85,12 @@ contract('App proxy', accounts => {
         if (appProxyType === 'AppProxyUpgradeable') {
           it('is upgradeable', async () => {
             const proxy = appProxyContract.at(app.address)
-            assert.equal((await proxy.proxyType.call()).toString(), UPGRADEABLE, 'app should be upgradeable')
+            assert.equal((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should be upgradeable')
           })
         } else if (appProxyType === 'AppProxyPinned') {
           it('is not upgradeable', async () => {
             const proxy = appProxyContract.at(app.address)
-            assert.notEqual((await proxy.proxyType.call()).toString(), UPGRADEABLE, 'app should not be upgradeable')
+            assert.notEqual((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should not be upgradeable')
           })
         }
       }
