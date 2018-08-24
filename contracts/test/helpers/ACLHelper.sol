@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../../contracts/acl/IACLOracle.sol";
+import "../../acl/IACLOracle.sol";
 
 
 contract ACLHelper {

@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "../apps/AragonApp.sol";
-import "../apps/UnsafeAragonApp.sol";
-import "../kernel/IKernel.sol";
+import "../../apps/AragonApp.sol";
+import "../../apps/UnsafeAragonApp.sol";
+import "../../kernel/IKernel.sol";
 
 
 contract AppSt {

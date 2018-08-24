@@ -1,10 +1,10 @@
 pragma solidity 0.4.24;
 
-import "truffle/Assert.sol";
+import "./helpers/Assert.sol";
 import "./helpers/ThrowProxy.sol";
 
-import "../contracts/common/DelegateProxy.sol";
-import "../contracts/evmscript/ScriptHelpers.sol";
+import "../common/DelegateProxy.sol";
+import "../evmscript/ScriptHelpers.sol";
 
 
 contract Target {

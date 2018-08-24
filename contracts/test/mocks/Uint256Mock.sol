@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../common/Uint256Helpers.sol";
+import "../../common/Uint256Helpers.sol";
 
 
 contract Uint256Mock {

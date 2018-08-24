@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "truffle/Assert.sol";
-import "../contracts/acl/ACL.sol";
+import "../acl/ACL.sol";
+import "./helpers/Assert.sol";
 import "./helpers/ACLHelper.sol";
 
 

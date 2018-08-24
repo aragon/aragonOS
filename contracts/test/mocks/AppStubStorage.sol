@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../apps/UnsafeAragonApp.sol";
+import "../../apps/UnsafeAragonApp.sol";
 
 
 // Need to use UnsafeAragonApp to allow initialization
