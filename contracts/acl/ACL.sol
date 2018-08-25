@@ -74,9 +74,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
-    function createPermission(address _entity, address _app, bytes32 _role, address _manager) external {
-        require(hasPermission(msg.sender, address(this), CREATE_PERMISSIONS_ROLE));
-
+    function createPermission(address _entity, address _app, bytes32 _role, address _manager)
+        external
+        auth(CREATE_PERMISSIONS_ROLE)
+    {
         _createPermission(_entity, _app, _role, _manager);
     }
 
