@@ -2,7 +2,7 @@
  * SPDX-License-Identitifer:    MIT
  */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 import "./Uint256Helpers.sol";
 
@@ -30,16 +30,16 @@ contract TimeHelpers {
 
     /**
     * @dev Returns the current timestamp.
-    *      Using a function rather than `now` allows us to easily mock it in
+    *      Using a function rather than `block.timestamp` allows us to easily mock it in
     *      tests.
     */
     function getTimestamp() internal view returns (uint256) {
-        return now; // solium-disable-line security/no-block-members
+        return block.timestamp; // solium-disable-line security/no-block-members
     }
 
     /**
-    * @dev Returns the current timestamp, covnerted to uint64.
-    *      Using a function rather than `now` allows us to easily mock it in
+    * @dev Returns the current timestamp, converted to uint64.
+    *      Using a function rather than `block.timestamp` allows us to easily mock it in
     *      tests.
     */
     function getTimestamp64() internal view returns (uint64) {

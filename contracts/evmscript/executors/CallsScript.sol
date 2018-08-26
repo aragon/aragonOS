@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
@@ -18,11 +18,10 @@ contract CallsScript is BaseEVMScriptExecutor {
     * @notice Executes a number of call scripts
     * @param _script [ specId (uint32) ] many calls with this structure ->
     *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
-    * @param _input Input is ignored in callscript
     * @param _blacklist Addresses the script cannot call to, or will revert.
     * @return always returns empty byte array
     */
-    function execScript(bytes _script, bytes _input, address[] _blacklist) external isInitialized returns (bytes) {
+    function execScript(bytes _script, bytes, address[] _blacklist) external isInitialized returns (bytes) {
         uint256 location = SCRIPT_START_LOCATION; // first 32 bits are spec id
         while (location < _script.length) {
             address contractAddress = _script.addressAt(location);
@@ -33,7 +32,7 @@ contract CallsScript is BaseEVMScriptExecutor {
 
             // logged before execution to ensure event ordering in receipt
             // if failed entire execution is reverted regardless
-            LogScriptCall(msg.sender, address(this), contractAddress);
+            emit LogScriptCall(msg.sender, address(this), contractAddress);
 
             uint256 calldataLength = uint256(_script.uint32At(location + 0x14));
             uint256 startOffset = location + 0x14 + 0x04;

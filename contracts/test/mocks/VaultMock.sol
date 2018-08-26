@@ -1,12 +1,12 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/apps/AragonApp.sol";
+import "../../apps/AragonApp.sol";
 
 
 contract VaultMock is AragonApp {
     event LogFund(address sender, uint256 amount);
 
     function () external payable {
-        LogFund(msg.sender, msg.value);
+        emit LogFund(msg.sender, msg.value);
     }
 }

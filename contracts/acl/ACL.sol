@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
 import "./ACLSyntaxSugar.sol";
@@ -43,6 +43,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 constant public NO_PERMISSION = bytes32(0);
     address constant public ANY_ENTITY = address(-1);
+    uint256 constant ORACLE_CHECK_GAS = 30000;
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
@@ -170,12 +171,10 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index)
         external
         view
-        returns (uint8 id, uint8 op, uint240 value)
+        returns (uint8, uint8, uint240)
     {
         Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
-        id = param.id;
-        op = param.op;
-        value = param.value;
+        return (param.id, param.op, param.value);
     }
 
     /**
@@ -257,17 +256,17 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
-        bool hasPermission = _paramsHash != NO_PERMISSION;
-        bool hasParams = hasPermission && _paramsHash != EMPTY_PARAM_HASH;
+        bool entityHasPermission = _paramsHash != NO_PERMISSION;
+        bool permissionHasParams = entityHasPermission && _paramsHash != EMPTY_PARAM_HASH;
 
-        SetPermission(_entity, _app, _role, hasPermission);
-        if (hasParams) {
-            SetPermissionParams(_entity, _app, _role, _paramsHash);
+        emit SetPermission(_entity, _app, _role, entityHasPermission);
+        if (permissionHasParams) {
+            emit SetPermissionParams(_entity, _app, _role, _paramsHash);
         }
     }
 
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
-        bytes32 paramHash = keccak256(_encodedParams);
+        bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
         Param[] storage params = permissionParams[paramHash];
 
         if (params.length == 0) { // params not saved before
@@ -333,14 +332,21 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         returns (bool)
     {
         if (Op(_param.op) == Op.IF_ELSE) {
-            var (condition, success, failure) = decodeParamsList(uint256(_param.value));
-            bool result = _evalParam(_paramsHash, condition, _who, _where, _what, _how);
+            uint32 conditionParam;
+            uint32 successParam;
+            uint32 failureParam;
 
-            return _evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
+            (conditionParam, successParam, failureParam) = decodeParamsList(uint256(_param.value));
+            bool result = _evalParam(_paramsHash, conditionParam, _who, _where, _what, _how);
+
+            return _evalParam(_paramsHash, result ? successParam : failureParam, _who, _where, _what, _how);
         }
 
-        var (v1, v2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = _evalParam(_paramsHash, v1, _who, _where, _what, _how);
+        uint32 param1;
+        uint32 param2;
+
+        (param1, param2,) = decodeParamsList(uint256(_param.value));
+        bool r1 = _evalParam(_paramsHash, param1, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -354,7 +360,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             return false;
         }
 
-        bool r2 = _evalParam(_paramsHash, v2, _who, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, param2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
             return r1 != r2;
@@ -377,8 +383,13 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bytes4 sig = _oracleAddr.canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bool ok = address(_oracleAddr).call(sig, _who, _where, _what, 0x80, _how.length, _how);
-        // 0x80 is the position where the array that goes there starts
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
+        uint256 oracleCheckGas = ORACLE_CHECK_GAS;
+
+        bool ok;
+        assembly {
+            ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+        }
 
         if (!ok) {
             return false;
@@ -393,7 +404,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
         bool result;
         assembly {
             let ptr := mload(0x40)       // get next free memory ptr
-            returndatacopy(ptr, 0, size) // copy return from above `call`
+            returndatacopy(ptr, 0, size) // copy return from above `staticcall`
             result := mload(ptr)         // read data at ptr and set it to result
             mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
         }
@@ -406,15 +417,15 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
         permissionManager[roleHash(_app, _role)] = _newManager;
-        ChangePermissionManager(_app, _role, _newManager);
+        emit ChangePermissionManager(_app, _role, _newManager);
     }
 
     function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256("ROLE", _where, _what);
+        return keccak256(abi.encodePacked("ROLE", _where, _what));
     }
 
     function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256("PERMISSION", _who, _where, _what);
+        return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
     }
 
     function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members

@@ -1,31 +1,31 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/kernel/Kernel.sol";
-import "../../contracts/lib/misc/ERCProxy.sol";
+import "../../kernel/Kernel.sol";
+import "../../lib/misc/ERCProxy.sol";
 
 
 /** Ugly hack to work around this issue:
  * https://github.com/trufflesuite/truffle/issues/569
  * https://github.com/trufflesuite/truffle/issues/737
  */
-contract KernelMock {
+contract KernelOverloadMock {
     Kernel kernel;
 
     event NewAppProxy(address proxy);
 
-    function KernelMock(address _kernel) public {
+    constructor(address _kernel) public {
         kernel = Kernel(_kernel);
     }
 
     //function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
     function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
         appProxy = kernel.newAppInstance(_name, _appBase, _setDefault);
-        NewAppProxy(appProxy);
+        emit NewAppProxy(appProxy);
     }
 
     // function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
     function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
         appProxy = kernel.newPinnedAppInstance(_name, _appBase, _setDefault);
-        NewAppProxy(appProxy);
+        emit NewAppProxy(appProxy);
     }
 }

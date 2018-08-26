@@ -24,7 +24,7 @@ contract('Constants', accounts => {
     assert.equal(await kernelConstants.ACL_APP_ID(), await keccakConstants.ACL_APP_ID(), "acl app id doesn't match")
     assert.equal(await kernelConstants.ACL_APP(), await keccakConstants.ACL_APP(), "acl app doesn't match")
 
-    const kernel = await getContract('Kernel').new()
+    const kernel = await getContract('Kernel').new(false)
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
     assert.equal(await kernel.DEFAULT_VAULT_ID(), await keccakConstants.DEFAULT_VAULT_ID(), "default vault id doesn't match")
   })
@@ -69,7 +69,7 @@ contract('Constants', accounts => {
   it('checks EVM Script executor types', async () => {
     const callsScriptExecutor = await getContract('CallsScript').new()
 
-    assert.equal(await callsScriptExecutor.executorType.call(), await keccakConstants.EVMSCRIPT_EXECUTOR_CALLS_SCRIPT(), "callscript executor type doesn't match")
+    assert.equal(await callsScriptExecutor.executorType(), await keccakConstants.EVMSCRIPT_EXECUTOR_CALLS_SCRIPT(), "callscript executor type doesn't match")
   })
 
   it('checks EVMScriptRegistry constants', async () => {
@@ -94,7 +94,10 @@ contract('Constants', accounts => {
   })
 
   it('checks AppProxyPinned unstructured storage constants', async () => {
-    const app = await getContract('AppStubPinnedStorage').new()
+    // Set up AppStubPinnedStorage
+    const fakeApp = await getContract('AppStub').new()
+    const kernelMock = await getContract('KernelPinnedStorageMock').new(fakeApp.address)
+    const app = await getContract('AppStubPinnedStorage').new(kernelMock.address)
 
     assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
   })

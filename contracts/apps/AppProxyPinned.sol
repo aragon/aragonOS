@@ -1,10 +1,11 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../common/UnstructuredStorage.sol";
+import "../common/IsContract.sol";
 import "./AppProxyBase.sol";
 
 
-contract AppProxyPinned is AppProxyBase {
+contract AppProxyPinned is IsContract, AppProxyBase {
     using UnstructuredStorage for bytes32;
 
     // keccak256("aragonOS.appStorage.pinnedCode"), used by Proxy Pinned
@@ -16,12 +17,12 @@ contract AppProxyPinned is AppProxyBase {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
+    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
         AppProxyBase(_kernel, _appId, _initializePayload)
         public // solium-disable-line visibility-first
     {
         setPinnedCode(getAppBase(_appId));
-        require(pinnedCode() != address(0));
+        require(isContract(pinnedCode()));
     }
 
     /**

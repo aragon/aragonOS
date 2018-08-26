@@ -21,7 +21,6 @@ contract('StandardToken', function(accounts) {
   });
 
   it('should return the correct allowance amount after approval', async function() {
-    let token = await StandardTokenMock.new();
     await token.approve(accounts[1], 100);
     let allowance = await token.allowance(accounts[0], accounts[1]);
 
@@ -29,7 +28,6 @@ contract('StandardToken', function(accounts) {
   });
 
   it('should return correct balances after transfer', async function() {
-    let token = await StandardTokenMock.new(accounts[0], 100);
     await token.transfer(accounts[1], 100);
     let balance0 = await token.balanceOf(accounts[0]);
     assert.equal(balance0, 0);
@@ -39,7 +37,6 @@ contract('StandardToken', function(accounts) {
   });
 
   it('should throw an error when trying to transfer more than balance', async function() {
-    let token = await StandardTokenMock.new(accounts[0], 100);
     try {
       await token.transfer(accounts[1], 101);
       assert.fail('should have thrown before');
@@ -49,7 +46,6 @@ contract('StandardToken', function(accounts) {
   });
 
   it('should return correct balances after transfering from another account', async function() {
-    let token = await StandardTokenMock.new(accounts[0], 100);
     await token.approve(accounts[1], 100);
     await token.transferFrom(accounts[0], accounts[2], 100, {from: accounts[1]});
 
@@ -108,10 +104,9 @@ contract('StandardToken', function(accounts) {
     await token.decreaseApproval(accounts[1], 60);
     let postDecrease = await token.allowance(accounts[0], accounts[1]);
     assert.equal(postDecrease, 0, 'postdecrease should be 0');
-});
+  });
 
   it('should throw an error when trying to transfer to 0x0', async function() {
-    let token = await StandardTokenMock.new(accounts[0], 100);
     try {
       let transfer = await token.transfer(0x0, 100);
       assert.fail('should have thrown before');
@@ -121,7 +116,6 @@ contract('StandardToken', function(accounts) {
   });
 
   it('should throw an error when trying to transferFrom to 0x0', async function() {
-    let token = await StandardTokenMock.new(accounts[0], 100);
     await token.approve(accounts[1], 100);
     try {
       let transfer = await token.transferFrom(accounts[0], 0x0, 100, {from: accounts[1]});

@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../apps/AppProxyUpgradeable.sol";
 import "../apps/AppProxyPinned.sol";
@@ -13,7 +13,7 @@ contract AppProxyFactory {
 
     function newAppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyUpgradeable) {
         AppProxyUpgradeable proxy = new AppProxyUpgradeable(_kernel, _appId, _initializePayload);
-        NewAppProxy(address(proxy), true, _appId);
+        emit NewAppProxy(address(proxy), true, _appId);
         return proxy;
     }
 
@@ -23,7 +23,7 @@ contract AppProxyFactory {
 
     function newAppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyPinned) {
         AppProxyPinned proxy = new AppProxyPinned(_kernel, _appId, _initializePayload);
-        NewAppProxy(address(proxy), false, _appId);
+        emit NewAppProxy(address(proxy), false, _appId);
         return proxy;
     }
 }

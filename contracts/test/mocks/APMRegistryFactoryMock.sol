@@ -1,12 +1,12 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 // Mock that doesn't grant enough permissions
 // external ENS
 
-import "../../contracts/factory/APMRegistryFactory.sol";
+import "../../factory/APMRegistryFactory.sol";
 
 contract APMRegistryFactoryMock is APMRegistryFactory {
-    function APMRegistryFactoryMock(
+    constructor(
         DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
@@ -16,10 +16,10 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
     )
     APMRegistryFactory(_daoFactory, _registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
 
-    function newAPM(bytes32 tld, bytes32 label, address _root) public returns (APMRegistry) {}
+    function newAPM(bytes32, bytes32, address) public returns (APMRegistry) {}
 
     function newBadAPM(bytes32 tld, bytes32 label, address _root, bool withoutACL) public returns (APMRegistry) {
-        bytes32 node = keccak256(tld, label);
+        bytes32 node = keccak256(abi.encodePacked(tld, label));
 
         // Assume it is the test ENS
         if (ens.owner(node) != address(this)) {
@@ -32,16 +32,28 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
 
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
-        bytes32 namespace = dao.APP_BASES_NAMESPACE();
-
         // Deploy app proxies
-        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(dao.newAppInstance(keccak256(node, ENS_SUB_APP_NAME), ensSubdomainRegistrarBase, false));
-        APMRegistry apm = APMRegistry(dao.newAppInstance(keccak256(node, APM_APP_NAME), registryBase, false));
+        // Deploy app proxies
+        ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(
+            dao.newAppInstance(
+                keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(ENS_SUB_APP_NAME)))),
+                ensSubdomainRegistrarBase,
+                false
+            )
+        );
+        APMRegistry apm = APMRegistry(
+            dao.newAppInstance(
+                keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(APM_APP_NAME)))),
+                registryBase,
+                false
+            )
+        );
 
         // APMRegistry controls Repos
-        dao.setApp(namespace, keccak256(node, REPO_APP_NAME), repoBase);
+        bytes32 repoAppId = keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(REPO_APP_NAME))));
+        dao.setApp(dao.APP_BASES_NAMESPACE(), repoAppId, repoBase);
 
-        DeployAPM(node, apm);
+        emit DeployAPM(node, apm);
 
         // Grant permissions needed for APM on ENSSubdomainRegistrar
 

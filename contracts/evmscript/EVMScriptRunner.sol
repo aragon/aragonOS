@@ -2,9 +2,8 @@
  * SPDX-License-Identitifer:    MIT
  */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-import "./ScriptHelpers.sol";
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
@@ -13,8 +12,6 @@ import "../common/Initializable.sol";
 
 
 contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants {
-    using ScriptHelpers for bytes;
-
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
@@ -25,20 +22,21 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         internal
         isInitialized
         protectState
-        returns (bytes output)
+        returns (bytes)
     {
         // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         IEVMScriptExecutor executor = getExecutor(_script);
         require(address(executor) != address(0));
 
-        bytes memory calldataArgs = _script.encode(_input, _blacklist);
         bytes4 sig = executor.execScript.selector;
 
-        require(address(executor).delegatecall(sig, calldataArgs));
+        require(address(executor).delegatecall(abi.encodeWithSelector(sig, _script, _input, _blacklist)));
 
-        output = returnedDataDecoded();
+        bytes memory output = returnedDataDecoded();
 
-        ScriptResult(address(executor), _script, _input, output);
+        emit ScriptResult(address(executor), _script, _input, output);
+
+        return output;
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {

@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "./AppStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
@@ -13,7 +13,7 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxyBase(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
+    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
         setKernel(_kernel);
         setAppId(_appId);
 
@@ -33,6 +33,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        return kernel().getApp(keccak256(APP_BASES_NAMESPACE, _appId));
+        return kernel().getApp(keccak256(abi.encodePacked(APP_BASES_NAMESPACE, _appId)));
     }
 }

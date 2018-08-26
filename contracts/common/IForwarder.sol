@@ -2,11 +2,11 @@
  * SPDX-License-Identitifer:    MIT
  */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 
 interface IForwarder {
-    function isForwarder() public pure returns (bool);
-    function canForward(address sender, bytes evmCallScript) public view returns (bool);
-    function forward(bytes evmCallScript) public;
+    function isForwarder() external pure returns (bool);
+    function canForward(address sender, bytes evmCallScript) external view returns (bool);
+    function forward(bytes evmCallScript) external;
 }

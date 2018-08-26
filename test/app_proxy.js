@@ -13,6 +13,7 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
+const KernelSetAppMock = artifacts.require('KernelSetAppMock')
 
 const APP_ID = hash('stub.aragonpm.test')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -72,7 +73,7 @@ contract('App proxy', accounts => {
           const implementation = await proxy.implementation()
           assert.equal(implementation, appBase1.address, 'app address should match base')
 
-          const proxyType = (await proxy.proxyType.call()).toString()
+          const proxyType = (await proxy.proxyType()).toString()
 
           if (appProxyType === 'AppProxyUpgradeable') {
             assert.equal(proxyType, UPGRADEABLE, 'proxy type should be upgradeable')
@@ -84,12 +85,12 @@ contract('App proxy', accounts => {
         if (appProxyType === 'AppProxyUpgradeable') {
           it('is upgradeable', async () => {
             const proxy = appProxyContract.at(app.address)
-            assert.equal((await proxy.proxyType.call()).toString(), UPGRADEABLE, 'app should be upgradeable')
+            assert.equal((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should be upgradeable')
           })
         } else if (appProxyType === 'AppProxyPinned') {
           it('is not upgradeable', async () => {
             const proxy = appProxyContract.at(app.address)
-            assert.notEqual((await proxy.proxyType.call()).toString(), UPGRADEABLE, 'app should not be upgradeable')
+            assert.notEqual((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should not be upgradeable')
           })
         }
       }
@@ -109,19 +110,25 @@ contract('App proxy', accounts => {
       })
 
       onlyAppProxyPinned(() => {
+        const FAKE_APP_ID = hash('fake.aragonpm.test')
+
         it("fails if code hasn't been set yet", async () => {
-          const fakeAppId = hash('fake.aragonpm.test')
-          return assertRevert(async () => {
-            await AppProxyPinned.new(kernel.address, fakeAppId, EMPTY_BYTES)
+          await assertRevert(async () => {
+            await AppProxyPinned.new(kernel.address, FAKE_APP_ID, EMPTY_BYTES)
+          })
+        })
+
+        it("fails if code set isn't a contract", async () => {
+          const kernelMock = await KernelSetAppMock.new()
+          await kernelMock.setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, '0x1234')
+
+          await assertRevert(async () => {
+            await AppProxyPinned.new(kernelMock.address, FAKE_APP_ID, EMPTY_BYTES)
           })
         })
       })
 
       context('> Fails on bad kernel', () => {
-        beforeEach(async () => {
-          await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
-        })
-
         it('fails if kernel address is 0', async () => {
           return assertRevert(async () => {
             await appProxyContract.new(ZERO_ADDR, APP_ID, EMPTY_BYTES)
