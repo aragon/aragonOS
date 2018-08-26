@@ -16,6 +16,26 @@ const processResult = receipt => {
   })
 }
 
+/*
+ * Deploy and link `libName` to provided contract artifact.
+ * Modifies bytecode in place
+*/
+const linkLib = async (contract, libName) => {
+  const underscores = n => '_'.repeat(n)
+  const PREFIX_UNDERSCORES = 2
+  const ADDR_LENGTH = 40
+
+  const prefix = underscores(PREFIX_UNDERSCORES)
+  const suffix = underscores(ADDR_LENGTH - PREFIX_UNDERSCORES - libName.length)
+  
+  const libPlaceholder = `${prefix}${libName}${suffix}`
+
+  const lib = await artifacts.require(libName).new()
+  const libAddr = lib.address.replace('0x', '').toLowerCase()
+
+  contract.bytecode = contract.bytecode.replace(new RegExp(libPlaceholder, 'g'), libAddr)
+}
+
 /**
  * Runs a solidity test file, via javascript.
  * Required to smooth over some technical problems in solidity-coverage
@@ -28,6 +48,8 @@ function runSolidityTest(c, mochaContext) {
     let deployed
 
     before(async () => {
+      await linkLib(artifact, 'Assert')
+
       deployed = await artifact.new()
     })
 
