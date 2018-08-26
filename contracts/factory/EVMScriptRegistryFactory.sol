@@ -19,7 +19,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         baseCallScript = IEVMScriptExecutor(new CallsScript());
     }
 
-    function newEVMScriptRegistry(Kernel _dao, address _root) public returns (EVMScriptRegistry reg) {
+    function newEVMScriptRegistry(Kernel _dao) public returns (EVMScriptRegistry reg) {
         reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, baseReg, true));
         reg.initialize();
 
