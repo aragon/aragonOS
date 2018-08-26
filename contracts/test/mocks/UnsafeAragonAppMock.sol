@@ -1,7 +1,7 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/apps/UnsafeAragonApp.sol";
-import "../../contracts/kernel/IKernel.sol";
+import "../../apps/UnsafeAragonApp.sol";
+import "../../kernel/IKernel.sol";
 
 
 contract UnsafeAragonAppMock is UnsafeAragonApp {

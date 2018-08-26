@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "./DelegateProxy.sol";
 
@@ -8,9 +8,9 @@ contract DepositableDelegateProxy is DelegateProxy {
 
     function () external payable {
         // send / transfer
-        if (msg.gas < FWD_GAS_LIMIT) {
+        if (gasleft() < FWD_GAS_LIMIT) {
             require(msg.value > 0 && msg.data.length == 0);
-            ProxyDeposit(msg.sender, msg.value);
+            emit ProxyDeposit(msg.sender, msg.value);
         } else { // all calls except for send or transfer
             address target = implementation();
             delegatedFwd(target, msg.data);

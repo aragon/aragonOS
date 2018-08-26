@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../lib/ens/ENS.sol";
 import "../lib/ens/PublicResolver.sol";
@@ -11,8 +11,8 @@ contract ENSFactory is ENSConstants {
     event DeployENS(address ens);
 
     // This is an incredibly trustfull ENS deployment, only use for testing
-    function newENS(address _owner) public returns (ENS ens) {
-        ens = new ENS();
+    function newENS(address _owner) public returns (ENS) {
+        ENS ens = new ENS();
 
         // Setup .eth TLD
         ens.setSubnodeOwner(ENS_ROOT, ETH_TLD_LABEL, this);
@@ -26,6 +26,8 @@ contract ENSFactory is ENSConstants {
         ens.setOwner(ETH_TLD_NODE, _owner);
         ens.setOwner(ENS_ROOT, _owner);
 
-        DeployENS(ens);
+        emit DeployENS(ens);
+
+        return ens;
     }
 }

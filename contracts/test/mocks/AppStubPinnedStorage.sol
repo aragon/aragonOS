@@ -1,8 +1,8 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/apps/AppProxyPinned.sol";
-import "../../contracts/kernel/IKernel.sol";
-import "../../contracts/kernel/Kernel.sol";
+import "../../apps/AppProxyPinned.sol";
+import "../../kernel/IKernel.sol";
+import "../../kernel/Kernel.sol";
 
 
 contract FakeAppConstants {
@@ -11,7 +11,7 @@ contract FakeAppConstants {
 
 contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
     bytes32 constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
-    function KernelPinnedStorageMock(address _fakeApp) Kernel(false) public {
+    constructor(address _fakeApp) Kernel(false) public {
         _setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, _fakeApp);
     }
 }
@@ -21,7 +21,7 @@ contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
 // pass in the constructor, so we're forced to initialize this with a mocked Kernel that already
 // sets a contract for the fake app.
 contract AppStubPinnedStorage is AppProxyPinned, FakeAppConstants {
-    function AppStubPinnedStorage(KernelPinnedStorageMock _mockKernel)
+    constructor(KernelPinnedStorageMock _mockKernel)
         AppProxyPinned(IKernel(_mockKernel), FAKE_APP_ID, new bytes(0))
         public // solium-disable-line visibility-first
     {
@@ -31,7 +31,7 @@ contract AppStubPinnedStorage is AppProxyPinned, FakeAppConstants {
         setPinnedCode(_pinnedCode);
     }
 
-    function getPinnedCodePosition() public view returns (bytes32) {
+    function getPinnedCodePosition() public pure returns (bytes32) {
         return PINNED_CODE_POSITION;
     }
 

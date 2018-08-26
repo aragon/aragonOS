@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 
 contract ExecutionTarget {
@@ -6,10 +6,10 @@ contract ExecutionTarget {
 
     function execute() public {
         counter += 1;
-        Executed(counter);
+        emit Executed(counter);
     }
 
-    function failExecute() public constant {
+    function failExecute() public pure {
         revert();
     }
 

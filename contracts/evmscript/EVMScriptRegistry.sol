@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
 import "./ScriptHelpers.sol";
@@ -33,14 +33,14 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
 
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_MANAGER_ROLE) returns (uint256 id) {
         uint256 executorId = executors.push(ExecutorEntry(_executor, true));
-        EnableExecutor(executorId, _executor);
+        emit EnableExecutor(executorId, _executor);
         return executorId;
     }
 
     function disableScriptExecutor(uint256 _executorId) external auth(REGISTRY_MANAGER_ROLE) {
         ExecutorEntry storage executorEntry = executors[_executorId];
         executorEntry.enabled = false;
-        DisableExecutor(_executorId, executorEntry.executor);
+        emit DisableExecutor(_executorId, executorEntry.executor);
     }
 
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {

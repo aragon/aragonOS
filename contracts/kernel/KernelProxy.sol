@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "./IKernel.sol";
 import "./KernelStorage.sol";
@@ -12,7 +12,7 @@ contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
-    function KernelProxy(IKernel _kernelImpl) public {
+    constructor(IKernel _kernelImpl) public {
         require(isContract(address(_kernelImpl)));
         apps[KERNEL_APP] = _kernelImpl;
     }

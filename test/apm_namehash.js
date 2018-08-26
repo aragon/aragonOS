@@ -13,7 +13,7 @@ contract('APM Name Hash', accounts => {
   const checkName = async (name) => {
     const node = namehash(name + '.aragonpm.eth')
     //await apmNamehashWrapper.getAPMNamehash(name)
-    const apmNamehash = await apmNamehashWrapper.getAPMNamehash.call(name)
+    const apmNamehash = await apmNamehashWrapper.getAPMNamehash(name)
     //console.log("node: " + node)
     return apmNamehash.toString() == node
   }

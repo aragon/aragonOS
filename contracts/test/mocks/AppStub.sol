@@ -1,8 +1,9 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/apps/AragonApp.sol";
-import "../../contracts/apps/UnsafeAragonApp.sol";
-import "../../contracts/kernel/IKernel.sol";
+import "../../apps/AragonApp.sol";
+import "../../apps/UnsafeAragonApp.sol";
+import "../../kernel/IKernel.sol";
+
 
 contract AppSt {
     uint a;
@@ -41,7 +42,7 @@ contract AppStub2 is AragonApp, AppSt {
 }
 
 contract UnsafeAppStub is AppStub, UnsafeAragonApp {
-    function UnsafeAppStub(IKernel _kernel) {
+    constructor(IKernel _kernel) public {
         setKernel(_kernel);
     }
 }

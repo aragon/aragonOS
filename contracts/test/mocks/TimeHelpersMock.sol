@@ -1,6 +1,6 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/common/TimeHelpers.sol";
+import "../../common/TimeHelpers.sol";
 
 
 contract TimeHelpersMock is TimeHelpers {

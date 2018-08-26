@@ -1,6 +1,6 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "../../contracts/apps/UnsafeAragonApp.sol";
+import "../../apps/UnsafeAragonApp.sol";
 
 
 // Need to use UnsafeAragonApp to allow initialization
@@ -17,15 +17,15 @@ contract AppStubStorage is UnsafeAragonApp {
         setAppId(_appId);
     }
 
-    function getKernelPosition() public view returns (bytes32) {
+    function getKernelPosition() public pure returns (bytes32) {
         return KERNEL_POSITION;
     }
 
-    function getAppIdPosition() public view returns (bytes32) {
+    function getAppIdPosition() public pure returns (bytes32) {
         return APP_ID_POSITION;
     }
 
-    function getInitializationBlockPosition() public view returns (bytes32) {
+    function getInitializationBlockPosition() public pure returns (bytes32) {
         return INITIALIZATION_BLOCK_POSITION;
     }
 }

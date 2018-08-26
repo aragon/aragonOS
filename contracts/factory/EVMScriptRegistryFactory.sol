@@ -1,4 +1,4 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../evmscript/IEVMScriptExecutor.sol";
 import "../evmscript/EVMScriptRegistry.sol";
@@ -14,7 +14,7 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
     EVMScriptRegistry public baseReg;
     IEVMScriptExecutor public baseCallScript;
 
-    function EVMScriptRegistryFactory() public {
+    constructor() public {
         baseReg = new EVMScriptRegistry();
         baseCallScript = IEVMScriptExecutor(new CallsScript());
     }
