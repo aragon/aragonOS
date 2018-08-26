@@ -15,6 +15,7 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 // Mocks
 const ExecutionTarget = artifacts.require('ExecutionTarget')
+const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
 const MockScriptExecutorApp = artifacts.require('MockScriptExecutorApp')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -55,18 +56,112 @@ contract('EVM Script', accounts => {
         assert.equal(await reg.getScriptExecutor('0x00000002'), ZERO_ADDR)
     })
 
-    it('fails if reinitializing registry', async () => {
-        return assertRevert(async () => {
-            await reg.initialize()
-        })
-    })
-
     it('fails if directly calling base executor', async () => {
         const executionTarget = await ExecutionTarget.new()
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
         await assertRevert(() => callsScriptBase.execScript(script, '0x', []))
+    })
+
+    context('> Registry', () => {
+        it('is initialized', async () => {
+            assert.isTrue(await reg.hasInitialized(), "should be initialized")
+        })
+
+        it('fails if reinitializing registry', async () => {
+            await assertRevert(async () => {
+                await reg.initialize()
+            })
+        })
+
+        context('> New executor', () => {
+            let executorMock, newExecutorId
+
+            before(async () => {
+                executorMock = await EVMScriptExecutorMock.new()
+            })
+
+            beforeEach(async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_ADD_EXECUTOR_ROLE(), boss, { from: boss })
+                const receipt = await reg.addScriptExecutor(executorMock.address, { from: boss })
+
+                newExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+            })
+
+            it('can add a new executor', async () => {
+                const executorEntry = await reg.executors(newExecutorId)
+                const newExecutor = IEVMScriptExecutor.at(executorEntry[0])
+
+                assert.equal(await executorMock.executorType(), await newExecutor.executorType(), "executor type should be the same")
+                // Enabled flag is second in struct
+                assert.isTrue(executorEntry[1], "new executor should be enabled")
+            })
+
+            it('can disable an executor', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+
+                let executorEntry = await reg.executors(newExecutorId)
+                assert.isTrue(executorEntry[1], "executor should be enabled")
+
+                const receipt = await reg.disableScriptExecutor(newExecutorId, { from: boss })
+                executorEntry = await reg.executors(newExecutorId)
+
+                assertEvent(receipt, 'DisableExecutor')
+                assert.isFalse(executorEntry[1], "executor should now be disabled")
+            })
+
+            it('can re-enable an executor', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+
+                await reg.disableScriptExecutor(newExecutorId, { from: boss })
+                let executorEntry = await reg.executors(newExecutorId)
+                assert.isFalse(executorEntry[1], "executor should now be disabled")
+
+                const receipt = await reg.enableScriptExecutor(newExecutorId, { from: boss })
+                executorEntry = await reg.executors(newExecutorId)
+
+                assertEvent(receipt, 'EnableExecutor')
+                assert.isTrue(executorEntry[1], "executor should now be re-enabled")
+            })
+
+            it('fails to add a new executor without the correct permissions', async () => {
+                await assertRevert(async () => {
+                    await reg.addScriptExecutor(executorMock.address)
+                })
+            })
+
+            it('fails to disable an executor without the correct permissions', async () => {
+                await assertRevert(async () => {
+                    await reg.disableScriptExecutor(newExecutorId)
+                })
+            })
+
+            it('fails to enable an executor without the correct permissions', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+                await reg.disableScriptExecutor(newExecutorId, { from: boss })
+
+                await assertRevert(async () => {
+                    await reg.enableScriptExecutor(newExecutorId)
+                })
+            })
+
+            it('fails to enable an already enabled executor', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+                await assertRevert(async () => {
+                    await reg.enableScriptExecutor(newExecutorId, { from: boss })
+                })
+            })
+
+            it('fails to disable an already disabled executor', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+                await reg.disableScriptExecutor(newExecutorId, { from: boss })
+
+                await assertRevert(async () => {
+                    await reg.disableScriptExecutor(newExecutorId, { from: boss })
+                })
+            })
+        })
     })
 
     context('> Uninitialized executor', () => {
