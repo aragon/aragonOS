@@ -64,7 +64,7 @@ contract('Kernel ACL', accounts => {
             })
 
             it('cannot perform actions by default', async () => {
-                assert.isFalse(await acl.hasPermission.call(permissionsRoot, noPermissions, APP_MANAGER_ROLE))
+                assert.isFalse(await acl.hasPermission(permissionsRoot, noPermissions, APP_MANAGER_ROLE))
             })
 
             it('cannot perform protected actions if not allowed', async () => {
@@ -75,7 +75,7 @@ contract('Kernel ACL', accounts => {
 
             it('create permission action can be performed by root by default', async () => {
                 const createPermissionRole = await acl.CREATE_PERMISSIONS_ROLE()
-                assert.isTrue(await acl.hasPermission.call(permissionsRoot, acl.address, createPermissionRole))
+                assert.isTrue(await acl.hasPermission(permissionsRoot, acl.address, createPermissionRole))
             })
 
             it('cannot create permissions without permission', async () => {
@@ -93,7 +93,7 @@ contract('Kernel ACL', accounts => {
                 })
 
                 it('has permission', async () => {
-                    assert.isTrue(await acl.hasPermission.call(granted, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isTrue(await acl.hasPermission(granted, kernelAddr, APP_MANAGER_ROLE))
                 })
 
                 it('can execute action', async () => {
@@ -115,9 +115,9 @@ contract('Kernel ACL', accounts => {
                     const grantChildReceipt = await acl.grantPermissionP(child, kernelAddr, APP_MANAGER_ROLE, [param], { from: granted })
 
                     // Retrieve the params back with the getters
-                    const numParams = await acl.getPermissionParamsLength.call(child, kernelAddr, APP_MANAGER_ROLE)
+                    const numParams = await acl.getPermissionParamsLength(child, kernelAddr, APP_MANAGER_ROLE)
                     assert.equal(numParams, 1, 'There should be just 1 param')
-                    const returnedParam = await acl.getPermissionParam.call(child, kernelAddr, APP_MANAGER_ROLE, 0)
+                    const returnedParam = await acl.getPermissionParam(child, kernelAddr, APP_MANAGER_ROLE, 0)
                     assert.equal(returnedParam[0].valueOf(), parseInt(argId, 16), 'param id should match')
                     assert.equal(returnedParam[1].valueOf(), parseInt(op, 10), 'param op should match')
                     assert.equal(returnedParam[2].valueOf(), parseInt(value, 10), 'param value should match')
@@ -158,15 +158,15 @@ contract('Kernel ACL', accounts => {
                     // Any entity can succesfully perform action
                     for (granteeIndex of [4, 5, 6]) {
                         const grantee = accounts[granteeIndex]
-                        assert.isTrue(await acl.hasPermission.call(grantee, kernelAddr, APP_MANAGER_ROLE), `account[${granteeIndex}] should have perm`)
+                        assert.isTrue(await acl.hasPermission(grantee, kernelAddr, APP_MANAGER_ROLE), `account[${granteeIndex}] should have perm`)
                         const setReceipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })
                         assertEvent(setReceipt, 'SetApp')
                     }
                 })
 
                 it('returns created permission', async () => {
-                    const allowed = await acl.hasPermission.call(granted, kernelAddr, APP_MANAGER_ROLE)
-                    const manager = await acl.getPermissionManager.call(kernelAddr, APP_MANAGER_ROLE)
+                    const allowed = await acl.hasPermission(granted, kernelAddr, APP_MANAGER_ROLE)
+                    const manager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
 
                     assert.isTrue(allowed, 'entity should be allowed to perform role actions')
                     assert.equal(manager, granted, 'permission parent should be correct')
@@ -186,7 +186,7 @@ contract('Kernel ACL', accounts => {
 
                 it('root cannot grant permission', async () => {
                     // Make sure child doesn't have permission yet
-                    assert.isFalse(await acl.hasPermission.call(child, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
                     return assertRevert(async () => {
                         await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: permissionsRoot })
                     })
@@ -202,7 +202,7 @@ contract('Kernel ACL', accounts => {
                     })
 
                     it('changes manager', async () => {
-                        const manager = await acl.getPermissionManager.call(kernelAddr, APP_MANAGER_ROLE)
+                        const manager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
                         assert.equal(manager, newManager, 'manager should have changed')
                     })
 
@@ -213,7 +213,7 @@ contract('Kernel ACL', accounts => {
 
                     it("new manager doesn't have permission yet", async () => {
                         // It's only the manager–it hasn't granted itself permissions yet
-                        assert.isFalse(await acl.hasPermission.call(newManager, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isFalse(await acl.hasPermission(newManager, kernelAddr, APP_MANAGER_ROLE))
                     })
 
                     it('old manager lost power', async () => {
@@ -233,7 +233,7 @@ contract('Kernel ACL', accounts => {
                     })
 
                     it('removes manager', async () => {
-                        const noManager = await acl.getPermissionManager.call(kernelAddr, APP_MANAGER_ROLE)
+                        const noManager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
                         assert.equal('0x0000000000000000000000000000000000000000', noManager, 'manager should have been removed')
                     })
 
@@ -260,7 +260,7 @@ contract('Kernel ACL', accounts => {
                     })
 
                     it('can no longer perform action', async () => {
-                        assert.isFalse(await acl.hasPermission.call(granted, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isFalse(await acl.hasPermission(granted, kernelAddr, APP_MANAGER_ROLE))
                         await assertRevert(async () => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address, { from: granted })
                         })
@@ -274,7 +274,7 @@ contract('Kernel ACL', accounts => {
 
                     it('permission manager can grant the permission', async () => {
                         await acl.grantPermission(granted, kernelAddr, APP_MANAGER_ROLE, { from: granted })
-                        assert.isTrue(await acl.hasPermission.call(granted, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isTrue(await acl.hasPermission(granted, kernelAddr, APP_MANAGER_ROLE))
                     })
                 })
 
@@ -285,7 +285,7 @@ contract('Kernel ACL', accounts => {
                     })
 
                     it('child entity can perform action', async () => {
-                        assert.isTrue(await acl.hasPermission.call(child, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isTrue(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
                         const receipt = await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address, { from: child })
                         assertEvent(receipt, 'SetApp')
                     })
@@ -293,7 +293,7 @@ contract('Kernel ACL', accounts => {
                     it('child cannot re-grant permission', async () => {
                         const grandchild = accounts[3]
                         // Make sure grandchild doesn't have permission yet
-                        assert.isFalse(await acl.hasPermission.call(grandchild, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isFalse(await acl.hasPermission(grandchild, kernelAddr, APP_MANAGER_ROLE))
                         return assertRevert(async () => {
                             await acl.grantPermission(grandchild, kernelAddr, APP_MANAGER_ROLE, { from: child })
                         })
@@ -302,7 +302,7 @@ contract('Kernel ACL', accounts => {
                     it('parent can revoke permission', async () => {
                         const receipt = await acl.revokePermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                         assertEvent(receipt, 'SetPermission')
-                        assert.isFalse(await acl.hasPermission.call(child, kernelAddr, APP_MANAGER_ROLE))
+                        assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
                     })
                 })
             })

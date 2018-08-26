@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "truffle/Assert.sol";
+import "./Assert.sol";
 
 // Based on Simon de la Rouviere method: http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
 
@@ -10,7 +10,7 @@ contract ThrowProxy {
   address public target;
   bytes data;
 
-  function ThrowProxy(address _target) public {
+  constructor(address _target) public {
     target = _target;
   }
 

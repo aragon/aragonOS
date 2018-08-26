@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "../apps/AppProxyPinned.sol";
-import "../kernel/IKernel.sol";
-import "../kernel/Kernel.sol";
+import "../../apps/AppProxyPinned.sol";
+import "../../kernel/IKernel.sol";
+import "../../kernel/Kernel.sol";
 
 
 contract FakeAppConstants {

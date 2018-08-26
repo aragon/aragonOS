@@ -112,7 +112,7 @@ contract('Kernel apps', accounts => {
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
-                            assert.equal((await appProxy.proxyType.call()).toString(), UPGRADEABLE, 'new appProxy instance should be upgradeable')
+                            assert.equal((await appProxy.proxyType()).toString(), UPGRADEABLE, 'new appProxy instance should be upgradeable')
                             assert.equal(await appProxy.implementation(), appBase1.address, 'new appProxy instance should be resolving to implementation address')
                         })
                     )
@@ -124,7 +124,7 @@ contract('Kernel apps', accounts => {
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
-                            assert.equal((await appProxy.proxyType.call()).toString(), FORWARDING, 'new appProxy instance should be not upgradeable')
+                            assert.equal((await appProxy.proxyType()).toString(), FORWARDING, 'new appProxy instance should be not upgradeable')
                             assert.equal(await appProxy.implementation(), appBase1.address, 'new appProxy instance should be resolving to implementation address')
                         })
                     )

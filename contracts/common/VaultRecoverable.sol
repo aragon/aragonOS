@@ -37,4 +37,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
     function allowRecoverability(address token) public view returns (bool) {
         return true;
     }
+
+    // Cast non-implemented interface to be public so we can use it internally
+    function getRecoveryVault() public view returns (address);
 }
