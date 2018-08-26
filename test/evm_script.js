@@ -20,7 +20,7 @@ const MockScriptExecutorApp = artifacts.require('MockScriptExecutorApp')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('EVM Script', accounts => {
-    let callsScriptBase, executorBase, executor, executionTarget, dao, daoFact, reg, acl
+    let callsScriptBase, executorAppBase, executorApp, executionTarget, dao, daoFact, reg, acl
     let APP_BASES_NAMESPACE
 
     const boss = accounts[1]
@@ -45,8 +45,8 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
-        executorBase = await MockScriptExecutorApp.new()
-        await dao.setApp(APP_BASES_NAMESPACE, executorAppId, executorBase.address, { from: boss })
+        executorAppBase = await MockScriptExecutorApp.new()
+        await dao.setApp(APP_BASES_NAMESPACE, executorAppId, executorAppBase.address, { from: boss })
     })
 
     it('factory registered just 1 script executor', async () => {
@@ -71,9 +71,9 @@ contract('EVM Script', accounts => {
 
     context('> Uninitialized executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, executorBase.address, { from: boss })
-            executor = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-            // Explicitly don't initialize the executor
+            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, { from: boss })
+            executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            // Explicitly don't initialize the executorApp
             executionTarget = await ExecutionTarget.new()
         })
 
@@ -81,27 +81,27 @@ contract('EVM Script', accounts => {
             const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
             const script = encodeCallScript([action])
 
-            await assertRevert(() => executor.execute(script))
+            await assertRevert(() => executorApp.execute(script))
         })
     })
 
     context('> Executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, executorBase.address, { from: boss })
-            executor = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-            await executor.initialize()
+            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, { from: boss })
+            executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            await executorApp.initialize()
             executionTarget = await ExecutionTarget.new()
         })
 
         it('fails to execute if spec ID is 0', async () => {
             return assertRevert(async () => {
-                await executor.execute('0x00000000')
+                await executorApp.execute('0x00000000')
             })
         })
 
         it('fails to execute if spec ID is unknown', async () => {
             return assertRevert(async () => {
-                await executor.execute('0x00000004')
+                await executorApp.execute('0x00000004')
             })
         })
 
@@ -116,7 +116,7 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
 
-                const receipt = await executor.execute(script)
+                const receipt = await executorApp.execute(script)
 
                 assert.equal(await executionTarget.counter(), 1, 'should have executed action')
 
@@ -134,7 +134,7 @@ contract('EVM Script', accounts => {
                 const script = encodeCallScript([action])
 
                 return assertRevert(async () => {
-                    await executor.executeWithBan(script, [executionTarget.address])
+                    await executorApp.executeWithBan(script, [executionTarget.address])
                 })
             })
 
@@ -142,7 +142,7 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
 
-                await executor.executeWithBan(script, ['0x1234'])
+                await executorApp.executeWithBan(script, ['0x1234'])
 
                 assert.equal(await executionTarget.counter(), 1, 'should have executed action')
             })
@@ -151,7 +151,7 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action, action, action, action])
 
-                await executor.execute(script)
+                await executorApp.execute(script)
 
                 assert.equal(await executionTarget.counter(), 4, 'should have executed action')
             })
@@ -164,7 +164,7 @@ contract('EVM Script', accounts => {
 
                 const script = encodeCallScript([action2, action, action2, action, action2])
 
-                await executor.execute(script)
+                await executorApp.execute(script)
 
                 assert.equal(await executionTarget.counter(), 2, 'should have executed action')
                 assert.equal(await executionTarget2.counter(), 3, 'should have executed action')
@@ -174,7 +174,7 @@ contract('EVM Script', accounts => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.setCounter.getData(101) }
                 const script = encodeCallScript([action])
 
-                await executor.execute(script)
+                await executorApp.execute(script)
 
                 assert.equal(await executionTarget.counter(), 101, 'should have set counter')
             })
@@ -186,12 +186,12 @@ contract('EVM Script', accounts => {
                 const script = encodeCallScript([action1, action2])
 
                 return assertRevert(async () => {
-                    await executor.execute(script)
+                    await executorApp.execute(script)
                 })
             })
 
             it('can execute empty script', async () => {
-                await executor.execute(encodeCallScript([]))
+                await executorApp.execute(encodeCallScript([]))
             })
 
             context('> Script overflow', () => {
@@ -212,7 +212,7 @@ contract('EVM Script', accounts => {
                     const script = encodeCallScriptBad([action])
 
                     return assertRevert(async () => {
-                        await executor.execute(script)
+                        await executorApp.execute(script)
                     })
                 })
             })
@@ -227,7 +227,7 @@ contract('EVM Script', accounts => {
                     assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting disabled executor should return zero addr')
                     assert.isFalse(isEnabled, 'executor should be disabled')
                     return assertRevert(async () => {
-                        await executor.execute(encodeCallScript([]))
+                        await executorApp.execute(encodeCallScript([]))
                     })
                 })
 
@@ -248,7 +248,7 @@ contract('EVM Script', accounts => {
                     assertEvent(receipt, 'EnableExecutor')
                     assert.notEqual(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting enabled executor should be non-zero addr')
                     assert.isTrue(isEnabled, 'executor should be enabled')
-                    await executor.execute(encodeCallScript([]))
+                    await executorApp.execute(encodeCallScript([]))
                 })
             })
         })
