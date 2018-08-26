@@ -15,21 +15,21 @@ contract ACLHelper {
 
 
 contract AcceptOracle is IACLOracle {
-    function canPerform(address, address, bytes32, uint256[]) public view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         return true;
     }
 }
 
 
 contract RejectOracle is IACLOracle {
-    function canPerform(address, address, bytes32, uint256[]) public view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         return false;
     }
 }
 
 
 contract RevertOracle is IACLOracle {
-    function canPerform(address, address, bytes32, uint256[]) public view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         revert();
     }
 }
@@ -38,14 +38,14 @@ contract RevertOracle is IACLOracle {
 contract StateModifyingOracle /* is IACLOracle */ {
     bool modifyState;
 
-    function canPerform(address, address, bytes32, uint256[]) public returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external returns (bool) {
         modifyState = true;
         return true;
     }
 }
 
 contract EmptyDataReturnOracle is IACLOracle {
-    function canPerform(address, address, bytes32, uint256[]) public view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         assembly {
             return(0, 0)
         }
@@ -53,7 +53,7 @@ contract EmptyDataReturnOracle is IACLOracle {
 }
 
 contract ConditionalOracle is IACLOracle {
-    function canPerform(address, address, bytes32, uint256[] how) public view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[] how) external view returns (bool) {
         return how[0] > 0;
     }
 }
