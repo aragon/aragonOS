@@ -34,7 +34,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     }
 
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
-        uint256 executorId = executors.push(ExecutorEntry(_executor, true));
+        uint256 executorId = executors.push(ExecutorEntry(_executor, true)) - 1;
         emit EnableExecutor(executorId, _executor);
         return executorId;
     }
