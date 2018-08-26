@@ -8,8 +8,8 @@ import "../evmscript/ScriptHelpers.sol";
 
 
 contract Target {
-    function dontReturn() public {}
-    function fail() public { revert(); }
+    function dontReturn() public pure {}
+    function fail() public pure { revert(); }
     function die() public { selfdestruct(0); }
 }
 

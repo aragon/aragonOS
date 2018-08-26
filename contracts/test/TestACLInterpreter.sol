@@ -260,7 +260,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         for (uint256 i = 0; i < params.length; i++) {
             Param memory param = params[i];
             encodedParams[i] = (uint256(param.id) << 248) + (uint256(param.op) << 240) + param.value;
-            LogParam(bytes32(encodedParams[i]));
+            emit LogParam(bytes32(encodedParams[i]));
         }
 
         return _saveParams(encodedParams);

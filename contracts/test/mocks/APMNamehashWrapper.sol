@@ -4,8 +4,7 @@ import "../../apm/APMNamehash.sol";
 
 
 contract APMNamehashWrapper is APMNamehash {
-    function getAPMNamehash(string name) public view returns (bytes32 hash) {
-        hash = apmNamehash(name);
-        return hash;
+    function getAPMNamehash(string name) public pure returns (bytes32) {
+        return apmNamehash(name);
     }
 }

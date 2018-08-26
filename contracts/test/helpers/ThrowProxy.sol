@@ -10,7 +10,7 @@ contract ThrowProxy {
   address public target;
   bytes data;
 
-  function ThrowProxy(address _target) public {
+  constructor(address _target) public {
     target = _target;
   }
 
