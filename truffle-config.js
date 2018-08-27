@@ -38,13 +38,13 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 6.9e6,
+      gas: 7.5e6,
     },
     devnet: {
       network_id: 15,
       host: 'localhost',
       port: 8535,
-      gas: 6.9e6,
+      gas: 7.5e6,
     },
     ropsten: {
       network_id: 3,
