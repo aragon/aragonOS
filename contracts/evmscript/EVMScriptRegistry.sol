@@ -56,7 +56,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(!executorEntry.enabled);
         executorEntry.enabled = true;
-        EnableExecutor(_executorId, executorEntry.executor);
+        emit EnableExecutor(_executorId, executorEntry.executor);
     }
 
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
