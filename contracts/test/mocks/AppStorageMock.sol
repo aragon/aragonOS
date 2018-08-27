@@ -1,14 +1,9 @@
 pragma solidity 0.4.24;
 
-import "../../apps/UnsafeAragonApp.sol";
+import "../../apps/AppStorage.sol";
 
 
-// Need to use UnsafeAragonApp to allow initialization
-contract AppStubStorage is UnsafeAragonApp {
-    function initialize() onlyInit public {
-        initialized();
-    }
-
+contract AppStorageMock is AppStorage {
     function setKernelExt(IKernel _kernel) public {
         setKernel(_kernel);
     }
@@ -23,9 +18,5 @@ contract AppStubStorage is UnsafeAragonApp {
 
     function getAppIdPosition() public pure returns (bytes32) {
         return APP_ID_POSITION;
-    }
-
-    function getInitializationBlockPosition() public pure returns (bytes32) {
-        return INITIALIZATION_BLOCK_POSITION;
     }
 }

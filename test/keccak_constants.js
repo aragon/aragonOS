@@ -85,19 +85,23 @@ contract('Constants', accounts => {
   })
 
   it('checks AppStorage unstructured storage constants', async () => {
-    const app = await getContract('AppStubStorage').new()
+    const appStorage = await getContract('AppStorageMock').new()
 
-    assert.equal(await app.getKernelPosition(), await keccakConstants.kernelPosition(), "kernelPosition doesn't match")
-    assert.equal(await app.getAppIdPosition(), await keccakConstants.appIdPosition(), "appIdPosition doesn't match")
-    assert.equal(await app.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
+    assert.equal(await appStorage.getKernelPosition(), await keccakConstants.kernelPosition(), "kernelPosition doesn't match")
+    assert.equal(await appStorage.getAppIdPosition(), await keccakConstants.appIdPosition(), "appIdPosition doesn't match")
   })
 
   it('checks AppProxyPinned unstructured storage constants', async () => {
     // Set up AppStubPinnedStorage
     const fakeApp = await getContract('AppStub').new()
     const kernelMock = await getContract('KernelPinnedStorageMock').new(fakeApp.address)
-    const app = await getContract('AppStubPinnedStorage').new(kernelMock.address)
+    const pinnedProxy = await getContract('AppProxyPinnedStorageMock').new(kernelMock.address)
 
-    assert.equal(await app.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
+    assert.equal(await pinnedProxy.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
+  })
+
+  it('checks Initializable unstructured storage constants', async () => {
+    const initializableMock = await getContract('InitializableStorageMock').new()
+    assert.equal(await initializableMock.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
   })
 })
