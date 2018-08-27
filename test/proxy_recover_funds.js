@@ -19,6 +19,7 @@ const VaultMock = artifacts.require('VaultMock')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 const APP_ID = hash('stub.aragonpm.test')
+const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
 contract('Proxy funds', accounts => {
   let aclBase, appBase, appConditionalRecoveryBase
@@ -31,7 +32,7 @@ contract('Proxy funds', accounts => {
     const amount = 1
     const initialBalance = await getBalance(target.address)
     const initialVaultBalance = await getBalance(vault.address)
-    const r = await target.sendTransaction({ value: 1, gas: 31000 })
+    const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
     assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
     await target.transferToVault(ETH)
     assert.equal((await getBalance(target.address)).valueOf(), 0)
@@ -55,7 +56,7 @@ contract('Proxy funds', accounts => {
     const vaultId = hash('vaultfake.aragonpm.test')
     const initialBalance = await getBalance(target.address)
     await kernel.setRecoveryVaultId(vaultId)
-    const r = await target.sendTransaction({ value: 1, gas: 31000 })
+    const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
     assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
       await target.transferToVault(ETH)
@@ -193,15 +194,15 @@ contract('Proxy funds', accounts => {
               target = AppStub.at(appProxy)
             })
 
-            it('cannot sent 0 ETH to proxy', async () => {
+            it('cannot send 0 ETH to proxy', async () => {
               await assertRevert(async () => {
-                await target.sendTransaction({ value: 0, gas: 31000 })
+                await target.sendTransaction({ value: 0, gas: SEND_ETH_GAS })
               })
             })
 
-            it('cannot sent ETH with data to proxy', async () => {
+            it('cannot send ETH with data to proxy', async () => {
               await assertRevert(async () => {
-                await target.sendTransaction({ value: 1, data: '0x1', gas: 31000 })
+                await target.sendTransaction({ value: 1, data: '0x1', gas: SEND_ETH_GAS })
               })
             })
 

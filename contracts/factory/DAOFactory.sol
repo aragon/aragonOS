@@ -63,7 +63,7 @@ contract DAOFactory {
         }
 
         emit DeployDAO(address(dao));
-        
+
         return dao;
     }
 }
