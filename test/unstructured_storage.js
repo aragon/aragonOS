@@ -4,6 +4,7 @@ const Kernel = artifacts.require('Kernel')
 // Mocks
 const AppStorageMock = artifacts.require('AppStorageMock')
 const AppProxyPinnedStorageMock = artifacts.require('AppProxyPinnedStorageMock')
+const DepositableStorageMock = artifacts.require('DepositableStorageMock')
 const InitializableStorageMock = artifacts.require('InitializableStorageMock')
 const KernelPinnedStorageMock = artifacts.require('KernelPinnedStorageMock')
 
@@ -74,6 +75,23 @@ contract('Unstructured storage', accounts => {
     })
   })
 
+  context('> DepositableStorage', () => {
+    let depositableMock
+
+    beforeEach(async () => {
+      depositableMock = await DepositableStorageMock.new()
+    })
+
+    it('tests depositable', async () => {
+      // set values
+      await depositableMock.setDepositableExt(true)
+      //checks
+      assert.equal(
+        await web3.eth.getStorageAt(depositableMock.address, (await depositableMock.getDepositablePosition())),
+        true,
+        'Depositable should match'
+      )
+    })
   })
 
   context('> Initializable', () => {

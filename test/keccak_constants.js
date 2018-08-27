@@ -100,6 +100,11 @@ contract('Constants', accounts => {
     assert.equal(await pinnedProxy.getPinnedCodePosition(), await keccakConstants.pinnedCodePosition(), "pinnedCodePosition doesn't match")
   })
 
+  it('checks DepositableStorage unstructured storage constants', async () => {
+    const depositableMock = await getContract('DepositableStorageMock').new()
+    assert.equal(await depositableMock.getDepositablePosition(), await keccakConstants.depositablePosition(), "depositablePosition doesn't match")
+  })
+
   it('checks Initializable unstructured storage constants', async () => {
     const initializableMock = await getContract('InitializableStorageMock').new()
     assert.equal(await initializableMock.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
