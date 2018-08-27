@@ -1,3 +1,4 @@
+const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
@@ -60,9 +61,8 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails when calling upgraded functionality on old version', async () => {
-        return assertRevert(async () => {
-            await UpgradedKernel.at(kernelAddr).isUpgraded()
-        })
+        const receipt = await UpgradedKernel.at(kernelAddr).isUpgraded()
+        assertEvent(receipt, 'IsUpgraded', 0) // should not have emitted
     })
 
     it('successfully upgrades kernel', async () => {
@@ -70,7 +70,10 @@ contract('Kernel upgrade', accounts => {
 
         await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, upgradedBase.address)
 
-        assert.isTrue(await UpgradedKernel.at(kernelAddr).isUpgraded(), 'kernel should have been upgraded')
+        const receipt = await UpgradedKernel.at(kernelAddr).isUpgraded()
+        const upgraded = receipt.logs.filter(l => l.event == 'IsUpgraded')[0].args.upgraded
+        assertEvent(receipt, 'IsUpgraded') // should have been emitted
+        assert.isTrue(upgraded, 'kernel should have been upgraded')
     })
 
     it('fails if upgrading to kernel that is not a contract', async () => {
