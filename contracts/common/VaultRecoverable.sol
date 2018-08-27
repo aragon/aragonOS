@@ -4,10 +4,10 @@
 
 pragma solidity ^0.4.24;
 
+import "../lib/token/ERC20.sol";
 import "./EtherTokenConstant.sol";
 import "./IsContract.sol";
 import "./IVaultRecoverable.sol";
-import "../lib/zeppelin/token/ERC20.sol";
 
 
 contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {

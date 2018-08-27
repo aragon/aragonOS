@@ -13,7 +13,7 @@ const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 // Mocks
 const AppStub = artifacts.require('AppStub')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
-const StandardTokenMock = artifacts.require('StandardTokenMock')
+const TokenMock = artifacts.require('TokenMock')
 const VaultMock = artifacts.require('VaultMock')
 
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
@@ -40,7 +40,7 @@ contract('Proxy funds', accounts => {
 
   const recoverTokens = async (target, vault) => {
     const amount = 1
-    const token = await StandardTokenMock.new(accounts[0], 1000)
+    const token = await TokenMock.new(accounts[0], 1000)
     const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
     await token.transfer(target.address, amount)
