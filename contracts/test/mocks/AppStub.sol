@@ -18,6 +18,10 @@ contract AppStub is AragonApp, AppSt {
         stringTest = "hola";
     }
 
+    function enableDeposits() public {
+        setDepositable(true);
+    }
+
     function requiresInitialization() isInitialized public constant returns (bool) {
         return true;
     }

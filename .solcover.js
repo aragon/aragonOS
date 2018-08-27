@@ -1,4 +1,10 @@
-const skipFiles = ['lib', 'test', 'acl/ACLSyntaxSugar.sol']
+const skipFiles = [
+  'lib',
+  'test',
+  'acl/ACLSyntaxSugar.sol',
+  'common/DepositableStorage.sol', // Used in tests that send ETH
+  'common/UnstructuredStorage' // Used in tests that send ETH
+]
 
 module.exports = {
     norpc: true,

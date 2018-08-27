@@ -6,6 +6,7 @@ pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
 import "../common/Autopetrified.sol";
+import "../common/DepositableStorage.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -16,7 +17,7 @@ import "../acl/ACLSyntaxSugar.sol";
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
 // ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
 // that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
+contract AragonApp is AppStorage, DepositableStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)));
         _;
@@ -25,6 +26,10 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
     modifier authP(bytes32 _role, uint256[] _params) {
         require(canPerform(msg.sender, _role, _params));
         _;
+    }
+
+    function () external payable {
+        require(isDepositable());
     }
 
     /**
