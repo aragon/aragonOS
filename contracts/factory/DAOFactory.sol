@@ -47,7 +47,7 @@ contract DAOFactory {
 
             acl.createPermission(regFactory, dao, appManagerRole, this);
 
-            EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao, _root);
+            EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao);
             emit DeployEVMScriptRegistry(address(reg));
 
             // Clean up permissions
