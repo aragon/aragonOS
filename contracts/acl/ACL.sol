@@ -69,7 +69,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     /**
     * @dev Creates a permission that wasn't previously set and managed. Access is limited by the ACL.
     *      If a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
+    * @notice Create a new permission granting `_entity` the ability to perform actions requiring `_role` on `_app` (setting `_manager` as the permission manager)
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
@@ -83,7 +83,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     /**
     * @dev Grants permission if allowed. This requires `msg.sender` to be the permission manager
-    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Grants `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
@@ -96,7 +96,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     /**
     * @dev Grants a permission with parameters if allowed. This requires `msg.sender` to be the permission manager
-    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Grants `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
@@ -112,7 +112,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
 
     /**
     * @dev Revokes permission if allowed. This requires `msg.sender` to be the the permission manager
-    * @notice Revokes `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Revokes from `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity to revoke access from
     * @param _app Address of the app in which the role will be revoked
     * @param _role Identifier for the group of actions in app being revoked
@@ -125,7 +125,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @notice Sets `_newManager` as the manager of the permission `_role` in `_app`
+    * @notice Sets `_newManager` as the manager of `_role` in `_app`
     * @param _newManager Address for the new manager
     * @param _app Address of the app in which the permission management is being transferred
     * @param _role Identifier for the group of actions being transferred
@@ -138,7 +138,7 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @notice Removes the manager of the permission `_role` in `_app`
+    * @notice Removes the manager of `_role` in `_app`
     * @param _app Address of the app in which the permission is being unmanaged
     * @param _role Identifier for the group of actions being unmanaged
     */
