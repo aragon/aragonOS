@@ -67,8 +67,12 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Creates a permission that wasn't previously set and managed. Access is limited by the ACL.
+    * @dev Creates a permission that wasn't previously set and managed.
     *      If a created permission is removed it is possible to reset it with createPermission.
+    *      This is the **ONLY** way to create permissions and set managers to permissions that don't
+    *      have a manager.
+    *      In terms of the ACL being initialized, this function implicitly protects all the other
+    *      state-changing external functions, as they all require the sender to be a manager.
     * @notice Create a new permission granting `_entity` the ability to perform actions requiring `_role` on `_app`, setting `_manager` as the permission's manager
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
