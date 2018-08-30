@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
+import "../common/TimeHelpers.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
@@ -8,7 +9,7 @@ import "./IACLOracle.sol";
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
-contract ACL is IACL, AragonApp, ACLHelpers {
+contract ACL is IACL, AragonApp, ACLHelpers, TimeHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
@@ -312,9 +313,9 @@ contract ACL is IACL, AragonApp, ACLHelpers {
             value = checkOracle(IACLOracle(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
-            value = blockN();
+            value = getBlockNumber();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
-            value = time();
+            value = getTimestamp64();
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
@@ -432,8 +433,4 @@ contract ACL is IACL, AragonApp, ACLHelpers {
     function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
     }
-
-    function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members
-
-    function blockN() internal view returns (uint256) { return block.number; }
 }
