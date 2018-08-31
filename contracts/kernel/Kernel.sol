@@ -37,12 +37,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     function initialize(IACL _baseAcl, address _permissionsCreator) public onlyInit {
         initialized();
 
-        IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
-
+        // Set ACL base
         _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
-        _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
 
+        // Create ACL instance and attach it as the default ACL app
+        IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
         acl.initialize(_permissionsCreator);
+        _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
 
         recoveryVaultId = DEFAULT_VAULT_APP_ID;
     }
