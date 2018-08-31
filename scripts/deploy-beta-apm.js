@@ -12,9 +12,13 @@ const tld = namehash('eth')
 const label = '0x'+keccak256('aragonpm')
 
 const getContract = name => artifacts.require(name)
-const deployBases = async baseNames => {
-  const baseContracts = await Promise.all(baseNames.map(c => getContract(c).new()))
 
+const baseInitArguments = {
+  Kernel: [ true ] // petrify
+}
+
+const deployBases = async baseNames => {
+  const baseContracts = await Promise.all(baseNames.map(c => getContract(c).new(...(baseInitArguments[c] || []))))
   return baseContracts.map(c => c.address)
 }
 
