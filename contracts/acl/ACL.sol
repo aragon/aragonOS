@@ -9,7 +9,7 @@ import "./IACLOracle.sol";
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
-contract ACL is IACL, AragonApp, ACLHelpers, TimeHelpers {
+contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
     //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
