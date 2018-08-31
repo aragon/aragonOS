@@ -14,9 +14,9 @@ import "../factory/AppProxyFactory.sol";
 contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    //bytes32 constant public DEFAULT_VAULT_ID = keccak256(APP_ADDR_NAMESPACE, apmNamehash("vault"));
+    //bytes32 constant public DEFAULT_VAULT_APP_ID = apmNamehash("vault");
     bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
-    bytes32 constant public DEFAULT_VAULT_ID = 0x4214e5fd6d0170d69ea641b5614f5093ebecc9928af51e95685c87617489800e;
+    bytes32 constant public DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -44,115 +44,118 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
         acl.initialize(_permissionsCreator);
 
-        recoveryVaultId = DEFAULT_VAULT_ID;
+        recoveryVaultId = DEFAULT_VAULT_APP_ID;
     }
 
     /**
     * @dev Create a new instance of an app linked to this kernel
-    * @param _name Name of the app
+    * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase)
+    function newAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newAppInstance(_name, _appBase, false);
+        return newAppInstance(_appId, _appBase, false);
     }
 
     /**
     * @dev Create a new instance of an app linked to this kernel and set its base
     *      implementation if it was not already set
-    * @param _name Name of the app
+    * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault)
+    function newAppInstance(bytes32 _appId, address _appBase, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
-        appProxy = newAppProxy(this, _name);
+        _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
+        appProxy = newAppProxy(this, _appId);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+            setApp(APP_ADDR_NAMESPACE, _appId, appProxy);
         }
     }
 
     /**
     * @dev Create a new pinned instance of an app linked to this kernel
-    * @param _name Name of the app
+    * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase)
+    function newPinnedAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newPinnedAppInstance(_name, _appBase, false);
+        return newPinnedAppInstance(_appId, _appBase, false);
     }
 
     /**
     * @dev Create a new pinned instance of an app linked to this kernel and set
     *      its base implementation if it was not already set
-    * @param _name Name of the app
+    * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault)
+    function newPinnedAppInstance(bytes32 _appId, address _appBase, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name))
+        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        _setAppIfNew(APP_BASES_NAMESPACE, _name, _appBase);
-        appProxy = newAppProxyPinned(this, _name);
+        _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
+        appProxy = newAppProxyPinned(this, _appId);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(APP_ADDR_NAMESPACE, _name, appProxy);
+            setApp(APP_ADDR_NAMESPACE, _appId, appProxy);
         }
     }
 
     /**
     * @dev Set the resolving address of an app instance or base implementation
     * @param _namespace App namespace to use
-    * @param _name Name of the app
-    * @param _app Address of the app
+    * @param _appId Identifier for app
+    * @param _app Address of the app instance or base implementation
     * @return ID of app
     */
-    function setApp(bytes32 _namespace, bytes32 _name, address _app)
+    function setApp(bytes32 _namespace, bytes32 _appId, address _app)
         public
-        auth(APP_MANAGER_ROLE, arr(_namespace, _name))
-        returns (bytes32 id)
+        auth(APP_MANAGER_ROLE, arr(_namespace, _appId))
     {
-        return _setApp(_namespace, _name, _app);
+        _setApp(_namespace, _appId, _app);
     }
 
     /**
     * @dev Set the default vault id for the escape hatch mechanism
-    * @param _name Name of the app
+    * @param _recoveryVaultId Identifier of the recovery vault app
     */
-    function setRecoveryVaultId(bytes32 _name) public auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _name)) {
-        recoveryVaultId = keccak256(abi.encodePacked(APP_ADDR_NAMESPACE, _name));
+    function setRecoveryVaultId(bytes32 _recoveryVaultId)
+        public
+        auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _recoveryVaultId))
+    {
+        recoveryVaultId = _recoveryVaultId;
     }
 
     /**
     * @dev Get the address of an app instance or base implementation
-    * @param _id App identifier
+    * @param _namespace App namespace to use
+    * @param _appId Identifier for app
     * @return Address of the app
     */
-    function getApp(bytes32 _id) public view returns (address) {
-        return apps[_id];
+    function getApp(bytes32 _namespace, bytes32 _appId) public view returns (address) {
+        return apps[_namespace][_appId];
     }
 
     /**
@@ -160,7 +163,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return Address of the Vault
     */
     function getRecoveryVault() public view returns (address) {
-        return apps[recoveryVaultId];
+        return apps[APP_ADDR_NAMESPACE][recoveryVaultId];
     }
 
     /**
@@ -168,7 +171,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return ACL app
     */
     function acl() public view returns (IACL) {
-        return IACL(getApp(ACL_APP));
+        return IACL(getApp(APP_ADDR_NAMESPACE, ACL_APP_ID));
     }
 
     /**
@@ -186,24 +189,19 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
             defaultAcl.hasPermission(_who, _where, _what, _how);
     }
 
-    function _setApp(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
+    function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {
         require(isContract(_app));
-        id = keccak256(abi.encodePacked(_namespace, _name));
-        apps[id] = _app;
-        emit SetApp(_namespace, _name, id, _app);
+        apps[_namespace][_appId] = _app;
+        emit SetApp(_namespace, _appId, _app);
     }
 
-    function _setAppIfNew(bytes32 _namespace, bytes32 _name, address _app) internal returns (bytes32 id) {
-        require(isContract(_app));
-
-        id = keccak256(abi.encodePacked(_namespace, _name));
-
-        address app = getApp(id);
+    function _setAppIfNew(bytes32 _namespace, bytes32 _appId, address _app) internal {
+        address app = getApp(_namespace, _appId);
         if (app != address(0)) {
+            // The only way to set an app is if it passes the isContract check, so no need to check it again
             require(app == _app);
         } else {
-            apps[id] = _app;
-            emit SetApp(_namespace, _name, id, _app);
+            _setApp(_namespace, _appId, _app);
         }
     }
 

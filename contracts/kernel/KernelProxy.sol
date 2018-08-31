@@ -14,7 +14,7 @@ contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
     */
     constructor(IKernel _kernelImpl) public {
         require(isContract(address(_kernelImpl)));
-        apps[KERNEL_APP] = _kernelImpl;
+        apps[CORE_NAMESPACE][KERNEL_APP_ID] = _kernelImpl;
     }
 
     /**
@@ -28,6 +28,6 @@ contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
     * @dev ERC897, the address the proxy would delegate calls to
     */
     function implementation() public view returns (address) {
-        return apps[KERNEL_APP];
+        return apps[CORE_NAMESPACE][KERNEL_APP_ID];
     }
 }
