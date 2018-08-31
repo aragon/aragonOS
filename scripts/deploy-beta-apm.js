@@ -12,9 +12,13 @@ const tld = namehash('eth')
 const label = '0x'+keccak256('aragonpm')
 
 const getContract = name => artifacts.require(name)
-const deployBases = async baseNames => {
-  const baseContracts = await Promise.all(baseNames.map(c => getContract(c).new()))
 
+const baseInitArguments = {
+  Kernel: [ true ] // petrify
+}
+
+const deployBases = async baseNames => {
+  const baseContracts = await Promise.all(baseNames.map(c => getContract(c).new(...(baseInitArguments[c] || []))))
   return baseContracts.map(c => c.address)
 }
 
@@ -53,6 +57,7 @@ module.exports = async callback => {
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
   console.log('deployed APM:', apmAddr)
   console.log(apmAddr)
+  callback()
 }
 
 // Rinkeby APM: 0x700569b6c99b8b5fa17b7976a26ae2f0d5fd145c
