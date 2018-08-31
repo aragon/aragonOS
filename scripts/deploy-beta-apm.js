@@ -53,6 +53,7 @@ module.exports = async callback => {
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
   console.log('deployed APM:', apmAddr)
   console.log(apmAddr)
+  callback()
 }
 
 // Rinkeby APM: 0x700569b6c99b8b5fa17b7976a26ae2f0d5fd145c
