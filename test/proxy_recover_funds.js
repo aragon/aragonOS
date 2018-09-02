@@ -54,7 +54,7 @@ contract('Proxy funds', accounts => {
     const amount = 1
     const vaultId = hash('vaultfake.aragonpm.test')
     const initialBalance = await getBalance(target.address)
-    await kernel.setRecoveryVaultId(vaultId)
+    await kernel.setRecoveryVaultAppId(vaultId)
     const r = await target.sendTransaction({ value: 1, gas: 31000 })
     assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
@@ -130,7 +130,7 @@ contract('Proxy funds', accounts => {
               vault = VaultMock.at(vaultProxyAddress)
             }
             await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, vault.address)
-            await kernel.setRecoveryVaultId(vaultId)
+            await kernel.setRecoveryVaultAppId(vaultId)
           })
 
           onlyBaseKernel(() => {

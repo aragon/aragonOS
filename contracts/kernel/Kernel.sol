@@ -45,7 +45,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         acl.initialize(_permissionsCreator);
         _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
 
-        recoveryVaultId = DEFAULT_VAULT_APP_ID;
+        recoveryVaultAppId = DEFAULT_VAULT_APP_ID;
     }
 
     /**
@@ -140,13 +140,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Set the default vault id for the escape hatch mechanism
-    * @param _recoveryVaultId Identifier of the recovery vault app
+    * @param _recoveryVaultAppId Identifier of the recovery vault app
     */
-    function setRecoveryVaultId(bytes32 _recoveryVaultId)
+    function setRecoveryVaultAppId(bytes32 _recoveryVaultAppId)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _recoveryVaultId))
+        auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _recoveryVaultAppId))
     {
-        recoveryVaultId = _recoveryVaultId;
+        recoveryVaultAppId = _recoveryVaultAppId;
     }
 
     /**
@@ -164,7 +164,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return Address of the Vault
     */
     function getRecoveryVault() public view returns (address) {
-        return apps[APP_ADDR_NAMESPACE][recoveryVaultId];
+        return apps[APP_ADDR_NAMESPACE][recoveryVaultAppId];
     }
 
     /**

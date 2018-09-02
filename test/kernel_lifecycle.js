@@ -24,7 +24,7 @@ contract('Kernel lifecycle', accounts => {
     await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address))
     await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address))
     await assertRevert(() => kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
-    await assertRevert(() => kernel.setRecoveryVaultId(VAULT_ID))
+    await assertRevert(() => kernel.setRecoveryVaultAppId(VAULT_ID))
   }
 
   const testUsability = async (kernel) => {
