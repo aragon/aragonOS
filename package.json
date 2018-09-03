@@ -20,7 +20,6 @@
   "files": [
     "build/",
     "contracts/",
-    "migrations/",
     "scripts/",
     "truffle-config.js",
     "test/"
