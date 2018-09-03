@@ -19,18 +19,19 @@ contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants
         baseCallScript = IEVMScriptExecutor(new CallsScript());
     }
 
-    function newEVMScriptRegistry(Kernel _dao, address _root) public returns (EVMScriptRegistry reg) {
+    function newEVMScriptRegistry(Kernel _dao) public returns (EVMScriptRegistry reg) {
         reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, baseReg, true));
         reg.initialize();
 
         ACL acl = ACL(_dao.acl());
 
-        acl.createPermission(this, reg, reg.REGISTRY_MANAGER_ROLE(), this);
+        acl.createPermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE(), this);
 
         reg.addScriptExecutor(baseCallScript);     // spec 1 = CallsScript
 
-        acl.revokePermission(this, reg, reg.REGISTRY_MANAGER_ROLE());
-        acl.setPermissionManager(_root, reg, reg.REGISTRY_MANAGER_ROLE());
+        // Clean up the permissions
+        acl.revokePermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        acl.removePermissionManager(reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
 
         return reg;
     }

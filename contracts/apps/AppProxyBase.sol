@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "./AppStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
-import "../kernel/KernelStorage.sol";
+import "../kernel/KernelConstants.sol";
 import "../kernel/IKernel.sol";
 
 
@@ -33,6 +33,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        return kernel().getApp(keccak256(abi.encodePacked(APP_BASES_NAMESPACE, _appId)));
+        return kernel().getApp(APP_BASES_NAMESPACE, _appId);
     }
 }

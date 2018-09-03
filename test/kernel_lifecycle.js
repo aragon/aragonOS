@@ -24,7 +24,7 @@ contract('Kernel lifecycle', accounts => {
     await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address))
     await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address))
     await assertRevert(() => kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
-    await assertRevert(() => kernel.setRecoveryVaultId(VAULT_ID))
+    await assertRevert(() => kernel.setRecoveryVaultAppId(VAULT_ID))
   }
 
   const testUsability = async (kernel) => {
@@ -146,10 +146,10 @@ contract('Kernel lifecycle', accounts => {
         const ACLAppLog = setAppLogs[1]
 
         assert.equal(ACLBaseLog.args.namespace, APP_BASES_NAMESPACE, 'should set base acl first')
-        assert.equal(ACLBaseLog.args.name, ACL_APP_ID, 'should set base acl first')
+        assert.equal(ACLBaseLog.args.appId, ACL_APP_ID, 'should set base acl first')
         assert.equal(ACLBaseLog.args.app, aclBase.address, 'should set base acl first')
         assert.equal(ACLAppLog.args.namespace, APP_ADDR_NAMESPACE, 'should set default acl second')
-        assert.equal(ACLAppLog.args.name, ACL_APP_ID, 'should set default acl second')
+        assert.equal(ACLAppLog.args.appId, ACL_APP_ID, 'should set default acl second')
         assert.equal(ACLAppLog.args.app, acl.address, 'should set default acl second')
       })
 

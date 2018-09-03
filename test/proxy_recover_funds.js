@@ -13,7 +13,7 @@ const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 // Mocks
 const AppStub = artifacts.require('AppStub')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
-const StandardTokenMock = artifacts.require('StandardTokenMock')
+const TokenMock = artifacts.require('TokenMock')
 const VaultMock = artifacts.require('VaultMock')
 
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
@@ -41,7 +41,7 @@ contract('Proxy funds', accounts => {
 
   const recoverTokens = async (target, vault) => {
     const amount = 1
-    const token = await StandardTokenMock.new(accounts[0], 1000)
+    const token = await TokenMock.new(accounts[0], 1000)
     const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
     await token.transfer(target.address, amount)
@@ -55,7 +55,7 @@ contract('Proxy funds', accounts => {
     const amount = 1
     const vaultId = hash('vaultfake.aragonpm.test')
     const initialBalance = await getBalance(target.address)
-    await kernel.setRecoveryVaultId(vaultId)
+    await kernel.setRecoveryVaultAppId(vaultId)
     const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
     assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
     return assertRevert(async () => {
@@ -133,7 +133,7 @@ contract('Proxy funds', accounts => {
             await vault.initialize()
 
             await kernel.setApp(APP_ADDR_NAMESPACE, vaultId, vault.address)
-            await kernel.setRecoveryVaultId(vaultId)
+            await kernel.setRecoveryVaultAppId(vaultId)
           })
 
           it('kernel recovers ETH', skipCoverageIfVaultProxy(async () =>

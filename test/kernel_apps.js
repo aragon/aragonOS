@@ -2,7 +2,6 @@ const { assertRevert } = require('./helpers/assertThrow')
 const { onlyIf } = require('./helpers/onlyIf')
 const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
-const { soliditySha3 } = require('web3-utils')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -23,7 +22,6 @@ const EMPTY_BYTES = '0x'
 contract('Kernel apps', accounts => {
     let aclBase, appBase1, appBase2
     let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE
-    let APP_SET_ID, APP_DEFAULT_ID
     let UPGRADEABLE, FORWARDING
 
     const permissionsRoot = accounts[0]
@@ -39,8 +37,6 @@ contract('Kernel apps', accounts => {
         APP_BASES_NAMESPACE = await kernel.APP_BASES_NAMESPACE()
         APP_ADDR_NAMESPACE = await kernel.APP_ADDR_NAMESPACE()
         APP_MANAGER_ROLE = await kernel.APP_MANAGER_ROLE()
-        APP_SET_ID = soliditySha3(APP_BASES_NAMESPACE, APP_ID)
-        APP_DEFAULT_ID = soliditySha3(APP_ADDR_NAMESPACE, APP_ID)
 
         const ercProxyMock = await ERCProxyMock.new()
         UPGRADEABLE = (await ercProxyMock.UPGRADEABLE()).toString()
@@ -130,10 +126,10 @@ contract('Kernel apps', accounts => {
                     )
 
                     it('sets the app base when not previously registered', async() => {
-                        assert.equal(ZERO_ADDR, await kernel.getApp(APP_SET_ID))
+                        assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
                         await kernel[newInstanceFn](APP_ID, appBase1.address)
-                        assert.equal(appBase1.address, await kernel.getApp(APP_SET_ID))
+                        assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
                     })
 
                     it("doesn't set the app base when already set", async() => {
@@ -154,8 +150,8 @@ contract('Kernel apps', accounts => {
                         })
 
                         // Check that both the app base and default app are set
-                        assert.equal(await kernel.getApp(APP_SET_ID), appBase1.address)
-                        assert.equal(await kernel.getApp(APP_DEFAULT_ID), appProxyAddr)
+                        assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address)
+                        assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), appProxyAddr)
                     })
 
                     it("fails if the app base is not given", async() => {
