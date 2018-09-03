@@ -3,7 +3,7 @@ const skipFiles = [
   'test',
   'acl/ACLSyntaxSugar.sol',
   'common/DepositableStorage.sol', // Used in tests that send ETH
-  'common/UnstructuredStorage' // Used in tests that send ETH
+  'common/UnstructuredStorage.sol' // Used in tests that send ETH
 ]
 
 module.exports = {
