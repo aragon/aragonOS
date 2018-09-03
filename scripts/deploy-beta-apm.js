@@ -6,7 +6,7 @@ const deployENS = require('./deploy-beta-ens')
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
 const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
-const defaultENS = process.env.ENS
+const defaultENSAddress = process.env.ENS
 
 const baseInitArguments = {
   Kernel: [ true ] // petrify
@@ -17,7 +17,15 @@ const deployBases = async baseContracts => {
   return deployedContracts.map(c => c.address)
 }
 
-module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, ens = defaultENS, owner = defaultOwner, verbose = true } = {}) => {
+module.exports = async (
+  truffleExecCallback,
+  {
+    artifacts = globalArtifacts,
+    ensAddress = defaultENSAddress,
+    owner = defaultOwner,
+    verbose = true
+  } = {}
+) => {
   const log = (...args) => {
     if (verbose) { console.log(...args) }
   }
@@ -40,15 +48,16 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, ens 
   log('Deploying APM...')
   log('Owner:', owner)
 
-  if (!ens) {
+  if (!ensAddress) {
     log('=========')
     log('Missing ENS! Deploying a custom ENS...')
     ens = (await deployENS(null, { artifacts, owner, verbose: false })).ens
+    ensAddress = ens.address
   } else {
-    ens = ENS.at(ens)
+    ens = ENS.at(ensAddress)
   }
 
-  log('ENS:', ens.address)
+  log('ENS:', ensAddress)
   log(`TLD: ${tldName} (${tldHash})`)
   log(`Label: ${labelName} (${labelHash})`)
 
@@ -67,7 +76,7 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, ens 
   log('Deployed DAOFactory:', daoFactory.address)
 
   log('Deploying APMRegistryFactory...')
-  const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ens.address, '0x00')
+  const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
   log('Deployed APMRegistryFactory:', apmFactory.address)
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
@@ -76,7 +85,7 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, ens 
   } catch (err) {
     console.error(
       `Error: could not set the owner of '${labelName}.${tldName}' on the given ENS instance`,
-      `(${ens.address}). Make sure you have ownership rights over the subdomain.`
+      `(${ensAddress}). Make sure you have ownership rights over the subdomain.`
     )
     throw err
   }
