@@ -315,7 +315,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = getBlockNumber();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
-            value = getTimestamp64();
+            value = getTimestamp();
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
