@@ -14,7 +14,7 @@ const configFilePath = (filename) =>
 
 const mnemonic = () => {
   try {
-  return require(configFilePath('mnemonic.json').mnemonic)
+    return require(configFilePath('mnemonic.json').mnemonic)
   } catch (e) {
     return DEFAULT_MNEMONIC
   }
@@ -22,7 +22,7 @@ const mnemonic = () => {
 
 const settingsForNetwork = (network) => {
   try {
-    return require(configFilePath(`${network}key.json`))
+    return require(configFilePath(`${network}_key.json`))
   } catch (e) {
     return { }
   }
@@ -35,7 +35,7 @@ const providerForNetwork = (network) => (
 
     rpc = rpc || defaultRPC(network)
 
-    if (!keys || keys.lenght == 0) {
+    if (!keys || keys.length == 0) {
       return new HDWalletProvider(mnemonic(), rpc)
     }
 
