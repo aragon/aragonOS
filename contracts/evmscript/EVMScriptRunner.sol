@@ -8,10 +8,11 @@ import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
 
 import "../apps/AppStorage.sol";
+import "../kernel/KernelConstants.sol";
 import "../common/Initializable.sol";
 
 
-contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants {
+contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelConstants {
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
@@ -40,7 +41,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
-        address registryAddr = kernel().getApp(EVMSCRIPT_REGISTRY_APP);
+        address registryAddr = kernel().getApp(APP_ADDR_NAMESPACE, EVMSCRIPT_REGISTRY_APP_ID);
         return IEVMScriptRegistry(registryAddr);
     }
 

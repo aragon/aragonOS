@@ -19,14 +19,11 @@ contract('Constants', accounts => {
     assert.equal(await kernelConstants.APP_ADDR_NAMESPACE(), await keccakConstants.APP_ADDR_NAMESPACE(), "app namespace doesn't match")
 
     assert.equal(await kernelConstants.KERNEL_APP_ID(), await keccakConstants.KERNEL_APP_ID(), "kernel app id doesn't match")
-    assert.equal(await kernelConstants.KERNEL_APP(), await keccakConstants.KERNEL_APP(), "kernel app doesn't match")
-
     assert.equal(await kernelConstants.ACL_APP_ID(), await keccakConstants.ACL_APP_ID(), "acl app id doesn't match")
-    assert.equal(await kernelConstants.ACL_APP(), await keccakConstants.ACL_APP(), "acl app doesn't match")
 
     const kernel = await getContract('Kernel').new(false)
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
-    assert.equal(await kernel.DEFAULT_VAULT_ID(), await keccakConstants.DEFAULT_VAULT_ID(), "default vault id doesn't match")
+    assert.equal(await kernel.DEFAULT_VAULT_APP_ID(), await keccakConstants.DEFAULT_VAULT_APP_ID(), "default vault id doesn't match")
   })
 
   it('checks ENS constants', async () => {
@@ -63,7 +60,6 @@ contract('Constants', accounts => {
     const evmScriptConstants = await getContract('EVMScriptRegistryConstants').new()
 
     assert.equal(await evmScriptConstants.EVMSCRIPT_REGISTRY_APP_ID(), await keccakConstants.EVMSCRIPT_REGISTRY_APP_ID(), "app id doesn't match")
-    assert.equal(await evmScriptConstants.EVMSCRIPT_REGISTRY_APP(), await keccakConstants.EVMSCRIPT_REGISTRY_APP(), "app doesn't match")
   })
 
   it('checks EVM Script executor types', async () => {
