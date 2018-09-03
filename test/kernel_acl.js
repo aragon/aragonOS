@@ -13,7 +13,7 @@ const APP_ID = hash('stub.aragonpm.test')
 
 contract('Kernel ACL', accounts => {
     let aclBase, appBase
-    let APP_MANAGER_ROLE, APP_BASES_NAMESPACE, ANY_ENTITY
+    let APP_MANAGER_ROLE, APP_BASES_NAMESPACE, ACL_APP_ID, ANY_ENTITY
 
     const permissionsRoot = accounts[0]
     const granted = accounts[1]
@@ -29,6 +29,7 @@ contract('Kernel ACL', accounts => {
         const kernel = await Kernel.new(true)
         APP_BASES_NAMESPACE = await kernel.APP_BASES_NAMESPACE()
         APP_MANAGER_ROLE = await kernel.APP_MANAGER_ROLE()
+        ACL_APP_ID = await kernel.ACL_APP_ID()
         ANY_ENTITY = await aclBase.ANY_ENTITY()
     })
 
@@ -56,10 +57,22 @@ contract('Kernel ACL', accounts => {
                 kernelAddr = kernel.address
             })
 
-            it('cannot initialize ACL outside of Kernel', async () => {
-                const acl = await ACL.new()
+            it('cannot initialize base ACL', async () => {
+                const newAcl = await ACL.new()
+                assert.isTrue(await newAcl.isPetrified())
                 return assertRevert(async () => {
-                    await acl.initialize(permissionsRoot)
+                    await newAcl.initialize(permissionsRoot)
+                })
+            })
+
+            it('cannot initialize proxied ACL outside of Kernel', async () => {
+                // Set up ACL proxy
+                await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot)
+                const receipt = await kernel.newAppInstance(ACL_APP_ID, aclBase.address)
+                const newAcl = ACL.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+
+                return assertRevert(async () => {
+                    await newAcl.initialize(permissionsRoot)
                 })
             })
 
