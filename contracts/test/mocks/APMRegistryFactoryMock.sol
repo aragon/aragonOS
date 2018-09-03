@@ -33,11 +33,12 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         // Deploy app proxies
-        // Deploy app proxies
+        bytes memory noInit = new bytes(0);
         ENSSubdomainRegistrar ensSub = ENSSubdomainRegistrar(
             dao.newAppInstance(
                 keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(ENS_SUB_APP_NAME)))),
                 ensSubdomainRegistrarBase,
+                noInit,
                 false
             )
         );
@@ -45,6 +46,7 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
             dao.newAppInstance(
                 keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(APM_APP_NAME)))),
                 registryBase,
+                noInit,
                 false
             )
         );
