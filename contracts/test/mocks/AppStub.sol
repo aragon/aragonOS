@@ -5,12 +5,12 @@ import "../../apps/UnsafeAragonApp.sol";
 import "../../kernel/IKernel.sol";
 
 
-contract AppSt {
+contract AppStubStorage {
     uint a;
     string public stringTest;
 }
 
-contract AppStub is AragonApp, AppSt {
+contract AppStub is AragonApp, AppStubStorage {
     bytes32 constant public ROLE = keccak256("ROLE");
 
     function initialize() onlyInit public {
@@ -39,7 +39,7 @@ contract AppStub is AragonApp, AppSt {
     }
 }
 
-contract AppStub2 is AragonApp, AppSt {
+contract AppStub2 is AragonApp, AppStubStorage {
     function getValue() public constant returns (uint) {
         return a * 2;
     }
