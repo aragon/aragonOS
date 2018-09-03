@@ -59,7 +59,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newAppInstance(_appId, _appBase, false, new bytes(0));
+        return newAppInstance(_appId, _appBase, new bytes(0), false);
     }
 
     /**
@@ -67,13 +67,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     *      implementation if it was not already set
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
+    * @param _initializePayload Payload for call made by the proxy during its construction to initialize
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
-    * @param _initializePayload Payload for call made by the proxy on its constructor to initialize
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _appId, address _appBase, bool _setDefault, bytes _initializePayload)
+    function newAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
@@ -98,7 +98,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newPinnedAppInstance(_appId, _appBase, false, new bytes(0));
+        return newPinnedAppInstance(_appId, _appBase, new bytes(0), false);
     }
 
     /**
@@ -106,13 +106,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     *      its base implementation if it was not already set
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
+    * @param _initializePayload Payload for call made by the proxy during its construction to initialize
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
-    * @param _initializePayload Payload for call made by the proxy on its constructor to initialize
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _appId, address _appBase, bool _setDefault, bytes _initializePayload)
+    function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)

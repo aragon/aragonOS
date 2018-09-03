@@ -60,16 +60,16 @@ contract APMRegistryFactory is APMRegistryConstants {
             dao.newAppInstance(
                 keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(ENS_SUB_APP_NAME)))),
                 ensSubdomainRegistrarBase,
-                false,
-                noInit
+                noInit,
+                false
             )
         );
         APMRegistry apm = APMRegistry(
             dao.newAppInstance(
                 keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(APM_APP_NAME)))),
                 registryBase,
-                false,
-                noInit
+                noInit,
+                false
             )
         );
 
