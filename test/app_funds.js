@@ -1,6 +1,7 @@
 const { hash } = require('eth-ens-namehash')
 const { assertRevert } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
+const { onlyIf } = require('./helpers/onlyIf')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -11,6 +12,8 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 // Mocks
 const AppStub = artifacts.require('AppStub')
 const UnsafeAppStub = artifacts.require('UnsafeAppStub')
+const AppStubDepositable = artifacts.require('AppStubDepositable')
+const UnsafeAppStubDepositable = artifacts.require('UnsafeAppStubDepositable')
 
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
@@ -30,65 +33,87 @@ contract('App funds', accounts => {
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
   })
 
-  // Test the app itself and when it's behind the proxies to make sure their behaviours are the same
-  const appProxyTypes = ['AppProxyUpgradeable', 'AppProxyPinned']
-  for (const appType of ['App', ...appProxyTypes]) {
-    context(`> ${appType}`, () => {
-      let appBase, app
+  const appBases = [
+    {
+      base: AppStub,
+      unsafeBase: UnsafeAppStub,
+    },
+    {
+      base: AppStubDepositable,
+      unsafeBase: UnsafeAppStubDepositable,
+    }
+  ]
+  for ({ base: appBaseType, unsafeBase: unsafeAppBaseType } of appBases) {
+    context(`> ${appBaseType.contractName}`, () => {
+      const onlyAppStubDepositable = onlyIf(() => appBaseType === AppStubDepositable)
 
-      before(async () => {
-        if (appProxyTypes.includes(appType)) {
-          // We can reuse the same app base for the proxies
-          appBase = await AppStub.new()
-        }
-      })
+      // Test the app itself and when it's behind the proxies to make sure their behaviours are the same
+      const appProxyTypes = ['AppProxyUpgradeable', 'AppProxyPinned']
+      for (const appType of ['App', ...appProxyTypes]) {
+        context(`> ${appType}`, () => {
+          let appBase, app
 
-      beforeEach(async () => {
-        const kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
-        await kernel.initialize(aclBase.address, permissionsRoot)
+          before(async () => {
+            if (appProxyTypes.includes(appType)) {
+              // We can reuse the same app base for the proxies
+              appBase = await appBaseType.new()
+            }
+          })
 
-        if (appType === 'App') {
-          // Use the unsafe version to use directly without a proxy
-          app = await UnsafeAppStub.new(kernel.address)
-        } else {
-          // Install app
-          const acl = ACL.at(await kernel.acl())
-          const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-          await acl.createPermission(permissionsRoot, kernel.address, APP_MANAGER_ROLE, permissionsRoot)
-          await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address)
+          beforeEach(async () => {
+            const kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+            await kernel.initialize(aclBase.address, permissionsRoot)
 
-          let appProxy
-          if (appType === 'AppProxyUpgradeable') {
-            appProxy = await AppProxyUpgradeable.new(kernel.address, APP_ID, EMPTY_BYTES)
-          } else if (appType === 'AppProxyPinned') {
-            appProxy = await AppProxyPinned.new(kernel.address, APP_ID, EMPTY_BYTES)
-          }
+            if (appType === 'App') {
+              // Use the unsafe version to use directly without a proxy
+              app = await unsafeAppBaseType.new(kernel.address)
+            } else {
+              // Install app
+              const acl = ACL.at(await kernel.acl())
+              const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+              await acl.createPermission(permissionsRoot, kernel.address, APP_MANAGER_ROLE, permissionsRoot)
+              await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address)
 
-          app = AppStub.at(appProxy.address)
-        }
+              let appProxy
+              if (appType === 'AppProxyUpgradeable') {
+                appProxy = await AppProxyUpgradeable.new(kernel.address, APP_ID, EMPTY_BYTES)
+              } else if (appType === 'AppProxyPinned') {
+                appProxy = await AppProxyPinned.new(kernel.address, APP_ID, EMPTY_BYTES)
+              }
 
-        await app.initialize();
-      })
+              app = appBaseType.at(appProxy.address)
+            }
 
-      it('cannot receive ETH by default', async () => {
-        assert.isTrue(await app.hasInitialized(), 'should have been initialized')
-        assert.isFalse(await app.isDepositable(), 'should not be depositable')
+            await app.initialize();
+          })
 
-        await assertRevert(async () => {
-          await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+          it('cannot receive ETH', async () => {
+            assert.isTrue(await app.hasInitialized(), 'should have been initialized')
+
+            await assertRevert(async () => {
+              await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+            })
+          })
+
+          onlyAppStubDepositable(() => {
+            it('does not have depositing enabled by default', async () => {
+              assert.isTrue(await app.hasInitialized(), 'should have been initialized')
+              assert.isFalse(await app.isDepositable(), 'should not be depositable')
+            })
+
+            it('can receive ETH after being set to depositable', async () => {
+              const amount = 1
+              const initialBalance = await getBalance(app.address)
+
+              await app.enableDeposits()
+              assert.isTrue(await app.isDepositable(), 'should be depositable')
+
+              await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+              assert.equal((await getBalance(app.address)).valueOf(), initialBalance.plus(amount))
+            })
+          })
         })
-      })
-
-      it('can receive ETH after being set to depositable', async () => {
-        const amount = 1
-        const initialBalance = await getBalance(app.address)
-
-        await app.enableDeposits()
-        assert.isTrue(await app.isDepositable(), 'should be depositable')
-
-        await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-        assert.equal((await getBalance(app.address)).valueOf(), initialBalance.plus(amount))
-      })
+      }
     })
   }
 })

@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
 import "../../apps/UnsafeAragonApp.sol";
+import "../../common/DepositableStorage.sol";
 
 
-contract VaultMock is UnsafeAragonApp {
+contract VaultMock is UnsafeAragonApp, DepositableStorage {
     event LogFund(address sender, uint256 amount);
 
     function initialize() external {
@@ -11,7 +12,6 @@ contract VaultMock is UnsafeAragonApp {
         setDepositable(true);
     }
 
-    // Override AragonApp's fallback so that we can get an non-instrumented version during coverage
     function () external payable {
         emit LogFund(msg.sender, msg.value);
     }

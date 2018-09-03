@@ -5,14 +5,13 @@ import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../common/DepositableStorage.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, DepositableStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
     //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 constant public DEFAULT_VAULT_APP_ID = apmNamehash("vault");
@@ -27,10 +26,6 @@ contract Kernel is IKernel, KernelStorage, DepositableStorage, Petrifiable, IsCo
         if (_shouldPetrify) {
             petrify();
         }
-    }
-
-    function () external payable {
-        require(isDepositable());
     }
 
     /**
@@ -50,7 +45,6 @@ contract Kernel is IKernel, KernelStorage, DepositableStorage, Petrifiable, IsCo
         acl.initialize(_permissionsCreator);
         _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
 
-        setDepositable(true);
         recoveryVaultAppId = DEFAULT_VAULT_APP_ID;
     }
 

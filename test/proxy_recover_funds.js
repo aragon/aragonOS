@@ -11,7 +11,7 @@ const ACL = artifacts.require('ACL')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 // Mocks
-const AppStub = artifacts.require('AppStub')
+const AppStubDepositable = artifacts.require('AppStubDepositable')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
 const TokenMock = artifacts.require('TokenMock')
 const VaultMock = artifacts.require('VaultMock')
@@ -66,7 +66,7 @@ contract('Proxy funds', accounts => {
   // Initial setup
   before(async () => {
     aclBase = await ACL.new()
-    appBase = await AppStub.new()
+    appBase = await AppStubDepositable.new()
     appConditionalRecoveryBase = await AppStubConditionalRecovery.new()
 
     // Setup constants
@@ -136,21 +136,19 @@ contract('Proxy funds', accounts => {
             await kernel.setRecoveryVaultAppId(vaultId)
           })
 
-          it('kernel recovers ETH', skipCoverageIfVaultProxy(async () =>
-            await recoverEth(kernel, vault)
-          ))
+          it('kernel cannot receive ETH', async () =>
+            await assertRevert(
+              () => kernel.sendTransaction({ value: 1, gas: 31000 })
+            )
+          )
 
           it('kernel recovers tokens', async () => {
             await recoverTokens(kernel, vault)
           })
 
-          it('kernel recovery fails if vault is not contract', async () => {
-            await failWithoutVault(kernel, kernel)
-          })
-
           context('> App without kernel', () => {
             beforeEach(async () => {
-              target = await AppStub.new()
+              target = await AppStubDepositable.new()
               await target.enableDeposits()
             })
 
@@ -172,10 +170,10 @@ contract('Proxy funds', accounts => {
               // Setup app
               const receipt = await kernel.newAppInstance(APP_ID, appBase.address)
               const appProxy = getEvent(receipt, 'NewAppProxy', 'proxy')
-              const app = AppStub.at(appProxy)
+              const app = AppStubDepositable.at(appProxy)
               await app.enableDeposits()
 
-              target = AppStub.at(appProxy)
+              target = app
             })
 
             it('cannot send 0 ETH to proxy', async () => {
@@ -211,7 +209,7 @@ contract('Proxy funds', accounts => {
               const app = AppStubConditionalRecovery.at(appProxy)
               await app.initialize()
 
-              target = AppStub.at(appProxy)
+              target = app
             })
 
             it('does not allow recovering ETH', skipCoverageIfVaultProxy(

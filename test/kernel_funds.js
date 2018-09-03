@@ -1,9 +1,13 @@
 const { assertRevert } = require('./helpers/assertThrow')
 const { getBalance } = require('./helpers/web3')
+const { onlyIf } = require('./helpers/onlyIf')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
+
+// Mocks
+const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
@@ -16,46 +20,74 @@ contract('Kernel funds', accounts => {
     aclBase = await ACL.new()
   })
 
-  // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
-  for (const kernelType of ['Kernel', 'KernelProxy']) {
-    context(`> ${kernelType}`, () => {
-      let kernelBase, kernel
+  for (const kernelBaseType of [Kernel, KernelDepositableMock]) {
+    context(`> ${kernelBaseType.contractName}`, () => {
+      const onlyKernelDepositable = onlyIf(() => kernelBaseType === KernelDepositableMock)
 
-      before(async () => {
-        if (kernelType === 'KernelProxy') {
-          // We can reuse the same kernel base for the proxies
-          kernelBase = await Kernel.new(true) // petrify immediately
-        }
-      })
+      // Test both the base itself and the KernelProxy to make sure their behaviours are the same
+      for (const kernelType of ['Base', 'Proxy']) {
+        context(`> ${kernelType}`, () => {
+          let kernelBase, kernel
 
-      beforeEach(async () => {
-        if (kernelType === 'Kernel') {
-          kernel = await Kernel.new(false) // don't petrify so it can be used
-        } else if (kernelType === 'KernelProxy') {
-          kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
-        }
-      })
+          before(async () => {
+            if (kernelType === 'Proxy') {
+              // We can reuse the same kernel base for the proxies
+              kernelBase = await kernelBaseType.new(true) // petrify immediately
+            }
+          })
 
-      it('cannot receive ETH before being initialized', async () => {
-        assert.isFalse(await kernel.hasInitialized(), 'should not have been initialized')
-        assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
+          beforeEach(async () => {
+            if (kernelType === 'Base') {
+              kernel = await kernelBaseType.new(false) // don't petrify so it can be used
+            } else if (kernelType === 'Proxy') {
+              kernel = kernelBaseType.at((await KernelProxy.new(kernelBase.address)).address)
+            }
+          })
 
-        await assertRevert(async () => {
-          await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+          it('cannot receive ETH', async () => {
+            // Before initialization
+            assert.isFalse(await kernel.hasInitialized(), 'should not have been initialized')
+
+            await assertRevert(async () => {
+              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+            })
+
+            // After initialization
+            await kernel.initialize(aclBase.address, permissionsRoot);
+            assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
+
+            await assertRevert(async () => {
+              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+            })
+          })
+
+          onlyKernelDepositable(() => {
+            it('does not have depositing enabled by default', async () => {
+              // Before initialization
+              assert.isFalse(await kernel.hasInitialized(), 'should not have been initialized')
+              assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
+
+              // After initialization
+              await kernel.initialize(aclBase.address, permissionsRoot);
+              assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
+              assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
+            })
+
+            it('can receive ETH after being enabled', async () => {
+              const amount = 1
+              const initialBalance = await getBalance(kernel.address)
+
+              await kernel.initialize(aclBase.address, permissionsRoot);
+              await kernel.enableDeposits();
+              assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
+              assert.isTrue(await kernel.isDepositable(), 'should be depositable')
+
+              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+              assert.equal((await getBalance(kernel.address)).valueOf(), initialBalance.plus(amount))
+            })
+          })
         })
-      })
-
-      it('can receive ETH after being initialized', async () => {
-        const amount = 1
-        const initialBalance = await getBalance(kernel.address)
-
-        await kernel.initialize(aclBase.address, permissionsRoot);
-        assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
-        assert.isTrue(await kernel.isDepositable(), 'should be depositable')
-
-        await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-        assert.equal((await getBalance(kernel.address)).valueOf(), initialBalance.plus(amount))
-      })
+      }
     })
   }
 })
