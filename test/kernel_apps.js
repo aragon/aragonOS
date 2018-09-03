@@ -145,13 +145,37 @@ contract('Kernel apps', accounts => {
                         const kernelMock = await KernelOverloadMock.new(kernel.address)
 
                         await withAppManagerPermission(kernelMock.address, async () => {
-                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, true)
+                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, true, '0x')
                             appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
                         })
 
                         // Check that both the app base and default app are set
                         assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address)
                         assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), appProxyAddr)
+
+                        // Make sure app is not initialized
+                        assert.isFalse(await AppStub.at(appProxyAddr).hasInitialized(), 'App shouldnt have been initialized')
+                    })
+
+                    it("allows initializing proxy when using the overloaded version", async () => {
+                        let appProxyAddr
+
+                        // Create KernelOverloadMock instance so we can use the overloaded version
+                        const kernelMock = await KernelOverloadMock.new(kernel.address)
+
+                        const initData = appBase1.initialize.request().params[0].data
+
+                        await withAppManagerPermission(kernelMock.address, async () => {
+                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, false, initData)
+                            appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
+                        })
+
+                        // Make sure app was initialized
+                        assert.isTrue(await AppStub.at(appProxyAddr).hasInitialized(), 'App should have been initialized')
+
+                        // Check that both the app base has been set, but the app isn't the default app
+                        assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address)
+                        assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDR)
                     })
 
                     it("fails if the app base is not given", async() => {

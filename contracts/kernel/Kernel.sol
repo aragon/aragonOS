@@ -59,7 +59,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newAppInstance(_appId, _appBase, false);
+        return newAppInstance(_appId, _appBase, false, new bytes(0));
     }
 
     /**
@@ -70,15 +70,16 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
+    * @param _initializePayload Payload for call made by the proxy on its constructor to initialize
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _appId, address _appBase, bool _setDefault)
+    function newAppInstance(bytes32 _appId, address _appBase, bool _setDefault, bytes _initializePayload)
         public
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
         _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
-        appProxy = newAppProxy(this, _appId);
+        appProxy = newAppProxy(this, _appId, _initializePayload);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
@@ -97,7 +98,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        return newPinnedAppInstance(_appId, _appBase, false);
+        return newPinnedAppInstance(_appId, _appBase, false, new bytes(0));
     }
 
     /**
@@ -108,15 +109,16 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @param _setDefault Whether the app proxy app is the default one.
     *        Useful when the Kernel needs to know of an instance of a particular app,
     *        like Vault for escape hatch mechanism.
+    * @param _initializePayload Payload for call made by the proxy on its constructor to initialize
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _appId, address _appBase, bool _setDefault)
+    function newPinnedAppInstance(bytes32 _appId, address _appBase, bool _setDefault, bytes _initializePayload)
         public
         auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
         _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
-        appProxy = newAppProxyPinned(this, _appId);
+        appProxy = newAppProxyPinned(this, _appId, _initializePayload);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {

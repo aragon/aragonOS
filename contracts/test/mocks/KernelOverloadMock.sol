@@ -17,15 +17,15 @@ contract KernelOverloadMock {
         kernel = Kernel(_kernel);
     }
 
-    //function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
-    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
-        appProxy = kernel.newAppInstance(_name, _appBase, _setDefault);
+    //function newAppInstance(bytes32 _name, address _appBase, bool _setDefault, bytes _initializePayload) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newAppInstance(bytes32 _name, address _appBase, bool _setDefault, bytes _initializePayload) public returns (ERCProxy appProxy) {
+        appProxy = kernel.newAppInstance(_name, _appBase, _setDefault, _initializePayload);
         emit NewAppProxy(appProxy);
     }
 
-    // function newPinnedAppInstance(bytes32 _name, address _appBase) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
-    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault) public returns (ERCProxy appProxy) {
-        appProxy = kernel.newPinnedAppInstance(_name, _appBase, _setDefault);
+    // function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault, bytes _initializePayload) auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _name)) public returns (ERCProxy appProxy) {
+    function newPinnedAppInstance(bytes32 _name, address _appBase, bool _setDefault, bytes _initializePayload) public returns (ERCProxy appProxy) {
+        appProxy = kernel.newPinnedAppInstance(_name, _appBase, _setDefault, _initializePayload);
         emit NewAppProxy(appProxy);
     }
 }
