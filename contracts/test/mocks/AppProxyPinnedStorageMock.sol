@@ -20,7 +20,7 @@ contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
 // Testing this contract is a bit of a pain... we can't overload anything to make the contract check
 // pass in the constructor, so we're forced to initialize this with a mocked Kernel that already
 // sets a contract for the fake app.
-contract AppStubPinnedStorage is AppProxyPinned, FakeAppConstants {
+contract AppProxyPinnedStorageMock is AppProxyPinned, FakeAppConstants {
     constructor(KernelPinnedStorageMock _mockKernel)
         AppProxyPinned(IKernel(_mockKernel), FAKE_APP_ID, new bytes(0))
         public // solium-disable-line visibility-first
