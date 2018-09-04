@@ -46,6 +46,7 @@ contract APMRegistryFactory is APMRegistryConstants {
         // Assume it is the test ENS
         if (ens.owner(node) != address(this)) {
             // If we weren't in test ens and factory doesn't have ownership, will fail
+            require(ens.owner(_tld) == address(this));
             ens.setSubnodeOwner(_tld, _label, this);
         }
 
