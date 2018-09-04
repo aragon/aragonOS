@@ -1,6 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
 const { skipCoverage } = require('./helpers/coverage')
-const { onlyIf } = require('./helpers/onlyIf')
 const { getBalance } = require('./helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
@@ -78,9 +77,6 @@ contract('Proxy funds', accounts => {
 
   // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
   for (const kernelType of ['Kernel', 'KernelProxy']) {
-    const onlyBaseKernel = onlyIf(() => kernelType === 'Kernel')
-    const onlyKernelProxy = onlyIf(() => kernelType === 'KernelProxy')
-
     context(`> ${kernelType}`, () => {
       let kernelBase, kernel
 
