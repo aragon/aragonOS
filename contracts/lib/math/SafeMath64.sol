@@ -15,7 +15,7 @@ library SafeMath64 {
     */
     function mul(uint64 _a, uint64 _b) internal pure returns (uint64) {
         uint256 c = uint256(_a) * uint256(_b);
-        require(c < 0x010000000000000000);
+        require(c < 0x010000000000000000); // 2**64 (less gas this way)
 
         return uint64(c);
     }

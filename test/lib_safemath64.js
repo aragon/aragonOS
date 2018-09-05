@@ -22,6 +22,21 @@ contract('SafeMath64 lib test', accounts => {
     })
   })
 
+  // division
+  it('divides', async () => {
+    const a = 32746
+    const b = 1234
+    assert.equal((await safeMath64Mock.divExt(a, b)).toString(), Math.floor(a / b), "Values should match")
+  })
+
+  it('fails dividing by zero', async () => {
+    const a = 1234
+    const b = 0
+    return assertRevert(async () => {
+      await safeMath64Mock.divExt(a, b)
+    })
+  })
+
   // subtraction
   it('subtract', async () => {
     const a = 1234
@@ -49,6 +64,21 @@ contract('SafeMath64 lib test', accounts => {
     const b = new web3.BigNumber(2).pow(63)
     return assertRevert(async () => {
       await safeMath64Mock.addExt(a, b)
+    })
+  })
+
+  // modulo
+  it('divides modulo', async () => {
+    const a = 32746
+    const b = 1234
+    assert.equal((await safeMath64Mock.modExt(a, b)).toString(), a % b, "Values should match")
+  })
+
+  it('fails modulo dividing by zero', async () => {
+    const a = 1234
+    const b = 0
+    return assertRevert(async () => {
+      await safeMath64Mock.modExt(a, b)
     })
   })
 })

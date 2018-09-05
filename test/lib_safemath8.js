@@ -22,6 +22,21 @@ contract('SafeMath8 lib test', accounts => {
     })
   })
 
+  // division
+  it('divides', async () => {
+    const a = 149
+    const b = 50
+    assert.equal((await safeMath8Mock.divExt(a, b)).toString(), Math.floor(a / b), "Values should match")
+  })
+
+  it('fails dividing by zero', async () => {
+    const a = 123
+    const b = 0
+    return assertRevert(async () => {
+      await safeMath8Mock.divExt(a, b)
+    })
+  })
+
   // subtraction
   it('subtract', async () => {
     const a = 123
@@ -49,6 +64,21 @@ contract('SafeMath8 lib test', accounts => {
     const b = 128
     return assertRevert(async () => {
       await safeMath8Mock.addExt(a, b)
+    })
+  })
+
+  // modulo
+  it('divides modulo', async () => {
+    const a = 149
+    const b = 50
+    assert.equal((await safeMath8Mock.modExt(a, b)).toString(), a % b, "Values should match")
+  })
+
+  it('fails modulo dividing by zero', async () => {
+    const a = 123
+    const b = 0
+    return assertRevert(async () => {
+      await safeMath8Mock.modExt(a, b)
     })
   })
 })
