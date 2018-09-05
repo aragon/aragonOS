@@ -1,5 +1,6 @@
 // See https://github.com/OpenZeppelin/openzeppelin-solidity/blob/d51e38758e1d985661534534d5c61e27bece5042/contracts/math/SafeMath.sol
 // Adapted for uint8, pragma ^0.4.24, and satisfying our linter rules
+// Also optimized the mul() implementation, see https://github.com/aragon/aragonOS/pull/417
 
 pragma solidity ^0.4.24;
 
@@ -14,17 +15,10 @@ library SafeMath8 {
     * @dev Multiplies two numbers, reverts on overflow.
     */
     function mul(uint8 _a, uint8 _b) internal pure returns (uint8) {
-        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (_a == 0) {
-            return 0;
-        }
+        uint256 c = uint256(_a) * uint256(_b);
+        require(c < 256);
 
-        uint8 c = _a * _b;
-        require(c / _a == _b);
-
-        return c;
+        return uint8(c);
     }
 
     /**
