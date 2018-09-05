@@ -13,6 +13,7 @@ allFiredEvents
 scTopics
 
 # truffle build artifacts
+abi/
 build/
 bytecode/
 bytecode_new/
