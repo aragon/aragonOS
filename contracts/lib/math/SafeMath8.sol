@@ -1,5 +1,6 @@
 // See https://github.com/OpenZeppelin/openzeppelin-solidity/blob/d51e38758e1d985661534534d5c61e27bece5042/contracts/math/SafeMath.sol
 // Adapted for uint8, pragma ^0.4.24, and satisfying our linter rules
+// Also optimized the mul() implementation, see https://github.com/aragon/aragonOS/pull/417
 
 pragma solidity ^0.4.24;
 
