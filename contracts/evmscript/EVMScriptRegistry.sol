@@ -27,18 +27,30 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     event EnableExecutor(uint256 indexed executorId, address indexed executorAddress);
     event DisableExecutor(uint256 indexed executorId, address indexed executorAddress);
 
+    /**
+    * @notice Initialize the registry
+    */
     function initialize() public onlyInit {
         initialized();
         // Create empty record to begin executor IDs at 1
         executors.push(ExecutorEntry(IEVMScriptExecutor(0), false));
     }
 
+    /**
+    * @notice Add a new script executor with address `_executor` to the registry
+    * @param _executor Address the IEVMScriptExecutor that will be added to the registry
+    * @return id Identifier of the executor in the registry
+    */
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
         uint256 executorId = executors.push(ExecutorEntry(_executor, true)) - 1;
         emit EnableExecutor(executorId, _executor);
         return executorId;
     }
 
+    /**
+    * @notice Disable script executor with ID `_executorId`
+    * @param _executorId Identifier of the executor in the registry
+    */
     function disableScriptExecutor(uint256 _executorId)
         external
         authP(REGISTRY_MANAGER_ROLE, arr(_executorId))
@@ -49,6 +61,10 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         emit DisableExecutor(_executorId, executorEntry.executor);
     }
 
+    /**
+    * @notice Enable script executor with ID `_executorId`
+    * @param _executorId Identifier of the executor in the registry
+    */
     function enableScriptExecutor(uint256 _executorId)
         external
         authP(REGISTRY_MANAGER_ROLE, arr(_executorId))
@@ -59,6 +75,10 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         emit EnableExecutor(_executorId, executorEntry.executor);
     }
 
+    /**
+    * @dev Get the script executor that can execute a particular script based on its first 4 bytes
+    * @param _script EVMScript being inspected
+    */
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 

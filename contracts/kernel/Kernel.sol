@@ -50,6 +50,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Create a new instance of an app linked to this kernel
+    * @notice Create a new upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
@@ -65,6 +66,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     /**
     * @dev Create a new instance of an app linked to this kernel and set its base
     *      implementation if it was not already set
+    * @notice Create a new upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`. `_setDefault ? 'Also sets it as the default app instance.':''`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _initializePayload Payload for call made by the proxy during its construction to initialize
@@ -89,6 +91,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Create a new pinned instance of an app linked to this kernel
+    * @notice Create a new non-upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`.
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
@@ -104,6 +107,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     /**
     * @dev Create a new pinned instance of an app linked to this kernel and set
     *      its base implementation if it was not already set
+    * @notice Create a new non-upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`. `_setDefault ? 'Also sets it as the default app instance.':''`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _initializePayload Payload for call made by the proxy during its construction to initialize
@@ -128,6 +132,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Set the resolving address of an app instance or base implementation
+    * @notice Set the resolving address of `_appId` in namespace `_namespace` to `_app`
     * @param _namespace App namespace to use
     * @param _appId Identifier for app
     * @param _app Address of the app instance or base implementation
