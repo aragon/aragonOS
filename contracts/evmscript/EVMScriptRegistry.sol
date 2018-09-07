@@ -38,7 +38,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
 
     /**
     * @notice Add a new script executor with address `_executor` to the registry
-    * @param _executor Address the IEVMScriptExecutor that will be added to the registry
+    * @param _executor Address of the IEVMScriptExecutor that will be added to the registry
     * @return id Identifier of the executor in the registry
     */
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
