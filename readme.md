@@ -9,7 +9,7 @@ It is not secure to use any of this code in production (mainnet) until proper se
 All issues tagged with **[bounty](https://github.com/aragon/aragonOS/labels/bounty)** are eligible for a bounty on a successfully merged Pull Request that solves the issue. Even if the bounty says 0 ANT, if it has the **bounty** label, it will always be higher than 0 ANT (until we automate it, we may take a bit to fund the bounties manually).
 
 #### 👋 We are tagging tasks that are [good first issues](https://github.com/aragon/aragonOS/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) so you can get started contributing to Aragon Core.
-Don't be shy to contribute even the smallest tweak. Everyone will be specially nice and helpful to beginners to help you get started!
+Don't be shy to contribute even the smallest tweak. Everyone will be especially nice and helpful to beginners to help you get started!
 
 ## Documentation
 
