@@ -11,9 +11,9 @@ import "./Repo.sol";
 contract APMRegistryConstants {
     // Cant have a regular APM appId because it is used to build APM
     // TODO: recheck this
-    string constant public APM_APP_NAME = "apm-registry";
-    string constant public REPO_APP_NAME = "apm-repo";
-    string constant public ENS_SUB_APP_NAME = "apm-enssub";
+    string public constant APM_APP_NAME = "apm-registry";
+    string public constant REPO_APP_NAME = "apm-repo";
+    string public constant ENS_SUB_APP_NAME = "apm-enssub";
 }
 
 
@@ -21,8 +21,8 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     AbstractENS public ens;
     ENSSubdomainRegistrar public registrar;
 
-    // bytes32 constant public CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
-    bytes32 constant public CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
+    // bytes32 public constant CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
+    bytes32 public constant CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
 
     event NewRepo(bytes32 id, string name, address repo);
 

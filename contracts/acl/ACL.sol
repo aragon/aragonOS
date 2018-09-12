@@ -31,12 +31,12 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
-    uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 constant TIMESTAMP_PARAM_ID    = 201;
+    uint8 constant internal BLOCK_NUMBER_PARAM_ID = 200;
+    uint8 constant internal TIMESTAMP_PARAM_ID    = 201;
     // 202 is unused
-    uint8 constant ORACLE_PARAM_ID       = 203;
-    uint8 constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 constant PARAM_VALUE_PARAM_ID  = 205;
+    uint8 constant internal ORACLE_PARAM_ID       = 203;
+    uint8 constant internal LOGIC_OP_PARAM_ID     = 204;
+    uint8 constant internal PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
     // Hardcoded constant to save gas
@@ -44,7 +44,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 constant public NO_PERMISSION = bytes32(0);
     address constant public ANY_ENTITY = address(-1);
-    uint256 constant ORACLE_CHECK_GAS = 30000;
+
+    uint256 constant internal ORACLE_CHECK_GAS = 30000;
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
