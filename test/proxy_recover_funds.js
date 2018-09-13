@@ -224,9 +224,10 @@ contract('Proxy funds', accounts => {
       }
     })
   }
+
   // Kernel is not depositable by default, but in order to test transferToVault,
   // we create a mockup to make it depositable
-  context('Depositable Kernel', async () => {
+  context('Depositable KernelProxy', async () => {
     let kernel, vault
 
     beforeEach(async () => {
@@ -251,8 +252,8 @@ contract('Proxy funds', accounts => {
       await kernel.setRecoveryVaultAppId(vaultId)
     })
 
-    it('recovers ETH from the kernel', async () => {
+    it('recovers ETH from the kernel', skipCoverage(async () => {
       await recoverEth(kernel, vault)
-    })
+    }))
   })
 })
