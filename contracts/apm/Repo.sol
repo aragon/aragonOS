@@ -16,8 +16,8 @@ contract Repo is AragonApp {
     mapping (bytes32 => uint256) internal versionIdForSemantic;
     mapping (address => uint256) internal latestVersionIdForContract;
 
-    // bytes32 constant public CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
-    bytes32 constant public CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
+    // bytes32 public constant CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
+    bytes32 public constant CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
 
     event NewVersion(uint256 versionId, uint16[3] semanticVersion);
 

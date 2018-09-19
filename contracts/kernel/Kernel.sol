@@ -13,10 +13,10 @@ import "../factory/AppProxyFactory.sol";
 
 contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
-    //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    //bytes32 constant public DEFAULT_VAULT_APP_ID = apmNamehash("vault");
-    bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
-    bytes32 constant public DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
+    //bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+    //bytes32 public constant DEFAULT_VAULT_APP_ID = apmNamehash("vault");
+    bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
+    bytes32 public constant DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.

@@ -11,8 +11,8 @@ import "./IACLOracle.sol";
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
-    //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
-    bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
+    //bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -31,20 +31,21 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
-    uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 constant TIMESTAMP_PARAM_ID    = 201;
+    uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
+    uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
     // 202 is unused
-    uint8 constant ORACLE_PARAM_ID       = 203;
-    uint8 constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 constant PARAM_VALUE_PARAM_ID  = 205;
+    uint8 internal constant ORACLE_PARAM_ID       = 203;
+    uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
+    uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
     // Hardcoded constant to save gas
-    //bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
-    bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
-    bytes32 constant public NO_PERMISSION = bytes32(0);
-    address constant public ANY_ENTITY = address(-1);
-    uint256 constant ORACLE_CHECK_GAS = 30000;
+    //bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
+    bytes32 public constant NO_PERMISSION = bytes32(0);
+    address public constant ANY_ENTITY = address(-1);
+
+    uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));

@@ -9,7 +9,7 @@ import "./Initializable.sol";
 
 contract Petrifiable is Initializable {
     // Use block UINT256_MAX (which should be never) as the initializable date
-    uint256 constant internal PETRIFIED_BLOCK = uint256(-1);
+    uint256 internal constant PETRIFIED_BLOCK = uint256(-1);
 
     function isPetrified() public view returns (bool) {
         return getInitializationBlock() == PETRIFIED_BLOCK;
