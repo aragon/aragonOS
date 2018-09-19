@@ -8,7 +8,7 @@ import "../ens/ENSConstants.sol";
 
 
 contract APMNamehash is ENSConstants {
-    bytes32 constant public APM_NODE = keccak256(abi.encodePacked(ETH_TLD_NODE, keccak256("aragonpm")));
+    bytes32 public constant APM_NODE = keccak256(abi.encodePacked(ETH_TLD_NODE, keccak256("aragonpm")));
 
     function apmNamehash(string name) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(APM_NODE, keccak256(bytes(name))));
