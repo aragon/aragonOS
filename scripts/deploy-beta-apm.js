@@ -45,6 +45,8 @@ module.exports = async (
   const tldHash = namehash(tldName)
   const labelHash = '0x'+keccak256(labelName)
 
+  let ens
+
   log('Deploying APM...')
   log('Owner:', owner)
 
@@ -105,7 +107,7 @@ module.exports = async (
     return {
       apmFactory,
       ens,
-      apm: APM.at(apmAddr),
+      apm: APMRegistry.at(apmAddr),
     }
   }
 }
