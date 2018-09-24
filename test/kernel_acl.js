@@ -2,6 +2,8 @@ const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
+const keccak_256 = require('js-sha3').keccak_256
+const keccak256 = (name) => '0x' + keccak_256(name)
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -316,6 +318,38 @@ contract('Kernel ACL', accounts => {
                         const receipt = await acl.revokePermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                         assertEvent(receipt, 'SetPermission')
                         assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    })
+                })
+            })
+            context('> petrifying permission', () => {
+                const MOCK_ROLE = keccak256("MOCK_ROLE")
+                let PETRIFY_ENTITY
+
+                before(async () => {
+                    PETRIFY_ENTITY = await acl.PETRIFY_ENTITY()
+                })
+
+                it('petrifies permission', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    // petrify it
+                    const receipt = await acl.petrifyPermission(kernelAddr, MOCK_ROLE, { from: granted })
+                    assertEvent(receipt, 'ChangePermissionManager')
+
+                    // check that nothing else can be done from now on
+                    assert.isTrue(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
+                    await assertRevert(async () => {
+                        await acl.grantPermission(child, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.setPermissionManager(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.removePermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
                     })
                 })
             })

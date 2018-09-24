@@ -44,6 +44,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 public constant NO_PERMISSION = bytes32(0);
     address public constant ANY_ENTITY = address(-1);
+    address public constant PETRIFY_ENTITY = address(1);
 
     uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
@@ -154,6 +155,18 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
     {
         _setPermissionManager(address(0), _app, _role);
+    }
+
+    /**
+    * @notice Lock `_role` in `_app`, so no midification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being unmanaged
+    * @param _role Identifier for the group of actions being unmanaged
+    */
+    function petrifyPermission(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        _setPermissionManager(PETRIFY_ENTITY, _app, _role);
     }
 
     /**
