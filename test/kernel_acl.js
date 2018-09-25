@@ -356,7 +356,7 @@ contract('Kernel ACL', accounts => {
 
                 it('petrifies non-existing permission', async () => {
                     // lock it
-                    const receipt = await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: granted })
+                    const receipt = await acl.createLockedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
                     assertEvent(receipt, 'ChangePermissionManager')
 
                     // check that nothing else can be done from now on

@@ -158,17 +158,26 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
+    * @notice Lock non-existing yet `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being locked
+    * @param _role Identifier for the group of actions being locked
+    */
+    function createLockedPermission(address _app, bytes32 _role)
+        external
+        auth(CREATE_PERMISSIONS_ROLE)
+    {
+        _setPermissionManager(LOCK_ENTITY, _app, _role);
+    }
+
+    /**
     * @notice Lock `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
-    * @param _app Address of the app in which the permission is being unmanaged
-    * @param _role Identifier for the group of actions being unmanaged
+    * @param _app Address of the app in which the permission is being locked
+    * @param _role Identifier for the group of actions being locked
     */
     function lockPermission(address _app, bytes32 _role)
         external
+        onlyPermissionManager(_app, _role)
     {
-        // only allow permission locking when there is no manager or by the manager
-        address permissionManager = getPermissionManager(_app, _role);
-        require(permissionManager == msg.sender  || permissionManager == address(0));
-
         _setPermissionManager(LOCK_ENTITY, _app, _role);
     }
 
