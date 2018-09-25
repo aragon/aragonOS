@@ -321,20 +321,21 @@ contract('Kernel ACL', accounts => {
                     })
                 })
             })
-            context('> petrifying permission', () => {
+
+            context('> locking permission', () => {
                 const MOCK_ROLE = keccak256("MOCK_ROLE")
-                let PETRIFY_ENTITY
+                let LOCK_ENTITY
 
                 before(async () => {
-                    PETRIFY_ENTITY = await acl.PETRIFY_ENTITY()
+                    LOCK_ENTITY = await acl.LOCK_ENTITY()
                 })
 
-                it('petrifies permission', async () => {
+                it('petrifies existing permission', async () => {
                     // create permission
                     await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
 
-                    // petrify it
-                    const receipt = await acl.petrifyPermission(kernelAddr, MOCK_ROLE, { from: granted })
+                    // lock it
+                    const receipt = await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: granted })
                     assertEvent(receipt, 'ChangePermissionManager')
 
                     // check that nothing else can be done from now on
@@ -350,6 +351,37 @@ contract('Kernel ACL', accounts => {
                     })
                     await assertRevert(async () => {
                         await acl.removePermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                })
+
+                it('petrifies non-existing permission', async () => {
+                    // lock it
+                    const receipt = await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: granted })
+                    assertEvent(receipt, 'ChangePermissionManager')
+
+                    // check that nothing else can be done from now on
+                    assert.isFalse(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
+                    await assertRevert(async () => {
+                        await acl.grantPermission(child, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.setPermissionManager(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.removePermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                })
+
+                it('fails petrifying existing permission by no manager', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    return assertRevert(async () => {
+                        // try to lock it
+                        await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: noPermissions })
                     })
                 })
             })

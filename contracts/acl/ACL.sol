@@ -44,7 +44,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 public constant NO_PERMISSION = bytes32(0);
     address public constant ANY_ENTITY = address(-1);
-    address public constant PETRIFY_ENTITY = address(1);
+    address public constant LOCK_ENTITY = address(1); // address(0) is already used as "no permission manager"
 
     uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
@@ -158,15 +158,18 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @notice Lock `_role` in `_app`, so no midification can be made to it (grant, revoke, permission manager)
+    * @notice Lock `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
     * @param _app Address of the app in which the permission is being unmanaged
     * @param _role Identifier for the group of actions being unmanaged
     */
-    function petrifyPermission(address _app, bytes32 _role)
+    function lockPermission(address _app, bytes32 _role)
         external
-        onlyPermissionManager(_app, _role)
     {
-        _setPermissionManager(PETRIFY_ENTITY, _app, _role);
+        // only allow permission locking when there is no manager or by the manager
+        address permissionManager = getPermissionManager(_app, _role);
+        require(permissionManager == msg.sender  || permissionManager == address(0));
+
+        _setPermissionManager(LOCK_ENTITY, _app, _role);
     }
 
     /**
