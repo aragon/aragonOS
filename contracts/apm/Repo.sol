@@ -12,7 +12,8 @@ contract Repo is AragonApp {
         bytes contentURI;
     }
 
-    Version[] public versions;
+    uint256 internal versionsNextIndex;
+    mapping (uint256 => Version) internal versions;
     mapping (bytes32 => uint256) internal versionIdForSemantic;
     mapping (address => uint256) internal latestVersionIdForContract;
 
@@ -27,6 +28,7 @@ contract Repo is AragonApp {
     */
     function initialize() public onlyInit {
         initialized();
+        versionsNextIndex = 1;
     }
 
     /**
@@ -42,21 +44,25 @@ contract Repo is AragonApp {
     ) public auth(CREATE_VERSION_ROLE)
     {
         address contractAddress = _contractAddress;
-        if (versions.length > 0) {
-            Version storage lastVersion = versions[versions.length - 1];
-            require(isValidBump(lastVersion.semanticVersion, _newSemanticVersion));
-            if (contractAddress == 0) {
+        uint256 lastVersionIndex = versionsNextIndex - 1;
+
+        uint16[3] memory lastSematicVersion;
+
+        if (lastVersionIndex > 0) {
+            Version storage lastVersion = versions[lastVersionIndex];
+            lastSematicVersion = lastVersion.semanticVersion;
+
+            if (contractAddress == address(0)) {
                 contractAddress = lastVersion.contractAddress;
             }
             // Only allows smart contract change on major version bumps
             require(lastVersion.contractAddress == contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0]);
-        } else {
-            versions.length += 1;
-            uint16[3] memory zeroVersion;
-            require(isValidBump(zeroVersion, _newSemanticVersion));
         }
 
-        uint versionId = versions.push(Version(_newSemanticVersion, contractAddress, _contentURI)) - 1;
+        require(isValidBump(lastSematicVersion, _newSemanticVersion));
+
+        uint256 versionId = versionsNextIndex++;
+        versions[versionId] = Version(_newSemanticVersion, contractAddress, _contentURI);
         versionIdForSemantic[semanticVersionHash(_newSemanticVersion)] = versionId;
         latestVersionIdForContract[contractAddress] = versionId;
 
@@ -64,7 +70,7 @@ contract Repo is AragonApp {
     }
 
     function getLatest() public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
-        return getByVersionId(versions.length - 1);
+        return getByVersionId(versionsNextIndex - 1);
     }
 
     function getLatestForContractAddress(address _contractAddress)
@@ -84,14 +90,13 @@ contract Repo is AragonApp {
     }
 
     function getByVersionId(uint _versionId) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
-        require(_versionId > 0);
+        require(_versionId > 0 && _versionId < versionsNextIndex);
         Version storage version = versions[_versionId];
         return (version.semanticVersion, version.contractAddress, version.contentURI);
     }
 
     function getVersionsCount() public view returns (uint256) {
-        uint256 len = versions.length;
-        return len > 0 ? len - 1 : 0;
+        return versionsNextIndex - 1;
     }
 
     function isValidBump(uint16[3] _oldVersion, uint16[3] _newVersion) public pure returns (bool) {
