@@ -322,20 +322,20 @@ contract('Kernel ACL', accounts => {
                 })
             })
 
-            context('> locking permission', () => {
+            context('> burning permission manager', () => {
                 const MOCK_ROLE = keccak256("MOCK_ROLE")
-                let LOCK_ENTITY
+                let BURN_ENTITY
 
                 before(async () => {
-                    LOCK_ENTITY = await acl.LOCK_ENTITY()
+                    BURN_ENTITY = await acl.BURN_ENTITY()
                 })
 
-                it('petrifies existing permission', async () => {
+                it('burns existing permission', async () => {
                     // create permission
                     await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
 
-                    // lock it
-                    const receipt = await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: granted })
+                    // burn it
+                    const receipt = await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
                     assertEvent(receipt, 'ChangePermissionManager')
 
                     // check that nothing else can be done from now on
@@ -354,9 +354,9 @@ contract('Kernel ACL', accounts => {
                     })
                 })
 
-                it('petrifies non-existing permission', async () => {
-                    // lock it
-                    const receipt = await acl.createLockedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
+                it('burns non-existing permission', async () => {
+                    // burn it
+                    const receipt = await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
                     assertEvent(receipt, 'ChangePermissionManager')
 
                     // check that nothing else can be done from now on
@@ -375,13 +375,23 @@ contract('Kernel ACL', accounts => {
                     })
                 })
 
-                it('fails petrifying existing permission by no manager', async () => {
+                it('fails burning existing permission by no manager', async () => {
                     // create permission
                     await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
 
                     return assertRevert(async () => {
-                        // try to lock it
-                        await acl.lockPermission(kernelAddr, MOCK_ROLE, { from: noPermissions })
+                        // try to burn it
+                        await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: noPermissions })
+                    })
+                })
+
+                it('fails trying to create a burned permission which already has a manager', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    return assertRevert(async () => {
+                        // try to create it burnt
+                        await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
                     })
                 })
             })

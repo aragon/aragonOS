@@ -44,7 +44,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 public constant NO_PERMISSION = bytes32(0);
     address public constant ANY_ENTITY = address(-1);
-    address public constant LOCK_ENTITY = address(1); // address(0) is already used as "no permission manager"
+    address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
 
     uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
@@ -158,27 +158,30 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @notice Lock non-existing yet `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
-    * @param _app Address of the app in which the permission is being locked
-    * @param _role Identifier for the group of actions being locked
+    * @notice Burn non-existent `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
     */
-    function createLockedPermission(address _app, bytes32 _role)
+    function createBurnedPermission(address _app, bytes32 _role)
         external
         auth(CREATE_PERMISSIONS_ROLE)
     {
-        _setPermissionManager(LOCK_ENTITY, _app, _role);
+        // only allow permission creation (or re-creation) when there is no manager
+        require(getPermissionManager(_app, _role) == address(0));
+
+        _setPermissionManager(BURN_ENTITY, _app, _role);
     }
 
     /**
-    * @notice Lock `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
-    * @param _app Address of the app in which the permission is being locked
-    * @param _role Identifier for the group of actions being locked
+    * @notice Burn `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
     */
-    function lockPermission(address _app, bytes32 _role)
+    function burnPermissionManager(address _app, bytes32 _role)
         external
         onlyPermissionManager(_app, _role)
     {
-        _setPermissionManager(LOCK_ENTITY, _app, _role);
+        _setPermissionManager(BURN_ENTITY, _app, _role);
     }
 
     /**
