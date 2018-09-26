@@ -336,7 +336,10 @@ contract('Kernel ACL', accounts => {
 
                     // burn it
                     const receipt = await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
-                    assertEvent(receipt, 'ChangePermissionManager')
+                    const events = assertEvent(receipt, 'ChangePermissionManager')
+                    assert.equal(events[0].args.app, kernelAddr)
+                    assert.equal(events[0].args.role, MOCK_ROLE)
+                    assert.equal(events[0].args.manager, BURN_ENTITY)
 
                     // check that nothing else can be done from now on
                     assert.isTrue(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
