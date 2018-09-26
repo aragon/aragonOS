@@ -19,6 +19,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
 
     // Who is the manager of a permission
+
     mapping (bytes32 => address) internal permissionManager;
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
@@ -50,6 +51,12 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
+        _;
+    }
+
+    modifier noPermissionManager(address _app, bytes32 _role) {
+        // only allow permission creation (or re-creation) when there is no manager
+        require(getPermissionManager(_app, _role) == address(0));
         _;
     }
 
@@ -85,6 +92,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function createPermission(address _entity, address _app, bytes32 _role, address _manager)
         external
         auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
     {
         _createPermission(_entity, _app, _role, _manager);
     }
@@ -165,10 +173,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function createBurnedPermission(address _app, bytes32 _role)
         external
         auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
     {
-        // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
-
         _setPermissionManager(BURN_ENTITY, _app, _role);
     }
 
@@ -279,9 +285,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
-        // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
-
         _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
         _setPermissionManager(_manager, _app, _role);
     }
