@@ -389,6 +389,14 @@ contract('Kernel ACL', accounts => {
                     // create permission
                     await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
 
+                    await assertRevert(async () => {
+                        // try to create it burnt
+                        await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
+                    })
+
+                    // even removing the only grantee, still fails
+                    await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+
                     return assertRevert(async () => {
                         // try to create it burnt
                         await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })

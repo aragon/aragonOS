@@ -19,7 +19,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
 
     // Who is the manager of a permission
-
     mapping (bytes32 => address) internal permissionManager;
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
