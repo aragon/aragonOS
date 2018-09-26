@@ -340,6 +340,7 @@ contract('Kernel ACL', accounts => {
                     assert.equal(events[0].args.app, kernelAddr)
                     assert.equal(events[0].args.role, MOCK_ROLE)
                     assert.equal(events[0].args.manager, BURN_ENTITY)
+                    assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
 
                     // check that nothing else can be done from now on
                     assert.isTrue(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
@@ -360,7 +361,11 @@ contract('Kernel ACL', accounts => {
                 it('burns non-existing permission', async () => {
                     // burn it
                     const receipt = await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
-                    assertEvent(receipt, 'ChangePermissionManager')
+                    const events = assertEvent(receipt, 'ChangePermissionManager')
+                    assert.equal(events[0].args.app, kernelAddr)
+                    assert.equal(events[0].args.role, MOCK_ROLE)
+                    assert.equal(events[0].args.manager, BURN_ENTITY)
+                    assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
 
                     // check that nothing else can be done from now on
                     assert.isFalse(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
