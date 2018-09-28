@@ -9,9 +9,10 @@ import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
+import "./KernelConstants.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, KernelConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
     //bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     //bytes32 public constant DEFAULT_VAULT_APP_ID = apmNamehash("vault");

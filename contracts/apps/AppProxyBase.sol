@@ -6,7 +6,7 @@ import "../kernel/KernelConstants.sol";
 import "../kernel/IKernel.sol";
 
 
-contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
+contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstantsAppBases {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app

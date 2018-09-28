@@ -4,9 +4,10 @@ import "./IKernel.sol";
 import "./KernelStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
 import "../common/IsContract.sol";
+import "./KernelConstants.sol";
 
 
-contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
+contract KernelProxy is KernelStorage, KernelConstantsKernelCore, IsContract, DepositableDelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
