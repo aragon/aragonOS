@@ -12,7 +12,7 @@ import "../kernel/KernelConstants.sol";
 import "../common/Initializable.sol";
 
 
-contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelConstants {
+contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelConstantsAppAddress {
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
     function getExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
