@@ -2,18 +2,15 @@ const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
 const deployENS = require('./deploy-beta-ens')
+const deployDaoFactory = require('./deploy-daofactory')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
 const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
 const defaultENSAddress = process.env.ENS
 
-const baseInitArguments = {
-  Kernel: [ true ] // petrify
-}
-
 const deployBases = async baseContracts => {
-  const deployedContracts = await Promise.all(baseContracts.map(c => c.new(...(baseInitArguments[c.contractName] || []))))
+  const deployedContracts = await Promise.all(baseContracts.map(c => c.new()))
   return deployedContracts.map(c => c.address)
 }
 
@@ -30,14 +27,11 @@ module.exports = async (
     if (verbose) { console.log(...args) }
   }
 
-  const ACL = artifacts.require('ACL')
-  const Kernel = artifacts.require('Kernel')
   const APMRegistry = artifacts.require('APMRegistry')
   const Repo = artifacts.require('Repo')
   const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 
   const APMRegistryFactory = artifacts.require('APMRegistryFactory')
-  const DAOFactory = artifacts.require('DAOFactory')
   const ENS = artifacts.require('ENS')
 
   const tldName = 'eth'
@@ -64,17 +58,16 @@ module.exports = async (
   log(`Label: ${labelName} (${labelHash})`)
 
   log('=========')
-  log('Deploying APM bases...')
-  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
+  log('Deploying APM Registry...')
+  //const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
+  const apmRegistryBase = await APMRegistry.new()
+  const apmRepoBase = await Repo.new()
+  const apmENSSubdomainRegistrar = await ENSSubdomainRegistrar.new()
+  const apmBases = [apmRegistryBase.address, apmRepoBase.address, apmENSSubdomainRegistrar.address]
   log('Deployed APM bases:', apmBases)
 
-  log('Deploying DAO bases...')
-  const daoBases = await deployBases([Kernel, ACL])
-  log('Deployed DAO bases', daoBases)
-
   log('Deploying DAOFactory without EVMScripts...')
-  const evmScriptRegistry = '0x00' // Basic APM needs no forwarding
-  const daoFactory = await DAOFactory.new(...daoBases, evmScriptRegistry)
+  const daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScripts: false, verbose: false })).daoFactory
   log('Deployed DAOFactory:', daoFactory.address)
 
   log('Deploying APMRegistryFactory...')
