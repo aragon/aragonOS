@@ -193,8 +193,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
         IACL defaultAcl = acl();
-        return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
-            defaultAcl.hasPermission(_who, _where, _what, _how);
+        return defaultAcl.hasPermission(_who, _where, _what, _how); // if acl is not set, it will revert
     }
 
     function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {
