@@ -58,8 +58,12 @@ module.exports = async (
   log(`Label: ${labelName} (${labelHash})`)
 
   log('=========')
-  log('Deploying APM bases...')
-  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
+  log('Deploying APM Registry...')
+  //const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
+  const apmRegistryBase = await APMRegistry.new()
+  const apmRepoBase = await Repo.new()
+  const apmENSSubdomainRegistrar = await ENSSubdomainRegistrar.new()
+  const apmBases = [apmRegistryBase.address, apmRepoBase.address, apmENSSubdomainRegistrar.address]
   log('Deployed APM bases:', apmBases)
 
   log('Deploying DAOFactory without EVMScripts...')
