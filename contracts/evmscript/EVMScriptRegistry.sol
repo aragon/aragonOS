@@ -22,18 +22,23 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         bool enabled;
     }
 
-    ExecutorEntry[] public executors;
+    uint256 private executorsNextIndex;
+    mapping (uint256 => ExecutorEntry) public executors;
 
     event EnableExecutor(uint256 indexed executorId, address indexed executorAddress);
     event DisableExecutor(uint256 indexed executorId, address indexed executorAddress);
 
+    modifier executorExists(uint256 _executorId) {
+        require(_executorId > 0 && _executorId < executorsNextIndex);
+        _;
+    }
     /**
     * @notice Initialize the registry
     */
     function initialize() public onlyInit {
         initialized();
         // Create empty record to begin executor IDs at 1
-        executors.push(ExecutorEntry(IEVMScriptExecutor(0), false));
+        executorsNextIndex = 1;
     }
 
     /**
@@ -42,7 +47,8 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     * @return id Identifier of the executor in the registry
     */
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
-        uint256 executorId = executors.push(ExecutorEntry(_executor, true)) - 1;
+        uint256 executorId = executorsNextIndex++;
+        executors[executorId] = ExecutorEntry(_executor, true);
         emit EnableExecutor(executorId, _executor);
         return executorId;
     }
@@ -54,6 +60,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function disableScriptExecutor(uint256 _executorId)
         external
         authP(REGISTRY_MANAGER_ROLE, arr(_executorId))
+        executorExists(_executorId)
     {
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(executorEntry.enabled);
@@ -68,6 +75,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function enableScriptExecutor(uint256 _executorId)
         external
         authP(REGISTRY_MANAGER_ROLE, arr(_executorId))
+        executorExists(_executorId)
     {
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(!executorEntry.enabled);
@@ -82,7 +90,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 
-        if (id == 0 || id >= executors.length) {
+        if (id == 0 || id >= executorsNextIndex) {
             return IEVMScriptExecutor(0);
         }
 
