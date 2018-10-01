@@ -3,12 +3,16 @@ pragma solidity 0.4.24;
 // Split in multiple contracts so they can be individually imported
 // Optimization for having lighter proxies and AragonApp base contract
 
+/* solium-disable no-empty-blocks */
+
+
 contract KernelConstantsAppBases {
     /*
     bytes32 public constant APP_BASES_NAMESPACE = keccak256("base");
     */
     bytes32 public constant APP_BASES_NAMESPACE = 0xf1f3eb40f5bc1ad1344716ced8b8a0431d840b5783aea1fd01786bc26f35ac0f;
 }
+
 
 contract KernelConstantsKernelCore {
     /*
@@ -18,6 +22,7 @@ contract KernelConstantsKernelCore {
     bytes32 public constant CORE_NAMESPACE = 0xc681a85306374a5ab27f0bbc385296a54bcd314a1948b6cf61c4ea1bc44bb9f8;
     bytes32 public constant KERNEL_APP_ID = 0x3b4bf6bf3ad5000ecf0f989d5befde585c6860fea3e574a4fab4c49d1c177d9c;
 }
+
 
 contract KernelConstantsAppAddress {
     /*
