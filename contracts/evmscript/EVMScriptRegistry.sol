@@ -90,10 +90,6 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 
-        if (id == 0 || id >= executorsNextIndex) {
-            return IEVMScriptExecutor(0);
-        }
-
         ExecutorEntry storage entry = executors[id];
         return entry.enabled ? entry.executor : IEVMScriptExecutor(0);
     }
