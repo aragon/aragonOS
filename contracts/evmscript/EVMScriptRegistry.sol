@@ -61,8 +61,9 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function disableScriptExecutor(uint256 _executorId)
         external
         authP(REGISTRY_MANAGER_ROLE, arr(_executorId))
-        executorExists(_executorId)
     {
+        // Note that we don't need to check for an executor's existence in this case, as only
+        // existing executors can be enabled
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(executorEntry.enabled);
         executorEntry.enabled = false;
@@ -91,6 +92,8 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
         uint256 id = _script.getSpecId();
 
+        // Note that we don't need to check for an executor's existence in this case, as only
+        // existing executors can be enabled
         ExecutorEntry storage entry = executors[id];
         return entry.enabled ? entry.executor : IEVMScriptExecutor(0);
     }
