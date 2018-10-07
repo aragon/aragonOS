@@ -32,6 +32,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         require(_executorId > 0 && _executorId < executorsNextIndex);
         _;
     }
+
     /**
     * @notice Initialize the registry
     */
