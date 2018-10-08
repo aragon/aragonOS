@@ -1,4 +1,8 @@
-pragma solidity 0.4.24;
+/*
+ * SPDX-License-Identitifer:    MIT
+ */
+
+pragma solidity ^0.4.24;
 
 
 contract KernelConstants {
