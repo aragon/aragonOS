@@ -17,7 +17,7 @@ const deployBases = async (baseContracts, verbose) => {
   const deployments = baseContracts.map(
     async (contract) => {
       const instance = await contract.new()
-      logDeploy(instance, verbose)
+      logDeploy(instance, { verbose })
       return instance
     }
   )
@@ -87,7 +87,7 @@ module.exports = async (
 
   log('Deploying APMRegistryFactory...')
   const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
-  logDeploy(apmFactory, verbose)
+  logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
   try {

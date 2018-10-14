@@ -17,3 +17,4 @@ abi/
 build/
 bytecode/
 bytecode_new/
+flattened_contracts/
