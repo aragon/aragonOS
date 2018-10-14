@@ -3,6 +3,7 @@ const keccak256 = require('js-sha3').keccak_256
 
 const deployENS = require('./deploy-beta-ens')
 const deployDaoFactory = require('./deploy-daofactory')
+const logDeploy = require('./helpers/create-logger')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
@@ -12,8 +13,15 @@ const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb2
 const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
 
-const deployBases = async baseContracts => {
-  const deployedContracts = await Promise.all(baseContracts.map(c => c.new()))
+const deployBases = async (baseContracts, verbose) => {
+  const deployments = baseContracts.map(
+    async (contract) => {
+      const instance = await contract.new()
+      logDeploy(instance, verbose)
+      return instance
+    }
+  )
+  const deployedContracts = await Promise.all(deployments)
   return deployedContracts.map(c => c.address)
 }
 
@@ -64,8 +72,7 @@ module.exports = async (
 
   log('=========')
   log('Deploying APM bases...')
-  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
-  log('Deployed APM bases:', apmBases)
+  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar], verbose)
 
   let daoFactory
   if (daoFactoryAddress) {
@@ -76,12 +83,11 @@ module.exports = async (
   } else {
     log('Deploying DAOFactory with EVMScripts...')
     daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: true, verbose: false })).daoFactory
-    log('Deployed DAOFactory:', daoFactory.address)
   }
 
   log('Deploying APMRegistryFactory...')
   const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
-  log('Deployed APMRegistryFactory:', apmFactory.address)
+  logDeploy(apmFactory, verbose)
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
   try {
@@ -99,7 +105,10 @@ module.exports = async (
 
   log('=========')
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
-  log('Deployed APM:', apmAddr)
+  log('# APM:')
+  log('Address:', apmAddr)
+  log('Transaction hash:', receipt.tx)
+  log('=========')
   log(apmAddr)
 
   if (typeof truffleExecCallback === 'function') {
