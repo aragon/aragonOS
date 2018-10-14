@@ -6,11 +6,10 @@ import "../../kernel/Kernel.sol";
 
 
 contract FakeAppConstants {
-    bytes32 constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
+    bytes32 public constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
 }
 
 contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
-    bytes32 constant FAKE_APP_ID = keccak256('FAKE_APP_ID');
     constructor(address _fakeApp) Kernel(false) public {
         _setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, _fakeApp);
     }

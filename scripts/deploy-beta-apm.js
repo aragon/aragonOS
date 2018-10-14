@@ -6,7 +6,7 @@ const deployDaoFactory = require('./deploy-daofactory')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
-const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
 const defaultENSAddress = process.env.ENS
 
 const deployBases = async baseContracts => {
@@ -39,6 +39,8 @@ module.exports = async (
   const tldHash = namehash(tldName)
   const labelHash = '0x'+keccak256(labelName)
 
+  let ens
+
   log('Deploying APM...')
   log('Owner:', owner)
 
@@ -61,7 +63,7 @@ module.exports = async (
   log('Deployed APM bases:', apmBases)
 
   log('Deploying DAOFactory without EVMScripts...')
-  const daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScripts: false, verbose: false })).daoFactory
+  const daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: false, verbose: false })).daoFactory
   log('Deployed DAOFactory:', daoFactory.address)
 
   log('Deploying APMRegistryFactory...')
@@ -94,7 +96,7 @@ module.exports = async (
     return {
       apmFactory,
       ens,
-      apm: APM.at(apmAddr),
+      apm: APMRegistry.at(apmAddr),
     }
   }
 }

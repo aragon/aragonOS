@@ -5,7 +5,7 @@ import "../lib/misc/ERCProxy.sol";
 
 
 contract DelegateProxy is ERCProxy, IsContract {
-    uint256 constant public FWD_GAS_LIMIT = 10000;
+    uint256 public constant FWD_GAS_LIMIT = 10000;
 
     /**
     * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)

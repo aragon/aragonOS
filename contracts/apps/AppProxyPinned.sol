@@ -8,7 +8,7 @@ import "./AppProxyBase.sol";
 contract AppProxyPinned is IsContract, AppProxyBase {
     using UnstructuredStorage for bytes32;
 
-    // keccak256("aragonOS.appStorage.pinnedCode"), used by Proxy Pinned
+    // keccak256("aragonOS.appStorage.pinnedCode")
     bytes32 internal constant PINNED_CODE_POSITION = 0xdee64df20d65e53d7f51cb6ab6d921a0a6a638a91e942e1d8d02df28e31c038e;
 
     /**

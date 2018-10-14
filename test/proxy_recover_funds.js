@@ -14,6 +14,7 @@ const AppStubDepositable = artifacts.require('AppStubDepositable')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
 const TokenMock = artifacts.require('TokenMock')
 const VaultMock = artifacts.require('VaultMock')
+const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
@@ -223,4 +224,36 @@ contract('Proxy funds', accounts => {
       }
     })
   }
+
+  // Kernel is not depositable by default, but in order to test transferToVault,
+  // we create a mockup to make it depositable
+  context('Depositable KernelProxy', async () => {
+    let kernel, vault
+
+    beforeEach(async () => {
+      const kernelBase = await KernelDepositableMock.new(true) // petrify immediately
+      const kernelProxy = await KernelProxy.new(kernelBase.address)
+      const aclBase = await ACL.new()
+      kernel = KernelDepositableMock.at(kernelProxy.address)
+      await kernel.initialize(aclBase.address, permissionsRoot)
+      await kernel.enableDeposits()
+      const acl = ACL.at(await kernel.acl())
+      const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+      await acl.createPermission(permissionsRoot, kernel.address, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
+
+      // Create a new vault and set that vault as the default vault in the kernel
+      const vaultId = hash('vault.aragonpm.test')
+      const vaultBase = await VaultMock.new()
+      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '', true)
+      const vaultAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
+      vault = VaultMock.at(vaultAddress)
+      await vault.initialize()
+
+      await kernel.setRecoveryVaultAppId(vaultId)
+    })
+
+    it('recovers ETH from the kernel', skipCoverage(async () => {
+      await recoverEth(kernel, vault)
+    }))
+  })
 })

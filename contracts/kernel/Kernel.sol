@@ -13,10 +13,10 @@ import "../factory/AppProxyFactory.sol";
 
 contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     // Hardcode constant to save gas
-    //bytes32 constant public APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    //bytes32 constant public DEFAULT_VAULT_APP_ID = apmNamehash("vault");
-    bytes32 constant public APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
-    bytes32 constant public DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
+    //bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+    //bytes32 public constant DEFAULT_VAULT_APP_ID = apmNamehash("vault");
+    bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
+    bytes32 public constant DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -50,6 +50,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Create a new instance of an app linked to this kernel
+    * @notice Create a new upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
@@ -65,6 +66,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     /**
     * @dev Create a new instance of an app linked to this kernel and set its base
     *      implementation if it was not already set
+    * @notice Create a new upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`. `_setDefault ? 'Also sets it as the default app instance.':''`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _initializePayload Payload for call made by the proxy during its construction to initialize
@@ -89,6 +91,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Create a new pinned instance of an app linked to this kernel
+    * @notice Create a new non-upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`.
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @return AppProxy instance
@@ -104,6 +107,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     /**
     * @dev Create a new pinned instance of an app linked to this kernel and set
     *      its base implementation if it was not already set
+    * @notice Create a new non-upgradeable instance of `_appId` app linked to the Kernel, setting its code to `_appBase`. `_setDefault ? 'Also sets it as the default app instance.':''`
     * @param _appId Identifier for app
     * @param _appBase Address of the app's base implementation
     * @param _initializePayload Payload for call made by the proxy during its construction to initialize
@@ -128,6 +132,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
 
     /**
     * @dev Set the resolving address of an app instance or base implementation
+    * @notice Set the resolving address of `_appId` in namespace `_namespace` to `_app`
     * @param _namespace App namespace to use
     * @param _appId Identifier for app
     * @param _app Address of the app instance or base implementation

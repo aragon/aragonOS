@@ -1,10 +1,12 @@
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
 module.exports = async (
   truffleExecCallback,
   {
     artifacts = globalArtifacts,
-    withEvmScripts = true,
+    withEvmScriptRegistryFactory = true,
     verbose = true
   } = {}
 ) => {
@@ -20,16 +22,18 @@ module.exports = async (
   log('Deploying DAOFactory with bases...')
   const kernelBase = await Kernel.new(true) // immediately petrify
   const aclBase = await ACL.new()
+
   let evmScriptRegistryFactory
-  if (withEvmScripts) {
+  if (withEvmScriptRegistryFactory) {
     const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
     evmScriptRegistryFactory = await EVMScriptRegistryFactory.new()
   }
   const daoFactory = await DAOFactory.new(
     kernelBase.address,
     aclBase.address,
-    evmScriptRegistryFactory ? evmScriptRegistryFactory.address : '0x00'
+    evmScriptRegistryFactory ? evmScriptRegistryFactory.address : ZERO_ADDR
   )
+
   log('DAOFactory deployed:', daoFactory.address)
 
   if (typeof truffleExecCallback === 'function') {

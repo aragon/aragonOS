@@ -14,7 +14,7 @@ const configFilePath = (filename) =>
 
 const mnemonic = () => {
   try {
-    return require(configFilePath('mnemonic.json').mnemonic)
+    return require(configFilePath('mnemonic.json')).mnemonic
   } catch (e) {
     return DEFAULT_MNEMONIC
   }
@@ -99,4 +99,10 @@ module.exports = {
   },
   build: {},
   mocha,
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 10000
+    }
+  },
 }

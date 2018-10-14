@@ -11,8 +11,8 @@ import "./IACLOracle.sol";
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // Hardcoded constant to save gas
-    //bytes32 constant public CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
-    bytes32 constant public CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
+    //bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -31,23 +31,31 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
-    uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 constant TIMESTAMP_PARAM_ID    = 201;
+    uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
+    uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
     // 202 is unused
-    uint8 constant ORACLE_PARAM_ID       = 203;
-    uint8 constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 constant PARAM_VALUE_PARAM_ID  = 205;
+    uint8 internal constant ORACLE_PARAM_ID       = 203;
+    uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
+    uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
     // Hardcoded constant to save gas
-    //bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
-    bytes32 constant public EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
-    bytes32 constant public NO_PERMISSION = bytes32(0);
-    address constant public ANY_ENTITY = address(-1);
-    uint256 constant ORACLE_CHECK_GAS = 30000;
+    //bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
+    bytes32 public constant NO_PERMISSION = bytes32(0);
+    address public constant ANY_ENTITY = address(-1);
+    address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
+
+    uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role));
+        _;
+    }
+
+    modifier noPermissionManager(address _app, bytes32 _role) {
+        // only allow permission creation (or re-creation) when there is no manager
+        require(getPermissionManager(_app, _role) == address(0));
         _;
     }
 
@@ -83,6 +91,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function createPermission(address _entity, address _app, bytes32 _role, address _manager)
         external
         auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
     {
         _createPermission(_entity, _app, _role, _manager);
     }
@@ -153,6 +162,31 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
     {
         _setPermissionManager(address(0), _app, _role);
+    }
+
+    /**
+    * @notice Burn non-existent `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
+    */
+    function createBurnedPermission(address _app, bytes32 _role)
+        external
+        auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
+    {
+        _setPermissionManager(BURN_ENTITY, _app, _role);
+    }
+
+    /**
+    * @notice Burn `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
+    */
+    function burnPermissionManager(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        _setPermissionManager(BURN_ENTITY, _app, _role);
     }
 
     /**
@@ -250,9 +284,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
-        // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
-
         _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
         _setPermissionManager(_manager, _app, _role);
     }
