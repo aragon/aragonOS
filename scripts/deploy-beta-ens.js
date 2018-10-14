@@ -2,7 +2,7 @@ const logDeploy = require('./helpers/create-logger')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
-const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
 
 module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owner = defaultOwner, verbose = true } = {}) => {
   const log = (...args) => {

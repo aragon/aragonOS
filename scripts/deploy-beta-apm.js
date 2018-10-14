@@ -13,18 +13,6 @@ const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb2
 const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
 
-const deployBases = async (baseContracts, verbose) => {
-  const deployments = baseContracts.map(
-    async (contract) => {
-      const instance = await contract.new()
-      logDeploy(instance, { verbose })
-      return instance
-    }
-  )
-  const deployedContracts = await Promise.all(deployments)
-  return deployedContracts.map(c => c.address)
-}
-
 module.exports = async (
   truffleExecCallback,
   {
@@ -72,7 +60,13 @@ module.exports = async (
 
   log('=========')
   log('Deploying APM bases...')
-  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar], verbose)
+
+  const apmRegistryBase = await APMRegistry.new()
+  logDeploy(apmRegistryBase, { verbose })
+  const apmRepoBase = await Repo.new()
+  logDeploy(apmRepoBase, { verbose })
+  const ensSubdomainRegistrarBase = await ENSSubdomainRegistrar.new()
+  logDeploy(ensSubdomainRegistrarBase, { verbose })
 
   let daoFactory
   if (daoFactoryAddress) {
@@ -86,7 +80,14 @@ module.exports = async (
   }
 
   log('Deploying APMRegistryFactory...')
-  const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
+  const apmFactory = await APMRegistryFactory.new(
+    daoFactory.address,
+    apmRegistryBase.address,
+    apmRepoBase.address,
+    ensSubdomainRegistrarBase.address,
+    ensAddress,
+    '0x00'
+  )
   logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
