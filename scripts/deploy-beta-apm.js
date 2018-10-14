@@ -71,7 +71,7 @@ module.exports = async (
     daoFactory = DAOFactory.at(daoFactoryAddress)
   } else {
     log('Deploying DAOFactory without EVMScripts...')
-    daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: false, verbose: false })).daoFactory
+    daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: true, verbose: false })).daoFactory
     log('Deployed DAOFactory:', daoFactory.address)
   }
 
