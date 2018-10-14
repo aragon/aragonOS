@@ -7,6 +7,7 @@ const deployDaoFactory = require('./deploy-daofactory')
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
 const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
 
 const deployBases = async baseContracts => {
@@ -20,6 +21,7 @@ module.exports = async (
     artifacts = globalArtifacts,
     ensAddress = defaultENSAddress,
     owner = defaultOwner,
+    daoFactoryAddress = defaultDaoFactoryAddress,
     verbose = true
   } = {}
 ) => {
@@ -31,6 +33,7 @@ module.exports = async (
   const Repo = artifacts.require('Repo')
   const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 
+  const DAOFactory = artifacts.require('DAOFactory')
   const APMRegistryFactory = artifacts.require('APMRegistryFactory')
   const ENS = artifacts.require('ENS')
 
@@ -62,9 +65,15 @@ module.exports = async (
   const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
   log('Deployed APM bases:', apmBases)
 
-  log('Deploying DAOFactory without EVMScripts...')
-  const daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: false, verbose: false })).daoFactory
-  log('Deployed DAOFactory:', daoFactory.address)
+  let daoFactory
+  if (daoFactoryAddress) {
+    log('Using provided DAOFactory:', daoFactoryAddress)
+    daoFactory = DAOFactory.at(daoFactoryAddress)
+  } else {
+    log('Deploying DAOFactory without EVMScripts...')
+    daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: false, verbose: false })).daoFactory
+    log('Deployed DAOFactory:', daoFactory.address)
+  }
 
   log('Deploying APMRegistryFactory...')
   const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
