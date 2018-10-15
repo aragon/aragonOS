@@ -6,6 +6,8 @@ const deployDaoFactory = require('./deploy-daofactory')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
 const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
 const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
@@ -67,10 +69,12 @@ module.exports = async (
 
   let daoFactory
   if (daoFactoryAddress) {
-    log('Using provided DAOFactory:', daoFactoryAddress)
     daoFactory = DAOFactory.at(daoFactoryAddress)
+    const hasEVMScripts = await daoFactory.regFactory() !== ZERO_ADDR
+
+    log(`Using provided DAOFactory (with${hasEVMScripts ? '' : 'out' } EVMScripts):`, daoFactoryAddress)
   } else {
-    log('Deploying DAOFactory without EVMScripts...')
+    log('Deploying DAOFactory with EVMScripts...')
     daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: true, verbose: false })).daoFactory
     log('Deployed DAOFactory:', daoFactory.address)
   }
