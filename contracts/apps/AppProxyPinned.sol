@@ -11,6 +11,7 @@ contract AppProxyPinned is IsContract, AppProxyBase {
     // keccak256("aragonOS.appStorage.pinnedCode")
     bytes32 internal constant PINNED_CODE_POSITION = 0xdee64df20d65e53d7f51cb6ab6d921a0a6a638a91e942e1d8d02df28e31c038e;
 
+    string private constant INIT_DESTINATION_NOT_CONTRACT_ERROR = "APP1";
     /**
     * @dev Initialize AppProxyPinned (makes it an un-upgradeable Aragon app)
     * @param _kernel Reference to organization kernel for the app
@@ -22,7 +23,7 @@ contract AppProxyPinned is IsContract, AppProxyBase {
         public // solium-disable-line visibility-first
     {
         setPinnedCode(getAppBase(_appId));
-        require(isContract(pinnedCode()));
+        require(isContract(pinnedCode()), INIT_DESTINATION_NOT_CONTRACT_ERROR);
     }
 
     /**

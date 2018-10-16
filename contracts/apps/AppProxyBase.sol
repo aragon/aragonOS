@@ -7,6 +7,9 @@ import "../kernel/IKernel.sol";
 
 
 contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
+    string private constant INIT_DESTINATION_NOT_CONTRACT_ERROR = "APB1";
+    string private constant INIT_REVERTED = "APB2";
+
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -25,10 +28,10 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
 
         // If initialize payload is provided, it will be executed
         if (_initializePayload.length > 0) {
-            require(isContract(appCode));
+            require(isContract(appCode), INIT_DESTINATION_NOT_CONTRACT_ERROR);
             // Cannot make delegatecall as a delegateproxy.delegatedFwd as it
             // returns ending execution context and halts contract deployment
-            require(appCode.delegatecall(_initializePayload));
+            require(appCode.delegatecall(_initializePayload), INIT_REVERTED);
         }
     }
 
