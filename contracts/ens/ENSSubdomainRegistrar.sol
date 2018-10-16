@@ -17,6 +17,10 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     bytes32 public constant DELETE_NAME_ROLE = 0x03d74c8724218ad4a99859bcb2d846d39999449fd18013dd8d69096627e68622;
     bytes32 public constant POINT_ROOTNODE_ROLE = 0x9ecd0e7bddb2e241c41b595a436c4ea4fd33c9fa0caa8056acf084fc3aa3bfbe;
 
+    string private constant NO_NODE_OWNERSHIP_ERROR = "ENSSUB_NO_NODE_OWNERSHIP";
+    string private constant NAME_EXISTS_ERROR = "ENSSUB_NAME_EXISTS";
+    string private constant NAME_DOESNT_EXIST_ERROR = "ENSSUB_DOESNT_EXIST";
+
     AbstractENS public ens;
     bytes32 public rootNode;
 
@@ -27,7 +31,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         initialized();
 
         // We need ownership to create subnodes
-        require(_ens.owner(_rootNode) == address(this));
+        require(_ens.owner(_rootNode) == address(this), NO_NODE_OWNERSHIP_ERROR);
 
         ens = _ens;
         rootNode = _rootNode;
@@ -47,7 +51,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
 
         address currentOwner = ens.owner(node);
 
-        require(currentOwner != address(0)); // fail if deleting unset name
+        require(currentOwner != address(0), NAME_DOESNT_EXIST_ERROR); // fail if deleting unset name
 
         if (currentOwner != address(this)) { // needs to reclaim ownership so it can set resolver
             ens.setSubnodeOwner(rootNode, _label, this);
@@ -65,7 +69,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
 
     function _createName(bytes32 _label, address _owner) internal returns (bytes32 node) {
         node = getNodeForLabel(_label);
-        require(ens.owner(node) == address(0)); // avoid name reset
+        require(ens.owner(node) == address(0), NAME_EXISTS_ERROR); // avoid name reset
 
         ens.setSubnodeOwner(rootNode, _label, _owner);
 

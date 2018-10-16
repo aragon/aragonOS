@@ -20,6 +20,10 @@ contract Repo is AragonApp {
     // bytes32 public constant CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
     bytes32 public constant CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
 
+    string private constant INVALID_BUMP_ERROR = "REPO_INVALID_BUMP";
+    string private constant INVALID_VERSION_ERROR = "REPO_INVALID_VERSION";
+    string private constant INEXISTENT_VERSION_ERROR = "REPO_INEXISTENT_VERSION";
+
     event NewVersion(uint256 versionId, uint16[3] semanticVersion);
 
     /**
@@ -56,10 +60,13 @@ contract Repo is AragonApp {
                 contractAddress = lastVersion.contractAddress;
             }
             // Only allows smart contract change on major version bumps
-            require(lastVersion.contractAddress == contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0]);
+            require(
+                lastVersion.contractAddress == contractAddress || _newSemanticVersion[0] > lastVersion.semanticVersion[0],
+                INVALID_VERSION_ERROR
+            );
         }
 
-        require(isValidBump(lastSematicVersion, _newSemanticVersion));
+        require(isValidBump(lastSematicVersion, _newSemanticVersion), INVALID_BUMP_ERROR);
 
         uint256 versionId = versionsNextIndex++;
         versions[versionId] = Version(_newSemanticVersion, contractAddress, _contentURI);
@@ -90,7 +97,7 @@ contract Repo is AragonApp {
     }
 
     function getByVersionId(uint _versionId) public view returns (uint16[3] semanticVersion, address contractAddress, bytes contentURI) {
-        require(_versionId > 0 && _versionId < versionsNextIndex);
+        require(_versionId > 0 && _versionId < versionsNextIndex, INEXISTENT_VERSION_ERROR);
         Version storage version = versions[_versionId];
         return (version.semanticVersion, version.contractAddress, version.contentURI);
     }

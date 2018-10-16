@@ -11,15 +11,18 @@ import "./IVaultRecoverable.sol";
 
 
 contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
+    string private constant DISALLOWED_ERROR = "RECOVER_DISALLOWED";
+    string private constant VAULT_NOT_CONTRACT_ERROR = "RECOVER_VAULT_NOT_CONTRACT";
+
     /**
      * @notice Send funds to recovery Vault. This contract should never receive funds,
      *         but in case it does, this function allows one to recover them.
      * @param _token Token balance to be sent to recovery vault.
      */
     function transferToVault(address _token) external {
-        require(allowRecoverability(_token));
+        require(allowRecoverability(_token), DISALLOWED_ERROR);
         address vault = getRecoveryVault();
-        require(isContract(vault));
+        require(isContract(vault), VAULT_NOT_CONTRACT_ERROR);
 
         if (_token == ETH) {
             vault.transfer(address(this).balance);
