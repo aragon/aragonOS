@@ -12,6 +12,10 @@ contract CallsScript is BaseEVMScriptExecutor {
     // bytes32 internal constant EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
     bytes32 internal constant EXECUTOR_TYPE = 0x2dc858a00f3e417be1394b87c07158e989ec681ce8cc68a9093680ac1a870302;
 
+    string private constant ERROR_BLACKLISTED_CALL = "EVMCALLS_BLACKLISTED_CALL";
+    string private constant ERROR_INVALID_LENGTH = "EVMCALLS_INVALID_LENGTH";
+    string private constant ERROR_CALL_REVERTED = "EVMCALLS_CALL_REVERTED";
+
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     /**
@@ -27,7 +31,7 @@ contract CallsScript is BaseEVMScriptExecutor {
             address contractAddress = _script.addressAt(location);
             // Check address being called is not blacklist
             for (uint i = 0; i < _blacklist.length; i++) {
-                require(contractAddress != _blacklist[i]);
+                require(contractAddress != _blacklist[i], ERROR_BLACKLISTED_CALL);
             }
 
             // logged before execution to ensure event ordering in receipt
@@ -40,12 +44,14 @@ contract CallsScript is BaseEVMScriptExecutor {
 
             // compute end of script / next location
             location = startOffset + calldataLength;
-            require(location <= _script.length);
+            require(location <= _script.length, ERROR_INVALID_LENGTH);
 
+            bool success;
             assembly {
-                let success := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
-                switch success case 0 { revert(0, 0) }
+                success := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
             }
+
+            require(success, ERROR_CALL_REVERTED);
         }
     }
 

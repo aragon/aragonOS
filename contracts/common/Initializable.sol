@@ -14,13 +14,16 @@ contract Initializable is TimeHelpers {
     // keccak256("aragonOS.initializable.initializationBlock")
     bytes32 internal constant INITIALIZATION_BLOCK_POSITION = 0xebb05b386a8d34882b8711d156f463690983dc47815980fb82aeeff1aa43579e;
 
+    string private constant ERROR_ALREADY_INITIALIZED = "INIT_ALREADY_INITIALIZED";
+    string private constant ERROR_NOT_INITIALIZED = "INIT_NOT_INITIALIZED";
+
     modifier onlyInit {
-        require(getInitializationBlock() == 0);
+        require(getInitializationBlock() == 0, ERROR_ALREADY_INITIALIZED);
         _;
     }
 
     modifier isInitialized {
-        require(hasInitialized());
+        require(hasInitialized(), ERROR_NOT_INITIALIZED);
         _;
     }
 

@@ -48,14 +48,18 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
+    string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
+    string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
+    string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
+
     modifier onlyPermissionManager(address _app, bytes32 _role) {
-        require(msg.sender == getPermissionManager(_app, _role));
+        require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
         _;
     }
 
     modifier noPermissionManager(address _app, bytes32 _role) {
         // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
+        require(getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
         _;
     }
 
@@ -70,7 +74,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     */
     function initialize(address _permissionsCreator) public onlyInit {
         initialized();
-        require(msg.sender == address(kernel()));
+        require(msg.sender == address(kernel()), ERROR_AUTH_INIT_KERNEL);
 
         _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
