@@ -7,13 +7,15 @@ import "../lib/misc/ERCProxy.sol";
 contract DelegateProxy is ERCProxy, IsContract {
     uint256 public constant FWD_GAS_LIMIT = 10000;
 
+    string private constant DESTINATION_NOT_CONTRACT_ERROR = "DP1";
+
     /**
     * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)
     * @param _dst Destination address to perform the delegatecall
     * @param _calldata Calldata for the delegatecall
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
-        require(isContract(_dst));
+        require(isContract(_dst), DESTINATION_NOT_CONTRACT_ERROR);
         uint256 fwdGasLimit = FWD_GAS_LIMIT;
 
         assembly {

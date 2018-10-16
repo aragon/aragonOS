@@ -7,13 +7,15 @@ import "../common/IsContract.sol";
 
 
 contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
+    string private constant INIT_DESTINATION_NOT_CONTRACT_ERROR = "KP1";
+
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
     constructor(IKernel _kernelImpl) public {
-        require(isContract(address(_kernelImpl)));
+        require(isContract(address(_kernelImpl)), INIT_DESTINATION_NOT_CONTRACT_ERROR);
         apps[CORE_NAMESPACE][KERNEL_APP_ID] = _kernelImpl;
     }
 
