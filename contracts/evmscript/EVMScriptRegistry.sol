@@ -17,9 +17,9 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     // bytes32 public constant REGISTRY_MANAGER_ROLE = keccak256("REGISTRY_MANAGER_ROLE");
     bytes32 public constant REGISTRY_MANAGER_ROLE = 0xf7a450ef335e1892cb42c8ca72e7242359d7711924b75db5717410da3f614aa3;
 
-    string private constant INEXISTENT_EXECUTOR_ERROR = "EVMREG_INEXISTENT_EXECUTOR";
-    string private constant EXECUTOR_ENABLED_ERROR = "EVMREG_EXECUTOR_ENABLED";
-    string private constant EXECUTOR_DISABLED_ERROR = "EVMREG_EXECUTOR_DISABLED";
+    string private constant ERROR_INEXISTENT_EXECUTOR = "EVMREG_INEXISTENT_EXECUTOR";
+    string private constant ERROR_EXECUTOR_ENABLED = "EVMREG_EXECUTOR_ENABLED";
+    string private constant ERROR_EXECUTOR_DISABLED = "EVMREG_EXECUTOR_DISABLED";
 
     struct ExecutorEntry {
         IEVMScriptExecutor executor;
@@ -33,7 +33,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     event DisableExecutor(uint256 indexed executorId, address indexed executorAddress);
 
     modifier executorExists(uint256 _executorId) {
-        require(_executorId > 0 && _executorId < executorsNextIndex, INEXISTENT_EXECUTOR_ERROR);
+        require(_executorId > 0 && _executorId < executorsNextIndex, ERROR_INEXISTENT_EXECUTOR);
         _;
     }
 
@@ -69,7 +69,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         // Note that we don't need to check for an executor's existence in this case, as only
         // existing executors can be enabled
         ExecutorEntry storage executorEntry = executors[_executorId];
-        require(executorEntry.enabled, EXECUTOR_DISABLED_ERROR);
+        require(executorEntry.enabled, ERROR_EXECUTOR_DISABLED);
         executorEntry.enabled = false;
         emit DisableExecutor(_executorId, executorEntry.executor);
     }
@@ -84,7 +84,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         executorExists(_executorId)
     {
         ExecutorEntry storage executorEntry = executors[_executorId];
-        require(!executorEntry.enabled, EXECUTOR_ENABLED_ERROR);
+        require(!executorEntry.enabled, ERROR_EXECUTOR_ENABLED);
         executorEntry.enabled = true;
         emit EnableExecutor(_executorId, executorEntry.executor);
     }

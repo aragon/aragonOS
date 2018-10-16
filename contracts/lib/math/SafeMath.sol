@@ -9,10 +9,10 @@ pragma solidity ^0.4.24;
  * @dev Math operations with safety checks that revert on error
  */
 library SafeMath {
-    string private constant ADD_OVERFLOW_ERROR = "MATH_ADD_OVERFLOW";
-    string private constant SUB_UNDERFLOW_ERROR = "MATH_SUB_UNDERFLOW";
-    string private constant MUL_OVERFLOW_ERROR = "MATH_MUL_OVERFLOW";
-    string private constant DIV_ZERO_ERROR = "MATH_DIV_ZERO";
+    string private constant ERROR_ADD_OVERFLOW = "MATH_ADD_OVERFLOW";
+    string private constant ERROR_SUB_UNDERFLOW = "MATH_SUB_UNDERFLOW";
+    string private constant ERROR_MUL_OVERFLOW = "MATH_MUL_OVERFLOW";
+    string private constant ERROR_DIV_ZERO = "MATH_DIV_ZERO";
 
     /**
     * @dev Multiplies two numbers, reverts on overflow.
@@ -26,7 +26,7 @@ library SafeMath {
         }
 
         uint256 c = _a * _b;
-        require(c / _a == _b, MUL_OVERFLOW_ERROR);
+        require(c / _a == _b, ERROR_MUL_OVERFLOW);
 
         return c;
     }
@@ -35,7 +35,7 @@ library SafeMath {
     * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
     */
     function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        require(_b > 0, DIV_ZERO_ERROR); // Solidity only automatically asserts when dividing by 0
+        require(_b > 0, ERROR_DIV_ZERO); // Solidity only automatically asserts when dividing by 0
         uint256 c = _a / _b;
         // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
 
@@ -46,7 +46,7 @@ library SafeMath {
     * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        require(_b <= _a, SUB_UNDERFLOW_ERROR);
+        require(_b <= _a, ERROR_SUB_UNDERFLOW);
         uint256 c = _a - _b;
 
         return c;
@@ -57,7 +57,7 @@ library SafeMath {
     */
     function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
         uint256 c = _a + _b;
-        require(c >= _a, ADD_OVERFLOW_ERROR);
+        require(c >= _a, ERROR_ADD_OVERFLOW);
 
         return c;
     }
@@ -67,7 +67,7 @@ library SafeMath {
     * reverts when dividing by zero.
     */
     function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b != 0, DIV_ZERO_ERROR);
+        require(b != 0, ERROR_DIV_ZERO);
         return a % b;
     }
 }

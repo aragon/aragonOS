@@ -17,15 +17,15 @@ import "../acl/ACLSyntaxSugar.sol";
 // ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
 // that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
-    string private constant AUTH_FAILED_ERROR = "APP_AUTH_FAILED";
+    string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, _role, new uint256[](0)), AUTH_FAILED_ERROR);
+        require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
         _;
     }
 
     modifier authP(bytes32 _role, uint256[] _params) {
-        require(canPerform(msg.sender, _role, _params), AUTH_FAILED_ERROR);
+        require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
         _;
     }
 
