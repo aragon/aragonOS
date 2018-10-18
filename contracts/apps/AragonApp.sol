@@ -18,15 +18,37 @@ import "../acl/ACLSyntaxSugar.sol";
 // that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
+    string private constant ERROR_NONCE_REUSE = "APP_NONCE_REUSE";
+    string private constant ERROR_INVALID_SIGNATURE = "APP_INVALID_SIGNATURE";
+
+    address internal constant ZERO_ADDRESS = address(0);
 
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
+        require(canPerform(sender(), _role, new uint256[](0)), ERROR_AUTH_FAILED);
         _;
     }
 
     modifier authP(bytes32 _role, uint256[] _params) {
-        require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
+        require(canPerform(sender(), _role, _params), ERROR_AUTH_FAILED);
         _;
+    }
+
+    // TODO: support standard? https://eips.ethereum.org/EIPS/eip-1077
+    function exec(address signer, bytes calldata, uint256 nonce, bytes signature) public {
+        require(!usedNonce(signer, nonce), ERROR_NONCE_REUSE);
+        bytes32 signedHash = executionHash(calldata, nonce);
+
+        require(isValidSignature(signer, signedHash, signature), ERROR_INVALID_SIGNATURE);
+
+        // This won't be too expensive on Constantinople: https://eips.ethereum.org/EIPS/eip-1283
+        setVolatileStorageSender(signer);
+        setUsedNonce(signer, nonce, true);
+        bool success = address(this).call(calldata);
+        if (!success){
+            // no need to clean up storage as the entire execution frame is reverted
+            revertForwadingError();
+        }
+        setVolatileStorageSender(ZERO_ADDRESS);
     }
 
     /**
@@ -65,5 +87,33 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         return kernel().getRecoveryVault(); // if kernel is not set, it will revert
+    }
+
+    function isValidSignature(address signer, bytes32 hash, bytes signature) public pure returns (bool) {
+        // TODO: Actually check signature.
+        return true; // YOLO
+    }
+
+    function executionHash(bytes calldata, uint256 nonce) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(keccak256(calldata), nonce));
+    }
+
+    function revertForwadingError() internal {
+        assembly {
+            let size := returndatasize
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, size)
+            revert(ptr, size)
+        }
+    }
+
+    function sender() internal view returns (address) {
+        // Prevents a sub-frame from re-entering into the app while the signer is authenticated
+        if (msg.sender != address(this)) {
+            return msg.sender;
+        }
+
+        address volatileSender = volatileStorageSender();
+        return volatileSender != ZERO_ADDRESS ? volatileSender : address(this);
     }
 }

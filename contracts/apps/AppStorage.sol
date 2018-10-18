@@ -18,6 +18,9 @@ contract AppStorage {
     // keccak256("aragonOS.appStorage.pinnedCode"), used by Proxy Pinned
     bytes32 internal constant PINNED_CODE_POSITION = 0xdee64df20d65e53d7f51cb6ab6d921a0a6a638a91e942e1d8d02df28e31c038e;
 
+    bytes32 internal constant VOLATILE_SENDER_POSITION = keccak256("aragonOS.appStorage.volatile.sender");
+    bytes32 internal constant USED_NONCE_POSITION_BASE = keccak256("aragonOS.appStorage.usedNonce");
+
     function kernel() public view returns (IKernel) {
         return IKernel(KERNEL_POSITION.getStorageAddress());
     }
@@ -26,11 +29,31 @@ contract AppStorage {
         return APP_ID_POSITION.getStorageBytes32();
     }
 
+    function volatileStorageSender() public view returns (address) {
+        return VOLATILE_SENDER_POSITION.getStorageAddress();
+    }
+
+    function usedNonce(address _account, uint256 _nonce) public view returns (bool) {
+        return usedNoncePosition(_account, _nonce).getStorageBool();
+    }
+
     function setKernel(IKernel _kernel) internal {
         KERNEL_POSITION.setStorageAddress(address(_kernel));
     }
 
     function setAppId(bytes32 _appId) internal {
         APP_ID_POSITION.setStorageBytes32(_appId);
+    }
+
+    function setVolatileStorageSender(address _sender) internal {
+        VOLATILE_SENDER_POSITION.setStorageAddress(_sender);
+    }
+
+    function setUsedNonce(address _account, uint256 _nonce, bool _used) internal {
+        return usedNoncePosition(_account, _nonce).setStorageBool(_used);
+    }
+
+    function usedNoncePosition(address _account, uint256 _nonce) internal returns (bytes32) {
+        return keccak256(abi.encodePacked(USED_NONCE_POSITION_BASE, _account, _nonce));
     }
 }
