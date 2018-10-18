@@ -45,7 +45,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
         setVolatileStorageSender(signer);
         setUsedNonce(signer, nonce, true);
         bool success = address(this).call(calldata);
-        if (!success){
+        if (!success) {
             // no need to clean up storage as the entire execution frame is reverted
             revertForwadingError();
         }
