@@ -3,6 +3,7 @@
  */
 
 pragma solidity ^0.4.24;
+// pragma experimental ABIEncoderV2;
 
 import "./AppStorage.sol";
 import "../common/Autopetrified.sol";
@@ -50,6 +51,19 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
         }
         setVolatileStorageSender(ZERO_ADDRESS);
     }
+
+    /*
+    // TODO: Currently causing a solidity error: InternalCompilerError
+    function multiexec(address[] signers, bytes[] calldatas, uint256[] nonces, bytes[] signatures) external {
+        require(signers.length == calldatas.length);
+        require(signers.length == nonces.length);
+        require(signers.length == signatures.length);
+
+        for (uint256 i = 0; i < signers.length; i++) {
+            exec(signers[i], calldatas[i], nonces[i], signatures[i]);
+        }
+    }
+    */
 
     /**
     * @dev Check whether an action can be performed by a sender for a particular role on this app
