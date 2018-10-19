@@ -14,7 +14,7 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owne
 
   log('Deploying ENSFactory...')
   const factory = await ENSFactory.new()
-  logDeploy(factory, { verbose })
+  await logDeploy(factory, { verbose })
   const receipt = await factory.newENS(owner)
 
   const ensAddr = receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens

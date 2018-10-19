@@ -18,16 +18,16 @@ module.exports = async (
   const DAOFactory = artifacts.require('DAOFactory')
 
   const kernelBase = await Kernel.new(true) // immediately petrify
-  logDeploy(kernelBase, { verbose })
+  await logDeploy(kernelBase, { verbose })
 
   const aclBase = await ACL.new()
-  logDeploy(aclBase, { verbose })
+  await logDeploy(aclBase, { verbose })
 
   let evmScriptRegistryFactory
   if (withEvmScriptRegistryFactory) {
     const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
     evmScriptRegistryFactory = await EVMScriptRegistryFactory.new()
-    logDeploy(evmScriptRegistryFactory, { verbose })
+    await logDeploy(evmScriptRegistryFactory, { verbose })
   }
   const daoFactory = await DAOFactory.new(
     kernelBase.address,

@@ -62,11 +62,11 @@ module.exports = async (
   log('Deploying APM bases...')
 
   const apmRegistryBase = await APMRegistry.new()
-  logDeploy(apmRegistryBase, { verbose })
+  await logDeploy(apmRegistryBase, { verbose })
   const apmRepoBase = await Repo.new()
-  logDeploy(apmRepoBase, { verbose })
+  await logDeploy(apmRepoBase, { verbose })
   const ensSubdomainRegistrarBase = await ENSSubdomainRegistrar.new()
-  logDeploy(ensSubdomainRegistrarBase, { verbose })
+  await logDeploy(ensSubdomainRegistrarBase, { verbose })
 
   let daoFactory
   if (daoFactoryAddress) {
@@ -88,7 +88,7 @@ module.exports = async (
     ensAddress,
     '0x00'
   )
-  logDeploy(apmFactory, { verbose })
+  await logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
   try {
