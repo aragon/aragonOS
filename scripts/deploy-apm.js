@@ -1,7 +1,7 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
 
-const deployENS = require('./deploy-beta-ens')
+const deployENS = require('./deploy-test-ens')
 const deployDaoFactory = require('./deploy-daofactory')
 const logDeploy = require('./helpers/create-logger')
 
@@ -123,5 +123,3 @@ module.exports = async (
     }
   }
 }
-
-// Rinkeby APM: 0x700569b6c99b8b5fa17b7976a26ae2f0d5fd145c

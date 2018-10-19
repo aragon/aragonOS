@@ -34,4 +34,3 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owne
   }
 }
 
-// Rinkeby ENS: 0xfbae32d1cde62858bc45f51efc8cc4fa1415447e
