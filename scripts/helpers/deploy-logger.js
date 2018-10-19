@@ -3,7 +3,7 @@ const mkdirp = require('mkdirp')
 const fs = require('fs')
 const path = require('path')
 
-const truffleConfig = require(path.resolve('..', '..', 'truffle-config'))
+const truffleConfig = require('../../truffle-config')
 
 const FLATTEN_DIR = './flattened_contracts'
 
