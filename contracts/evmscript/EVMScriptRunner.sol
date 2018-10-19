@@ -34,8 +34,8 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         require(address(executor) != address(0), ERROR_EXECUTOR_UNAVAILABLE);
 
         bytes4 sig = executor.execScript.selector;
-        bytes memory calldata = abi.encodeWithSelector(sig, _script, _input, _blacklist);
-        require(address(executor).delegatecall(calldata), ERROR_EXECUTION_REVERTED);
+        bytes memory data = abi.encodeWithSelector(sig, _script, _input, _blacklist);
+        require(address(executor).delegatecall(data), ERROR_EXECUTION_REVERTED);
 
         bytes memory output = returnedDataDecoded();
 
