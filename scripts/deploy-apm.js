@@ -1,5 +1,6 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
+const { promisify } = require('util')
 
 const deployENS = require('./deploy-test-ens')
 const deployDaoFactory = require('./deploy-daofactory')
@@ -9,7 +10,7 @@ const globalArtifacts = this.artifacts // Not injected unless called directly vi
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
-const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const defaultOwner = process.env.OWNER
 const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
 
@@ -43,6 +44,12 @@ module.exports = async (
   let ens
 
   log('Deploying APM...')
+
+  if (!owner) {
+    const accounts = await promisify(web3.eth.getAccounts)()
+    owner = accounts[0]
+    log('OWNER env variable not found, setting APM owner to the provider\'s first account')
+  }
   log('Owner:', owner)
 
   if (!ensAddress) {
