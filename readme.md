@@ -5,7 +5,7 @@ This repo contains Aragon's reference implementation for [aragonOS](https://hack
 #### 🚨 Security review status: bug bounty
 aragonOS 4 has undergone two independent professional security reviews, and the issues raised have been resolved. However there is a [bug bounty program](https://wiki.aragon.org/dev/bug_bounty/) for rewarding hackers who find security vulnerabilities. There is a bounty pool of $250,000 USD, you can find more information [here](https://wiki.aragon.org/dev/bug_bounty/).
 
-#### 👋 We are tagging tasks that are [good first issues](https://github.com/aragon/aragonOS/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) so you can get started contributing to Aragon Core.
+#### 👋 Get started contributing with a [good first issue](https://github.com/aragon/aragonOS/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 Don't be shy to contribute even the smallest tweak. Everyone will be especially nice and helpful to beginners to help you get started!
 
 ## Documentation
