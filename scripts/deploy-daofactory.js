@@ -1,4 +1,4 @@
-const logDeploy = require('./helpers/create-logger')
+const logDeploy = require('./helpers/deploy-logger')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
@@ -35,7 +35,7 @@ module.exports = async (
     evmScriptRegistryFactory ? evmScriptRegistryFactory.address : ZERO_ADDR
   )
 
-  logDeploy(daoFactory, { verbose })
+  await logDeploy(daoFactory, { verbose })
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`

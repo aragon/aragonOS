@@ -4,7 +4,7 @@ const { promisify } = require('util')
 
 const deployENS = require('./deploy-test-ens')
 const deployDaoFactory = require('./deploy-daofactory')
-const logDeploy = require('./helpers/create-logger')
+const logDeploy = require('./helpers/deploy-logger')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
@@ -117,7 +117,6 @@ module.exports = async (
   log('Address:', apmAddr)
   log('Transaction hash:', receipt.tx)
   log('=========')
-  log(apmAddr)
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`
