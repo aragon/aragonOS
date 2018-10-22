@@ -70,7 +70,7 @@ contract('Kernel ACL', accounts => {
             it('cannot initialize proxied ACL outside of Kernel', async () => {
                 // Set up ACL proxy
                 await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot)
-                const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address)
+                const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address, '0x', false)
                 const newAcl = ACL.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
                 return assertRevert(async () => {

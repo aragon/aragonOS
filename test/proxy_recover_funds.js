@@ -125,7 +125,7 @@ contract('Proxy funds', accounts => {
               vault = vaultBase
             } else if (vaultType === 'VaultProxy') {
               // This doesn't automatically setup the recovery address
-              const receipt = await kernel.newAppInstance(vaultId, vaultBase.address)
+              const receipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', false)
               const vaultProxyAddress = getEvent(receipt, 'NewAppProxy', 'proxy')
               vault = VaultMock.at(vaultProxyAddress)
             }
@@ -167,7 +167,7 @@ contract('Proxy funds', accounts => {
           context('> Proxied app with kernel', () => {
             beforeEach(async () => {
               // Setup app
-              const receipt = await kernel.newAppInstance(APP_ID, appBase.address)
+              const receipt = await kernel.newAppInstance(APP_ID, appBase.address, '0x', false)
               const appProxy = getEvent(receipt, 'NewAppProxy', 'proxy')
               const app = AppStubDepositable.at(appProxy)
               await app.enableDeposits()
@@ -203,7 +203,7 @@ contract('Proxy funds', accounts => {
           context('> Conditional fund recovery', () => {
             beforeEach(async () => {
               // Setup app with conditional recovery code
-              const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address)
+              const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address, '0x', false)
               const appProxy = getEvent(receipt, 'NewAppProxy', 'proxy')
               const app = AppStubConditionalRecovery.at(appProxy)
               await app.initialize()
@@ -246,7 +246,7 @@ contract('Proxy funds', accounts => {
       // Create a new vault and set that vault as the default vault in the kernel
       const vaultId = hash('vault.aragonpm.test')
       const vaultBase = await VaultMock.new()
-      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '', true)
+      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
       const vaultAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
       vault = VaultMock.at(vaultAddress)
       await vault.initialize()
