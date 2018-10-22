@@ -11,7 +11,7 @@ contract FakeAppConstants {
 
 contract KernelPinnedStorageMock is Kernel, FakeAppConstants {
     constructor(address _fakeApp) Kernel(false) public {
-        _setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, _fakeApp);
+        _setApp(KERNEL_APP_BASES_NAMESPACE, FAKE_APP_ID, _fakeApp);
     }
 }
 

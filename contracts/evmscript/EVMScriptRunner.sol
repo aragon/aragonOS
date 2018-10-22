@@ -12,7 +12,7 @@ import "../kernel/KernelConstants.sol";
 import "../common/Initializable.sol";
 
 
-contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelConstants {
+contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelNamespaceConstants {
     string private constant ERROR_EXECUTOR_UNAVAILABLE = "EVMRUN_EXECUTOR_UNAVAILABLE";
     string private constant ERROR_EXECUTION_REVERTED = "EVMRUN_EXECUTION_REVERTED";
     string private constant ERROR_PROTECTED_STATE_MODIFIED = "EVMRUN_PROTECTED_STATE_MODIFIED";
@@ -45,7 +45,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     function getExecutorRegistry() internal view returns (IEVMScriptRegistry) {
-        address registryAddr = kernel().getApp(APP_ADDR_NAMESPACE, EVMSCRIPT_REGISTRY_APP_ID);
+        address registryAddr = kernel().getApp(KERNEL_APP_ADDR_NAMESPACE, EVMSCRIPT_REGISTRY_APP_ID);
         return IEVMScriptRegistry(registryAddr);
     }
 

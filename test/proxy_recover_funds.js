@@ -12,6 +12,7 @@ const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 // Mocks
 const AppStubDepositable = artifacts.require('AppStubDepositable')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
+const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const TokenMock = artifacts.require('TokenMock')
 const VaultMock = artifacts.require('VaultMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
@@ -23,7 +24,7 @@ const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxie
 
 contract('Proxy funds', accounts => {
   let aclBase, appBase, appConditionalRecoveryBase
-  let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, ETH
+  let APP_ADDR_NAMESPACE, ETH
 
   const permissionsRoot = accounts[0]
 
@@ -71,9 +72,10 @@ contract('Proxy funds', accounts => {
 
     // Setup constants
     const kernel = await Kernel.new(true)
-    APP_BASES_NAMESPACE = await kernel.APP_BASES_NAMESPACE()
     APP_ADDR_NAMESPACE = await kernel.APP_ADDR_NAMESPACE()
-    ETH = await kernel.ETH()
+
+    const etherTokenConstantMock = await EtherTokenConstantMock.new()
+    ETH = await etherTokenConstantMock.getETHConstant()
   })
 
   // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same

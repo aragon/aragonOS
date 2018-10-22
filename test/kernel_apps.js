@@ -145,7 +145,7 @@ contract('Kernel apps', accounts => {
                         const kernelMock = await KernelOverloadMock.new(kernel.address)
 
                         await withAppManagerPermission(kernelMock.address, async () => {
-                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, '0x', true)
+                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, true, '0x')
                             appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
                         })
 
@@ -166,7 +166,7 @@ contract('Kernel apps', accounts => {
                         const initData = appBase1.initialize.request().params[0].data
 
                         await withAppManagerPermission(kernelMock.address, async () => {
-                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, initData, false)
+                            const receipt = await kernelMock[newInstanceFn](APP_ID, appBase1.address, false, initData)
                             appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
                         })
 

@@ -6,7 +6,7 @@ import "../kernel/KernelConstants.sol";
 import "../kernel/IKernel.sol";
 
 
-contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
+contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelNamespaceConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
@@ -33,6 +33,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        return kernel().getApp(APP_BASES_NAMESPACE, _appId);
+        return kernel().getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
     }
 }

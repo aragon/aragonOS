@@ -14,7 +14,7 @@ const VAULT_ID = hash('vault.aragonpm.test')
 
 contract('Kernel lifecycle', accounts => {
   let aclBase, appBase
-  let ACL_APP_ID, APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
+  let DEFAULT_ACL_APP_ID, APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
 
   const testUnaccessibleFunctionalityWhenUninitialized = async (kernel) => {
     // hasPermission should always return false when uninitialized
@@ -49,7 +49,7 @@ contract('Kernel lifecycle', accounts => {
 
     // Setup constants
     const kernel = await Kernel.new(true)
-    ACL_APP_ID = await kernel.ACL_APP_ID()
+    DEFAULT_ACL_APP_ID = await kernel.DEFAULT_ACL_APP_ID()
     APP_BASES_NAMESPACE = await kernel.APP_BASES_NAMESPACE()
     APP_ADDR_NAMESPACE = await kernel.APP_ADDR_NAMESPACE()
     APP_MANAGER_ROLE = await kernel.APP_MANAGER_ROLE()
@@ -146,10 +146,10 @@ contract('Kernel lifecycle', accounts => {
         const ACLAppLog = setAppLogs[1]
 
         assert.equal(ACLBaseLog.args.namespace, APP_BASES_NAMESPACE, 'should set base acl first')
-        assert.equal(ACLBaseLog.args.appId, ACL_APP_ID, 'should set base acl first')
+        assert.equal(ACLBaseLog.args.appId, DEFAULT_ACL_APP_ID, 'should set base acl first')
         assert.equal(ACLBaseLog.args.app, aclBase.address, 'should set base acl first')
         assert.equal(ACLAppLog.args.namespace, APP_ADDR_NAMESPACE, 'should set default acl second')
-        assert.equal(ACLAppLog.args.appId, ACL_APP_ID, 'should set default acl second')
+        assert.equal(ACLAppLog.args.appId, DEFAULT_ACL_APP_ID, 'should set default acl second')
         assert.equal(ACLAppLog.args.app, acl.address, 'should set default acl second')
       })
 
