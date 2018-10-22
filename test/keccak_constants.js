@@ -29,6 +29,7 @@ contract('Constants', accounts => {
   it('checks kernel constants', async () => {
     const kernelConstants = await getContract('KernelConstantsMock').new()
     assert.equal(await kernelConstants.getKernelAppId(), await keccakConstants.KERNEL_APP_ID(), "kernel app id doesn't match")
+    assert.equal(await kernelConstants.getDefaultACLAppId(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default ACL id doesn't match")
     assert.equal(await kernelConstants.getDefaultVaultAppId(), await keccakConstants.DEFAULT_VAULT_APP_ID(), "default vault id doesn't match")
     assert.equal(await kernelConstants.getKernelCoreNamespace(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppBasesNamespace(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
@@ -36,6 +37,7 @@ contract('Constants', accounts => {
 
     const kernel = await getContract('Kernel').new(false)
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
+    assert.equal(await kernel.KERNEL_APP_ID(), await keccakConstants.KERNEL_APP_ID(), "app id doesn't match")
     assert.equal(await kernel.DEFAULT_ACL_APP_ID(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default acl id doesn't match")
     assert.equal(await kernel.CORE_NAMESPACE(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernel.APP_BASES_NAMESPACE(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")

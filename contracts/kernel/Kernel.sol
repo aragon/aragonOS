@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "./IKernel.sol";
+import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -11,15 +12,11 @@ import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     /* Hardcoded constants to save gas
     bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    bytes32 public constant DEFAULT_ACL_APP_ID = apmNamehash("acl");
-    bytes32 internal constant DEFAULT_VAULT_APP_ID = apmNamehash("vault");
     */
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
-    bytes32 public constant DEFAULT_ACL_APP_ID = 0xe3262375f45a6e2026b7e7b18c2b807434f2508fe1a2a3dfb493c7df8f4aad6a;
-    bytes32 internal constant DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
@@ -45,14 +42,14 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         initialized();
 
         // Set ACL base
-        _setApp(KERNEL_APP_BASES_NAMESPACE, DEFAULT_ACL_APP_ID, _baseAcl);
+        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, _baseAcl);
 
         // Create ACL instance and attach it as the default ACL app
-        IACL acl = IACL(newAppProxy(this, DEFAULT_ACL_APP_ID));
+        IACL acl = IACL(newAppProxy(this, KERNEL_DEFAULT_ACL_APP_ID));
         acl.initialize(_permissionsCreator);
-        _setApp(KERNEL_APP_ADDR_NAMESPACE, DEFAULT_ACL_APP_ID, acl);
+        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, acl);
 
-        recoveryVaultAppId = DEFAULT_VAULT_APP_ID;
+        recoveryVaultAppId = KERNEL_DEFAULT_VAULT_APP_ID;
     }
 
     /**
@@ -163,11 +160,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         recoveryVaultAppId = _recoveryVaultAppId;
     }
 
-    // External access to namespace constants to mimic default getters for constants
+    // External access to default app id and namespace constants to mimic default getters for constants
     /* solium-disable function-order, mixedcase */
     function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
     function APP_BASES_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_BASES_NAMESPACE; }
     function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
+    function KERNEL_APP_ID() external pure returns (bytes32) { return KERNEL_CORE_APP_ID; }
+    function DEFAULT_ACL_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_ACL_APP_ID; }
     /* solium-enable function-order, mixedcase */
 
     /**
@@ -193,7 +192,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return ACL app
     */
     function acl() public view returns (IACL) {
-        return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, DEFAULT_ACL_APP_ID));
+        return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
     }
 
     /**
