@@ -24,6 +24,9 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     // bytes32 public constant CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
     bytes32 public constant CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
 
+    string private constant ERROR_INIT_PERMISSIONS = "APMREG_INIT_PERMISSIONS";
+    string private constant ERROR_EMPTY_NAME = "APMREG_EMPTY_NAME";
+
     event NewRepo(bytes32 id, string name, address repo);
 
     /**
@@ -40,8 +43,8 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
 
         // Check APM has all permissions it needss
         ACL acl = ACL(kernel().acl());
-        require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()));
-        require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()));
+        require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()), ERROR_INIT_PERMISSIONS);
+        require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()), ERROR_INIT_PERMISSIONS);
     }
 
     /**
@@ -81,7 +84,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
     }
 
     function _newRepo(string _name, address _dev) internal returns (Repo) {
-        require(bytes(_name).length > 0);
+        require(bytes(_name).length > 0, ERROR_EMPTY_NAME);
 
         Repo repo = newClonedRepo();
 

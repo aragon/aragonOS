@@ -1,10 +1,19 @@
+const logDeploy = require('./helpers/deploy-logger')
+const { promisify } = require('util')
+
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
-const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const defaultOwner = process.env.OWNER
 
 module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owner = defaultOwner, verbose = true } = {}) => {
   const log = (...args) => {
     if (verbose) { console.log(...args) }
+  }
+
+  if (!owner) {
+    const accounts = await promisify(web3.eth.getAccounts)()
+    owner = accounts[0]
+    log(`No OWNER environment variable passed, setting ENS owner to provider's account: ${owner}`)
   }
 
   const ENS = artifacts.require('ENS')
@@ -12,7 +21,7 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owne
 
   log('Deploying ENSFactory...')
   const factory = await ENSFactory.new()
-  log('ENSFactory deployed:', factory.address)
+  await logDeploy(factory, { verbose })
   const receipt = await factory.newENS(owner)
 
   const ensAddr = receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens
@@ -32,4 +41,3 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owne
   }
 }
 
-// Rinkeby ENS: 0xfbae32d1cde62858bc45f51efc8cc4fa1415447e

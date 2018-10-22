@@ -2,6 +2,8 @@ const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
+const keccak_256 = require('js-sha3').keccak_256
+const keccak256 = (name) => '0x' + keccak_256(name)
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -316,6 +318,96 @@ contract('Kernel ACL', accounts => {
                         const receipt = await acl.revokePermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                         assertEvent(receipt, 'SetPermission')
                         assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    })
+                })
+            })
+
+            context('> burning permission manager', () => {
+                const MOCK_ROLE = keccak256("MOCK_ROLE")
+                let BURN_ENTITY
+
+                before(async () => {
+                    BURN_ENTITY = await acl.BURN_ENTITY()
+                })
+
+                it('burns existing permission', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    // burn it
+                    const receipt = await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
+                    const events = assertEvent(receipt, 'ChangePermissionManager')
+                    assert.equal(events[0].args.app, kernelAddr)
+                    assert.equal(events[0].args.role, MOCK_ROLE)
+                    assert.equal(events[0].args.manager, BURN_ENTITY)
+                    assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
+
+                    // check that nothing else can be done from now on
+                    assert.isTrue(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
+                    await assertRevert(async () => {
+                        await acl.grantPermission(child, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.setPermissionManager(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.removePermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                })
+
+                it('burns non-existing permission', async () => {
+                    // burn it
+                    const receipt = await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
+                    const events = assertEvent(receipt, 'ChangePermissionManager')
+                    assert.equal(events[0].args.app, kernelAddr)
+                    assert.equal(events[0].args.role, MOCK_ROLE)
+                    assert.equal(events[0].args.manager, BURN_ENTITY)
+                    assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
+
+                    // check that nothing else can be done from now on
+                    assert.isFalse(await acl.hasPermission(granted, kernelAddr, MOCK_ROLE))
+                    await assertRevert(async () => {
+                        await acl.grantPermission(child, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.setPermissionManager(granted, kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                    await assertRevert(async () => {
+                        await acl.removePermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
+                    })
+                })
+
+                it('fails burning existing permission by no manager', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    return assertRevert(async () => {
+                        // try to burn it
+                        await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: noPermissions })
+                    })
+                })
+
+                it('fails trying to create a burned permission which already has a manager', async () => {
+                    // create permission
+                    await acl.createPermission(granted, kernelAddr, MOCK_ROLE, granted, { from: permissionsRoot })
+
+                    await assertRevert(async () => {
+                        // try to create it burnt
+                        await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
+                    })
+
+                    // even removing the only grantee, still fails
+                    await acl.revokePermission(granted, kernelAddr, MOCK_ROLE, { from: granted })
+
+                    return assertRevert(async () => {
+                        // try to create it burnt
+                        await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
                     })
                 })
             })

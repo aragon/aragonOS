@@ -1,4 +1,8 @@
-pragma solidity 0.4.24;
+/*
+ * SPDX-License-Identitifer:    MIT
+ */
+
+pragma solidity ^0.4.24;
 
 // Split in multiple contracts so they can be individually imported
 // Optimization for having lighter proxies and AragonApp base contract

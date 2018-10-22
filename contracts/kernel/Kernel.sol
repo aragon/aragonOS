@@ -19,6 +19,10 @@ contract Kernel is IKernel, KernelStorage, KernelConstants, Petrifiable, IsContr
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
     bytes32 public constant DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
+    string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
+    string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
+    string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
+
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
     * @param _shouldPetrify Immediately petrify this instance so that it can never be initialized
@@ -199,7 +203,7 @@ contract Kernel is IKernel, KernelStorage, KernelConstants, Petrifiable, IsContr
     }
 
     function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {
-        require(isContract(_app));
+        require(isContract(_app), ERROR_APP_NOT_CONTRACT);
         apps[_namespace][_appId] = _app;
         emit SetApp(_namespace, _appId, _app);
     }
@@ -208,7 +212,7 @@ contract Kernel is IKernel, KernelStorage, KernelConstants, Petrifiable, IsContr
         address app = getApp(_namespace, _appId);
         if (app != address(0)) {
             // The only way to set an app is if it passes the isContract check, so no need to check it again
-            require(app == _app);
+            require(app == _app, ERROR_INVALID_APP_CHANGE);
         } else {
             _setApp(_namespace, _appId, _app);
         }
@@ -222,7 +226,7 @@ contract Kernel is IKernel, KernelStorage, KernelConstants, Petrifiable, IsContr
             mstore(how, byteLength)
         }
         // Params is invalid from this point fwd
-        require(hasPermission(msg.sender, address(this), _role, how));
+        require(hasPermission(msg.sender, address(this), _role, how), ERROR_AUTH_FAILED);
         _;
     }
 }

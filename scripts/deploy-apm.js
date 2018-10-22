@@ -1,21 +1,18 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
+const { promisify } = require('util')
 
-const deployENS = require('./deploy-beta-ens')
+const deployENS = require('./deploy-test-ens')
+const deployDaoFactory = require('./deploy-daofactory')
+const logDeploy = require('./helpers/deploy-logger')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
-const defaultOwner = process.env.OWNER || '0x4cb3fd420555a09ba98845f0b816e45cfb230983'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
+const defaultOwner = process.env.OWNER
+const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
-
-const baseInitArguments = {
-  Kernel: [ true ] // petrify
-}
-
-const deployBases = async baseContracts => {
-  const deployedContracts = await Promise.all(baseContracts.map(c => c.new(...(baseInitArguments[c.contractName] || []))))
-  return deployedContracts.map(c => c.address)
-}
 
 module.exports = async (
   truffleExecCallback,
@@ -23,6 +20,7 @@ module.exports = async (
     artifacts = globalArtifacts,
     ensAddress = defaultENSAddress,
     owner = defaultOwner,
+    daoFactoryAddress = defaultDaoFactoryAddress,
     verbose = true
   } = {}
 ) => {
@@ -30,14 +28,12 @@ module.exports = async (
     if (verbose) { console.log(...args) }
   }
 
-  const ACL = artifacts.require('ACL')
-  const Kernel = artifacts.require('Kernel')
   const APMRegistry = artifacts.require('APMRegistry')
   const Repo = artifacts.require('Repo')
   const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 
-  const APMRegistryFactory = artifacts.require('APMRegistryFactory')
   const DAOFactory = artifacts.require('DAOFactory')
+  const APMRegistryFactory = artifacts.require('APMRegistryFactory')
   const ENS = artifacts.require('ENS')
 
   const tldName = 'eth'
@@ -48,6 +44,12 @@ module.exports = async (
   let ens
 
   log('Deploying APM...')
+
+  if (!owner) {
+    const accounts = await promisify(web3.eth.getAccounts)()
+    owner = accounts[0]
+    log('OWNER env variable not found, setting APM owner to the provider\'s first account')
+  }
   log('Owner:', owner)
 
   if (!ensAddress) {
@@ -65,21 +67,35 @@ module.exports = async (
 
   log('=========')
   log('Deploying APM bases...')
-  const apmBases = await deployBases([APMRegistry, Repo, ENSSubdomainRegistrar])
-  log('Deployed APM bases:', apmBases)
 
-  log('Deploying DAO bases...')
-  const daoBases = await deployBases([Kernel, ACL])
-  log('Deployed DAO bases', daoBases)
+  const apmRegistryBase = await APMRegistry.new()
+  await logDeploy(apmRegistryBase, { verbose })
+  const apmRepoBase = await Repo.new()
+  await logDeploy(apmRepoBase, { verbose })
+  const ensSubdomainRegistrarBase = await ENSSubdomainRegistrar.new()
+  await logDeploy(ensSubdomainRegistrarBase, { verbose })
 
-  log('Deploying DAOFactory without EVMScripts...')
-  const evmScriptRegistry = '0x00' // Basic APM needs no forwarding
-  const daoFactory = await DAOFactory.new(...daoBases, evmScriptRegistry)
-  log('Deployed DAOFactory:', daoFactory.address)
+  let daoFactory
+  if (daoFactoryAddress) {
+    daoFactory = DAOFactory.at(daoFactoryAddress)
+    const hasEVMScripts = await daoFactory.regFactory() !== ZERO_ADDR
+
+    log(`Using provided DAOFactory (with${hasEVMScripts ? '' : 'out' } EVMScripts):`, daoFactoryAddress)
+  } else {
+    log('Deploying DAOFactory with EVMScripts...')
+    daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: true, verbose: false })).daoFactory
+  }
 
   log('Deploying APMRegistryFactory...')
-  const apmFactory = await APMRegistryFactory.new(daoFactory.address, ...apmBases, ensAddress, '0x00')
-  log('Deployed APMRegistryFactory:', apmFactory.address)
+  const apmFactory = await APMRegistryFactory.new(
+    daoFactory.address,
+    apmRegistryBase.address,
+    apmRepoBase.address,
+    ensSubdomainRegistrarBase.address,
+    ensAddress,
+    '0x00'
+  )
+  await logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
   try {
@@ -97,8 +113,10 @@ module.exports = async (
 
   log('=========')
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
-  log('Deployed APM:', apmAddr)
-  log(apmAddr)
+  log('# APM:')
+  log('Address:', apmAddr)
+  log('Transaction hash:', receipt.tx)
+  log('=========')
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`
@@ -111,5 +129,3 @@ module.exports = async (
     }
   }
 }
-
-// Rinkeby APM: 0x700569b6c99b8b5fa17b7976a26ae2f0d5fd145c
