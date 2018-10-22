@@ -25,13 +25,6 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
     string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
 
-    // External access to namespace constants to mimic default getters for constants
-    /* solium-disable function-order, mixedcase */
-    function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
-    function APP_BASES_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_BASES_NAMESPACE; }
-    function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
-    /* solium-enable function-order, mixedcase */
-
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
     * @param _shouldPetrify Immediately petrify this instance so that it can never be initialized
@@ -169,6 +162,13 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     {
         recoveryVaultAppId = _recoveryVaultAppId;
     }
+
+    // External access to namespace constants to mimic default getters for constants
+    /* solium-disable function-order, mixedcase */
+    function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
+    function APP_BASES_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_BASES_NAMESPACE; }
+    function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
+    /* solium-enable function-order, mixedcase */
 
     /**
     * @dev Get the address of an app instance or base implementation
