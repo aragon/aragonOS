@@ -6,6 +6,15 @@ import "../apps/AragonApp.sol";
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract Repo is AragonApp {
+    /* Hardcoded constants to save gas
+    bytes32 public constant CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
+    */
+    bytes32 public constant CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
+
+    string private constant ERROR_INVALID_BUMP = "REPO_INVALID_BUMP";
+    string private constant ERROR_INVALID_VERSION = "REPO_INVALID_VERSION";
+    string private constant ERROR_INEXISTENT_VERSION = "REPO_INEXISTENT_VERSION";
+
     struct Version {
         uint16[3] semanticVersion;
         address contractAddress;
@@ -16,13 +25,6 @@ contract Repo is AragonApp {
     mapping (uint256 => Version) internal versions;
     mapping (bytes32 => uint256) internal versionIdForSemantic;
     mapping (address => uint256) internal latestVersionIdForContract;
-
-    // bytes32 public constant CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
-    bytes32 public constant CREATE_VERSION_ROLE = 0x1f56cfecd3595a2e6cc1a7e6cb0b20df84cdbd92eff2fee554e70e4e45a9a7d8;
-
-    string private constant ERROR_INVALID_BUMP = "REPO_INVALID_BUMP";
-    string private constant ERROR_INVALID_VERSION = "REPO_INVALID_VERSION";
-    string private constant ERROR_INEXISTENT_VERSION = "REPO_INEXISTENT_VERSION";
 
     event NewVersion(uint256 versionId, uint16[3] semanticVersion);
 

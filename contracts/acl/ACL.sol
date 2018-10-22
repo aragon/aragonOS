@@ -10,16 +10,10 @@ import "./IACLOracle.sol";
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
-    // Hardcoded constant to save gas
-    //bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    /* Hardcoded constants to save gas
+    bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    */
     bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
-
-    // Whether someone has a permission
-    mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
-    mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
-
-    // Who is the manager of a permission
-    mapping (bytes32 => address) internal permissionManager;
 
     enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
 
@@ -39,8 +33,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
-    // Hardcoded constant to save gas
-    //bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    /* Hardcoded constant to save gas
+    bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    */
     bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 public constant NO_PERMISSION = bytes32(0);
     address public constant ANY_ENTITY = address(-1);
@@ -52,6 +47,17 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
     string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
 
+    // Whether someone has a permission
+    mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
+    mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
+
+    // Who is the manager of a permission
+    mapping (bytes32 => address) internal permissionManager;
+
+    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
+    event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
+    event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
+
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
         _;
@@ -62,10 +68,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         require(getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
         _;
     }
-
-    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
-    event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
-    event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
