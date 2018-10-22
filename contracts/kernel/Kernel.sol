@@ -12,6 +12,7 @@ import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
+// solium-disable-next-line max-len
 contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     /* Hardcoded constants to save gas
     bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
