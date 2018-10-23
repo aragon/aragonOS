@@ -188,6 +188,11 @@ contract('EVM Script', accounts => {
             executionTarget = await ExecutionTarget.new()
         })
 
+        it('gets the correct executor registry from the app', async () => {
+            const appRegistry = await executorApp.getEVMScriptRegistry()
+            assert.equal(reg.address, appRegistry, 'app should return the same evm script registry')
+        })
+
         it('fails to execute if spec ID is 0', async () => {
             return assertRevert(async () => {
                 await executorApp.execute('0x00000000')
@@ -205,6 +210,15 @@ contract('EVM Script', accounts => {
                 const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
                 const executor = IEVMScriptExecutor.at(await reg.getScriptExecutor('0x00000001'))
                 assert.equal(await executor.executorType(), CALLS_SCRIPT_TYPE)
+            })
+
+            it('gets the correct executor from the app', async () => {
+                const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
+                const script = '0x00000001'
+                const executor = await reg.getScriptExecutor(script)
+
+                const appExecutor = await executorApp.getEVMScriptExecutor(script)
+                assert.equal(executor, appExecutor, 'app should return the same evm script executor')
             })
 
             it('executes single action script', async () => {
