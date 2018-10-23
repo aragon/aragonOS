@@ -19,12 +19,12 @@
     "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
   },
   "files": [
-    "abi/",
-    "build/",
-    "contracts/",
-    "scripts/",
-    "truffle-config.js",
-    "test/"
+    "/abi",
+    "/build",
+    "/contracts",
+    "/scripts",
+    "/test",
+    "/truffle-config.js"
   ],
   "author": "Aragon Institution MTU <contact@aragon.one>",
   "contributors": [
