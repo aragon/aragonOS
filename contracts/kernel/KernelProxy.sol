@@ -1,12 +1,13 @@
 pragma solidity 0.4.24;
 
 import "./IKernel.sol";
+import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
 import "../common/IsContract.sol";
 
 
-contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
+contract KernelProxy is KernelStorage, KernelAppIds, KernelNamespaceConstants, IsContract, DepositableDelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
@@ -14,7 +15,7 @@ contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
     */
     constructor(IKernel _kernelImpl) public {
         require(isContract(address(_kernelImpl)));
-        apps[CORE_NAMESPACE][KERNEL_APP_ID] = _kernelImpl;
+        apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID] = _kernelImpl;
     }
 
     /**
@@ -28,6 +29,6 @@ contract KernelProxy is KernelStorage, IsContract, DepositableDelegateProxy {
     * @dev ERC897, the address the proxy would delegate calls to
     */
     function implementation() public view returns (address) {
-        return apps[CORE_NAMESPACE][KERNEL_APP_ID];
+        return apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID];
     }
 }

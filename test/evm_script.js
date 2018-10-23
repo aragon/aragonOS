@@ -166,7 +166,7 @@ contract('EVM Script', accounts => {
 
     context('> Uninitialized executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, { from: boss })
+            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
             executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             // Explicitly don't initialize the executorApp
             executionTarget = await ExecutionTarget.new()
@@ -182,7 +182,7 @@ contract('EVM Script', accounts => {
 
     context('> Executor', () => {
         beforeEach(async () => {
-            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, { from: boss })
+            const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
             executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             await executorApp.initialize()
             executionTarget = await ExecutionTarget.new()

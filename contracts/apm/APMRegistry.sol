@@ -8,24 +8,24 @@ import "../acl/ACL.sol";
 import "./Repo.sol";
 
 
-contract APMRegistryConstants {
-    // Cant have a regular APM appId because it is used to build APM
-    // TODO: recheck this
-    string public constant APM_APP_NAME = "apm-registry";
-    string public constant REPO_APP_NAME = "apm-repo";
-    string public constant ENS_SUB_APP_NAME = "apm-enssub";
+contract APMInternalAppNames {
+    string internal constant APM_APP_NAME = "apm-registry";
+    string internal constant REPO_APP_NAME = "apm-repo";
+    string internal constant ENS_SUB_APP_NAME = "apm-enssub";
 }
 
 
-contract APMRegistry is AragonApp, AppProxyFactory, APMRegistryConstants {
-    AbstractENS public ens;
-    ENSSubdomainRegistrar public registrar;
-
-    // bytes32 public constant CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
+contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
+    /* Hardcoded constants to save gas
+    bytes32 public constant CREATE_REPO_ROLE = keccak256("CREATE_REPO_ROLE");
+    */
     bytes32 public constant CREATE_REPO_ROLE = 0x2a9494d64846c9fdbf0158785aa330d8bc9caf45af27fa0e8898eb4d55adcea6;
 
     string private constant ERROR_INIT_PERMISSIONS = "APMREG_INIT_PERMISSIONS";
     string private constant ERROR_EMPTY_NAME = "APMREG_EMPTY_NAME";
+
+    AbstractENS public ens;
+    ENSSubdomainRegistrar public registrar;
 
     event NewRepo(bytes32 id, string name, address repo);
 

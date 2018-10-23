@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 
 library Uint256Helpers {
-    uint256 public constant MAX_UINT64 = uint64(-1);
+    uint256 private constant MAX_UINT64 = uint64(-1);
 
     string private constant ERROR_NUMBER_TOO_BIG = "UINT64_NUMBER_TOO_BIG";
 

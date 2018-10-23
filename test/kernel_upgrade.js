@@ -5,12 +5,15 @@ const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const UpgradedKernel = artifacts.require('UpgradedKernel')
 
+// Mocks
+const ERCProxyMock = artifacts.require('ERCProxyMock')
+
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 // Only applicable to KernelProxy instances
 contract('Kernel upgrade', accounts => {
     let aclBase, kernelBase, upgradedBase, kernelAddr, kernel, acl
-    let APP_MANAGER_ROLE, CORE_NAMESPACE, KERNEL_APP_ID
+    let APP_MANAGER_ROLE, CORE_NAMESPACE, KERNEL_APP_ID, UPGRADEABLE
 
     const permissionsRoot = accounts[0]
 
@@ -24,6 +27,9 @@ contract('Kernel upgrade', accounts => {
         APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
         CORE_NAMESPACE = await kernelBase.CORE_NAMESPACE()
         KERNEL_APP_ID = await kernelBase.KERNEL_APP_ID()
+
+        const ercProxyMock = await ERCProxyMock.new()
+        UPGRADEABLE = (await ercProxyMock.UPGRADEABLE()).toString()
     })
 
     beforeEach(async () => {
@@ -38,7 +44,7 @@ contract('Kernel upgrade', accounts => {
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = (await kernelProxy.proxyType()).toString()
-        assert.equal(proxyType, (await kernelProxy.UPGRADEABLE()).toString(), "Proxy type should be 2 (upgradeable)")
+        assert.equal(proxyType, UPGRADEABLE, "Proxy type should be 2 (upgradeable)")
     })
 
     it('fails to create a KernelProxy if the base is 0', async () => {

@@ -1,19 +1,19 @@
 const namehash = require('eth-ens-namehash').hash
-const APMNamehashWrapper = artifacts.require('APMNamehashWrapper')
+const APMNamehashMock = artifacts.require('APMNamehashMock')
 
 contract('APM Name Hash', accounts => {
-  let apmNamehashWrapper
+  let apmNamehashMock
 
   before(async() => {
     //console.log("eth: " + namehash('eth'))
     //console.log("aragonpm.eth: " + namehash('aragonpm.eth'))
-    apmNamehashWrapper = await APMNamehashWrapper.new()
+    apmNamehashMock = await APMNamehashMock.new()
   })
 
   const checkName = async (name) => {
     const node = namehash(name + '.aragonpm.eth')
-    //await apmNamehashWrapper.getAPMNamehash(name)
-    const apmNamehash = await apmNamehashWrapper.getAPMNamehash(name)
+    //await apmNamehashMock.getAPMNamehash(name)
+    const apmNamehash = await apmNamehashMock.getAPMNamehash(name)
     //console.log("node: " + node)
     return apmNamehash.toString() == node
   }

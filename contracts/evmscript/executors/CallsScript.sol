@@ -9,7 +9,9 @@ import "./BaseEVMScriptExecutor.sol";
 contract CallsScript is BaseEVMScriptExecutor {
     using ScriptHelpers for bytes;
 
-    // bytes32 internal constant EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
+    /* Hardcoded constants to save gas
+    bytes32 internal constant EXECUTOR_TYPE = keccak256("CALLS_SCRIPT");
+    */
     bytes32 internal constant EXECUTOR_TYPE = 0x2dc858a00f3e417be1394b87c07158e989ec681ce8cc68a9093680ac1a870302;
 
     string private constant ERROR_BLACKLISTED_CALL = "EVMCALLS_BLACKLISTED_CALL";

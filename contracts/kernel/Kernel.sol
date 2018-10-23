@@ -1,6 +1,7 @@
 pragma solidity 0.4.24;
 
 import "./IKernel.sol";
+import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -11,12 +12,12 @@ import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 
 
-contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
-    // Hardcode constant to save gas
-    //bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    //bytes32 public constant DEFAULT_VAULT_APP_ID = apmNamehash("vault");
+// solium-disable-next-line max-len
+contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+    /* Hardcoded constants to save gas
+    bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+    */
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
-    bytes32 public constant DEFAULT_VAULT_APP_ID = 0x7e852e0fcfce6551c13800f1e7476f982525c2b5277ba14b24339c68416336d1;
 
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
@@ -42,14 +43,14 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
         initialized();
 
         // Set ACL base
-        _setApp(APP_BASES_NAMESPACE, ACL_APP_ID, _baseAcl);
+        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, _baseAcl);
 
         // Create ACL instance and attach it as the default ACL app
-        IACL acl = IACL(newAppProxy(this, ACL_APP_ID));
+        IACL acl = IACL(newAppProxy(this, KERNEL_DEFAULT_ACL_APP_ID));
         acl.initialize(_permissionsCreator);
-        _setApp(APP_ADDR_NAMESPACE, ACL_APP_ID, acl);
+        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, acl);
 
-        recoveryVaultAppId = DEFAULT_VAULT_APP_ID;
+        recoveryVaultAppId = KERNEL_DEFAULT_VAULT_APP_ID;
     }
 
     /**
@@ -61,7 +62,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function newAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
         return newAppInstance(_appId, _appBase, new bytes(0), false);
@@ -81,15 +82,15 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function newAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
+        _setAppIfNew(KERNEL_APP_BASES_NAMESPACE, _appId, _appBase);
         appProxy = newAppProxy(this, _appId, _initializePayload);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(APP_ADDR_NAMESPACE, _appId, appProxy);
+            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, appProxy);
         }
     }
 
@@ -102,7 +103,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function newPinnedAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
         return newPinnedAppInstance(_appId, _appBase, new bytes(0), false);
@@ -122,15 +123,15 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     {
-        _setAppIfNew(APP_BASES_NAMESPACE, _appId, _appBase);
+        _setAppIfNew(KERNEL_APP_BASES_NAMESPACE, _appId, _appBase);
         appProxy = newAppProxyPinned(this, _appId, _initializePayload);
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(APP_ADDR_NAMESPACE, _appId, appProxy);
+            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, appProxy);
         }
     }
 
@@ -155,10 +156,19 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     */
     function setRecoveryVaultAppId(bytes32 _recoveryVaultAppId)
         public
-        auth(APP_MANAGER_ROLE, arr(APP_ADDR_NAMESPACE, _recoveryVaultAppId))
+        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_ADDR_NAMESPACE, _recoveryVaultAppId))
     {
         recoveryVaultAppId = _recoveryVaultAppId;
     }
+
+    // External access to default app id and namespace constants to mimic default getters for constants
+    /* solium-disable function-order, mixedcase */
+    function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
+    function APP_BASES_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_BASES_NAMESPACE; }
+    function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
+    function KERNEL_APP_ID() external pure returns (bytes32) { return KERNEL_CORE_APP_ID; }
+    function DEFAULT_ACL_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_ACL_APP_ID; }
+    /* solium-enable function-order, mixedcase */
 
     /**
     * @dev Get the address of an app instance or base implementation
@@ -175,7 +185,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return Address of the Vault
     */
     function getRecoveryVault() public view returns (address) {
-        return apps[APP_ADDR_NAMESPACE][recoveryVaultAppId];
+        return apps[KERNEL_APP_ADDR_NAMESPACE][recoveryVaultAppId];
     }
 
     /**
@@ -183,7 +193,7 @@ contract Kernel is IKernel, KernelStorage, Petrifiable, IsContract, VaultRecover
     * @return ACL app
     */
     function acl() public view returns (IACL) {
-        return IACL(getApp(APP_ADDR_NAMESPACE, ACL_APP_ID));
+        return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
     }
 
     /**

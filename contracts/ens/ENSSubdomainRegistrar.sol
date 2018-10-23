@@ -10,9 +10,11 @@ import "../apps/AragonApp.sol";
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
-    // bytes32 public constant CREATE_NAME_ROLE = keccak256("CREATE_NAME_ROLE");
-    // bytes32 public constant DELETE_NAME_ROLE = keccak256("DELETE_NAME_ROLE");
-    // bytes32 public constant POINT_ROOTNODE_ROLE = keccak256("POINT_ROOTNODE_ROLE");
+    /* Hardcoded constants to save gas
+    bytes32 public constant CREATE_NAME_ROLE = keccak256("CREATE_NAME_ROLE");
+    bytes32 public constant DELETE_NAME_ROLE = keccak256("DELETE_NAME_ROLE");
+    bytes32 public constant POINT_ROOTNODE_ROLE = keccak256("POINT_ROOTNODE_ROLE");
+    */
     bytes32 public constant CREATE_NAME_ROLE = 0xf86bc2abe0919ab91ef714b2bec7c148d94f61fdb069b91a6cfe9ecdee1799ba;
     bytes32 public constant DELETE_NAME_ROLE = 0x03d74c8724218ad4a99859bcb2d846d39999449fd18013dd8d69096627e68622;
     bytes32 public constant POINT_ROOTNODE_ROLE = 0x9ecd0e7bddb2e241c41b595a436c4ea4fd33c9fa0caa8056acf084fc3aa3bfbe;
