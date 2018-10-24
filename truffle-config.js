@@ -62,7 +62,7 @@ module.exports = {
       gas: 6.9e6
     },
     devnet: {
-      network_id: 15,
+      network_id: 16,
       host: 'localhost',
       port: 8535,
       gas: 6.9e6
