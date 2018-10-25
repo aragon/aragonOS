@@ -228,13 +228,16 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     modifier auth(bytes32 _role, uint256[] memory params) {
+        // Force cast the uint256[] into a bytes array, by overwriting its length
+        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
+        // with params and a new length, and params becomes invalid from this point forward
         bytes memory how;
         uint256 byteLength = params.length * 32;
         assembly {
-            how := params // forced casting
+            how := params
             mstore(how, byteLength)
         }
-        // Params is invalid from this point fwd
+
         require(hasPermission(msg.sender, address(this), _role, how), ERROR_AUTH_FAILED);
         _;
     }

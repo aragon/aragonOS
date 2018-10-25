@@ -47,10 +47,13 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
             return false;
         }
 
-        bytes memory how; // no need to init memory as it is never used
+        // Force cast the uint256[] into a bytes array, by overwriting its length
+        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
+        // with _params and a new length, and _params becomes invalid from this point forward
+        bytes memory how;
         uint256 byteLength = _params.length * 32;
         assembly {
-            how := _params // forced casting
+            how := _params
             mstore(how, byteLength)
         }
         return linkedKernel.hasPermission(_sender, address(this), _role, how);
