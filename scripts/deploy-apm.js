@@ -40,6 +40,7 @@ module.exports = async (
   const labelName = 'aragonpm'
   const tldHash = namehash(tldName)
   const labelHash = '0x'+keccak256(labelName)
+  const apmNode = namehash(`${labelName}.${tldName}`)
 
   let ens
 
@@ -98,14 +99,21 @@ module.exports = async (
   await logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
-  try {
-    await ens.setSubnodeOwner(tldHash, labelHash, apmFactory.address)
-  } catch (err) {
-    console.error(
-      `Error: could not set the owner of '${labelName}.${tldName}' on the given ENS instance`,
-      `(${ensAddress}). Make sure you have ownership rights over the subdomain.`
-    )
-    throw err
+
+  if (await ens.owner(apmNode) === accounts[0]) {
+    log('Transferring name ownership from deployer to APMRegistryFactory')
+    await ens.setOwner(apmNode, apmFactory.address)
+  } else {
+    log('Creating subdomain and assigning it to APMRegistryFactory')
+    try {
+      await ens.setSubnodeOwner(tldHash, labelHash, apmFactory.address)
+    } catch (err) {
+      console.error(
+        `Error: could not set the owner of '${labelName}.${tldName}' on the given ENS instance`,
+        `(${ensAddress}). Make sure you have ownership rights over the subdomain.`
+      )
+      throw err
+    }
   }
 
   log('Deploying APM...')
