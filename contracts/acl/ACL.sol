@@ -244,7 +244,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
         // Force cast the bytes array into a uint256[], by overwriting its length
         // Note that the uint256[] doesn't need to be initialized as we immediately overwrite it
-        // with _how and a new length, and _howbecomes invalid from this point forward
+        // with _how and a new length, and _how becomes invalid from this point forward
         uint256[] memory how;
         uint256 intsLength = _how.length / 32;
         assembly {
