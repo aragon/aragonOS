@@ -1,10 +1,10 @@
 const namehash = require('eth-ens-namehash').hash
 const keccak256 = require('js-sha3').keccak_256
-const { promisify } = require('util')
 
 const deployENS = require('./deploy-test-ens')
 const deployDaoFactory = require('./deploy-daofactory')
 const logDeploy = require('./helpers/deploy-logger')
+const getAccounts = require('./helpers/get-accounts')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
@@ -40,13 +40,14 @@ module.exports = async (
   const labelName = 'aragonpm'
   const tldHash = namehash(tldName)
   const labelHash = '0x'+keccak256(labelName)
+  const apmNode = namehash(`${labelName}.${tldName}`)
 
   let ens
 
   log('Deploying APM...')
 
+  const accounts = await getAccounts(web3)
   if (!owner) {
-    const accounts = await promisify(web3.eth.getAccounts)()
     owner = accounts[0]
     log('OWNER env variable not found, setting APM owner to the provider\'s first account')
   }
@@ -98,14 +99,21 @@ module.exports = async (
   await logDeploy(apmFactory, { verbose })
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
-  try {
-    await ens.setSubnodeOwner(tldHash, labelHash, apmFactory.address)
-  } catch (err) {
-    console.error(
-      `Error: could not set the owner of '${labelName}.${tldName}' on the given ENS instance`,
-      `(${ensAddress}). Make sure you have ownership rights over the subdomain.`
-    )
-    throw err
+
+  if (await ens.owner(apmNode) === accounts[0]) {
+    log('Transferring name ownership from deployer to APMRegistryFactory')
+    await ens.setOwner(apmNode, apmFactory.address)
+  } else {
+    log('Creating subdomain and assigning it to APMRegistryFactory')
+    try {
+      await ens.setSubnodeOwner(tldHash, labelHash, apmFactory.address)
+    } catch (err) {
+      console.error(
+        `Error: could not set the owner of '${labelName}.${tldName}' on the given ENS instance`,
+        `(${ensAddress}). Make sure you have ownership rights over the subdomain.`
+      )
+      throw err
+    }
   }
 
   log('Deploying APM...')
