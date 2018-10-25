@@ -1,5 +1,5 @@
 const logDeploy = require('./helpers/deploy-logger')
-const { promisify } = require('util')
+const getAccounts = require('./helpers/get-accounts')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 
@@ -11,7 +11,7 @@ module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owne
   }
 
   if (!owner) {
-    const accounts = await promisify(web3.eth.getAccounts)()
+    const accounts = await getAccounts(web3)
     owner = accounts[0]
     log(`No OWNER environment variable passed, setting ENS owner to provider's account: ${owner}`)
   }
