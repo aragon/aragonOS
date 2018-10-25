@@ -48,12 +48,10 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
         }
 
         bytes memory how; // no need to init memory as it is never used
-        if (_params.length > 0) {
-            uint256 byteLength = _params.length * 32;
-            assembly {
-                how := _params // forced casting
-                mstore(how, byteLength)
-            }
+        uint256 byteLength = _params.length * 32;
+        assembly {
+            how := _params // forced casting
+            mstore(how, byteLength)
         }
         return linkedKernel.hasPermission(_sender, address(this), _role, how);
     }
