@@ -242,13 +242,16 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
+        // Force cast the bytes array into a uint256[], by overwriting its length
+        // Note that the uint256[] doesn't need to be initialized as we immediately overwrite it
+        // with _how and a new length, and _how becomes invalid from this point forward
         uint256[] memory how;
         uint256 intsLength = _how.length / 32;
         assembly {
-            how := _how // forced casting
+            how := _how
             mstore(how, intsLength)
         }
-        // _how is invalid from this point fwd
+
         return hasPermission(_who, _where, _what, how);
     }
 
