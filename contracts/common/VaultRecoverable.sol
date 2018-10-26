@@ -34,10 +34,9 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
 
     /**
     * @dev By default deriving from AragonApp makes it recoverable
-    * @param token Token address that would be recovered
     * @return bool whether the app allows the recovery
     */
-    function allowRecoverability(address token) public view returns (bool) {
+    function allowRecoverability(address) public view returns (bool) {
         return true;
     }
 
