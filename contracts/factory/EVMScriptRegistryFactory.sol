@@ -5,12 +5,11 @@ import "../evmscript/EVMScriptRegistry.sol";
 
 import "../evmscript/executors/CallsScript.sol";
 
-import "./AppProxyFactory.sol";
 import "../kernel/Kernel.sol";
 import "../acl/ACL.sol";
 
 
-contract EVMScriptRegistryFactory is AppProxyFactory, EVMScriptRegistryConstants {
+contract EVMScriptRegistryFactory is EVMScriptRegistryConstants {
     EVMScriptRegistry public baseReg;
     IEVMScriptExecutor public baseCallScript;
 
