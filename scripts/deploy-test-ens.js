@@ -2,10 +2,19 @@ const logDeploy = require('./helpers/deploy-logger')
 const getAccounts = require('./helpers/get-accounts')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
+const globalWeb3 = this.artifacts // Not injected unless called directly via truffle
 
 const defaultOwner = process.env.OWNER
 
-module.exports = async (truffleExecCallback, { artifacts = globalArtifacts, owner = defaultOwner, verbose = true } = {}) => {
+module.exports = async (
+  truffleExecCallback,
+  {
+    artifacts = globalArtifacts,
+    web3 = globalWeb3,
+    owner = defaultOwner,
+    verbose = true
+  } = {}
+) => {
   const log = (...args) => {
     if (verbose) { console.log(...args) }
   }
