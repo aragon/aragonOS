@@ -7,7 +7,7 @@ const logDeploy = require('./helpers/deploy-logger')
 const getAccounts = require('./helpers/get-accounts')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
-const globalWeb3 = this.artifacts // Not injected unless called directly via truffle
+const globalWeb3 = this.web3 // Not injected unless called directly via truffle
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
