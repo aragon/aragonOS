@@ -86,6 +86,10 @@ contract ACLSyntaxSugar {
 
 
 contract ACLHelpers {
+    function encodeParam(uint8 id, uint8 op, uint240 value) internal pure returns (uint256) {
+        return uint256(id) << 248 | uint256(op) << 240 | value;
+    }
+    
     function decodeParamOp(uint256 _x) internal pure returns (uint8 b) {
         return uint8(_x >> (8 * 30));
     }
