@@ -97,6 +97,19 @@ contract ACLHelpers {
         // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
+    function encodeParams(Param[] params) internal pure returns (uint256[]) {
+        uint256[] memory encodedParams = new uint256[](params.length);
+
+        for (uint i = 0; i < params.length; i++)
+            encodedParams[i] = encodeParam(params[i]);
+
+        return encodedParams;
+    }
+
+    function encodeParam(Param param) internal pure returns (uint256) {
+        return uint256(param.id) << 248 | uint256(param.op) << 240 | param.value;
+    }
+
     function encodeParam(uint8 id, uint8 op, uint240 value) internal pure returns (uint256) {
         return uint256(id) << 248 | uint256(op) << 240 | value;
     }
