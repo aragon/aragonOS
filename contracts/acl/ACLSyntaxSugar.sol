@@ -86,10 +86,21 @@ contract ACLSyntaxSugar {
 
 
 contract ACLHelpers {
+
+    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
+
+    struct Param {
+        uint8 id;
+        uint8 op;
+        uint240 value; // even though value is an uint240 it can store addresses
+        // in the case of 32 byte hashes losing 2 bytes precision isn't a huge deal
+        // op and id take less than 1 byte each so it can be kept in 1 sstore
+    }
+
     function encodeParam(uint8 id, uint8 op, uint240 value) internal pure returns (uint256) {
         return uint256(id) << 248 | uint256(op) << 240 | value;
     }
-    
+
     function decodeParamOp(uint256 _x) internal pure returns (uint8 b) {
         return uint8(_x >> (8 * 30));
     }

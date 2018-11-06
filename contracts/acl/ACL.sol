@@ -15,16 +15,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     */
     bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
-    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
-
-    struct Param {
-        uint8 id;
-        uint8 op;
-        uint240 value; // even though value is an uint240 it can store addresses
-        // in the case of 32 byte hashes losing 2 bytes precision isn't a huge deal
-        // op and id take less than 1 byte each so it can be kept in 1 sstore
-    }
-
     uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
     uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
     // 202 is unused
