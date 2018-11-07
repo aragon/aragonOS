@@ -210,15 +210,22 @@ contract('Kernel ACL', accounts => {
                 it('can revoke all permissions on a role', async () => {
                     const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertEvent(receipt, 'SetPermission')
+                    const receipt2 = await acl.grantPermission(accounts[3], kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt2, 'SetPermission')
                     await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isFalse(await acl.hasPermission(accounts[3], kernelAddr, APP_MANAGER_ROLE))
                 })
 
-                it('can revoke all permissions on a role', async () => {
+                it('can revoke all permissions on a role for the specified app only', async () => {
                     const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertEvent(receipt, 'SetPermission')
+                    const createReceipt = await acl.createPermission(child, kernelAddr, '0x1234', child, { from: permissionsRoot })
+                    assertEvent(createReceipt, 'SetPermission')
+                    assertEvent(createReceipt, 'ChangePermissionManager')
                     await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isTrue(await acl.hasPermission(child, kernelAddr, '0x1234'))
                 })
 
                 it('can reassign a role with a new era', async () => {
@@ -226,7 +233,8 @@ contract('Kernel ACL', accounts => {
                     assertEvent(receipt, 'SetPermission')
                     await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
-                    const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    const receipt2 = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt2, 'SetPermission')
                     assert.isTrue(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
                 })
 
