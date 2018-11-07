@@ -54,6 +54,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // Who is the manager of a permission
     mapping (bytes32 => address) internal permissionManager;
 
+    // Eras for the different roles
+    mapping (bytes32 => uint256) internal roleEras;
+
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
@@ -144,6 +147,19 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     {
         _setPermission(_entity, _app, _role, NO_PERMISSION);
     }
+
+    /**
+    * @dev Revokes all permissions for a specified role if allowed. This requires `msg.sender` to be the the permission manager
+    * @notice Revoke from all the ability to perform actions requiring `_role` on `_app`
+    * @param _app Address of the app in which the role will be revoked
+    * @param _role Identifier for the group of actions in app being revoked
+    */
+    function revokeAll(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        roleEras[roleHash(_app, _role)] = roleEras[roleHash(_app, _role)] + 1;
+    }     
 
     /**
     * @notice Set `_newManager` as the manager of `_role` in `_app`
@@ -470,7 +486,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return keccak256(abi.encodePacked("ROLE", _where, _what));
     }
 
-    function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+    function permissionHash(address _who, address _where, bytes32 _what) internal view returns (bytes32) {
+        uint256 roleEra = roleEras[roleHash(_where, _what)];
+        return keccak256(abi.encodePacked("PERMISSION", roleEra, _who, _where, _what));
     }
 }
