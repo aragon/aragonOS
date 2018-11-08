@@ -1,11 +1,10 @@
 pragma solidity 0.4.24;
 
 import "./helpers/Assert.sol";
-import "../acl/ACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 
 
-contract TestACLHelpers is ACLHelpers, ACL {
+contract TestACLHelpers is ACLHelpers {
 
     function testEncodeParam() public {
         Param memory param = Param({ 
