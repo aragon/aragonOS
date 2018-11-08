@@ -100,8 +100,9 @@ contract ACLHelpers {
     function encodeParams(Param[] params) internal pure returns (uint256[]) {
         uint256[] memory encodedParams = new uint256[](params.length);
 
-        for (uint i = 0; i < params.length; i++)
+        for (uint i = 0; i < params.length; i++) {
             encodedParams[i] = encodeParam(params[i]);
+        }
 
         return encodedParams;
     }
