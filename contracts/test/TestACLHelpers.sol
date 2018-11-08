@@ -14,7 +14,7 @@ contract TestACLHelpers is ACLHelpers, ACL {
             value: 5294967297
         });
 
-        uint256 encodedParam = encodeParam(param.id, param.op, param.value);
+        uint256 encodedParam = encodeParam(param);
 
         (uint32 id, uint32 op, uint32 value) = decodeParamsList(encodedParam);
 
