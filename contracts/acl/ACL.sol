@@ -491,6 +491,11 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     function permissionHash(address _who, address _where, bytes32 _what) internal view returns (bytes32) {
         uint256 roleEra = roleEras[roleHash(_where, _what)];
+
+        // Backward compatibility for DAOs with earlier versions of the ACL
+        if (roleEra == 0)
+		    return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+
         return keccak256(abi.encodePacked("PERMISSION", roleEra, _who, _where, _what));
     }
 }
