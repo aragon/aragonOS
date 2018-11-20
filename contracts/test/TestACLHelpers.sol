@@ -1,10 +1,12 @@
 pragma solidity 0.4.24;
 
 import "./helpers/Assert.sol";
+import "./helpers/ACLHelper.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../acl/ACL.sol";
 
 
-contract TestACLHelpers is ACLHelpers {
+contract TestACLHelpers is ACL, ACLHelper {
 
     function testEncodeParam() public {
         Param memory param = Param({ 
@@ -23,19 +25,33 @@ contract TestACLHelpers is ACLHelpers {
     }
 
     function testEncodeParams() public {
-        Param[] memory params = new Param[](2);
+        Param[] memory params = new Param[](6);
 
         params[0] = Param({ 
-            id: 1,
-            op: uint8(Op.EQ),
-            value: 5294967297
+            id: LOGIC_OP_PARAM_ID,
+            op: uint8(Op.IF_ELSE),
+            value: encodeIfElse(1, 2, 3)
         });
 
         params[1] = Param({ 
+            id: LOGIC_OP_PARAM_ID,
+            op: uint8(Op.AND),
+            value: encodeOperator(2, 3)
+        });   
+
+        params[2] = Param({ 
             id: 2,
             op: uint8(Op.EQ),
-            value: 5294967297
-        });
+            value: 1
+        });   
+
+        params[3] = Param({ 
+            id: 3,
+            op: uint8(Op.NEQ),
+            value: 2
+        }); 
+ 
+                                  
 
 
         uint256[] memory encodedParam = encodeParams(params);
@@ -50,7 +66,20 @@ contract TestACLHelpers is ACLHelpers {
 
         Assert.equal(uint256(params[1].id), uint256(id1), "Encoded id is not equal");
         Assert.equal(uint256(params[1].op), uint256(op1), "Encoded op is not equal");
-        Assert.equal(uint256(params[1].value), uint256(value1), "Encoded value is not equal");        
+        Assert.equal(uint256(params[1].value), uint256(value1), "Encoded value is not equal"); 
+
+        (uint32 id2, uint32 op2, uint32 value2) = decodeParamsList(encodedParam[2]);
+
+        Assert.equal(uint256(params[2].id), uint256(id2), "Encoded id is not equal");
+        Assert.equal(uint256(params[2].op), uint256(op2), "Encoded op is not equal");
+        Assert.equal(uint256(params[2].value), uint256(value2), "Encoded value is not equal");    
+
+        (uint32 id3, uint32 op3, uint32 value3) = decodeParamsList(encodedParam[3]);
+
+        Assert.equal(uint256(params[3].id), uint256(id3), "Encoded id is not equal");
+        Assert.equal(uint256(params[3].op), uint256(op3), "Encoded op is not equal");
+        Assert.equal(uint256(params[3].value), uint256(value3), "Encoded value is not equal");   
+                                
     }    
 
 }
