@@ -90,20 +90,6 @@ contract ACLSyntaxSugar {
 contract ACLHelpers is ACLParams {
 
 
-    function encodeParams(Param[] params) internal pure returns (uint256[]) {
-        uint256[] memory encodedParams = new uint256[](params.length);
-
-        for (uint i = 0; i < params.length; i++) {
-            encodedParams[i] = encodeParam(params[i]);
-        }
-
-        return encodedParams;
-    }
-
-    function encodeParam(Param param) internal pure returns (uint256) {
-        return uint256(param.id) << 248 | uint256(param.op) << 240 | param.value;
-    }
-
     function decodeParamOp(uint256 _x) public pure returns (uint8 b) {
         return uint8(_x >> (8 * 30));
     }
@@ -117,4 +103,18 @@ contract ACLHelpers is ACLParams {
         b = uint32(_x >> (8 * 4));
         c = uint32(_x >> (8 * 8));
     }
+
+    function encodeParams(Param[] params) internal pure returns (uint256[]) {
+        uint256[] memory encodedParams = new uint256[](params.length);
+
+        for (uint i = 0; i < params.length; i++) {
+            encodedParams[i] = encodeParam(params[i]);
+        }
+
+        return encodedParams;
+    }
+
+    function encodeParam(Param param) internal pure returns (uint256) {
+        return uint256(param.id) << 248 | uint256(param.op) << 240 | param.value;
+    }    
 }
