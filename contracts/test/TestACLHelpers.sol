@@ -9,11 +9,7 @@ import "../acl/ACL.sol";
 contract TestACLHelpers is ACL, ACLHelper {
 
     function testEncodeParam() public {
-        Param memory param = Param({ 
-            id: 2,
-            op: uint8(Op.EQ),
-            value: 5294967297
-        });
+        Param memory param = Param(2, uint8(Op.EQ), 5294967297);
 
         uint256 encodedParam = encodeParam(param);
 
@@ -27,31 +23,10 @@ contract TestACLHelpers is ACL, ACLHelper {
     function testEncodeParams() public {
         Param[] memory params = new Param[](6);
 
-        params[0] = Param({ 
-            id: LOGIC_OP_PARAM_ID,
-            op: uint8(Op.IF_ELSE),
-            value: encodeIfElse(1, 2, 3)
-        });
-
-        params[1] = Param({ 
-            id: LOGIC_OP_PARAM_ID,
-            op: uint8(Op.AND),
-            value: encodeOperator(2, 3)
-        });   
-
-        params[2] = Param({ 
-            id: 2,
-            op: uint8(Op.EQ),
-            value: 1
-        });   
-
-        params[3] = Param({ 
-            id: 3,
-            op: uint8(Op.NEQ),
-            value: 2
-        }); 
- 
-                                  
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 2, 3));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));   
+        params[2] = Param(2, uint8(Op.EQ), 1);   
+        params[3] = Param(3, uint8(Op.NEQ), 2);                                   
 
 
         uint256[] memory encodedParam = encodeParams(params);
