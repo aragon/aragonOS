@@ -59,13 +59,15 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 6.9e6
+      gas: 6.9e6,
+      gasPrice: 15000000001
     },
     devnet: {
       network_id: 16,
       host: 'localhost',
       port: 8535,
-      gas: 6.9e6
+      gas: 6.9e6,
+      gasPrice: 15000000001
     },
     mainnet: {
       network_id: 1,

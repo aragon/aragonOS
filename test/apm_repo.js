@@ -8,7 +8,7 @@ contract('Repo', accounts => {
 
     beforeEach(async () => {
         repo = await Repo.new()
-        repo.initialize();
+        await repo.initialize();
     })
 
     it('computes correct valid bumps', async () => {
