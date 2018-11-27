@@ -44,6 +44,7 @@
     "truffle": "4.1.14",
     "truffle-bytecode-manager": "^1.1.1",
     "truffle-extract": "^1.2.1",
+    "web3-eth-abi": "1.0.0-beta.33",
     "web3-utils": "1.0.0-beta.33"
   },
   "dependencies": {
