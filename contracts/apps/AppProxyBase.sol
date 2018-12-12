@@ -1,27 +1,27 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
-import "./IAppProxy.sol";
 import "./AppStorage.sol";
-import "../common/DelegateProxy.sol";
-import "../kernel/KernelStorage.sol";
+import "../common/DepositableDelegateProxy.sol";
+import "../kernel/KernelConstants.sol";
+import "../kernel/IKernel.sol";
 
 
-contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
+contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelNamespaceConstants {
     /**
     * @dev Initialize AppProxy
     * @param _kernel Reference to organization kernel for the app
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    function AppProxyBase(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
-        kernel = _kernel;
-        appId = _appId;
+    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
+        setKernel(_kernel);
+        setAppId(_appId);
 
         // Implicit check that kernel is actually a Kernel
         // The EVM doesn't actually provide a way for us to make sure, but we can force a revert to
         // occur if the kernel is set to 0x0 or a non-code address when we try to call a method on
         // it.
-        address appCode = getAppBase(appId);
+        address appCode = getAppBase(_appId);
 
         // If initialize payload is provided, it will be executed
         if (_initializePayload.length > 0) {
@@ -33,12 +33,6 @@ contract AppProxyBase is IAppProxy, AppStorage, DelegateProxy, KernelConstants {
     }
 
     function getAppBase(bytes32 _appId) internal view returns (address) {
-        return kernel.getApp(keccak256(APP_BASES_NAMESPACE, _appId));
-    }
-
-    function () payable public {
-        address target = getCode();
-        require(target != 0); // if app code hasn't been set yet, don't call
-        delegatedFwd(target, msg.data);
+        return kernel().getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
     }
 }

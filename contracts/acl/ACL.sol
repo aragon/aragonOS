@@ -1,26 +1,21 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
+import "../common/TimeHelpers.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
+import "./IACLOracle.sol";
 
 
-interface ACLOracle {
-    function canPerform(address who, address where, bytes32 what) public view returns (bool);
-}
+/* solium-disable function-order */
+// Allow public initialize() to be first
+contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
+    /* Hardcoded constants to save gas
+    bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
+    */
+    bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
-
-contract ACL is IACL, AragonApp, ACLSyntaxSugar {
-    bytes32 constant public CREATE_PERMISSIONS_ROLE = bytes32(1);
-
-    // whether a certain entity has a permission
-    mapping (bytes32 => bytes32) permissions; // 0 for no permission, or parameters id
-    mapping (bytes32 => Param[]) public permissionParams;
-
-    // who is the manager of a permission
-    mapping (bytes32 => address) permissionManager;
-
-    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, NOT, AND, OR, XOR, IF_ELSE, RET } // op types
+    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
 
     struct Param {
         uint8 id;
@@ -30,55 +25,86 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         // op and id take less than 1 byte each so it can be kept in 1 sstore
     }
 
-    uint8 constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 constant TIMESTAMP_PARAM_ID    = 201;
-    uint8 constant SENDER_PARAM_ID       = 202;
-    uint8 constant ORACLE_PARAM_ID       = 203;
-    uint8 constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 constant PARAM_VALUE_PARAM_ID  = 205;
+    uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
+    uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
+    // 202 is unused
+    uint8 internal constant ORACLE_PARAM_ID       = 203;
+    uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
+    uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
     // TODO: Add execution times param type?
 
-    bytes32 constant public EMPTY_PARAM_HASH = keccak256(uint256(0));
-    address constant ANY_ENTITY = address(-1);
+    /* Hardcoded constant to save gas
+    bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    */
+    bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
+    bytes32 public constant NO_PERMISSION = bytes32(0);
+    address public constant ANY_ENTITY = address(-1);
+    address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
+
+    uint256 internal constant ORACLE_CHECK_GAS = 30000;
+
+    string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
+    string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
+    string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
+
+    // Whether someone has a permission
+    mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
+    mapping (bytes32 => Param[]) internal permissionParams; // params hash => params
+
+    // Who is the manager of a permission
+    mapping (bytes32 => address) internal permissionManager;
+
+    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
+    event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
+    event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
-        require(msg.sender == getPermissionManager(_app, _role));
+        require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
         _;
     }
 
-    event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
-    event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
+    modifier noPermissionManager(address _app, bytes32 _role) {
+        // only allow permission creation (or re-creation) when there is no manager
+        require(getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
+        _;
+    }
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initializes an ACL instance and sets `_permissionsCreator` as the entity that can create other permissions
+    * @notice Initialize an ACL instance and set `_permissionsCreator` as the entity that can create other permissions
     * @param _permissionsCreator Entity that will be given permission over createPermission
     */
-    function initialize(address _permissionsCreator) onlyInit public {
+    function initialize(address _permissionsCreator) public onlyInit {
         initialized();
-        require(msg.sender == address(kernel));
+        require(msg.sender == address(kernel()), ERROR_AUTH_INIT_KERNEL);
 
         _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
 
     /**
-    * @dev Creates a permission that wasn't previously set. Access is limited by the ACL.
+    * @dev Creates a permission that wasn't previously set and managed.
     *      If a created permission is removed it is possible to reset it with createPermission.
-    * @notice Create a new permission granting `_entity` the ability to perform actions of role `_role` on `_app` (setting `_manager` as the permission manager)
+    *      This is the **ONLY** way to create permissions and set managers to permissions that don't
+    *      have a manager.
+    *      In terms of the ACL being initialized, this function implicitly protects all the other
+    *      state-changing external functions, as they all require the sender to be a manager.
+    * @notice Create a new permission granting `_entity` the ability to perform actions requiring `_role` on `_app`, setting `_manager` as the permission's manager
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _manager Address of the entity that will be able to grant and revoke the permission further.
     */
-    function createPermission(address _entity, address _app, bytes32 _role, address _manager) external {
-        require(hasPermission(msg.sender, address(this), CREATE_PERMISSIONS_ROLE));
-
+    function createPermission(address _entity, address _app, bytes32 _role, address _manager)
+        external
+        auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
+    {
         _createPermission(_entity, _app, _role, _manager);
     }
 
     /**
     * @dev Grants permission if allowed. This requires `msg.sender` to be the permission manager
-    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Grant `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
@@ -91,49 +117,110 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
 
     /**
     * @dev Grants a permission with parameters if allowed. This requires `msg.sender` to be the permission manager
-    * @notice Grants `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Grant `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity that will be able to perform the role
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
     function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
-        onlyPermissionManager(_app, _role)
         public
+        onlyPermissionManager(_app, _role)
     {
-        require(!hasPermission(_entity, _app, _role));
-
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(_entity, _app, _role, paramsHash);
     }
 
     /**
     * @dev Revokes permission if allowed. This requires `msg.sender` to be the the permission manager
-    * @notice Revokes `_entity` the ability to perform actions of role `_role` on `_app`
+    * @notice Revoke from `_entity` the ability to perform actions requiring `_role` on `_app`
     * @param _entity Address of the whitelisted entity to revoke access from
     * @param _app Address of the app in which the role will be revoked
     * @param _role Identifier for the group of actions in app being revoked
     */
     function revokePermission(address _entity, address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
+        onlyPermissionManager(_app, _role)
     {
-        require(hasPermission(_entity, _app, _role));
-
-        _setPermission(_entity, _app, _role, bytes32(0));
+        _setPermission(_entity, _app, _role, NO_PERMISSION);
     }
 
     /**
-    * @notice Sets `_newManager` as the manager of the permission `_role` in `_app`
+    * @notice Set `_newManager` as the manager of `_role` in `_app`
     * @param _newManager Address for the new manager
     * @param _app Address of the app in which the permission management is being transferred
     * @param _role Identifier for the group of actions being transferred
     */
     function setPermissionManager(address _newManager, address _app, bytes32 _role)
-        onlyPermissionManager(_app, _role)
         external
+        onlyPermissionManager(_app, _role)
     {
         _setPermissionManager(_newManager, _app, _role);
+    }
+
+    /**
+    * @notice Remove the manager of `_role` in `_app`
+    * @param _app Address of the app in which the permission is being unmanaged
+    * @param _role Identifier for the group of actions being unmanaged
+    */
+    function removePermissionManager(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        _setPermissionManager(address(0), _app, _role);
+    }
+
+    /**
+    * @notice Burn non-existent `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
+    */
+    function createBurnedPermission(address _app, bytes32 _role)
+        external
+        auth(CREATE_PERMISSIONS_ROLE)
+        noPermissionManager(_app, _role)
+    {
+        _setPermissionManager(BURN_ENTITY, _app, _role);
+    }
+
+    /**
+    * @notice Burn `_role` in `_app`, so no modification can be made to it (grant, revoke, permission manager)
+    * @param _app Address of the app in which the permission is being burned
+    * @param _role Identifier for the group of actions being burned
+    */
+    function burnPermissionManager(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        _setPermissionManager(BURN_ENTITY, _app, _role);
+    }
+
+    /**
+     * @notice Get parameters for permission array length
+     * @param _entity Address of the whitelisted entity that will be able to perform the role
+     * @param _app Address of the app
+     * @param _role Identifier for a group of actions in app
+     * @return Length of the array
+     */
+    function getPermissionParamsLength(address _entity, address _app, bytes32 _role) external view returns (uint) {
+        return permissionParams[permissions[permissionHash(_entity, _app, _role)]].length;
+    }
+
+    /**
+    * @notice Get parameter for permission
+    * @param _entity Address of the whitelisted entity that will be able to perform the role
+    * @param _app Address of the app
+    * @param _role Identifier for a group of actions in app
+    * @param _index Index of parameter in the array
+    * @return Parameter (id, op, value)
+    */
+    function getPermissionParam(address _entity, address _app, bytes32 _role, uint _index)
+        external
+        view
+        returns (uint8, uint8, uint240)
+    {
+        Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
+        return (param.id, param.op, param.value);
     }
 
     /**
@@ -155,24 +242,27 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
+        // Force cast the bytes array into a uint256[], by overwriting its length
+        // Note that the uint256[] doesn't need to be initialized as we immediately overwrite it
+        // with _how and a new length, and _how becomes invalid from this point forward
         uint256[] memory how;
         uint256 intsLength = _how.length / 32;
         assembly {
-            how := _how // forced casting
+            how := _how
             mstore(how, intsLength)
         }
-        // _how is invalid from this point fwd
+
         return hasPermission(_who, _where, _what, how);
     }
 
     function hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) public view returns (bool) {
         bytes32 whoParams = permissions[permissionHash(_who, _where, _what)];
-        if (whoParams != bytes32(0) && evalParams(whoParams, _who, _where, _what, _how)) {
+        if (whoParams != NO_PERMISSION && evalParams(whoParams, _who, _where, _what, _how)) {
             return true;
         }
 
         bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, _where, _what)];
-        if (anyParams != bytes32(0) && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
+        if (anyParams != NO_PERMISSION && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
             return true;
         }
 
@@ -184,13 +274,25 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         return hasPermission(_who, _where, _what, empty);
     }
 
+    function evalParams(
+        bytes32 _paramsHash,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    ) public view returns (bool)
+    {
+        if (_paramsHash == EMPTY_PARAM_HASH) {
+            return true;
+        }
+
+        return _evalParam(_paramsHash, 0, _who, _where, _what, _how);
+    }
+
     /**
     * @dev Internal createPermission for access inside the kernel (on instantiation)
     */
     function _createPermission(address _entity, address _app, bytes32 _role, address _manager) internal {
-        // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0));
-
         _setPermission(_entity, _app, _role, EMPTY_PARAM_HASH);
         _setPermissionManager(_manager, _app, _role);
     }
@@ -200,12 +302,17 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
     */
     function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
         permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
+        bool entityHasPermission = _paramsHash != NO_PERMISSION;
+        bool permissionHasParams = entityHasPermission && _paramsHash != EMPTY_PARAM_HASH;
 
-        SetPermission(_entity, _app, _role, _paramsHash != bytes32(0));
+        emit SetPermission(_entity, _app, _role, entityHasPermission);
+        if (permissionHasParams) {
+            emit SetPermissionParams(_entity, _app, _role, _paramsHash);
+        }
     }
 
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
-        bytes32 paramHash = keccak256(_encodedParams);
+        bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
         Param[] storage params = permissionParams[paramHash];
 
         if (params.length == 0) { // params not saved before
@@ -219,22 +326,7 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         return paramHash;
     }
 
-    function evalParams(
-        bytes32 _paramsHash,
-        address _who,
-        address _where,
-        bytes32 _what,
-        uint256[] _how
-    ) internal view returns (bool)
-    {
-        if (_paramsHash == EMPTY_PARAM_HASH) {
-            return true;
-        }
-
-        return evalParam(_paramsHash, 0, _who, _where, _what, _how);
-    }
-
-    function evalParam(
+    function _evalParam(
         bytes32 _paramsHash,
         uint32 _paramId,
         address _who,
@@ -250,7 +342,7 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         Param memory param = permissionParams[_paramsHash][_paramId];
 
         if (param.id == LOGIC_OP_PARAM_ID) {
-            return evalLogic(param, _paramsHash, _who, _where, _what, _how);
+            return _evalLogic(param, _paramsHash, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -258,14 +350,12 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = ACLOracle(param.value).canPerform(_who, _where, _what) ? 1 : 0;
+            value = checkOracle(IACLOracle(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
-            value = blockN();
+            value = getBlockNumber();
         } else if (param.id == TIMESTAMP_PARAM_ID) {
-            value = time();
-        } else if (param.id == SENDER_PARAM_ID) {
-            value = uint256(msg.sender);
+            value = getTimestamp();
         } else if (param.id == PARAM_VALUE_PARAM_ID) {
             value = uint256(param.value);
         } else {
@@ -282,16 +372,27 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+    function _evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
+        internal
+        view
+        returns (bool)
+    {
         if (Op(_param.op) == Op.IF_ELSE) {
-            var (condition, success, failure) = decodeParamsList(uint256(_param.value));
-            bool result = evalParam(_paramsHash, condition, _who, _where, _what, _how);
+            uint32 conditionParam;
+            uint32 successParam;
+            uint32 failureParam;
 
-            return evalParam(_paramsHash, result ? success : failure, _who, _where, _what, _how);
+            (conditionParam, successParam, failureParam) = decodeParamsList(uint256(_param.value));
+            bool result = _evalParam(_paramsHash, conditionParam, _who, _where, _what, _how);
+
+            return _evalParam(_paramsHash, result ? successParam : failureParam, _who, _where, _what, _how);
         }
 
-        var (v1, v2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = evalParam(_paramsHash, v1, _who, _where, _what, _how);
+        uint32 param1;
+        uint32 param2;
+
+        (param1, param2,) = decodeParamsList(uint256(_param.value));
+        bool r1 = _evalParam(_paramsHash, param1, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -305,10 +406,10 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
             return false;
         }
 
-        bool r2 = evalParam(_paramsHash, v2, _who, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, param2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
-            return (r1 && !r2) || (!r1 && r2);
+            return r1 != r2;
         }
 
         return r2; // both or and and depend on result of r2 after checks
@@ -324,23 +425,52 @@ contract ACL is IACL, AragonApp, ACLSyntaxSugar {
         return false;
     }
 
+    function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        bytes4 sig = _oracleAddr.canPerform.selector;
+
+        // a raw call is required so we can return false if the call reverts, rather than reverting
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
+        uint256 oracleCheckGas = ORACLE_CHECK_GAS;
+
+        bool ok;
+        assembly {
+            ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+        }
+
+        if (!ok) {
+            return false;
+        }
+
+        uint256 size;
+        assembly { size := returndatasize }
+        if (size != 32) {
+            return false;
+        }
+
+        bool result;
+        assembly {
+            let ptr := mload(0x40)       // get next free memory ptr
+            returndatacopy(ptr, 0, size) // copy return from above `staticcall`
+            result := mload(ptr)         // read data at ptr and set it to result
+            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
+        }
+
+        return result;
+    }
+
     /**
     * @dev Internal function that sets management
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
         permissionManager[roleHash(_app, _role)] = _newManager;
-        ChangePermissionManager(_app, _role, _newManager);
+        emit ChangePermissionManager(_app, _role, _newManager);
     }
 
-    function roleHash(address _where, bytes32 _what) pure internal returns (bytes32) {
-        return keccak256(uint256(1), _where, _what);
+    function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("ROLE", _where, _what));
     }
 
-    function permissionHash(address _who, address _where, bytes32 _what) pure internal returns (bytes32) {
-        return keccak256(uint256(2), _who, _where, _what);
+    function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
     }
-
-    function time() internal view returns (uint64) { return uint64(block.timestamp); } // solium-disable-line security/no-block-members
-
-    function blockN() internal view returns (uint256) { return block.number; }
 }

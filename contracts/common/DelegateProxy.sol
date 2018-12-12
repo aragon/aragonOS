@@ -1,7 +1,12 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
+
+import "../common/IsContract.sol";
+import "../lib/misc/ERCProxy.sol";
 
 
-contract DelegateProxy {
+contract DelegateProxy is ERCProxy, IsContract {
+    uint256 internal constant FWD_GAS_LIMIT = 10000;
+
     /**
     * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)
     * @param _dst Destination address to perform the delegatecall
@@ -9,10 +14,11 @@ contract DelegateProxy {
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
         require(isContract(_dst));
-        assembly {
-            let result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
-            let size := returndatasize
+        uint256 fwdGasLimit = FWD_GAS_LIMIT;
 
+        assembly {
+            let result := delegatecall(sub(gas, fwdGasLimit), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
+            let size := returndatasize
             let ptr := mload(0x40)
             returndatacopy(ptr, 0, size)
 
@@ -21,11 +27,5 @@ contract DelegateProxy {
             switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
-    }
-
-    function isContract(address _target) internal view returns (bool) {
-        uint256 size;
-        assembly { size := extcodesize(_target) }
-        return size > 0;
     }
 }

@@ -1,13 +1,20 @@
+# Dependencies
 node_modules/
-npm-debug.log
-build/
-docker_home/
-test-*
-tmp-*
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# coverage
 coverage/
 coverageEnv/
 coverage.json
-scTopics
-functions.csv
-artifacts/
 allFiredEvents
+scTopics
+
+# truffle build artifacts
+abi/
+build/
+bytecode/
+bytecode_new/
+flattened_contracts/

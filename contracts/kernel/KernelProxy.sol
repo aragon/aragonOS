@@ -1,24 +1,34 @@
-pragma solidity 0.4.18;
+pragma solidity 0.4.24;
 
+import "./IKernel.sol";
+import "./KernelConstants.sol";
 import "./KernelStorage.sol";
-import "../common/DelegateProxy.sol";
+import "../common/DepositableDelegateProxy.sol";
+import "../common/IsContract.sol";
 
 
-contract KernelProxy is KernelStorage, DelegateProxy {
+contract KernelProxy is KernelStorage, KernelAppIds, KernelNamespaceConstants, IsContract, DepositableDelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
     * @param _kernelImpl Address of the contract used as implementation for kernel
     */
-    function KernelProxy(address _kernelImpl) public {
-        apps[keccak256(CORE_NAMESPACE, KERNEL_APP_ID)] = _kernelImpl;
+    constructor(IKernel _kernelImpl) public {
+        require(isContract(address(_kernelImpl)));
+        apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID] = _kernelImpl;
     }
 
     /**
-    * @dev All calls made to the proxy are forwarded to the kernel implementation via a delegatecall
-    * @return Any bytes32 value the implementation returns
+     * @dev ERC897, whether it is a forwarding (1) or an upgradeable (2) proxy
+     */
+    function proxyType() public pure returns (uint256 proxyTypeId) {
+        return UPGRADEABLE;
+    }
+
+    /**
+    * @dev ERC897, the address the proxy would delegate calls to
     */
-    function () payable public {
-        delegatedFwd(apps[KERNEL_APP], msg.data);
+    function implementation() public view returns (address) {
+        return apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID];
     }
 }

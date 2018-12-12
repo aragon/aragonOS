@@ -1,19 +1,53 @@
-var HDWalletProvider = require('truffle-hdwallet-provider')
+const homedir = require('homedir')
+const path = require('path')
 
-const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
+const HDWalletProvider = require('truffle-hdwallet-provider')
+const HDWalletProviderPrivkey = require('truffle-hdwallet-provider-privkey')
 
-let ropstenProvider, kovanProvider = {}
+const DEFAULT_MNEMONIC = 'stumble story behind hurt patient ball whisper art swift tongue ice alien'
 
-if (process.env.LIVE_NETWORKS) {
-  ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
-  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
+const defaultRPC = (network) =>
+  `https://${network}.infura.io`
+
+const configFilePath = (filename) =>
+  path.join(homedir(), `.aragon/${filename}`)
+
+const mnemonic = () => {
+  try {
+    return require(configFilePath('mnemonic.json')).mnemonic
+  } catch (e) {
+    return DEFAULT_MNEMONIC
+  }
 }
+
+const settingsForNetwork = (network) => {
+  try {
+    return require(configFilePath(`${network}_key.json`))
+  } catch (e) {
+    return { }
+  }
+}
+
+// Lazily loaded provider
+const providerForNetwork = (network) => (
+  () => {
+    let { rpc, keys } = settingsForNetwork(network)
+
+    rpc = rpc || defaultRPC(network)
+
+    if (!keys || keys.length == 0) {
+      return new HDWalletProvider(mnemonic(), rpc)
+    }
+
+    return new HDWalletProviderPrivkey(keys, rpc)
+  }
+)
 
 const mochaGasSettings = {
   reporter: 'eth-gas-reporter',
   reporterOptions : {
     currency: 'USD',
-    gasPrice: 21
+    gasPrice: 3
   }
 }
 
@@ -25,17 +59,37 @@ module.exports = {
       network_id: 15,
       host: 'localhost',
       port: 8545,
-      gas: 50e6,
+      gas: 6.9e6,
+      gasPrice: 15000000001
+    },
+    devnet: {
+      network_id: 16,
+      host: 'localhost',
+      port: 8535,
+      gas: 6.9e6,
+      gasPrice: 15000000001
+    },
+    mainnet: {
+      network_id: 1,
+      provider: providerForNetwork('mainnet'),
+      gas: 7.9e6,
+      gasPrice: 3000000001
     },
     ropsten: {
       network_id: 3,
-      provider: ropstenProvider,
-      gas: 4.712e6,
+      provider: providerForNetwork('ropsten'),
+      gas: 4.712e6
+    },
+    rinkeby: {
+      network_id: 4,
+      provider: providerForNetwork('rinkeby'),
+      gas: 6.9e6,
+      gasPrice: 15000000001
     },
     kovan: {
       network_id: 42,
-      provider: kovanProvider,
-      gas: 6.9e6,
+      provider: providerForNetwork('kovan'),
+      gas: 6.9e6
     },
     coverage: {
       host: "localhost",
@@ -47,4 +101,10 @@ module.exports = {
   },
   build: {},
   mocha,
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 10000
+    }
+  },
 }

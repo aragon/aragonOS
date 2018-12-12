@@ -1,29 +1,31 @@
 const { assertRevert } = require('./helpers/assertThrow')
 
-const Repo = artifacts.require('Repo')
+
+const Repo = artifacts.require('UnsafeRepo')
 
 contract('Repo', accounts => {
-    let repo = {}
+    let repo
 
     beforeEach(async () => {
         repo = await Repo.new()
+        await repo.initialize();
     })
 
     it('computes correct valid bumps', async () => {
-        await assert.isTrue(await repo.isValidBump.call([0, 0, 0], [0, 0, 1]))
-        await assert.isTrue(await repo.isValidBump.call([0, 0, 0], [0, 1, 0]))
-        await assert.isTrue(await repo.isValidBump.call([0, 0, 0], [1, 0, 0]))
-        await assert.isTrue(await repo.isValidBump.call([1, 4, 7], [2, 0, 0]))
-        await assert.isTrue(await repo.isValidBump.call([147, 4, 7], [147, 5, 0]))
+        await assert.isTrue(await repo.isValidBump([0, 0, 0], [0, 0, 1]))
+        await assert.isTrue(await repo.isValidBump([0, 0, 0], [0, 1, 0]))
+        await assert.isTrue(await repo.isValidBump([0, 0, 0], [1, 0, 0]))
+        await assert.isTrue(await repo.isValidBump([1, 4, 7], [2, 0, 0]))
+        await assert.isTrue(await repo.isValidBump([147, 4, 7], [147, 5, 0]))
 
-        await assert.isFalse(await repo.isValidBump.call([0, 0, 1], [0, 0, 1]))
-        await assert.isFalse(await repo.isValidBump.call([0, 1, 0], [0, 2, 1]))
-        await assert.isFalse(await repo.isValidBump.call([0, 0, 2], [0, 0, 1]))
-        await assert.isFalse(await repo.isValidBump.call([2, 1, 0], [2, 2, 1]))
-        await assert.isFalse(await repo.isValidBump.call([1, 1, 1], [5, 0, 0]))
-        await assert.isFalse(await repo.isValidBump.call([5, 0, 0], [5, 2, 0]))
-        await assert.isFalse(await repo.isValidBump.call([0, 1, 2], [1, 1, 2]))
-        await assert.isFalse(await repo.isValidBump.call([0, 0, Math.pow(2, 16)], [0, 0, Math.pow(2, 16) - 1]))
+        await assert.isFalse(await repo.isValidBump([0, 0, 1], [0, 0, 1]))
+        await assert.isFalse(await repo.isValidBump([0, 1, 0], [0, 2, 1]))
+        await assert.isFalse(await repo.isValidBump([0, 0, 2], [0, 0, 1]))
+        await assert.isFalse(await repo.isValidBump([2, 1, 0], [2, 2, 1]))
+        await assert.isFalse(await repo.isValidBump([1, 1, 1], [5, 0, 0]))
+        await assert.isFalse(await repo.isValidBump([5, 0, 0], [5, 2, 0]))
+        await assert.isFalse(await repo.isValidBump([0, 1, 2], [1, 1, 2]))
+        await assert.isFalse(await repo.isValidBump([0, 0, Math.pow(2, 16)], [0, 0, Math.pow(2, 16) - 1]))
     })
 
     // valid version as being a correct bump from 0.0.0
@@ -91,7 +93,7 @@ contract('Repo', accounts => {
             })
         })
 
-        context('adding new version', async () => {
+        context('adding new version', () => {
             const newCode = accounts[9] // random addr, irrelevant
             const newContent = '0x13'
 
