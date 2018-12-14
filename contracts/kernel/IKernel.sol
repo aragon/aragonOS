@@ -8,10 +8,13 @@ import "../acl/IACL.sol";
 import "../common/IVaultRecoverable.sol";
 
 
-// This should be an interface, but interfaces can't inherit yet :(
-contract IKernel is IVaultRecoverable {
+interface IKernelEvents {
     event SetApp(bytes32 indexed namespace, bytes32 indexed appId, address app);
+}
 
+
+// This should be an interface, but interfaces can't inherit yet :(
+contract IKernel is IKernelEvents, IVaultRecoverable {
     function acl() public view returns (IACL);
     function hasPermission(address who, address where, bytes32 what, bytes how) public view returns (bool);
 
