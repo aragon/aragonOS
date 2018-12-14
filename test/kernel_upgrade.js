@@ -1,4 +1,5 @@
 const { assertRevert } = require('./helpers/assertThrow')
+const { decodeEventsOfType } = require('./helpers/decodeEvent')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -45,6 +46,19 @@ contract('Kernel upgrade', accounts => {
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = (await kernelProxy.proxyType()).toString()
         assert.equal(proxyType, UPGRADEABLE, "Proxy type should be 2 (upgradeable)")
+    })
+
+    it('emits SetApp event', async () => {
+        const kernelProxy = await KernelProxy.new(kernelBase.address)
+        const receipt = web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
+
+        const setAppLogs = decodeEventsOfType(receipt, kernelProxy.abi, 'SetApp')
+        assert.equal(setAppLogs.length, 1)
+
+        const setAppArgs = setAppLogs[0].args
+        assert.equal(setAppArgs.namespace, CORE_NAMESPACE, 'Kernel namespace should match')
+        assert.equal(setAppArgs.appId, KERNEL_APP_ID, 'Kernel app id should match')
+        assert.equal(setAppArgs.app.toLowerCase(), kernelBase.address.toLowerCase(), 'Kernel base address should match')
     })
 
     it('fails to create a KernelProxy if the base is 0', async () => {

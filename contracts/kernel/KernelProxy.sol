@@ -7,7 +7,7 @@ import "../common/DepositableDelegateProxy.sol";
 import "../common/IsContract.sol";
 
 
-contract KernelProxy is KernelStorage, KernelAppIds, KernelNamespaceConstants, IsContract, DepositableDelegateProxy {
+contract KernelProxy is IKernelEvents, KernelStorage, KernelAppIds, KernelNamespaceConstants, IsContract, DepositableDelegateProxy {
     /**
     * @dev KernelProxy is a proxy contract to a kernel implementation. The implementation
     *      can update the reference, which effectively upgrades the contract
@@ -16,6 +16,12 @@ contract KernelProxy is KernelStorage, KernelAppIds, KernelNamespaceConstants, I
     constructor(IKernel _kernelImpl) public {
         require(isContract(address(_kernelImpl)));
         apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID] = _kernelImpl;
+
+        // Note that emitting this event is important for verifying that a KernelProxy instance
+        // was never upgraded to a malicious Kernel logic contract over its lifespan.
+        // This starts the "chain of trust", that can be followed through later SetApp() events
+        // emitted during kernel upgrades.
+        emit SetApp(KERNEL_CORE_NAMESPACE, KERNEL_CORE_APP_ID, _kernelImpl);
     }
 
     /**
