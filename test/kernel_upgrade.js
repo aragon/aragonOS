@@ -52,9 +52,7 @@ contract('Kernel upgrade', accounts => {
         const kernelProxy = await KernelProxy.new(kernelBase.address)
         const receipt = web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
 
-        const setAppAbi = kernelProxy.abi.filter(abi => abi.name === 'SetApp' && abi.type === 'event')[0]
-        const setAppLogs = decodeEventsOfType(receipt, setAppAbi)
-
+        const setAppLogs = decodeEventsOfType(receipt, kernelProxy.abi, 'SetApp')
         assert.equal(setAppLogs.length, 1)
 
         const setAppArgs = setAppLogs[0].args
