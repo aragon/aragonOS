@@ -14,6 +14,8 @@ const AppStubDepositable = artifacts.require('AppStubDepositable')
 const AppStubConditionalRecovery = artifacts.require('AppStubConditionalRecovery')
 const EtherTokenConstantMock = artifacts.require('EtherTokenConstantMock')
 const TokenMock = artifacts.require('TokenMock')
+const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
+const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
 const VaultMock = artifacts.require('VaultMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
@@ -22,34 +24,70 @@ const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.ev
 const APP_ID = hash('stub.aragonpm.test')
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-contract('Proxy funds', accounts => {
+contract('Fund recovery', accounts => {
   let aclBase, appBase, appConditionalRecoveryBase
   let APP_ADDR_NAMESPACE, ETH
 
   const permissionsRoot = accounts[0]
 
   // Helpers
-  const recoverEth = async (target, vault) => {
+  const recoverEth = async ({ shouldFail, target, vault }) => {
     const amount = 1
     const initialBalance = await getBalance(target.address)
     const initialVaultBalance = await getBalance(vault.address)
     const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
     assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
-    await target.transferToVault(ETH)
-    assert.equal((await getBalance(target.address)).valueOf(), 0)
-    assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount).valueOf())
+
+    const recoverAction = () => target.transferToVault(ETH)
+
+    if (shouldFail) {
+      await assertRevert(recoverAction)
+      assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
+      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance)
+    } else {
+      await recoverAction()
+      assert.equal((await getBalance(target.address)).valueOf(), 0)
+      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount))
+    }
   }
 
-  const recoverTokens = async (target, vault) => {
+  const recoverTokens = async ({ shouldFail, tokenContract, target, vault }) => {
     const amount = 1
-    const token = await TokenMock.new(accounts[0], 1000)
+    const token = await tokenContract.new(accounts[0], 1000)
     const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
     await token.transfer(target.address, amount)
     assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
-    await target.transferToVault(token.address)
-    assert.equal((await token.balanceOf(target.address)).valueOf(), 0)
-    assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount).valueOf())
+
+    const recoverAction = () => target.transferToVault(token.address)
+
+    if (shouldFail) {
+      await assertRevert(recoverAction)
+      assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance)
+    } else {
+      await recoverAction()
+      assert.equal((await token.balanceOf(target.address)).valueOf(), 0)
+      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount))
+    }
+  }
+
+  const failingRecoverTokens = async ({ tokenContract, target, vault }) => {
+    const amount = 1
+    const token = await tokenContract.new(accounts[0], 1000)
+    const initialBalance = await token.balanceOf(target.address)
+    const initialVaultBalance = await token.balanceOf(vault.address)
+    await token.transfer(target.address, amount)
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+
+    // Stop token from being transferable
+    await token.setAllowTransfer(false)
+
+    // Try to transfer
+    await assertRevert(() => target.transferToVault(token.address))
+
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+    assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance)
   }
 
   const failWithoutVault = async (target, kernel) => {
@@ -63,6 +101,25 @@ contract('Proxy funds', accounts => {
       await target.transferToVault(ETH)
     })
   }
+
+  // Token test groups
+  const tokenTestGroups = [
+    {
+      title: 'standards compliant, reverting token',
+      tokenContract: TokenMock,
+      revertsOnFailure: true,
+    },
+    {
+      title: 'standards compliant, non-reverting token',
+      tokenContract: TokenReturnFalseMock,
+      revertsOnFailure: false,
+    },
+    {
+      title: 'non-standards compliant, missing return token',
+      tokenContract: TokenReturnMissingMock,
+      revertsOnFailure: true,
+    },
+  ]
 
   // Initial setup
   before(async () => {
@@ -141,9 +198,25 @@ contract('Proxy funds', accounts => {
             )
           )
 
-          it('kernel recovers tokens', async () => {
-            await recoverTokens(kernel, vault)
-          })
+          for ({ title, tokenContract} of tokenTestGroups) {
+            it(`kernel recovers ${title}`, async () => {
+              await recoverTokens({
+                tokenContract,
+                vault,
+                target: kernel
+              })
+            })
+          }
+
+          for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+            it(`kernel reverts on failing recovery for ${title}`, async () => {
+              await failingRecoverTokens({
+                tokenContract,
+                vault,
+                target: kernel,
+              })
+            })
+          }
 
           context('> App without kernel', () => {
             beforeEach(async () => {
@@ -152,15 +225,16 @@ contract('Proxy funds', accounts => {
             })
 
             it('does not recover ETH', skipCoverageIfVaultProxy(async () =>
-              await assertRevert(
-                () => recoverEth(target, vault)
-              )
+              await recoverEth({ target, vault, shouldFail: true })
             ))
 
             it('does not recover tokens', async () =>
-              await assertRevert(
-                () => recoverTokens(target, vault)
-              )
+              await recoverTokens({
+                target,
+                vault,
+                shouldFail: true,
+                tokenContract: TokenMock,
+              })
             )
           })
 
@@ -187,13 +261,29 @@ contract('Proxy funds', accounts => {
               })
             })
 
-            it('recovers ETH', skipCoverageIfVaultProxy(
-              async () => await recoverEth(target, vault)
+            it('recovers ETH', skipCoverageIfVaultProxy(async () =>
+              await recoverEth({ target, vault })
             ))
 
-            it('recovers tokens', async () => {
-              await recoverTokens(target, vault)
-            })
+            for ({ title, tokenContract} of tokenTestGroups) {
+              it(`recovers ${title}`, async () => {
+                await recoverTokens({
+                  tokenContract,
+                  target,
+                  vault,
+                })
+              })
+            }
+
+            for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+              it(`reverts on failing recovery for ${title}`, async () => {
+                await failingRecoverTokens({
+                  tokenContract,
+                  target,
+                  vault,
+                })
+              })
+            }
 
             it('fails if vault is not contract', async () => {
               await failWithoutVault(target, kernel)
@@ -211,16 +301,30 @@ contract('Proxy funds', accounts => {
               target = app
             })
 
-            it('does not allow recovering ETH', skipCoverageIfVaultProxy(
+            it('does not allow recovering ETH', skipCoverageIfVaultProxy(async () =>
               // Conditional stub doesnt allow eth recoveries
-              () => assertRevert(
-                () => recoverEth(target, vault)
-              )
+              await recoverEth({ target, vault, shouldFail: true })
             ))
 
-            it('allows recovering tokens', async () => {
-              await recoverTokens(target, vault)
-            })
+            for ({ title, tokenContract} of tokenTestGroups) {
+              it(`allows recovers ${title}`, async () => {
+                await recoverTokens({
+                  tokenContract,
+                  target,
+                  vault,
+                })
+              })
+            }
+
+            for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+              it(`reverts on failing recovery for ${title}`, async () => {
+                await failingRecoverTokens({
+                  tokenContract,
+                  target,
+                  vault,
+                })
+              })
+            }
           })
         })
       }
@@ -255,7 +359,7 @@ contract('Proxy funds', accounts => {
     })
 
     it('recovers ETH from the kernel', skipCoverage(async () => {
-      await recoverEth(kernel, vault)
+      await recoverEth({ target: kernel, vault })
     }))
   })
 })

@@ -9,6 +9,7 @@ contract TokenReturnFalseMock {
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
     uint256 private totalSupply_;
+    bool private allowTransfer_;
 
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -17,6 +18,7 @@ contract TokenReturnFalseMock {
     constructor(address initialAccount, uint256 initialBalance) public {
         balances[initialAccount] = initialBalance;
         totalSupply_ = initialBalance;
+        allowTransfer_ = true;
     }
 
     function totalSupply() public view returns (uint256) { return totalSupply_; }
@@ -41,12 +43,20 @@ contract TokenReturnFalseMock {
     }
 
     /**
+    * @dev Set whether the token is transferable or not
+    * @param _allowTransfer Should token be transferable
+    */
+    function setAllowTransfer(bool _allowTransfer) public {
+        allowTransfer_ = _allowTransfer;
+    }
+
+    /**
     * @dev Transfer token for a specified address
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        if (_to == address(0) || _value > balances[msg.sender]) {
+        if (!allowTransfer_ || _to == address(0) || _value > balances[msg.sender]) {
             return false;
         }
 
@@ -83,7 +93,11 @@ contract TokenReturnFalseMock {
     * @param _value uint256 the amount of tokens to be transferred
     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        if (_to == address(0) || _value > balances[_from] || _value > allowed[_from][msg.sender]) {
+        if (!allowTransfer_ ||
+            _to == address(0) ||
+            _value > balances[_from] ||
+            _value > allowed[_from][msg.sender]
+        ) {
             return false;
         }
 

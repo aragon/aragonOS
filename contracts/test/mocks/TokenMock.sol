@@ -1,4 +1,4 @@
-// Stripped from https://github.com/OpenZeppelin/openzeppelin-solidity/blob/a9f910d34f0ab33a1ae5e714f69f9596a02b4d91/contracts/token/ERC20/StandardToken.sol
+// Modified from https://github.com/OpenZeppelin/openzeppelin-solidity/blob/a9f910d34f0ab33a1ae5e714f69f9596a02b4d91/contracts/token/ERC20/StandardToken.sol
 
 pragma solidity 0.4.24;
 
@@ -10,6 +10,7 @@ contract TokenMock {
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
     uint256 private totalSupply_;
+    bool private allowTransfer_;
 
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -18,6 +19,7 @@ contract TokenMock {
     constructor(address initialAccount, uint256 initialBalance) public {
         balances[initialAccount] = initialBalance;
         totalSupply_ = initialBalance;
+        allowTransfer_ = true;
     }
 
     function totalSupply() public view returns (uint256) { return totalSupply_; }
@@ -42,11 +44,20 @@ contract TokenMock {
     }
 
     /**
+    * @dev Set whether the token is transferable or not
+    * @param _allowTransfer Should token be transferable
+    */
+    function setAllowTransfer(bool _allowTransfer) public {
+        allowTransfer_ = _allowTransfer;
+    }
+
+    /**
     * @dev Transfer token for a specified address
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
+        require(allowTransfer_);
         require(_value <= balances[msg.sender]);
         require(_to != address(0));
 
@@ -81,6 +92,7 @@ contract TokenMock {
     * @param _value uint256 the amount of tokens to be transferred
     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(allowTransfer_);
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         require(_to != address(0));
