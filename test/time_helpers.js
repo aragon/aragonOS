@@ -1,4 +1,4 @@
-contract('TimeHelpers test', accounts => {
+contract('TimeHelpers', accounts => {
   let timeHelpersMock
 
   before(async () => {

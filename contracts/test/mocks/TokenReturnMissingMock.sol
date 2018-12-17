@@ -1,11 +1,13 @@
-// Stripped from https://github.com/OpenZeppelin/openzeppelin-solidity/blob/a9f910d34f0ab33a1ae5e714f69f9596a02b4d91/contracts/token/ERC20/StandardToken.sol
+// Non-standards compliant token that is missing return values for
+// `transfer()`, `transferFrom()`, and `approve().
+// Modified from https://github.com/OpenZeppelin/openzeppelin-solidity/blob/a9f910d34f0ab33a1ae5e714f69f9596a02b4d91/contracts/token/ERC20/StandardToken.sol
 
 pragma solidity 0.4.24;
 
 import "../../lib/math/SafeMath.sol";
 
 
-contract TokenMock {
+contract TokenReturnMissingMock {
     using SafeMath for uint256;
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
@@ -46,14 +48,13 @@ contract TokenMock {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) public {
         require(_value <= balances[msg.sender]);
         require(_to != address(0));
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         emit Transfer(msg.sender, _to, _value);
-        return true;
     }
 
     /**
@@ -65,13 +66,12 @@ contract TokenMock {
     * @param _spender The address which will spend the funds.
     * @param _value The amount of tokens to be spent.
     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value) public {
         // Assume we want to protect for the race condition
         require(allowed[msg.sender][_spender] == 0);
 
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
-        return true;
     }
 
     /**
@@ -80,7 +80,7 @@ contract TokenMock {
     * @param _to address The address which you want to transfer to
     * @param _value uint256 the amount of tokens to be transferred
     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public {
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         require(_to != address(0));
@@ -89,6 +89,5 @@ contract TokenMock {
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         emit Transfer(_from, _to, _value);
-        return true;
     }
 }
