@@ -33,7 +33,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         } else {
             ERC20 token = ERC20(_token);
             uint256 amount = token.balanceOf(this);
-            require(ERC20(_token).safeTransfer(vault, amount), ERROR_TOKEN_TRANSFER_FAILED);
+            require(token.safeTransfer(vault, amount), ERROR_TOKEN_TRANSFER_FAILED);
         }
     }
 
