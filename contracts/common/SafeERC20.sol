@@ -43,8 +43,8 @@ library SafeERC20 {
     * @dev Same as a standards-compliant ERC20.transfer().
     *      Note that this makes an external call to the token.
     */
-    function safeTransfer(ERC20 token, address to, uint256 amount) internal returns (bool) {
-        GeneralERC20(token).transfer(to, amount);
+    function safeTransfer(ERC20 _token, address _to, uint256 _amount) internal returns (bool) {
+        GeneralERC20(_token).transfer(_to, _amount);
         return checkSuccess();
     }
 
@@ -52,8 +52,8 @@ library SafeERC20 {
     * @dev Same as a standards-compliant ERC20.transferFrom().
     *      Note that this makes an external call to the token.
     */
-    function safeTransferFrom(ERC20 token, address from, address to, uint256 amount) internal returns (bool) {
-        GeneralERC20(token).transferFrom(from, to, amount);
+    function safeTransferFrom(ERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
+        GeneralERC20(_token).transferFrom(_from, _to, _amount);
         return checkSuccess();
     }
 
@@ -61,8 +61,8 @@ library SafeERC20 {
     * @dev Same as a standards-compliant ERC20.approve().
     *      Note that this makes an external call to the token.
     */
-    function safeApprove(ERC20 token, address spender, uint256 amount) internal returns (bool) {
-        GeneralERC20(token).approve(spender, amount);
+    function safeApprove(ERC20 _token, address _spender, uint256 _amount) internal returns (bool) {
+        GeneralERC20(_token).approve(_spender, _amount);
         return checkSuccess();
     }
 }
