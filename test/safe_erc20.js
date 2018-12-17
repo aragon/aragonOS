@@ -122,6 +122,22 @@ contract('SafeERC20', accounts => {
         assert.equal((await tokenMock.balanceOf(receiver)).valueOf(), 0, 'Balance of receiver should stay the same')
         assert.equal((await tokenMock.balanceOf(safeERC20Mock.address)).valueOf(), 0, 'Balance of mock should stay the same')
       })
+
+      it('gives correct value with static allowance', async () => {
+        // Create approval
+        const approvedAmount = 5000
+        await tokenMock.approve(safeERC20Mock.address, approvedAmount)
+
+        const approval = (await safeERC20Mock.allowance(tokenMock.address, owner, safeERC20Mock.address)).valueOf()
+        assert.equal(approval, approvedAmount, 'Mock should return correct allowance')
+        assert.equal((await tokenMock.allowance(owner, safeERC20Mock.address)).valueOf(), approval, "Mock should match token contract's allowance")
+      })
+
+      it('gives correct value with static balanceOf', async () => {
+        const balance = (await safeERC20Mock.balanceOf(tokenMock.address, owner)).valueOf()
+        assert.equal(balance, initialBalance, 'Mock should return correct balance')
+        assert.equal((await tokenMock.balanceOf(owner)).valueOf(), balance, "Mock should match token contract's balance")
+      })
     })
   }
 })

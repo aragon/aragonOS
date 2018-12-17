@@ -25,4 +25,12 @@ contract SafeERC20Mock {
         emit Result(result);
         return result;
     }
+
+    function allowance(ERC20 token, address owner, address spender) external view returns (uint256) {
+        return token.staticAllowance(owner, spender);
+    }
+
+    function balanceOf(ERC20 token, address owner) external view returns (uint256) {
+        return token.staticBalanceOf(owner);
+    }
 }
