@@ -24,7 +24,7 @@ const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.ev
 const APP_ID = hash('stub.aragonpm.test')
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-contract('Fund recovery', accounts => {
+contract('Recovery to vault', accounts => {
   let aclBase, appBase, appConditionalRecoveryBase
   let APP_ADDR_NAMESPACE, ETH
 
