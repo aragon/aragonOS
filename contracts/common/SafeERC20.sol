@@ -54,7 +54,7 @@ library SafeERC20 {
                 add(_calldata, 0x20), // calldata start
                 mload(_calldata),     // calldata length
                 0,                    // write output over scratch
-                32                    // uint256 return
+                0x20                  // uint256 return
             )
 
             switch success
