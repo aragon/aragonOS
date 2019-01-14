@@ -5,11 +5,13 @@ import "../common/TimeHelpers.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
-
+import "../lib/math/SafeMath.sol";
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
+    using SafeMath for uint256;
+
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     */
@@ -159,7 +161,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         external
         onlyPermissionManager(_app, _role)
     {
-        uint256 newRoleEra = roleEras[roleHash(_app, _role)] + 1;
+        uint256 newRoleEra = roleEras[roleHash(_app, _role)].add(1);
         require(newRoleEra >= roleEras[roleHash(_app, _role)], ERROR_ROLE_ERA_INCREMENT);
         roleEras[roleHash(_app, _role)] = newRoleEra;
     }     
@@ -493,8 +495,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         uint256 roleEra = roleEras[roleHash(_where, _what)];
 
         // Backward compatibility for DAOs with earlier versions of the ACL
-        if (roleEra == 0)
+        if (roleEra == 0) {
 		    return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+        }
 
         return keccak256(abi.encodePacked("PERMISSION", roleEra, _who, _where, _what));
     }
