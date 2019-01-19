@@ -16,7 +16,7 @@ interface GeneralERC20 {
 
 library SafeERC20 {
     string private constant ERROR_TOKEN_BALANCE_REVERTED = "SAFE_ERC_20_BALANCE_REVERTED";
-    string private constant ERROR_TOKEN_ALLOWANCE_REVERTED = "SAFE_ERC_20_BALANCE_REVERTED";
+    string private constant ERROR_TOKEN_ALLOWANCE_REVERTED = "SAFE_ERC_20_ALLOWANCE_REVERTED";
 
     function checkSuccess() private pure returns (bool ret) {
         assembly {
