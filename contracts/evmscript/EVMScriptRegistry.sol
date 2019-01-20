@@ -31,8 +31,8 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     uint256 private executorsNextIndex;
     mapping (uint256 => ExecutorEntry) public executors;
 
-    event EnableExecutor(uint256 indexed executorId, address indexed executorAddress);
-    event DisableExecutor(uint256 indexed executorId, address indexed executorAddress);
+    event EnableExecutor(uint256 indexed executorId, address indexed executorAddress, bytes32 executorType);
+    event DisableExecutor(uint256 indexed executorId, address indexed executorAddress, bytes32 executorType);
 
     modifier executorExists(uint256 _executorId) {
         require(_executorId > 0 && _executorId < executorsNextIndex, ERROR_INEXISTENT_EXECUTOR);
@@ -56,7 +56,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
         uint256 executorId = executorsNextIndex++;
         executors[executorId] = ExecutorEntry(_executor, true);
-        emit EnableExecutor(executorId, _executor);
+        emit EnableExecutor(executorId, _executor, _executor.executorType());
         return executorId;
     }
 
@@ -73,7 +73,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(executorEntry.enabled, ERROR_EXECUTOR_DISABLED);
         executorEntry.enabled = false;
-        emit DisableExecutor(_executorId, executorEntry.executor);
+        emit DisableExecutor(_executorId, executorEntry.executor, executorEntry.executor.executorType());
     }
 
     /**
@@ -88,7 +88,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(!executorEntry.enabled, ERROR_EXECUTOR_ENABLED);
         executorEntry.enabled = true;
-        emit EnableExecutor(_executorId, executorEntry.executor);
+        emit EnableExecutor(_executorId, executorEntry.executor, executorEntry.executor.executorType());
     }
 
     /**
