@@ -48,7 +48,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
     string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
-    string private constant ERROR_ROLE_ERA_INCREMENT = "ACL_ROLE_ERA_INCREMENT";
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -161,10 +160,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         external
         onlyPermissionManager(_app, _role)
     {
-        uint256 newRoleEra = roleEras[roleHash(_app, _role)].add(1);
-        require(newRoleEra >= roleEras[roleHash(_app, _role)], ERROR_ROLE_ERA_INCREMENT);
-        roleEras[roleHash(_app, _role)] = newRoleEra;
-    }     
+        bytes32 hash = roleHash(_app, _role);
+        roleEras[hash] = roleEras[hash].add(1);
+    }
 
     /**
     * @notice Set `_newManager` as the manager of `_role` in `_app`
