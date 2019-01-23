@@ -183,7 +183,7 @@ contract('Proxy funds', accounts => {
 
             it('cannot send ETH with data to proxy', async () => {
               await assertRevert(async () => {
-                await target.sendTransaction({ value: 1, data: '0x1', gas: SEND_ETH_GAS })
+                await target.sendTransaction({ value: 1, input: '0x1', gas: SEND_ETH_GAS })
               })
             })
 
