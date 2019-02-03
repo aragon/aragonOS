@@ -21,7 +21,7 @@ contract TestACLHelpers is ACL, ACLHelper {
     }
 
     function testEncodeParams() public {
-        Param[] memory params = new Param[](6);
+        Param[] memory params = new Param[](4);
 
         params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 2, 3));
         params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));   
@@ -31,6 +31,7 @@ contract TestACLHelpers is ACL, ACLHelper {
 
         uint256[] memory encodedParam = encodeParams(params);
 
+        
         (uint32 id0, uint32 op0, uint32 value0) = decodeParamsList(encodedParam[0]);
 
         Assert.equal(uint256(params[0].id), uint256(id0), "Encoded id is not equal");

@@ -88,8 +88,6 @@ contract ACLSyntaxSugar {
 
 
 contract ACLHelpers is ACLParams {
-
-
     function decodeParamOp(uint256 _x) public pure returns (uint8 b) {
         return uint8(_x >> (8 * 30));
     }
