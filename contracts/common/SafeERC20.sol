@@ -92,6 +92,10 @@ library SafeERC20 {
         return checkSuccess();
     }
 
+    /**
+    * @dev Static call into ERC20.balanceOf().
+    * Reverts if the call fails for some reason (should never fail).
+    */
     function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256) {
         bytes memory balanceOfCallData = abi.encodeWithSelector(
             ERC20(_token).balanceOf.selector,
@@ -104,6 +108,10 @@ library SafeERC20 {
         return tokenBalance;
     }
 
+    /**
+    * @dev Static call into ERC20.allowance().
+    * Reverts if the call fails for some reason (should never fail).
+    */
     function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256) {
         bytes memory allowanceCallData = abi.encodeWithSelector(
             ERC20(_token).allowance.selector,
