@@ -25,31 +25,18 @@ contract('SafeERC20', accounts => {
     {
       title: 'Standards compliant, reverting token',
       tokenContract: TokenMock,
-      revertsOnFailure: true,
     },
     {
       title: 'Standards compliant, non-reverting token',
       tokenContract: TokenReturnFalseMock,
-      revertsOnFailure: false,
     },
     {
       title: 'Non-standards compliant, missing return token',
       tokenContract: TokenReturnMissingMock,
-      revertsOnFailure: true,
     },
   ]
 
-  for ({ title, revertsOnFailure, tokenContract} of testGroups) {
-    // Change behaviour based on whether failing action reverts or returns false
-    const assertFailingAction = async (action) => {
-      if (revertsOnFailure) {
-        await assertRevert(action)
-      } else {
-        const receipt = await action()
-        assertMockResult(receipt, false)
-      }
-    }
-
+  for ({ title, tokenContract} of testGroups) {
     context(`> ${title}`, () => {
       let tokenMock
 
@@ -71,9 +58,9 @@ contract('SafeERC20', accounts => {
 
       it('detects failed transfer', async () => {
         // Attempt transfer when mock has no balance
-        await assertFailingAction(
-          () => safeERC20Mock.transfer(tokenMock.address, owner, 1000)
-        )
+        const receipt = await safeERC20Mock.transfer(tokenMock.address, owner, 1000)
+
+        assertMockResult(receipt, false)
         assert.equal((await tokenMock.balanceOf(owner)).valueOf(), initialBalance, 'Balance of owner should stay the same')
         assert.equal((await tokenMock.balanceOf(safeERC20Mock.address)).valueOf(), 0, 'Balance of mock should stay the same')
       })
@@ -94,9 +81,9 @@ contract('SafeERC20', accounts => {
         await safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount)
 
         // Attempt to create another approval without reseting it back to 0
-        await assertFailingAction(
-          () => safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount - 500)
-        )
+        const receipt = await safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount - 500)
+
+        assertMockResult(receipt, false)
         assert.equal((await tokenMock.allowance(safeERC20Mock.address, receiver)).valueOf(), preApprovedAmount, 'Allowance of receiver should be the pre-existing value')
       })
 
@@ -115,9 +102,9 @@ contract('SafeERC20', accounts => {
 
       it('detects failed transferFrom', async () => {
         // Attempt transfer to receiver through the mock when mock wasn't approved
-        await assertFailingAction(
-          () => safeERC20Mock.transferFrom(tokenMock.address, owner, receiver, 5000)
-        )
+        const receipt = await safeERC20Mock.transferFrom(tokenMock.address, owner, receiver, 5000)
+
+        assertMockResult(receipt, false)
         assert.equal((await tokenMock.balanceOf(owner)).valueOf(), initialBalance, 'Balance of owner should stay the same')
         assert.equal((await tokenMock.balanceOf(receiver)).valueOf(), 0, 'Balance of receiver should stay the same')
         assert.equal((await tokenMock.balanceOf(safeERC20Mock.address)).valueOf(), 0, 'Balance of mock should stay the same')

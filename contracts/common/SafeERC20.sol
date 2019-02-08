@@ -5,16 +5,12 @@ pragma solidity ^0.4.24;
 
 import "../lib/token/ERC20.sol";
 
-// Same as ERC20 except the return values of these interfaces have been removed to allow us to
-// manually check them
-interface GeneralERC20 {
-    function transfer(address to, uint256 value) external;
-    function transferFrom(address from, address to, uint256 value) external;
-    function approve(address spender, uint256 value) external;
-}
-
 
 library SafeERC20 {
+    // Before 0.5, solidity has a mismatch between `address.transfer()` and `token.transfer()`:
+    // https://github.com/ethereum/solidity/issues/3544
+    bytes4 private constant TRANSFER_SELECTOR = 0xa9059cbb;
+
     string private constant ERROR_TOKEN_BALANCE_REVERTED = "SAFE_ERC_20_BALANCE_REVERTED";
     string private constant ERROR_TOKEN_ALLOWANCE_REVERTED = "SAFE_ERC_20_ALLOWANCE_REVERTED";
 
@@ -66,30 +62,46 @@ library SafeERC20 {
     }
 
     /**
-    * @dev Same as a standards-compliant ERC20.transfer().
+    * @dev Same as a standards-compliant ERC20.transfer() that never reverts (returns false).
     *      Note that this makes an external call to the token.
     */
     function safeTransfer(ERC20 _token, address _to, uint256 _amount) internal returns (bool) {
-        GeneralERC20(_token).transfer(_to, _amount);
-        return checkSuccess();
+        bytes memory transferCallData = abi.encodeWithSelector(
+            TRANSFER_SELECTOR,
+            _to,
+            _amount
+        );
+        bool callSuccess = address(_token).call(transferCallData);
+        return callSuccess && checkSuccess();
     }
 
     /**
-    * @dev Same as a standards-compliant ERC20.transferFrom().
+    * @dev Same as a standards-compliant ERC20.transferFrom() that never reverts (returns false).
     *      Note that this makes an external call to the token.
     */
     function safeTransferFrom(ERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
-        GeneralERC20(_token).transferFrom(_from, _to, _amount);
-        return checkSuccess();
+        bytes memory transferFromCallData = abi.encodeWithSelector(
+            _token.transferFrom.selector,
+            _from,
+            _to,
+            _amount
+        );
+        bool callSuccess = address(_token).call(transferFromCallData);
+        return callSuccess && checkSuccess();
     }
 
     /**
-    * @dev Same as a standards-compliant ERC20.approve().
+    * @dev Same as a standards-compliant ERC20.approve() that never reverts (returns false).
     *      Note that this makes an external call to the token.
     */
     function safeApprove(ERC20 _token, address _spender, uint256 _amount) internal returns (bool) {
-        GeneralERC20(_token).approve(_spender, _amount);
-        return checkSuccess();
+        bytes memory approveCallData = abi.encodeWithSelector(
+            _token.approve.selector,
+            _spender,
+            _amount
+        );
+        bool callSuccess = address(_token).call(approveCallData);
+        return callSuccess && checkSuccess();
     }
 
     /**
