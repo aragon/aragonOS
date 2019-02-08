@@ -92,24 +92,28 @@ library SafeERC20 {
         return checkSuccess();
     }
 
-    function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256 tokenBalance) {
+    function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256) {
         bytes memory balanceOfCallData = abi.encodeWithSelector(
             ERC20(_token).balanceOf.selector,
             _owner
         );
-        bool success;
-        (success, tokenBalance) = staticInvoke(_token, balanceOfCallData);
+
+        (bool success, uint256 tokenBalance) = staticInvoke(_token, balanceOfCallData);
         require(success, ERROR_TOKEN_BALANCE_REVERTED);
+
+        return tokenBalance;
     }
 
-    function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256 allowance) {
+    function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256) {
         bytes memory allowanceCallData = abi.encodeWithSelector(
             ERC20(_token).allowance.selector,
             _owner,
             _spender
         );
-        bool success;
-        (success, allowance) = staticInvoke(_token, allowanceCallData);
+
+        (bool success, uint256 allowance) = staticInvoke(_token, allowanceCallData);
         require(success, ERROR_TOKEN_ALLOWANCE_REVERTED);
+
+        return allowance;
     }
 }
