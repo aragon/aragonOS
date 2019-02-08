@@ -19,13 +19,15 @@ library SafeERC20 {
         returns (bool ret)
     {
         assembly {
+            let ptr := mload(0x40)    // free memory pointer
+
             let success := call(
                 gas,                  // forward all gas
                 _addr,                // address
                 0,                    // no value
                 add(_calldata, 0x20), // calldata start
                 mload(_calldata),     // calldata length
-                0,                    // write output over scratch
+                ptr,                  // write output over free memory
                 0x20                  // uint256 return
             )
 
@@ -34,17 +36,15 @@ library SafeERC20 {
                 switch returndatasize
 
                 // No bytes returned: assume success
-                case 0x0 {
+                case 0 {
                     ret := 1
                 }
 
                 // 32 bytes returned: check if non-zero
                 case 0x20 {
-                    // Copy 32 bytes into scratch space
-                    returndatacopy(0x0, 0x0, 0x20)
-
                     // Only return success if returned data was true
-                    ret := eq(mload(0x0), 1)
+                    // Already have output in ptr
+                    ret := eq(mload(ptr), 1)
                 }
 
                 // Not sure what was returned: don't mark as success
@@ -59,17 +59,19 @@ library SafeERC20 {
         returns (bool success, uint256 ret)
     {
         assembly {
+            let ptr := mload(0x40)    // free memory pointer
+
             success := staticcall(
                 gas,                  // forward all gas
                 _addr,                // address
                 add(_calldata, 0x20), // calldata start
                 mload(_calldata),     // calldata length
-                0,                    // write output over scratch
+                ptr,                  // write output over free memory
                 0x20                  // uint256 return
             )
 
             if gt(success, 0) {
-                ret := mload(0)
+                ret := mload(ptr)
             }
         }
     }
