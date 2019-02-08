@@ -107,17 +107,14 @@ contract('Recovery to vault', accounts => {
     {
       title: 'standards compliant, reverting token',
       tokenContract: TokenMock,
-      revertsOnFailure: true,
     },
     {
       title: 'standards compliant, non-reverting token',
       tokenContract: TokenReturnFalseMock,
-      revertsOnFailure: false,
     },
     {
       title: 'non-standards compliant, missing return token',
       tokenContract: TokenReturnMissingMock,
-      revertsOnFailure: true,
     },
   ]
 
@@ -208,7 +205,7 @@ contract('Recovery to vault', accounts => {
             })
           }
 
-          for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+          for ({ title, tokenContract} of tokenTestGroups) {
             it(`kernel reverts on failing recovery for ${title}`, async () => {
               await failingRecoverTokens({
                 tokenContract,
@@ -275,7 +272,7 @@ contract('Recovery to vault', accounts => {
               })
             }
 
-            for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
@@ -316,7 +313,7 @@ contract('Recovery to vault', accounts => {
               })
             }
 
-            for ({ title, revertsOnFailure, tokenContract} of tokenTestGroups) {
+            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
