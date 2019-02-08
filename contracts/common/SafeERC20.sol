@@ -14,27 +14,42 @@ library SafeERC20 {
     string private constant ERROR_TOKEN_BALANCE_REVERTED = "SAFE_ERC_20_BALANCE_REVERTED";
     string private constant ERROR_TOKEN_ALLOWANCE_REVERTED = "SAFE_ERC_20_ALLOWANCE_REVERTED";
 
-    function checkSuccess() private pure returns (bool ret) {
+    function invokeAndCheckSuccess(address _addr, bytes memory _calldata)
+        private
+        returns (bool ret)
+    {
         assembly {
-            // Check number of bytes returned from last function call
-            switch returndatasize
+            let success := call(
+                gas,                  // forward all gas
+                _addr,                // address
+                0,                    // no value
+                add(_calldata, 0x20), // calldata start
+                mload(_calldata),     // calldata length
+                0,                    // write output over scratch
+                0x20                  // uint256 return
+            )
 
-            // No bytes returned: assume success
-            case 0x0 {
-                ret := 1
+            if gt(success, 0) {
+                // Check number of bytes returned from last function call
+                switch returndatasize
+
+                // No bytes returned: assume success
+                case 0x0 {
+                    ret := 1
+                }
+
+                // 32 bytes returned: check if non-zero
+                case 0x20 {
+                    // Copy 32 bytes into scratch space
+                    returndatacopy(0x0, 0x0, 0x20)
+
+                    // Only return success if returned data was true
+                    ret := eq(mload(0x0), 1)
+                }
+
+                // Not sure what was returned: don't mark as success
+                default { }
             }
-
-            // 32 bytes returned: check if non-zero
-            case 0x20 {
-                // Copy 32 bytes into scratch space
-                returndatacopy(0x0, 0x0, 0x20)
-
-                // Only return success if returned data was true
-                ret := eq(mload(0x0), 1)
-            }
-
-            // Not sure what was returned: don't mark as success
-            default { }
         }
     }
 
@@ -53,11 +68,9 @@ library SafeERC20 {
                 0x20                  // uint256 return
             )
 
-            switch success
-            case 1 {
+            if gt(success, 0) {
                 ret := mload(0)
             }
-            default {}
         }
     }
 
@@ -71,8 +84,7 @@ library SafeERC20 {
             _to,
             _amount
         );
-        bool callSuccess = address(_token).call(transferCallData);
-        return callSuccess && checkSuccess();
+        return invokeAndCheckSuccess(_token, transferCallData);
     }
 
     /**
@@ -86,8 +98,7 @@ library SafeERC20 {
             _to,
             _amount
         );
-        bool callSuccess = address(_token).call(transferFromCallData);
-        return callSuccess && checkSuccess();
+        return invokeAndCheckSuccess(_token, transferFromCallData);
     }
 
     /**
@@ -100,8 +111,7 @@ library SafeERC20 {
             _spender,
             _amount
         );
-        bool callSuccess = address(_token).call(approveCallData);
-        return callSuccess && checkSuccess();
+        return invokeAndCheckSuccess(_token, approveCallData);
     }
 
     /**
