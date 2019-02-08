@@ -15,6 +15,9 @@ interface GeneralERC20 {
 
 
 library SafeERC20 {
+    string private constant ERROR_TOKEN_BALANCE_REVERTED = "SAFE_ERC_20_BALANCE_REVERTED";
+    string private constant ERROR_TOKEN_ALLOWANCE_REVERTED = "SAFE_ERC_20_ALLOWANCE_REVERTED";
+
     function checkSuccess() private pure returns (bool ret) {
         assembly {
             // Check number of bytes returned from last function call
@@ -36,6 +39,29 @@ library SafeERC20 {
 
             // Not sure what was returned: don't mark as success
             default { }
+        }
+    }
+
+    function staticInvoke(address _addr, bytes memory _calldata)
+        private
+        view
+        returns (bool success, uint256 ret)
+    {
+        assembly {
+            success := staticcall(
+                gas,                  // forward all gas
+                _addr,                // address
+                add(_calldata, 0x20), // calldata start
+                mload(_calldata),     // calldata length
+                0,                    // write output over scratch
+                0x20                  // uint256 return
+            )
+
+            switch success
+            case 1 {
+                ret := mload(0)
+            }
+            default {}
         }
     }
 
@@ -64,5 +90,30 @@ library SafeERC20 {
     function safeApprove(ERC20 _token, address _spender, uint256 _amount) internal returns (bool) {
         GeneralERC20(_token).approve(_spender, _amount);
         return checkSuccess();
+    }
+
+    function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256) {
+        bytes memory balanceOfCallData = abi.encodeWithSelector(
+            ERC20(_token).balanceOf.selector,
+            _owner
+        );
+
+        (bool success, uint256 tokenBalance) = staticInvoke(_token, balanceOfCallData);
+        require(success, ERROR_TOKEN_BALANCE_REVERTED);
+
+        return tokenBalance;
+    }
+
+    function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256) {
+        bytes memory allowanceCallData = abi.encodeWithSelector(
+            ERC20(_token).allowance.selector,
+            _owner,
+            _spender
+        );
+
+        (bool success, uint256 allowance) = staticInvoke(_token, allowanceCallData);
+        require(success, ERROR_TOKEN_ALLOWANCE_REVERTED);
+
+        return allowance;
     }
 }
