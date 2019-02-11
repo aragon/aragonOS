@@ -16,8 +16,9 @@ library SafeERC20 {
 
     function invokeAndCheckSuccess(address _addr, bytes memory _calldata)
         private
-        returns (bool ret)
+        returns (bool)
     {
+        bool ret;
         assembly {
             let ptr := mload(0x40)    // free memory pointer
 
@@ -51,13 +52,16 @@ library SafeERC20 {
                 default { }
             }
         }
+        return ret;
     }
 
     function staticInvoke(address _addr, bytes memory _calldata)
         private
         view
-        returns (bool success, uint256 ret)
+        returns (bool, uint256)
     {
+        bool success;
+        uint256 ret;
         assembly {
             let ptr := mload(0x40)    // free memory pointer
 
@@ -74,6 +78,7 @@ library SafeERC20 {
                 ret := mload(ptr)
             }
         }
+        return (success, ret);
     }
 
     /**
