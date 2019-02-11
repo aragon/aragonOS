@@ -8,24 +8,24 @@ import "./AppStorage.sol";
 import "../common/Autopetrified.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
-import "../acl/ACLSyntaxSugar.sol";
 
 
 // Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
 // that they can never be initialized.
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
-// ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
-// that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
+// EVMScriptRunner is not directly used by this contract, but is included so
+// that it is automatically usable by subclassing contracts
+contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
+        require(canPerform(msg.sender, _role), ERROR_AUTH_FAILED);
         _;
     }
 
+    // TODO:
     modifier authP(bytes32 _role, uint256[] _params) {
-        require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
+        require(canPerform(msg.sender, _role), ERROR_AUTH_FAILED);
         _;
     }
 
@@ -33,11 +33,10 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
     * @dev Check whether an action can be performed by a sender for a particular role on this app
     * @param _sender Sender of the call
     * @param _role Role on this app
-    * @param _params Permission params for the role
     * @return Boolean indicating whether the sender has the permissions to perform the action.
     *         Always returns false if the app hasn't been initialized yet.
     */
-    function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
+    function canPerform(address _sender, bytes32 _role) public view returns (bool) {
         if (!hasInitialized()) {
             return false;
         }
@@ -47,16 +46,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
             return false;
         }
 
-        // Force cast the uint256[] into a bytes array, by overwriting its length
-        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
-        // with _params and a new length, and _params becomes invalid from this point forward
-        bytes memory how;
-        uint256 byteLength = _params.length * 32;
-        assembly {
-            how := _params
-            mstore(how, byteLength)
-        }
-        return linkedKernel.hasPermission(_sender, address(this), _role, how);
+        return linkedKernel.hasPermission(_sender, address(this), _role);
     }
 
     /**

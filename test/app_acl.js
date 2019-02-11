@@ -89,11 +89,6 @@ contract('App ACL', accounts => {
         assert.equal(await app.getValue(), 10, 'should have returned correct value')
       })
 
-      it('parametrized call works from authed entity if no params set', async () => {
-        await app.setValueParam(11)
-        assert.equal(await app.getValue(), 11, 'should have returned correct value')
-      })
-
       it('fails when called by unauthorized entity', async () => {
         return assertRevert(async () => {
           await app.setValue(10, { from: unauthorized })
@@ -111,38 +106,6 @@ contract('App ACL', accounts => {
           })
         })
       )
-
-      context('> Parametrized calls', () => {
-        const paramsGrantee = accounts[2]
-        const paramValue = 5
-        const succeedValue = paramValue + 1
-        const failValue = paramValue - 1
-
-        beforeEach(async () => {
-          const argId = '0x00' // arg 0
-          const op = '03'    // greater than
-          const value = `00000000000000000000000000000000000000000000000000000000000${paramValue}` // 5
-          const param = new web3.BigNumber(`${argId}${op}${value}`)
-
-          await acl.grantPermissionP(paramsGrantee, app.address, APP_ROLE, [param], { from: permissionsRoot })
-        })
-
-        it('parametrized call succeeds if param eval succeeds', async () => {
-          await app.setValueParam(succeedValue, { from: paramsGrantee })
-        })
-
-        it('parametrized call works from entity with no params set', async () => {
-          // Fail value should still work for the entity who didn't have restrictions placed
-          await app.setValueParam(failValue)
-          assert.equal(await app.getValue(), failValue, 'should have returned correct value')
-        })
-
-        it('parametrized app call fails if param eval fails', async () => {
-          return assertRevert(async () => {
-            await app.setValueParam(failValue, { from: paramsGrantee })
-          })
-        })
-      })
     })
   }
 })

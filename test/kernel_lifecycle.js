@@ -18,25 +18,25 @@ contract('Kernel lifecycle', accounts => {
 
   const testUnaccessibleFunctionalityWhenUninitialized = async (kernel) => {
     // hasPermission should always return false when uninitialized
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE))
 
     await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address, '0x', false))
-    await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address))
+    await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address, '0x', false))
     await assertRevert(() => kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
     await assertRevert(() => kernel.setRecoveryVaultAppId(VAULT_ID))
   }
 
   const testUsability = async (kernel) => {
     // Make sure we haven't already setup the required permission
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE))
 
     // Then set the required permission
     const acl = ACL.at(await kernel.acl())
     await acl.createPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, accounts[0])
-    assert.isTrue(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isTrue(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE))
 
     // And finally test functionality
     await kernel.newAppInstance(APP_ID, appBase.address, '0x', false)

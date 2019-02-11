@@ -21,7 +21,7 @@ const EMPTY_BYTES = '0x'
 
 contract('Kernel apps', accounts => {
     let aclBase, appBase1, appBase2
-    let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE
+    let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
     let UPGRADEABLE, FORWARDING
 
     const permissionsRoot = accounts[0]
@@ -113,7 +113,7 @@ contract('Kernel apps', accounts => {
 
                     onlyAppProxyPinned(() =>
                         it('creates a new non upgradeable app proxy instance', async () => {
-                            const receipt = await kernel.newPinnedAppInstance(APP_ID, appBase1.address)
+                            const receipt = await kernel.newPinnedAppInstance(APP_ID, appBase1.address, '0x', false)
                             const appProxy = AppProxyPinned.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
@@ -205,18 +205,18 @@ contract('Kernel apps', accounts => {
                         it('sets the app base when not previously registered', async() => {
                             assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
-                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
                         })
 
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
                             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
                         })
 
                         it("does not set the default app", async () => {
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Check that only the app base is set
@@ -230,7 +230,7 @@ contract('Kernel apps', accounts => {
                         it("does not allow initializing proxy", async () => {
                             const initData = appBase1.initialize.request().params[0].data
 
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Make sure app was not initialized
@@ -243,7 +243,7 @@ contract('Kernel apps', accounts => {
 
                         it("fails if the app base is not given", async() => {
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR)
+                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR, '0x', false)
                             })
                         })
 
@@ -254,7 +254,7 @@ contract('Kernel apps', accounts => {
 
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, existingBase)
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, differentBase)
+                                await kernelOverload[newInstanceFn](APP_ID, differentBase, '0x', false)
                             })
                         })
                     })

@@ -7,7 +7,7 @@ import "../../apps/UnsafeAragonApp.sol";
 // Allows Repo to be used without a proxy or access controls
 contract UnsafeRepo is Repo, UnsafeAragonApp {
     // Protected actions are always performable
-    function canPerform(address, bytes32, uint256[]) public view returns (bool) {
+    function canPerform(address, bytes32) public view returns (bool) {
         return true;
     }
 }

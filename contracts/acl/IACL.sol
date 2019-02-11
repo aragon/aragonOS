@@ -10,5 +10,5 @@ interface IACL {
 
     // TODO: this should be external
     // See https://github.com/ethereum/solidity/issues/4832
-    function hasPermission(address who, address where, bytes32 what, bytes how) public view returns (bool);
+    function hasPermission(address who, address where, bytes32 what) public view returns (bool);
 }

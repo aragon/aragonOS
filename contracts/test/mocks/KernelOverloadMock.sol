@@ -26,11 +26,11 @@ contract KernelOverloadMock {
         auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
     */
-    function newAppInstance(bytes32 _appId, address _appBase)
+    function newAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
         returns (ERCProxy appProxy)
     {
-        appProxy = kernel.newAppInstance(_appId, _appBase);
+        appProxy = kernel.newAppInstance(_appId, _appBase, _initializePayload, _setDefault);
         emit NewAppProxy(appProxy);
     }
 

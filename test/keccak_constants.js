@@ -54,7 +54,6 @@ contract('Constants', accounts => {
     const acl = await getContract('ACL').new()
 
     assert.equal(await acl.CREATE_PERMISSIONS_ROLE(), await keccakConstants.CREATE_PERMISSIONS_ROLE(), "create permissions role doesn't match")
-    assert.equal(await acl.EMPTY_PARAM_HASH(), await keccakConstants.EMPTY_PARAM_HASH(), "empty param hash doesn't match")
   })
 
   it('checks ENSSubdomainRegistrar constants', async () => {

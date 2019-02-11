@@ -26,10 +26,6 @@ contract AppStub is AragonApp, AppStubStorage {
         a = i;
     }
 
-    function setValueParam(uint i) authP(ROLE, arr(i)) public {
-        a = i;
-    }
-
     function getValue() public constant returns (uint) {
         return a;
     }

@@ -4,7 +4,6 @@ import "./IKernel.sol";
 import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
-import "../acl/ACLSyntaxSugar.sol";
 import "../lib/misc/ERCProxy.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
@@ -13,7 +12,7 @@ import "../factory/AppProxyFactory.sol";
 
 
 // solium-disable-next-line max-len
-contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory {
     /* Hardcoded constants to save gas
     bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     */
@@ -62,7 +61,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function newAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE)
         returns (ERCProxy appProxy)
     {
         return newAppInstance(_appId, _appBase, new bytes(0), false);
@@ -82,7 +81,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function newAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE)
         returns (ERCProxy appProxy)
     {
         _setAppIfNew(KERNEL_APP_BASES_NAMESPACE, _appId, _appBase);
@@ -103,7 +102,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function newPinnedAppInstance(bytes32 _appId, address _appBase)
         public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE)
         returns (ERCProxy appProxy)
     {
         return newPinnedAppInstance(_appId, _appBase, new bytes(0), false);
@@ -123,7 +122,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
         public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
+        auth(APP_MANAGER_ROLE)
         returns (ERCProxy appProxy)
     {
         _setAppIfNew(KERNEL_APP_BASES_NAMESPACE, _appId, _appBase);
@@ -145,7 +144,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function setApp(bytes32 _namespace, bytes32 _appId, address _app)
         public
-        auth(APP_MANAGER_ROLE, arr(_namespace, _appId))
+        auth(APP_MANAGER_ROLE)
     {
         _setApp(_namespace, _appId, _app);
     }
@@ -156,7 +155,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function setRecoveryVaultAppId(bytes32 _recoveryVaultAppId)
         public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_ADDR_NAMESPACE, _recoveryVaultAppId))
+        auth(APP_MANAGER_ROLE)
     {
         recoveryVaultAppId = _recoveryVaultAppId;
     }
@@ -201,14 +200,13 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @param _who Sender of the original call
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app
-    * @param _how Extra data for ACL auth
     * @return Boolean indicating whether the ACL allows the role or not.
     *         Always returns false if the kernel hasn't been initialized yet.
     */
-    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what) public view returns (bool) {
         IACL defaultAcl = acl();
         return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
-            defaultAcl.hasPermission(_who, _where, _what, _how);
+            defaultAcl.hasPermission(_who, _where, _what);
     }
 
     function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {
@@ -227,18 +225,8 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         }
     }
 
-    modifier auth(bytes32 _role, uint256[] memory params) {
-        // Force cast the uint256[] into a bytes array, by overwriting its length
-        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
-        // with params and a new length, and params becomes invalid from this point forward
-        bytes memory how;
-        uint256 byteLength = params.length * 32;
-        assembly {
-            how := params
-            mstore(how, byteLength)
-        }
-
-        require(hasPermission(msg.sender, address(this), _role, how), ERROR_AUTH_FAILED);
+    modifier auth(bytes32 _role) {
+        require(hasPermission(msg.sender, address(this), _role), ERROR_AUTH_FAILED);
         _;
     }
 }

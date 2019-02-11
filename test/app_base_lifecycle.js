@@ -46,7 +46,7 @@ contract('App base lifecycle', accounts => {
     })
 
     it('should not be usable', async () => {
-      assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+      assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE))
     })
   })
 
@@ -67,7 +67,7 @@ contract('App base lifecycle', accounts => {
     })
 
     it('should not be usable yet', async () => {
-      assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+      assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE))
     })
 
     context('> Initialized', () => {
@@ -96,7 +96,7 @@ contract('App base lifecycle', accounts => {
       it('should still not be usable without a kernel', async () => {
         assert.equal(await app.getKernel(), ZERO_ADDR, 'app should still be missing kernel reference')
 
-        assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+        assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE))
       })
 
       context('> Set kernel', () => {
@@ -112,14 +112,14 @@ contract('App base lifecycle', accounts => {
         })
 
         it('should not be usable if no permission is granted', async () => {
-          assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+          assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE))
         })
 
         it('should be usable after initialization, setting a kernel, and setting a permission', async () => {
           // Setup permissions
           await acl.createPermission(permissionsRoot, app.address, FAKE_ROLE, permissionsRoot)
 
-          assert.isTrue(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
+          assert.isTrue(await app.canPerform(permissionsRoot, FAKE_ROLE))
         })
       })
     })

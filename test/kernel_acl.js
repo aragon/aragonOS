@@ -116,55 +116,6 @@ contract('Kernel ACL', accounts => {
                     assertEvent(receipt, 'SetApp')
                 })
 
-                it('can grant permission with params', async () => {
-                    const secondChild = accounts[3]
-
-                    // Set role such that the first param cannot be equal to 0
-                    // For APP_MANAGER_ROLE, this is the namespace
-                    // param hash 0x68b4adfe8175b29530f1c715f147337823f4ae55693be119bef69129637d681f
-                    const argId = '0x00' // arg 0
-                    const op = '02'      // not equal
-                    const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
-                    const param = new web3.BigNumber(`${argId}${op}${value}`)
-
-                    const grantChildReceipt = await acl.grantPermissionP(child, kernelAddr, APP_MANAGER_ROLE, [param], { from: granted })
-
-                    // Retrieve the params back with the getters
-                    const numParams = await acl.getPermissionParamsLength(child, kernelAddr, APP_MANAGER_ROLE)
-                    assert.equal(numParams, 1, 'There should be just 1 param')
-                    const returnedParam = await acl.getPermissionParam(child, kernelAddr, APP_MANAGER_ROLE, 0)
-                    assert.equal(returnedParam[0].valueOf(), parseInt(argId, 16), 'param id should match')
-                    assert.equal(returnedParam[1].valueOf(), parseInt(op, 10), 'param op should match')
-                    assert.equal(returnedParam[2].valueOf(), parseInt(value, 10), 'param value should match')
-
-                    // Assert that the right events have been emitted with the right args
-                    assertEvent(grantChildReceipt, 'SetPermission')
-                    assertEvent(grantChildReceipt, 'SetPermissionParams')
-                    const setParamsHash = grantChildReceipt.logs.filter(l => l.event == 'SetPermissionParams')[0].args.paramsHash
-                    assert.equal(setParamsHash, soliditySha3(param))
-
-                    // Grants again without re-saving params (saves gas)
-                    const grantSecondChildReceipt = await acl.grantPermissionP(secondChild, kernelAddr, APP_MANAGER_ROLE, [param], { from: granted })
-                    assert.isBelow(
-                        grantSecondChildReceipt.receipt.gasUsed,
-                        grantChildReceipt.receipt.gasUsed,
-                        'should have used less gas because of cache'
-                    )
-
-                    // Allows setting code for namespace other than 0
-                    for (grantee of [child, secondChild]) {
-                        const receipt = await kernel.setApp('0x121212', '0x0', appBase.address, { from: grantee })
-                        assertEvent(receipt, 'SetApp')
-                    }
-
-                    // Fail if setting code for namespace 0
-                    for (grantee of [child, secondChild]) {
-                        await assertRevert(async () => {
-                            await kernel.setApp('0x0', APP_ID, appBase.address, { from: grantee })
-                        })
-                    }
-                })
-
                 it('can grant a public permission', async () => {
                     const receipt = await acl.grantPermission(ANY_ENTITY, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertEvent(receipt, 'SetPermission')
