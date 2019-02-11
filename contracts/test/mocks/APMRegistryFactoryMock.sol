@@ -1,31 +1,49 @@
 pragma solidity 0.4.24;
 
+import "../../apm/APMRegistry.sol";
+import "../../apm/Repo.sol";
+import "../../ens/ENSSubdomainRegistrar.sol";
+
+import "../../factory/DAOFactory.sol";
+import "../../factory/ENSFactory.sol";
+
 // Mock that doesn't grant enough permissions
-// external ENS
+// Only usable with new ENS instance
 
-import "../../factory/APMRegistryFactory.sol";
+contract APMRegistryFactoryMock is APMInternalAppNames {
+    DAOFactory public daoFactory;
+    APMRegistry public registryBase;
+    Repo public repoBase;
+    ENSSubdomainRegistrar public ensSubdomainRegistrarBase;
+    ENS public ens;
 
-contract APMRegistryFactoryMock is APMRegistryFactory {
     constructor(
         DAOFactory _daoFactory,
         APMRegistry _registryBase,
         Repo _repoBase,
         ENSSubdomainRegistrar _ensSubBase,
-        ENS _ens,
         ENSFactory _ensFactory
+    ) public
+    {
+        daoFactory = _daoFactory;
+        registryBase = _registryBase;
+        repoBase = _repoBase;
+        ensSubdomainRegistrarBase = _ensSubBase;
+        ens = _ensFactory.newENS(this);
+    }
+
+    function newFailingAPM(
+        bytes32 _tld,
+        bytes32 _label,
+        address _root,
+        bool _withoutNameRole
     )
-    APMRegistryFactory(_daoFactory, _registryBase, _repoBase, _ensSubBase, _ens, _ensFactory) public {}
-
-    function newAPM(bytes32, bytes32, address) public returns (APMRegistry) {}
-
-    function newBadAPM(bytes32 tld, bytes32 label, address _root, bool withoutACL) public returns (APMRegistry) {
-        bytes32 node = keccak256(abi.encodePacked(tld, label));
-
-        // Assume it is the test ENS
-        if (ens.owner(node) != address(this)) {
-            // If we weren't in test ens and factory doesn't have ownership, will fail
-            ens.setSubnodeOwner(tld, label, this);
-        }
+        public
+        returns (APMRegistry)
+    {
+        // Set up ENS control
+        bytes32 node = keccak256(abi.encodePacked(_tld, _label));
+        ens.setSubnodeOwner(_tld, _label, this);
 
         Kernel dao = daoFactory.newDAO(this);
         ACL acl = ACL(dao.acl());
@@ -55,34 +73,24 @@ contract APMRegistryFactoryMock is APMRegistryFactory {
         bytes32 repoAppId = keccak256(abi.encodePacked(node, keccak256(abi.encodePacked(REPO_APP_NAME))));
         dao.setApp(dao.APP_BASES_NAMESPACE(), repoAppId, repoBase);
 
-        emit DeployAPM(node, apm);
-
         // Grant permissions needed for APM on ENSSubdomainRegistrar
+        acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
 
-        if (withoutACL) {
+        // Don't grant all permissions needed for APM to initialize
+        if (_withoutNameRole) {
             acl.createPermission(apm, ensSub, ensSub.CREATE_NAME_ROLE(), _root);
         }
 
-        acl.createPermission(apm, ensSub, ensSub.POINT_ROOTNODE_ROLE(), _root);
-
-        configureAPMPermissions(acl, apm, _root);
-
-        // allow apm to create permissions for Repos in Kernel
-        bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
-
-        if (!withoutACL) {
+        if (!_withoutNameRole) {
+            bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
             acl.grantPermission(apm, acl, permRole);
         }
-
-        // Permission transition to _root
-        acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());
-        acl.revokePermission(this, acl, permRole);
-        acl.grantPermission(_root, acl, permRole);
-        acl.setPermissionManager(_root, acl, permRole);
 
         // Initialize
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
+
+        // This should fail since we haven't given all required permissions
         apm.initialize(ensSub);
 
         return apm;
