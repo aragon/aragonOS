@@ -8,11 +8,15 @@ import "../lib/token/ERC20.sol";
 import "./EtherTokenConstant.sol";
 import "./IsContract.sol";
 import "./IVaultRecoverable.sol";
+import "./SafeERC20.sol";
 
 
 contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
+    using SafeERC20 for ERC20;
+
     string private constant ERROR_DISALLOWED = "RECOVER_DISALLOWED";
     string private constant ERROR_VAULT_NOT_CONTRACT = "RECOVER_VAULT_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_TRANSFER_FAILED = "RECOVER_TOKEN_TRANSFER_FAILED";
 
     /**
      * @notice Send funds to recovery Vault. This contract should never receive funds,
@@ -27,8 +31,9 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         if (_token == ETH) {
             vault.transfer(address(this).balance);
         } else {
-            uint256 amount = ERC20(_token).balanceOf(this);
-            ERC20(_token).transfer(vault, amount);
+            ERC20 token = ERC20(_token);
+            uint256 amount = token.staticBalanceOf(this);
+            require(token.safeTransfer(vault, amount), ERROR_TOKEN_TRANSFER_FAILED);
         }
     }
 
