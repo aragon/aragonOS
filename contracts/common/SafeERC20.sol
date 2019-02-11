@@ -122,7 +122,7 @@ library SafeERC20 {
     */
     function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256) {
         bytes memory balanceOfCallData = abi.encodeWithSelector(
-            ERC20(_token).balanceOf.selector,
+            _token.balanceOf.selector,
             _owner
         );
 
@@ -138,7 +138,7 @@ library SafeERC20 {
     */
     function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256) {
         bytes memory allowanceCallData = abi.encodeWithSelector(
-            ERC20(_token).allowance.selector,
+            _token.allowance.selector,
             _owner,
             _spender
         );
