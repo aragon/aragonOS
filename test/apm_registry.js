@@ -91,6 +91,17 @@ contract('APMRegistry', accounts => {
         assert.equal(await repo.getVersionsCount(), 2, 'should have created version')
     })
 
+    it('fails to init with existing ENS deployment if not owner of tld', async () => {
+        const ensReceipt = await ensFactory.newENS(accounts[0])
+        const ens2 = ENS.at(ensReceipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens)
+        const newFactory = await APMRegistryFactory.new(daoFactory.address, ...baseAddrs, ens2.address, '0x00')
+
+        // Factory doesn't have ownership over 'eth' tld
+        await assertRevert(async () => {
+            await newFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
+        })
+    })
+
     it('fails to create empty repo name', async () => {
         return assertRevert(async () => {
             await registry.newRepo('', repoDev, { from: apmOwner })
@@ -103,7 +114,7 @@ contract('APMRegistry', accounts => {
         })
     })
 
-    context('creating test.aragonpm.eth repo', () => {
+    context('> Creating test.aragonpm.eth repo', () => {
         let repo = {}
 
         beforeEach(async () => {
@@ -164,22 +175,22 @@ contract('APMRegistry', accounts => {
         })
     })
 
-    context('APMRegistry created with lacking permissions', () => {
+    context('> Created with missing permissions', () => {
         let apmFactoryMock
 
         before(async () => {
-            apmFactoryMock = await APMRegistryFactoryMock.new(daoFactory.address, ...baseAddrs, '0x0', ensFactory.address)
-        })
-
-        it('fails if factory doesnt give permission to create permissions', async () => {
-            return assertRevert(async () => {
-                await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
-            })
+            apmFactoryMock = await APMRegistryFactoryMock.new(daoFactory.address, ...baseAddrs, ensFactory.address)
         })
 
         it('fails if factory doesnt give permission to create names', async () => {
-            return assertRevert(async () => {
-                await apmFactoryMock.newBadAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
+            await assertRevert(async () => {
+                await apmFactoryMock.newFailingAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, true)
+            })
+        })
+
+        it('fails if factory doesnt give permission to create permissions', async () => {
+            await assertRevert(async () => {
+                await apmFactoryMock.newFailingAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner, false)
             })
         })
     })
