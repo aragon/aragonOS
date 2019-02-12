@@ -6,7 +6,9 @@ pragma solidity ^0.4.24;
 
 
 contract ACLSyntaxSugar {
-    function arr() internal pure returns (uint256[]) {}
+    function arr() internal pure returns (uint256[]) {
+        // solium-disable-previous-line no-empty-blocks
+    }
 
     function arr(bytes32 _a) internal pure returns (uint256[] r) {
         return arr(uint256(_a));

@@ -14,7 +14,7 @@ contract AppProxyUpgradeable is AppProxyBase {
         AppProxyBase(_kernel, _appId, _initializePayload)
         public // solium-disable-line visibility-first
     {
-
+        // solium-disable-previous-line no-empty-blocks
     }
 
     /**
