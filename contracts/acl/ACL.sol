@@ -7,6 +7,7 @@ import "./IACL.sol";
 import "./IACLOracle.sol";
 import "../lib/math/SafeMath.sol";
 
+
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
@@ -496,7 +497,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         // Backward compatibility for DAOs with earlier versions of the ACL
         if (roleEra == 0) {
-		    return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+            return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
         }
 
         return keccak256(abi.encodePacked("PERMISSION", roleEra, _who, _where, _what));
