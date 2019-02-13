@@ -62,6 +62,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
+    event RevokeAllPermissions(address indexed app, bytes32 indexed role);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
@@ -162,6 +163,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     {
         bytes32 hash = roleHash(_app, _role);
         roleEras[hash] = roleEras[hash].add(1);
+        emit RevokeAllPermissions(_app, _role);
     }
 
     /**
