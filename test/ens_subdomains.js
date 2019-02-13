@@ -10,14 +10,19 @@ const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
 
 const APMRegistry = artifacts.require('APMRegistry')
+const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
 const Repo = artifacts.require('Repo')
 const APMRegistryFactory = artifacts.require('APMRegistryFactory')
 const DAOFactory = artifacts.require('DAOFactory')
 
+const EMPTY_BYTES = '0x'
+
 // Using APMFactory in order to reuse it
 contract('ENSSubdomainRegistrar', accounts => {
-    let baseDeployed, apmFactory, ensFactory, daoFactory, ens, registrar
+    let baseDeployed, apmFactory, ensFactory, dao, daoFactory, ens, registrar
+    let APP_BASES_NAMESPACE
+
     const ensOwner = accounts[0]
     const apmOwner = accounts[1]
     const repoDev  = accounts[2]
@@ -38,6 +43,8 @@ contract('ENSSubdomainRegistrar', accounts => {
         const kernelBase = await Kernel.new(true) // petrify immediately
         const aclBase = await ACL.new()
         daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x00')
+
+        APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     })
 
     beforeEach(async () => {
@@ -49,7 +56,7 @@ contract('ENSSubdomainRegistrar', accounts => {
         const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
         const registry = APMRegistry.at(apmAddr)
 
-        const dao = Kernel.at(await registry.kernel())
+        dao = Kernel.at(await registry.kernel())
         const acl = ACL.at(await dao.acl())
 
         registrar = ENSSubdomainRegistrar.at(await registry.registrar())
@@ -99,11 +106,12 @@ contract('ENSSubdomainRegistrar', accounts => {
     })
 
     it('fails if initializing without rootnode ownership', async () => {
-        const reg = await ENSSubdomainRegistrar.new()
         const ens = await ENS.new()
+        const newRegProxy = await AppProxyUpgradeable.new(dao.address, namehash('apm-enssub.aragonpm.eth'), EMPTY_BYTES)
+        const newReg = ENSSubdomainRegistrar.at(newRegProxy.address)
 
-        return assertRevert(async () => {
-            await reg.initialize(ens.address, holanode)
+        await assertRevert(async () => {
+            await newReg.initialize(ens.address, holanode)
         })
     })
 })

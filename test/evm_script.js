@@ -109,6 +109,7 @@ contract('EVM Script', accounts => {
 
                 assertEvent(receipt, 'DisableExecutor')
                 assert.isFalse(executorEntry[1], "executor should now be disabled")
+                assert.equal(await reg.getScriptExecutor(`0x0000000${newExecutorId}`), ZERO_ADDR, 'getting disabled executor should return zero addr')
             })
 
             it('can re-enable an executor', async () => {
@@ -117,12 +118,14 @@ contract('EVM Script', accounts => {
                 await reg.disableScriptExecutor(newExecutorId, { from: boss })
                 let executorEntry = await reg.executors(newExecutorId)
                 assert.isFalse(executorEntry[1], "executor should now be disabled")
+                assert.equal(await reg.getScriptExecutor(`0x0000000${newExecutorId}`), ZERO_ADDR, 'getting disabled executor should return zero addr')
 
                 const receipt = await reg.enableScriptExecutor(newExecutorId, { from: boss })
                 executorEntry = await reg.executors(newExecutorId)
 
                 assertEvent(receipt, 'EnableExecutor')
                 assert.isTrue(executorEntry[1], "executor should now be re-enabled")
+                assert.notEqual(await reg.getScriptExecutor(`0x0000000${newExecutorId}`), ZERO_ADDR, 'getting disabled executor should return non-zero addr')
             })
 
             it('fails to add a new executor without the correct permissions', async () => {
@@ -150,6 +153,13 @@ contract('EVM Script', accounts => {
                 await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
                 await assertRevert(async () => {
                     await reg.enableScriptExecutor(newExecutorId, { from: boss })
+                })
+            })
+
+            it('fails to enable a non-existent executor', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+                await assertRevert(async () => {
+                    await reg.enableScriptExecutor(newExecutorId + 1, { from: boss })
                 })
             })
 
@@ -326,37 +336,23 @@ contract('EVM Script', accounts => {
                 })
             })
 
-            context('registry', () => {
-                it('can be disabled', async () => {
+            context('> Registry actions', () => {
+                it("can't be executed once disabled", async () => {
                     await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
-                    const receipt = await reg.disableScriptExecutor(1, { from: boss })
-                    const isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
+                    await reg.disableScriptExecutor(1, { from: boss })
 
-                    assertEvent(receipt, 'DisableExecutor')
-                    assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting disabled executor should return zero addr')
-                    assert.isFalse(isEnabled, 'executor should be disabled')
                     return assertRevert(async () => {
                         await executorApp.execute(encodeCallScript([]))
                     })
                 })
 
                 it('can be re-enabled', async () => {
-                    let isEnabled
                     await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
 
-                    // First, disable the executor
+                    // Disable then re-enable the executor
                     await reg.disableScriptExecutor(1, { from: boss })
-                    isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
-                    assert.equal(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting disabled executor should return zero addr')
-                    assert.isFalse(isEnabled, 'executor should be disabled')
+                    await reg.enableScriptExecutor(1, { from: boss })
 
-                    // Then re-enable it
-                    const receipt = await reg.enableScriptExecutor(1, { from: boss })
-                    isEnabled = (await reg.executors(1))[1] // enabled flag is second in struct
-
-                    assertEvent(receipt, 'EnableExecutor')
-                    assert.notEqual(await reg.getScriptExecutor('0x00000001'), ZERO_ADDR, 'getting enabled executor should be non-zero addr')
-                    assert.isTrue(isEnabled, 'executor should be enabled')
                     await executorApp.execute(encodeCallScript([]))
                 })
             })
