@@ -6,7 +6,7 @@ import "../acl/ACLSyntaxSugar.sol";
 import "../acl/ACL.sol";
 
 
-contract TestACLHelpers is ACL, ACLHelper {
+contract TestACLHelpers is ACL {
 
     function testEncodeParam() public {
         Param memory param = Param(2, uint8(Op.EQ), 5294967297);

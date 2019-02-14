@@ -116,5 +116,13 @@ contract ACLHelpers is ACLParams {
 
     function encodeParam(Param param) internal pure returns (uint256) {
         return uint256(param.id) << 248 | uint256(param.op) << 240 | param.value;
-    }    
+    }  
+
+    function encodeOperator(uint256 param1, uint256 param2) internal pure returns (uint240) {
+        return uint240(param1 + (param2 << 32) + (0 << 64));
+    }
+
+    function encodeIfElse(uint256 condition, uint256 successParam, uint256 failureParam) internal pure returns (uint240) {
+        return uint240(condition + (successParam << 32) + (failureParam << 64));
+    }  
 }
