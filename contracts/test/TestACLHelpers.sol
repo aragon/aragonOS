@@ -1,7 +1,6 @@
 pragma solidity 0.4.24;
 
 import "./helpers/Assert.sol";
-import "./helpers/ACLHelper.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../acl/ACL.sol";
 

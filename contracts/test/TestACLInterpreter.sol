@@ -2,7 +2,7 @@ pragma solidity 0.4.24;
 
 import "../acl/ACL.sol";
 import "./helpers/Assert.sol";
-import "./helpers/ACLHelper.sol";
+import "./helpers/ACLOracleHelper.sol";
 
 
 contract TestACLInterpreter is ACL {
