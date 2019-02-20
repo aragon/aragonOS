@@ -1,3 +1,4 @@
+const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
 const { skipCoverage } = require('./helpers/coverage')
 const { getBalance } = require('./helpers/web3')
@@ -36,18 +37,22 @@ contract('Recovery to vault', accounts => {
     const initialBalance = await getBalance(target.address)
     const initialVaultBalance = await getBalance(vault.address)
     const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
+    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount), 'Target initial balance should be correct')
 
     const recoverAction = () => target.transferToVault(ETH)
 
     if (shouldFail) {
       await assertRevert(recoverAction)
-      assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
-      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance)
+      assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount), 'Target balance should be same as before')
+      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance, 'Vault balance should should be same as before')
     } else {
-      await recoverAction()
-      assert.equal((await getBalance(target.address)).valueOf(), 0)
-      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount))
+      const recoverReceipt = await recoverAction()
+      assert.equal((await getBalance(target.address)).valueOf(), 0, 'Target balance should be 0')
+      assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount), 'Vault balance should include recovered amount')
+
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'token'), ETH, 'RecoverToVault event should have correct token')
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'amount'), amount, 'RecoverToVault event should have correct amount')
+      assertEvent(recoverReceipt, 'RecoverToVault', 1)
     }
   }
 
@@ -57,18 +62,22 @@ contract('Recovery to vault', accounts => {
     const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
     await token.transfer(target.address, amount)
-    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount), 'Target initial balance should be correct')
 
     const recoverAction = () => target.transferToVault(token.address)
 
     if (shouldFail) {
       await assertRevert(recoverAction)
-      assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
-      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance)
+      assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount), 'Target balance should be same as before')
+      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance, 'Vault balance should should be same as before')
     } else {
-      await recoverAction()
-      assert.equal((await token.balanceOf(target.address)).valueOf(), 0)
-      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount))
+      const recoverReceipt = await recoverAction()
+      assert.equal((await token.balanceOf(target.address)).valueOf(), 0, 'Target balance should be 0')
+      assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount), 'Vault balance should include recovered amount')
+
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'token'), token.address, 'RecoverToVault event should have correct token')
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'amount'), amount, 'RecoverToVault event should have correct amount')
+      assertEvent(recoverReceipt, 'RecoverToVault', 1)
     }
   }
 
@@ -78,7 +87,7 @@ contract('Recovery to vault', accounts => {
     const initialBalance = await token.balanceOf(target.address)
     const initialVaultBalance = await token.balanceOf(vault.address)
     await token.transfer(target.address, amount)
-    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount), 'Target initial balance should be correct')
 
     // Stop token from being transferable
     await token.setAllowTransfer(false)
@@ -86,8 +95,8 @@ contract('Recovery to vault', accounts => {
     // Try to transfer
     await assertRevert(() => target.transferToVault(token.address))
 
-    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount))
-    assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance)
+    assert.equal((await token.balanceOf(target.address)).valueOf(), initialBalance.plus(amount), 'Target balance should be same as before')
+    assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance, 'Vault balance should should be same as before')
   }
 
   const failWithoutVault = async (target, kernel) => {
@@ -96,7 +105,7 @@ contract('Recovery to vault', accounts => {
     const initialBalance = await getBalance(target.address)
     await kernel.setRecoveryVaultAppId(vaultId)
     const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount))
+    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount), 'Target initial balance should be correct')
     return assertRevert(async () => {
       await target.transferToVault(ETH)
     })
@@ -134,7 +143,7 @@ contract('Recovery to vault', accounts => {
 
   // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
   for (const kernelType of ['Kernel', 'KernelProxy']) {
-    context(`> ${kernelType}`, () => {
+    context.only(`> ${kernelType}`, () => {
       let kernelBase, kernel
 
       before(async () => {
