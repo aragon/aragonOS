@@ -50,6 +50,7 @@ contract('Recovery to vault', accounts => {
       assert.equal((await getBalance(target.address)).valueOf(), 0, 'Target balance should be 0')
       assert.equal((await getBalance(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount), 'Vault balance should include recovered amount')
 
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'vault'), vault.address, 'RecoverToVault event should have correct vault')
       assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'token'), ETH, 'RecoverToVault event should have correct token')
       assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'amount'), amount, 'RecoverToVault event should have correct amount')
       assertEvent(recoverReceipt, 'RecoverToVault', 1)
@@ -75,6 +76,7 @@ contract('Recovery to vault', accounts => {
       assert.equal((await token.balanceOf(target.address)).valueOf(), 0, 'Target balance should be 0')
       assert.equal((await token.balanceOf(vault.address)).valueOf(), initialVaultBalance.plus(initialBalance).plus(amount), 'Vault balance should include recovered amount')
 
+      assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'vault'), vault.address, 'RecoverToVault event should have correct vault')
       assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'token'), token.address, 'RecoverToVault event should have correct token')
       assert.equal(getEvent(recoverReceipt, 'RecoverToVault', 'amount'), amount, 'RecoverToVault event should have correct amount')
       assertEvent(recoverReceipt, 'RecoverToVault', 1)

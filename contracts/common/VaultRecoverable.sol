@@ -38,7 +38,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
             require(token.safeTransfer(vault, balance), ERROR_TOKEN_TRANSFER_FAILED);
         }
 
-        emit RecoverToVault(_token, balance);
+        emit RecoverToVault(vault, _token, balance);
     }
 
     /**
