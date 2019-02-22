@@ -145,7 +145,7 @@ contract('Recovery to vault', accounts => {
 
   // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
   for (const kernelType of ['Kernel', 'KernelProxy']) {
-    context.only(`> ${kernelType}`, () => {
+    context(`> ${kernelType}`, () => {
       let kernelBase, kernel
 
       before(async () => {
