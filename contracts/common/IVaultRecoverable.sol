@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 
 interface IVaultRecoverable {
-    event RecoverToVault(address token, uint256 amount);
+    event RecoverToVault(address indexed token, uint256 amount);
 
     function transferToVault(address token) external;
 
