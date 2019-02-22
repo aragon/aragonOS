@@ -29,6 +29,12 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     event NewName(bytes32 indexed node, bytes32 indexed label);
     event DeleteName(bytes32 indexed node, bytes32 indexed label);
 
+    /**
+    * @dev Initialize can only be called once. It saves the block number in which it was initialized.
+    * @notice Initializes this subdomain registrar. Sets `_ens` as domain registrar and `_rootNode` as ENS root node. This contract must be owner of `_rootNode` ENS root node in `_ens` domain registrar.
+    * @param _ens ENS Domain Registrar
+    * @param _rootNode Root node of this contract in ENS Domain Registrar
+    */
     function initialize(AbstractENS _ens, bytes32 _rootNode) public onlyInit {
         initialized();
 
