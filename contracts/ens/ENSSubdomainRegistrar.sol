@@ -31,8 +31,8 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initializes this subdomain registrar. Sets `_ens` as domain registrar and `_rootNode` as ENS root node. This contract must be owner of `_rootNode` ENS root node in `_ens` domain registrar.
-    * @param _ens ENS Domain Registrar
+    * @notice Initializes a ENSSubdomainRegistrar instance and sets `_ens` as domain registrar and `_rootNode` as ENS root node. This contract must be owner of `_rootNode` ENS root node in `_ens` domain registrar.
+    * @param _ens Address of ENS Domain Registrar instance
     * @param _rootNode Root node of this contract in ENS Domain Registrar
     */
     function initialize(AbstractENS _ens, bytes32 _rootNode) public onlyInit {
@@ -45,15 +45,34 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         rootNode = _rootNode;
     }
 
+    /**
+    * @dev Creates a new ENS subdomain record. Prevents resetting owner and emits new label event.
+    * @notice Creates a new ENS subdomain record with label `_label` under current root node and assigns ownership to `_owner`.
+    * @param _label Label of new subdomain
+    * @param _owner Owner of new subdomain
+    * @return node Hash of created node
+    */
     function createName(bytes32 _label, address _owner) external auth(CREATE_NAME_ROLE) returns (bytes32 node) {
         return _createName(_label, _owner);
     }
 
+    /**
+    * @dev Creates a new ENS subdomain record and points public resolver to target address
+    * @notice Creates a new ENS subdomain record with label `_label` under current root node (with ownership assigned to this contract) and associates label `_label` with address `_target` in public resolver.
+    * @param _label Label of new subdomain
+    * @param _target Ethereum address this new subdomain label will point to
+    * @return node Hash of created node
+    */
     function createNameAndPoint(bytes32 _label, address _target) external auth(CREATE_NAME_ROLE) returns (bytes32 node) {
         node = _createName(_label, this);
         _pointToResolverAndResolve(node, _target);
     }
 
+    /**
+    * @dev Deregisters ENS subdomain record and removes resolver from ENS.
+    * @notice Deregisters ENS subdomain record (and removes resolver from ENS) for label `_label`.
+    * @param _label Label of subdomain to deregister
+    */
     function deleteName(bytes32 _label) external auth(DELETE_NAME_ROLE) {
         bytes32 node = getNodeForLabel(_label);
 
@@ -71,6 +90,11 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
         emit DeleteName(node, _label);
     }
 
+    /**
+    * @dev Points public resolver to target address for root node
+    * @notice Associates root node with address `_target` in public resolver.
+    * @param _target Ethereum address root node will point to
+    */
     function pointRootNode(address _target) external auth(POINT_ROOTNODE_ROLE) {
         _pointToResolverAndResolve(rootNode, _target);
     }
