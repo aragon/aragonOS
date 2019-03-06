@@ -71,7 +71,7 @@ contract ENSSubdomainRegistrar is AragonApp, ENSConstants {
     /**
     * @dev Deregisters ENS subdomain record and removes resolver from ENS.
     * @notice Deregisters ENS subdomain record (and removes resolver from ENS) for label `_label`.
-    * @param _label Label of subdomain to deregister
+    * @param _label Label of subdomain to de-register
     */
     function deleteName(bytes32 _label) external auth(DELETE_NAME_ROLE) {
         bytes32 node = getNodeForLabel(_label);
