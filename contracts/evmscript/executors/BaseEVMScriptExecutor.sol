@@ -10,4 +10,6 @@ import "../IEVMScriptExecutor.sol";
 
 contract BaseEVMScriptExecutor is IEVMScriptExecutor, Autopetrified {
     uint256 internal constant SCRIPT_START_LOCATION = 4;
+
+    function executorType() external pure returns (bytes32);
 }
