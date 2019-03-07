@@ -28,13 +28,17 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         address vault = getRecoveryVault();
         require(isContract(vault), ERROR_VAULT_NOT_CONTRACT);
 
+        uint256 balance;
         if (_token == ETH) {
-            vault.transfer(address(this).balance);
+            balance = address(this).balance;
+            vault.transfer(balance);
         } else {
             ERC20 token = ERC20(_token);
-            uint256 amount = token.staticBalanceOf(this);
-            require(token.safeTransfer(vault, amount), ERROR_TOKEN_TRANSFER_FAILED);
+            balance = token.staticBalanceOf(this);
+            require(token.safeTransfer(vault, balance), ERROR_TOKEN_TRANSFER_FAILED);
         }
+
+        emit RecoverToVault(vault, _token, balance);
     }
 
     /**
