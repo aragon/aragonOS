@@ -30,7 +30,7 @@ contract Repo is AragonApp {
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initializes a Repo to be usable
+    * @notice Initialize this Repo
     */
     function initialize() public onlyInit {
         initialized();
