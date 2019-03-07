@@ -31,6 +31,8 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
 
     /**
     * NEEDS CREATE_NAME_ROLE and POINT_ROOTNODE_ROLE permissions on registrar
+    * @dev Initialize can only be called once. It saves the block number in which it was initialized
+    * @notice Initialize this APMRegistry instance and set `_registrar` as the ENS subdomain registrar
     * @param _registrar ENSSubdomainRegistrar instance that holds registry root node ownership
     */
     function initialize(ENSSubdomainRegistrar _registrar) public onlyInit {
