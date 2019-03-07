@@ -16,14 +16,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLParams, ACLHelpers {
     */
     bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
 
-    uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
-    // 202 is unused
-    uint8 internal constant ORACLE_PARAM_ID       = 203;
-    uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
-    // TODO: Add execution times param type?
-
     /* Hardcoded constant to save gas
     bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
     */
