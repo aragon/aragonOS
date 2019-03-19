@@ -156,7 +156,7 @@ contract('Kernel ACL', accounts => {
 
                     // Allows setting code for namespace other than 0
                     for (grantee of [child, secondChild]) {
-                        const receipt = await kernel.setApp('0x121212', ZERO_ADDR, appBase.address, { from: grantee })
+                        const receipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })
                         assertEvent(receipt, 'SetApp')
                     }
 
@@ -164,6 +164,13 @@ contract('Kernel ACL', accounts => {
                     for (grantee of [child, secondChild]) {
                         await assertRevert(async () => {
                             await kernel.setApp('0x00', APP_ID, appBase.address, { from: grantee })
+                        })
+                    }
+
+                    // Fail if setting code for empty namespace (which becomes 0)
+                    for (grantee of [child, secondChild]) {
+                        await assertRevert(async () => {
+                            await kernel.setApp(EMPTY_BYTES, APP_ID, appBase.address, { from: grantee })
                         })
                     }
                 })
