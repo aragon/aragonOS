@@ -1,6 +1,6 @@
 pragma solidity ^0.4.0;
 
-import './AbstractENS.sol';
+import "./AbstractENS.sol";
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its
