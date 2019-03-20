@@ -19,8 +19,11 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     // WARN: Manager can censor all votes and the like happening in an org
     bytes32 public constant REGISTRY_MANAGER_ROLE = 0xf7a450ef335e1892cb42c8ca72e7242359d7711924b75db5717410da3f614aa3;
 
+    uint256 internal constant SCRIPT_START_LOCATION = 4;
+
     string private constant ERROR_INEXISTENT_EXECUTOR = "EVMREG_INEXISTENT_EXECUTOR";
     string private constant ERROR_EXECUTOR_ENABLED = "EVMREG_EXECUTOR_ENABLED";
+    string private constant ERROR_SCRIPT_LENGTH_TOO_SHORT = "EVMREG_SCRIPT_LENGTH_TOO_SHORT";
     string private constant ERROR_EXECUTOR_DISABLED = "EVMREG_EXECUTOR_DISABLED";
 
     struct ExecutorEntry {
@@ -96,6 +99,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     * @param _script EVMScript being inspected
     */
     function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
+        require(_script.length >= SCRIPT_START_LOCATION, ERROR_SCRIPT_LENGTH_TOO_SHORT);
         uint256 id = _script.getSpecId();
 
         // Note that we don't need to check for an executor's existence in this case, as only

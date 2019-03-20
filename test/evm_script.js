@@ -75,6 +75,13 @@ contract('EVM Script', accounts => {
             })
         })
 
+        it('fails to get an executor if not enough bytes are given', async () => {
+            await assertRevert(async () => {
+                // Not enough bytes are given (need 4, given 3)
+                await reg.getScriptExecutor('0x'.padEnd(6, 0))
+            })
+        })
+
         context('> New executor', () => {
             let executorMock, newExecutorId
 
