@@ -25,11 +25,14 @@ contract CallsScript is BaseEVMScriptExecutor {
     * @param _script [ specId (uint32) ] many calls with this structure ->
     *    [ to (address: 20 bytes) ] [ calldataLength (uint32: 4 bytes) ] [ calldata (calldataLength bytes) ]
     * @param _blacklist Addresses the script cannot call to, or will revert.
-    * @return always returns empty byte array
+    * @return Always returns empty byte array
     */
     function execScript(bytes _script, bytes, address[] _blacklist) external isInitialized returns (bytes) {
         uint256 location = SCRIPT_START_LOCATION; // first 32 bits are spec id
         while (location < _script.length) {
+            // Check there's at least address + calldataLength available
+            require(_script.length - location >= 0x18, ERROR_INVALID_LENGTH);
+
             address contractAddress = _script.addressAt(location);
             // Check address being called is not blacklist
             for (uint i = 0; i < _blacklist.length; i++) {
@@ -55,6 +58,7 @@ contract CallsScript is BaseEVMScriptExecutor {
 
             require(success, ERROR_CALL_REVERTED);
         }
+        // No need to allocate empty bytes for the return as this can only be called via an delegatecall
     }
 
     function executorType() external pure returns (bytes32) {

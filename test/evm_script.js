@@ -255,15 +255,6 @@ contract('EVM Script', accounts => {
                 assert.equal(scriptResult.args.returnData, '0x', 'should log the return data')
             })
 
-            it('fails to execute if has blacklist addresses being called', async () => {
-                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                const script = encodeCallScript([action])
-
-                return assertRevert(async () => {
-                    await executorApp.executeWithBan(script, [executionTarget.address])
-                })
-            })
-
             it("can execute if call doesn't contain blacklist addresses", async () => {
                 const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                 const script = encodeCallScript([action])
@@ -320,8 +311,56 @@ contract('EVM Script', accounts => {
                 await executorApp.execute(encodeCallScript([]))
             })
 
+            it('fails to execute if has blacklist addresses being called', async () => {
+                const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                const script = encodeCallScript([action])
+
+                return assertRevert(async () => {
+                    await executorApp.executeWithBan(script, [executionTarget.address])
+                })
+            })
+
+            context('> Script underflow', () => {
+                const encodeCallScriptAddressUnderflow = actions => {
+                    return actions.reduce((script, { to }) => {
+                        const addr = rawEncode(['address'], [to]).toString('hex')
+
+                        // Remove too much of the address (should just remove first 12 0s of padding as addr)
+                        return script + addr.slice(24 + 4)
+                    }, '0x00000001') // spec 1
+                }
+
+                const encodeCallScriptLengthUnderflow = actions => {
+                    return actions.reduce((script, { to, calldata }) => {
+                        const addr = rawEncode(['address'], [to]).toString('hex')
+                        const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
+
+                        // Remove too much of the calldataLength (should just remove first 28 0s of padding as uint32)
+                        return script + addr.slice(24) + length.slice(56 + 4)
+                    }, '0x00000001') // spec 1
+                }
+
+                it('fails if data length is too small to contain address', async () => {
+                    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                    const script = encodeCallScriptAddressUnderflow([action])
+
+                    return assertRevert(async () => {
+                        await executorApp.execute(script)
+                    })
+                })
+
+                it('fails if data length is too small to contain length', async () => {
+                    const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+                    const script = encodeCallScriptLengthUnderflow([action])
+
+                    return assertRevert(async () => {
+                        await executorApp.execute(script)
+                    })
+                })
+            })
+
             context('> Script overflow', () => {
-                const encodeCallScriptBad = actions => {
+                const encodeCallScriptCalldataOverflow = actions => {
                     return actions.reduce((script, { to, calldata }) => {
                         const addr = rawEncode(['address'], [to]).toString('hex')
                         // length should be (calldata.length - 2) / 2 instead of calldata.length
@@ -335,7 +374,7 @@ contract('EVM Script', accounts => {
 
                 it('fails if data length is too big', async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                    const script = encodeCallScriptBad([action])
+                    const script = encodeCallScriptCalldataOverflow([action])
 
                     return assertRevert(async () => {
                         await executorApp.execute(script)
