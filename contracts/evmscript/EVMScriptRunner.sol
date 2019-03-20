@@ -14,7 +14,6 @@ import "../common/Initializable.sol";
 
 contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelNamespaceConstants {
     string private constant ERROR_EXECUTOR_UNAVAILABLE = "EVMRUN_EXECUTOR_UNAVAILABLE";
-    string private constant ERROR_EXECUTION_REVERTED = "EVMRUN_EXECUTION_REVERTED";
     string private constant ERROR_PROTECTED_STATE_MODIFIED = "EVMRUN_PROTECTED_STATE_MODIFIED";
 
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
@@ -40,33 +39,35 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
 
         bytes4 sig = executor.execScript.selector;
         bytes memory data = abi.encodeWithSelector(sig, _script, _input, _blacklist);
-        require(address(executor).delegatecall(data), ERROR_EXECUTION_REVERTED);
+        bool result = address(executor).delegatecall(data);
 
-        bytes memory output = returnedDataDecoded();
+        bytes memory output;
+        assembly {
+            let size := returndatasize
+
+            output := mload(0x40) // free mem ptr get
+            mstore(0x40, add(output, add(size, 0x20))) // free mem ptr set
+
+            // If the call returned error data, forward it
+            switch result
+            case 0 {
+                returndatacopy(output, 0, size) // copy full return data
+                revert(output, size)
+            }
+            default {
+                switch size
+                case 0 {}
+                default {
+                    // Copy and ABI decode result, since `execScript()`'s return type is `bytes`
+                    mstore(output, size)
+                    returndatacopy(output, 0x20, sub(size, 0x20))
+                }
+            }
+        }
 
         emit ScriptResult(address(executor), _script, _input, output);
 
         return output;
-    }
-
-    /**
-    * @dev Copies and returns last's call data. Needs to ABI decode first
-    */
-    function returnedDataDecoded() internal pure returns (bytes) {
-        bytes memory ret;
-        assembly {
-            let size := returndatasize
-
-            ret := mload(0x40) // free mem ptr get
-            mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
-
-            switch size
-            case 0 {}
-            default {
-                returndatacopy(ret, 0x20, sub(size, 0x20)) // copy return data
-            }
-        }
-        return ret;
     }
 
     modifier protectState {
