@@ -11,6 +11,7 @@ const KernelProxy = artifacts.require('KernelProxy')
 const AppStub = artifacts.require('AppStub')
 const APP_ID = hash('stub.aragonpm.test')
 const VAULT_ID = hash('vault.aragonpm.test')
+const EMPTY_BYTES = '0x'
 
 contract('Kernel lifecycle', accounts => {
   let aclBase, appBase
@@ -18,10 +19,10 @@ contract('Kernel lifecycle', accounts => {
 
   const testUnaccessibleFunctionalityWhenUninitialized = async (kernel) => {
     // hasPermission should always return false when uninitialized
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
-    await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address, '0x', false))
+    await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
     await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address))
     await assertRevert(() => kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
     await assertRevert(() => kernel.setRecoveryVaultAppId(VAULT_ID))
@@ -29,17 +30,17 @@ contract('Kernel lifecycle', accounts => {
 
   const testUsability = async (kernel) => {
     // Make sure we haven't already setup the required permission
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // Then set the required permission
     const acl = ACL.at(await kernel.acl())
     await acl.createPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, accounts[0])
-    assert.isTrue(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, '0x'))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, '0x'))
+    assert.isTrue(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // And finally test functionality
-    await kernel.newAppInstance(APP_ID, appBase.address, '0x', false)
+    await kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false)
   }
 
   // Initial setup
