@@ -50,16 +50,19 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     /**
-    * @dev copies and returns last's call data. Needs to ABI decode first
+    * @dev Copies and returns last's call data. Needs to ABI decode first
     */
-    function returnedDataDecoded() internal pure returns (bytes ret) {
+    function returnedDataDecoded() internal pure returns (bytes) {
+        bytes memory ret;
         assembly {
             let size := returndatasize
+
+            ret := mload(0x40) // free mem ptr get
+            mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
+
             switch size
             case 0 {}
             default {
-                ret := mload(0x40) // free mem ptr get
-                mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
                 returndatacopy(ret, 0x20, sub(size, 0x20)) // copy return data
             }
         }
