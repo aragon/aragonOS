@@ -1,7 +1,7 @@
 const abi = require('ethereumjs-abi')
 
 module.exports = {
-    // Encodes an array of actions ({ to: address, calldata: bytes}) into the EVM call script format
+    // Encodes an array of actions ({ to: address, calldata: bytes }) into the EVM call script format
     // Sets spec id 1 = 0x00000001 and
     // Concatenates per call [ 20 bytes (address) ] + [ 4 bytes (uint32: calldata length) ] + [ calldataLength bytes (payload) ]
     encodeCallScript: actions => {
