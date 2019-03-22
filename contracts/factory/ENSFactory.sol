@@ -10,7 +10,10 @@ import "../ens/ENSConstants.sol";
 contract ENSFactory is ENSConstants {
     event DeployENS(address ens);
 
-    // This is an incredibly trustfull ENS deployment, only use for testing
+    /**
+    * @notice Create a new instance of ENS. Address `_owner` will be set as owner of top level domain and root in ENS. WARNING: This is an incredibly trustfull ENS deployment, only use for testing
+    * @param _owner ENS owner address
+    */
     function newENS(address _owner) public returns (ENS) {
         ENS ens = new ENS();
 
