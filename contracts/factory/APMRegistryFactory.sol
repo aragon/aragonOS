@@ -55,7 +55,7 @@ contract APMRegistryFactory is APMInternalAppNames {
     * @param _tld The parent node for APM subdomain
     * @param _label The hash of the label specifying the subnode for APM subdomain
     * @param _root Manager address
-    * @returns APM Registry
+    * @return APM Registry
     */
     function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
         bytes32 node = keccak256(abi.encodePacked(_tld, _label));

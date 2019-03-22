@@ -37,6 +37,7 @@ contract DAOFactory {
     /**
     * @notice Create a new instance of DAO. Address `_root` will be granted control to setup DAO permissions
     * @param _root Address that will be granted control to setup DAO permissions
+    * @return newloy created DAO
     */
     function newDAO(address _root) public returns (Kernel) {
         Kernel dao = Kernel(new KernelProxy(baseKernel));
