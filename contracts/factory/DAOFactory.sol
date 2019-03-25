@@ -19,7 +19,7 @@ contract DAOFactory {
     event DeployEVMScriptRegistry(address reg);
 
     /**
-    * @notice Create a new instance of DAOFactory. New DAOs will be proxied to `_baseKernel` kernel, and initialized with base ACL `_baseACL`. Registry factory with address `_regFactory` (if not 0x0) will be used to deploy EVMScriptRegistry
+    * @notice Create a new DAOFactory, creating DAOs with Kernels proxied to `_baseKernel`, ACLs proxied to `_baseACL`, and new EVMScriptRegistries created from `_regFactory`.
     * @param _baseKernel Base Kernel
     * @param _baseACL Base ACL
     * @param _regFactory EVMScriptRegistry factory
@@ -35,9 +35,9 @@ contract DAOFactory {
     }
 
     /**
-    * @notice Create a new instance of DAO. Address `_root` will be granted control to setup DAO permissions
+    * @notice Create a new DAO with `_root` set as the initial admin
     * @param _root Address that will be granted control to setup DAO permissions
-    * @return newloy created DAO
+    * @return Newly created DAO
     */
     function newDAO(address _root) public returns (Kernel) {
         Kernel dao = Kernel(new KernelProxy(baseKernel));

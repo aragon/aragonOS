@@ -14,7 +14,7 @@ contract EVMScriptRegistryFactory is EVMScriptRegistryConstants {
     IEVMScriptExecutor public baseCallScript;
 
     /**
-    * @notice Create a new instance of EVMScriptRegistryFactory.
+    * @notice Create a new EVMScriptRegistryFactory.
     */
     constructor() public {
         baseReg = new EVMScriptRegistry();
@@ -22,9 +22,9 @@ contract EVMScriptRegistryFactory is EVMScriptRegistryConstants {
     }
 
     /**
-    * @notice Create a new instance of EVMScriptRegistry. Kernel with address `_dao` will create EVMScriptRegistry pinned app.
-    * @param _dao Kernel that will create EVMScriptRegistry pinned app
-    * @return created EVMScriptRegistry
+    * @notice Install a new pinned instance of EVMScriptRegistry on `_dao`.
+    * @param _dao Kernel
+    * @return Installed EVMScriptRegistry
     */
     function newEVMScriptRegistry(Kernel _dao) public returns (EVMScriptRegistry reg) {
         bytes memory initPayload = abi.encodeWithSelector(reg.initialize.selector);

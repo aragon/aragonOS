@@ -5,15 +5,16 @@ import "../lib/ens/PublicResolver.sol";
 import "../ens/ENSConstants.sol";
 
 
-// Note that this contract is NOT meant to be used in production.
-// Its only purpose is to easily create ENS instances for testing APM.
+// WARNING: This is an incredibly trustful ENS deployment, do NOT use in production!
+// This contract is NOT meant to be deployed to a live network.
+// Its only purpose is to easily create ENS instances for testing aragonPM.
 contract ENSFactory is ENSConstants {
     event DeployENS(address ens);
 
     /**
-    * @notice Create a new instance of ENS. Address `_owner` will be set as owner of top level domain and root in ENS. WARNING: This is an incredibly trustfull ENS deployment, only use for testing
-    * @param _owner ENS owner address
-    * @return newly created ENS
+    * @notice Create a new ENS and set `_owner` as the owner of the top level domain.
+    * @param _owner Owner of .eth
+    * @return ENS
     */
     function newENS(address _owner) public returns (ENS) {
         ENS ens = new ENS();

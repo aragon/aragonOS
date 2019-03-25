@@ -8,21 +8,20 @@ contract AppProxyFactory {
     event NewAppProxy(address proxy, bool isUpgradeable, bytes32 appId);
 
     /**
-    * @notice Create a new instance of AppProxyUpgradeable. Reference to organization kernel: `_kernel`, app ID: `_appId`
-    * @param _kernel Reference to organization kernel for the app
+    * @notice Create a new upgradeable app instance on `_kernel` with identifier `_appId`
+    * @param _kernel App's Kernel reference
     * @param _appId Identifier for app
-    * @return newly created AppProxyUpgradeable
+    * @return AppProxyUpgradeable
     */
     function newAppProxy(IKernel _kernel, bytes32 _appId) public returns (AppProxyUpgradeable) {
         return newAppProxy(_kernel, _appId, new bytes(0));
     }
 
     /**
-    * @notice Create a new instance of AppProxyUpgradeable. Reference to organization kernel: `_kernel`, app ID: `_appId`, init payload: `_initializePayload`
-    * @param _kernel Reference to organization kernel for the app
+    * @notice Create a new upgradeable app instance on `_kernel` with identifier `_appId` and initialization payload `_initializePayload`
+    * @param _kernel App's Kernel reference
     * @param _appId Identifier for app
-    * @param _initializePayload Proxy initialization payload
-    * @return newly created AppProxyUpgradeable
+    * @return AppProxyUpgradeable
     */
     function newAppProxy(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyUpgradeable) {
         AppProxyUpgradeable proxy = new AppProxyUpgradeable(_kernel, _appId, _initializePayload);
@@ -31,21 +30,21 @@ contract AppProxyFactory {
     }
 
     /**
-    * @notice Create a new instance of AppProxyPinned. Reference to organization kernel: `_kernel`, app ID: `_appId`
-    * @param _kernel Reference to organization kernel for the app
+    * @notice Create a new pinned app instance on `_kernel` with identifier `_appId`
+    * @param _kernel App's Kernel reference
     * @param _appId Identifier for app
-    * @return newly created AppProxyPinned
+    * @return AppProxyPinned
     */
     function newAppProxyPinned(IKernel _kernel, bytes32 _appId) public returns (AppProxyPinned) {
         return newAppProxyPinned(_kernel, _appId, new bytes(0));
     }
 
     /**
-    * @notice Create a new instance of AppProxyPinned. Reference to organization kernel: `_kernel`, app ID: `_appId`, init payload: `_initializePayload`
-    * @param _kernel Reference to organization kernel for the app
+    * @notice Create a new pinned app instance on `_kernel` with identifier `_appId` and initialization payload `_initializePayload`
+    * @param _kernel App's Kernel reference
     * @param _appId Identifier for app
     * @param _initializePayload Proxy initialization payload
-    * @return newly created AppProxyPinned
+    * @return AppProxyPinned
     */
     function newAppProxyPinned(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public returns (AppProxyPinned) {
         AppProxyPinned proxy = new AppProxyPinned(_kernel, _appId, _initializePayload);
