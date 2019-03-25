@@ -86,6 +86,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
         // if returned data size is not correct, returns false
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new EmptyDataReturnOracle()), false);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new LargeDataReturnOracle()), false);
 
         // conditional oracle returns true if first param > 0
         ConditionalOracle conditionalOracle = new ConditionalOracle();

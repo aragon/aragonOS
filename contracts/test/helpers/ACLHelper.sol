@@ -52,6 +52,18 @@ contract EmptyDataReturnOracle is IACLOracle {
     }
 }
 
+contract LargeDataReturnOracle is IACLOracle {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
+        uint256[] memory largeData = new uint256[](2);
+        largeData[0] = 1;
+        largeData[1] = 2;
+        assembly {
+            // Return two uint256s
+            return(largeData, 0x40)
+        }
+    }
+}
+
 contract ConditionalOracle is IACLOracle {
     function canPerform(address, address, bytes32, uint256[] how) external view returns (bool) {
         return how[0] > 0;

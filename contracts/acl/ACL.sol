@@ -419,31 +419,37 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
         bytes4 sig = _oracleAddr.canPerform.selector;
 
-        // a raw call is required so we can return false if the call reverts, rather than reverting
         bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
         uint256 oracleCheckGas = ORACLE_CHECK_GAS;
-
-        bool ok;
-        assembly {
-            ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
-        }
-
-        if (!ok) {
-            return false;
-        }
-
-        uint256 size;
-        assembly { size := returndatasize }
-        if (size != 32) {
-            return false;
-        }
-
         bool result;
+
         assembly {
-            let ptr := mload(0x40)       // get next free memory ptr
-            returndatacopy(ptr, 0, size) // copy return from above `staticcall`
-            result := mload(ptr)         // read data at ptr and set it to result
-            mstore(ptr, 0)               // set pointer memory to 0 so it still is the next free ptr
+            let ptr := mload(0x40)        // free memory pointer
+
+            // A raw staticcall is required so we can return false if the call reverts, rather than reverting
+            let success := staticcall(
+                oracleCheckGas,           // gas forwarded
+                _oracleAddr,              // address
+                add(checkCalldata, 0x20), // calldata start
+                mload(checkCalldata),     // calldata length
+                ptr,                      // write output over free memory
+                0x20                      // uint256 return
+            )
+
+            if gt(success, 0) {
+                // Check number of bytes returned from last function call
+                switch returndatasize
+
+                // 32 bytes returned: check if true
+                case 0x20 {
+                    // Only return success if returned data was true
+                    // Already have output in ptr
+                    result := eq(mload(ptr), 1)
+                }
+
+                // Not sure what was returned: don't mark as success
+                default { }
+            }
         }
 
         return result;
