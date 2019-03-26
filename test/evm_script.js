@@ -349,7 +349,7 @@ contract('EVM Script', accounts => {
                     })
                 })
 
-                it('fails if data length is too small to contain length', async () => {
+                it('fails if data length is too small to contain calldata', async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
                     const script = encodeCallScriptLengthUnderflow([action])
 
