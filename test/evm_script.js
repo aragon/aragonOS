@@ -330,7 +330,7 @@ contract('EVM Script', accounts => {
                     }, '0x00000001') // spec 1
                 }
 
-                const encodeCallScriptLengthUnderflow = actions => {
+                const encodeCallScriptCalldataUnderflow = actions => {
                     return actions.reduce((script, { to, calldata }) => {
                         const addr = rawEncode(['address'], [to]).toString('hex')
                         const length = rawEncode(['uint256'], [calldata.length]).toString('hex')
@@ -351,7 +351,7 @@ contract('EVM Script', accounts => {
 
                 it('fails if data length is too small to contain calldata', async () => {
                     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-                    const script = encodeCallScriptLengthUnderflow([action])
+                    const script = encodeCallScriptCalldataUnderflow([action])
 
                     return assertRevert(async () => {
                         await executorApp.execute(script)
