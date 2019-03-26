@@ -175,6 +175,12 @@ contract('Kernel ACL', accounts => {
                     }
                 })
 
+                it('cannot grant a single empty permission', async () => {
+                    await assertRevert(async () => {
+                        await acl.grantPermissionP(ANY_ENTITY, kernelAddr, APP_MANAGER_ROLE, [0], { from: granted })
+                    })
+                })
+
                 it('can grant a public permission', async () => {
                     const receipt = await acl.grantPermission(ANY_ENTITY, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertEvent(receipt, 'SetPermission')

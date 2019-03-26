@@ -11,7 +11,7 @@ import "./IACLOracle.sol";
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
-    /* Hardcoded constants to save gas
+    /* Hardcoded constant to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     */
     bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
@@ -35,7 +35,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // TODO: Add execution times param type?
 
     /* Hardcoded constant to save gas
-    bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
+    bytes32 public constant EMPTY_PARAM_HASH = keccak256([ uint256(0) ]);
     */
     bytes32 public constant EMPTY_PARAM_HASH = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
     bytes32 public constant NO_PERMISSION = bytes32(0);
@@ -44,9 +44,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     uint256 internal constant ORACLE_CHECK_GAS = 30000;
 
-    string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
     string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
+    string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
+    string private constant ERROR_SAVE_EMPTY_HASH = "ACL_SAVE_EMPTY_HASH";
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -304,6 +305,15 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
         bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
+
+        // Note: EMPTY_PARAM_HASH has been miscalculated since aragonOS@4.0.0.
+        // Its value is actually `keccak256([ uint256(0) ])` (mapping to a single empty param with
+        // Op.None) and not the intended `keccak256("")`.
+        // To not be confusing for users who attempt to use Op.None, we're now left with this
+        // historical artifact to keep compatibility with old state from ACLs created with
+        // aragonOS@4.0.0's ACL.
+        require(paramHash != EMPTY_PARAM_HASH, ERROR_SAVE_EMPTY_HASH);
+
         Param[] storage params = permissionParams[paramHash];
 
         if (params.length == 0) { // params not saved before
