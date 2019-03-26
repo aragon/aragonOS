@@ -39,29 +39,29 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
 
         bytes4 sig = executor.execScript.selector;
         bytes memory data = abi.encodeWithSelector(sig, _script, _input, _blacklist);
-        bool result = address(executor).delegatecall(data);
 
         bytes memory output;
         assembly {
+            let success := delegatecall(
+                gas,                // forward all gas
+                executor,           // address
+                add(data, 0x20),    // calldata start
+                mload(data),        // calldata length
+                0,                  // don't write output (we'll handle this ourselves)
+                0                   // don't write output
+            )
             let size := returndatasize
 
             output := mload(0x40) // free mem ptr get
             mstore(0x40, add(output, add(size, 0x20))) // free mem ptr set
 
-            // If the call returned error data, forward it
-            switch result
-            case 0 {
-                returndatacopy(output, 0, size) // copy full return data
+            // Copy result
+            // No ABI decoding is needed on success as `execScript()`'s return type is `bytes`
+            returndatacopy(output, 0, size)
+
+            if iszero(success) {
+                // If the call errored, forward its error data
                 revert(output, size)
-            }
-            default {
-                switch size
-                case 0 {}
-                default {
-                    // Copy and ABI decode result, since `execScript()`'s return type is `bytes`
-                    mstore(output, size)
-                    returndatacopy(output, 0x20, sub(size, 0x20))
-                }
             }
         }
 
