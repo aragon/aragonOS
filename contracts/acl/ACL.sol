@@ -2,36 +2,19 @@ pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
 import "../common/TimeHelpers.sol";
-import "./ACLSyntaxSugar.sol";
+import "./ACLHelpers.sol";
+import "./ACLParams.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
 
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
-contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
+contract ACL is IACL, TimeHelpers, AragonApp, ACLParams, ACLHelpers {
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     */
     bytes32 public constant CREATE_PERMISSIONS_ROLE = 0x0b719b33c83b8e5d300c521cb8b54ae9bd933996a14bef8c2f4e0285d2d2400a;
-
-    enum Op { NONE, EQ, NEQ, GT, LT, GTE, LTE, RET, NOT, AND, OR, XOR, IF_ELSE } // op types
-
-    struct Param {
-        uint8 id;
-        uint8 op;
-        uint240 value; // even though value is an uint240 it can store addresses
-        // in the case of 32 byte hashes losing 2 bytes precision isn't a huge deal
-        // op and id take less than 1 byte each so it can be kept in 1 sstore
-    }
-
-    uint8 internal constant BLOCK_NUMBER_PARAM_ID = 200;
-    uint8 internal constant TIMESTAMP_PARAM_ID    = 201;
-    // 202 is unused
-    uint8 internal constant ORACLE_PARAM_ID       = 203;
-    uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
-    uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
-    // TODO: Add execution times param type?
 
     /* Hardcoded constant to save gas
     bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));

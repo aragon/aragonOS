@@ -2,10 +2,10 @@ pragma solidity 0.4.24;
 
 import "../acl/ACL.sol";
 import "./helpers/Assert.sol";
-import "./helpers/ACLHelper.sol";
+import "./helpers/ACLOracleHelper.sol";
 
 
-contract TestACLInterpreter is ACL, ACLHelper {
+contract TestACLInterpreter is ACL {
     function testEqualityUint() public {
         // Assert param 0 is equal to 10, given that params are [10, 11]
         assertEval(arr(uint256(10), 11), 0, Op.EQ, 10, true);
