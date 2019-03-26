@@ -50,18 +50,17 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
                 0,                  // don't write output (we'll handle this ourselves)
                 0                   // don't write output
             )
-            let size := returndatasize
 
             output := mload(0x40) // free mem ptr get
-            mstore(0x40, add(output, add(size, 0x20))) // free mem ptr set
+            mstore(0x40, add(output, add(returndatasize, 0x20))) // free mem ptr set
 
             // Copy result
             // No ABI decoding is needed on success as `execScript()`'s return type is `bytes`
-            returndatacopy(output, 0, size)
+            returndatacopy(output, 0, returndatasize)
 
             if iszero(success) {
                 // If the call errored, forward its error data
-                revert(output, size)
+                revert(output, returndatasize)
             }
         }
 
