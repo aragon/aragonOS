@@ -312,7 +312,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         // To not be confusing for users who attempt to use Op.None, we're now left with this
         // historical artifact to keep compatibility with old state from ACLs created with
         // aragonOS@4.0.0's ACL.
-        require(paramHash != EMPTY_PARAM_HASH, ERROR_SAVE_EMPTY_HASH);
+        // Note: EMPTY_PARAM_HASH has been miscalculated since aragonOS@3.0.0.
 
         Param[] storage params = permissionParams[paramHash];
 
