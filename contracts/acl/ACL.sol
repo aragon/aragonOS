@@ -437,7 +437,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             )
 
             if gt(success, 0) {
-                // Check number of bytes returned from last function call
+                // Check number of bytes returned from last external call
                 switch returndatasize
 
                 // 32 bytes returned: check if true
