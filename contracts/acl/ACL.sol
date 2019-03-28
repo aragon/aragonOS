@@ -427,7 +427,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             let ptr := mload(0x40)        // free memory pointer
 
             // A raw staticcall is required so we can return false if the call reverts, rather than reverting
-            let success := staticcall(
+            result := staticcall(
                 oracleCheckGas,           // gas forwarded
                 _oracleAddr,              // address
                 add(checkCalldata, 0x20), // calldata start
@@ -436,7 +436,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
                 0x20                      // uint256 return
             )
 
-            if gt(success, 0) {
+            // solidity-coverage fails on assembly `if`
+            switch result case 0 { }
+            default {
                 // Check number of bytes returned from last external call
                 switch returndatasize
 
