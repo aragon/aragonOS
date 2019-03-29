@@ -306,13 +306,13 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
         bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
 
-        // Note: EMPTY_PARAM_HASH has been miscalculated since aragonOS@4.0.0.
+        // Note: EMPTY_PARAM_HASH has been miscalculated since aragonOS@3.0.0.
         // Its value is actually `keccak256([ uint256(0) ])` (mapping to a single empty param with
         // Op.None) and not the intended `keccak256("")`.
         // To not be confusing for users who attempt to use Op.None, we're now left with this
         // historical artifact to keep compatibility with old state from ACLs created with
         // aragonOS@4.0.0's ACL.
-        // Note: EMPTY_PARAM_HASH has been miscalculated since aragonOS@3.0.0.
+        require(paramHash != EMPTY_PARAM_HASH, ERROR_SAVE_EMPTY_HASH);
 
         Param[] storage params = permissionParams[paramHash];
 
