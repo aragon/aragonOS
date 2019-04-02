@@ -67,6 +67,7 @@ contract CallsScript is BaseEVMScriptExecutor {
             require(success, ERROR_CALL_REVERTED);
         }
         // No need to allocate empty bytes for the return as this can only be called via an delegatecall
+        // (due to the isInitialized modifier)
     }
 
     function executorType() external pure returns (bytes32) {
