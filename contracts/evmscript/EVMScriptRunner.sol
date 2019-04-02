@@ -42,7 +42,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         bytes memory data = abi.encodeWithSelector(sig, _script, _input, _blacklist);
         require(address(executor).delegatecall(data), ERROR_EXECUTION_REVERTED);
 
-        bytes memory output = returnedData();
+        bytes memory output = returnedDataDecoded();
 
         emit ScriptResult(address(executor), _script, _input, output);
 
@@ -50,9 +50,9 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     /**
-    * @dev Copies and returns last's call data.
+    * @dev Copies and returns last's call data. Needs to ABI decode first
     */
-    function returnedData() internal pure returns (bytes) {
+    function returnedDataDecoded() internal pure returns (bytes) {
         bytes memory ret;
         assembly {
             let size := returndatasize
@@ -63,8 +63,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
             switch size
             case 0 {}
             default {
-                // No need to ABI decode first, as return type is `bytes`
-                returndatacopy(ret, 0, size) // copy return data
+                returndatacopy(ret, 0x20, sub(size, 0x20)) // copy return data
             }
         }
         return ret;
