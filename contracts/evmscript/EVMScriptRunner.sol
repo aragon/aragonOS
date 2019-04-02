@@ -50,20 +50,25 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     }
 
     /**
-    * @dev Copies and returns last's call data. Needs to ABI decode first
+    * @dev Copies and returns last call's data.
+    *      Needs to perform an ABI decode for the expected `bytes` return type of
+    *      `executor.execScript()` as solidity will automatically ABI encode the returned bytes as:
+    *         [ position of the first dynamic length return value = 0x20 (32 bytes) ]
+    *         [ output length (32 bytes) ]
+    *         [ output content (N bytes) ]
     */
     function returnedDataDecoded() internal pure returns (bytes) {
         bytes memory ret;
         assembly {
-            let size := returndatasize
-
             ret := mload(0x40) // free mem ptr get
-            mstore(0x40, add(ret, add(size, 0x20))) // free mem ptr set
+            mstore(0x40, add(ret, add(returndatasize, 0x20))) // free mem ptr set
 
-            switch size
+            switch returndatasize
             case 0 {}
             default {
-                returndatacopy(ret, 0x20, sub(size, 0x20)) // copy return data
+                // Copy return data
+                // Apply ABI decode by ignoring the first 32 bytes of the return data
+                returndatacopy(ret, 0x20, sub(returndatasize, 0x20))
             }
         }
         return ret;
