@@ -6,6 +6,7 @@ pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
 import "../common/Autopetrified.sol";
+import "../common/ReentrancyGuard.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -14,9 +15,9 @@ import "../acl/ACLSyntaxSugar.sol";
 // Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
 // that they can never be initialized.
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
-// ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
-// that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
+// ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
+// are included so that they are automatically usable by subclassing contracts
+contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
