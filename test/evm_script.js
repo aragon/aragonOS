@@ -22,7 +22,7 @@ const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConst
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
-contract.only('EVM Script', accounts => {
+contract('EVM Script', accounts => {
   let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
@@ -195,6 +195,54 @@ contract.only('EVM Script', accounts => {
 
     it('fails to execute if spec ID is unknown', async () => {
       await assertRevert(executorApp.execute(createExecutorId(4)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+    })
+
+    context('> Uninitialized', () => {
+      beforeEach(async () => {
+        const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
+        executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        // Explicitly don't initialize the executorApp
+      })
+
+      it('fails to execute any executor', async () => {
+        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const script = encodeCallScript([action])
+
+        await assertRevert(executorApp.execute(script), reverts.INIT_NOT_INITIALIZED)
+      })
+    })
+
+    context('> Registry actions', () => {
+      let executorMock, executorSpecId
+
+      before(async () => {
+        executorMock = await EVMScriptExecutorMock.new()
+      })
+
+      beforeEach(async () => {
+        // Let boss enable and disable executors
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
+
+        // Install mock executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(executorMock.address, { from: boss })
+
+        executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+      })
+
+      it("can't execute disabled spec ID", async () => {
+        await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
+
+        await assertRevert(executorApp.execute(encodeCallScript([])), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+      })
+
+      it('can execute once spec ID is re-enabled', async () => {
+        // Disable then re-enable the executor
+        await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
+        await evmScriptReg.enableScriptExecutor(executorSpecId, { from: boss })
+
+        await executorApp.execute(encodeCallScript([]))
+      })
     })
 
     context('> CallsScript', () => {
@@ -371,54 +419,6 @@ contract.only('EVM Script', accounts => {
           // EVMScriptRunner doesn't pass through the revert yet
           await assertRevert(executorApp.execute(script), reverts.EVMRUN_EXECUTION_REVERTED)
         })
-      })
-    })
-
-    context('> Registry actions', () => {
-      let executorMock, executorSpecId
-
-      before(async () => {
-        executorMock = await EVMScriptExecutorMock.new()
-      })
-
-      beforeEach(async () => {
-        // Let boss enable and disable executors
-        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
-
-        // Install mock executor onto registry
-        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
-        const receipt = await evmScriptReg.addScriptExecutor(executorMock.address, { from: boss })
-
-        executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
-      })
-
-      it("can't execute disabled spec ID", async () => {
-        await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
-
-        await assertRevert(executorApp.execute(encodeCallScript([])), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
-      })
-
-      it('can execute once spec ID is re-enabled', async () => {
-        // Disable then re-enable the executor
-        await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
-        await evmScriptReg.enableScriptExecutor(executorSpecId, { from: boss })
-
-        await executorApp.execute(encodeCallScript([]))
-      })
-    })
-
-    context('> Uninitialized', () => {
-      beforeEach(async () => {
-        const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
-        executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-        // Explicitly don't initialize the executorApp
-      })
-
-      it('fails to execute any executor', async () => {
-        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeCallScript([action])
-
-        await assertRevert(executorApp.execute(script), reverts.INIT_NOT_INITIALIZED)
       })
     })
   })
