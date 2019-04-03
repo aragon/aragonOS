@@ -16,8 +16,8 @@ const ERCProxyMock = artifacts.require('ERCProxyMock')
 const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 
 const APP_ID = hash('stub.aragonpm.test')
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('Kernel apps', accounts => {
     let aclBase, appBase1, appBase2
@@ -101,7 +101,7 @@ contract('Kernel apps', accounts => {
                 context(`> new ${appProxyType} instances`, () => {
                     onlyAppProxy(() =>
                         it('creates a new upgradeable app proxy instance', async () => {
-                            const receipt = await kernel.newAppInstance(APP_ID, appBase1.address, '0x', false)
+                            const receipt = await kernel.newAppInstance(APP_ID, appBase1.address, EMPTY_BYTES, false)
                             const appProxy = AppProxyUpgradeable.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
@@ -137,18 +137,18 @@ contract('Kernel apps', accounts => {
                         it('sets the app base when not previously registered', async() => {
                             assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
-                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
+                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
                         })
 
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', false)
+                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
                             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
                         })
 
                         it("also sets the default app", async () => {
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, '0x', true)
+                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, true)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Check that both the app base and default app are set
@@ -175,7 +175,7 @@ contract('Kernel apps', accounts => {
 
                         it("fails if the app base is not given", async() => {
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR, '0x', false)
+                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR, EMPTY_BYTES, false)
                             })
                         })
 
@@ -186,7 +186,7 @@ contract('Kernel apps', accounts => {
 
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, existingBase)
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, differentBase, '0x', false)
+                                await kernelOverload[newInstanceFn](APP_ID, differentBase, EMPTY_BYTES, false)
                             })
                         })
                     })

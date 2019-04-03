@@ -3,7 +3,7 @@ const { soliditySha3 } = require('web3-utils')
 
 const assertEvent = require('./helpers/assertEvent')
 const { assertRevert } = require('./helpers/assertThrow')
-const { encodeCallScript } = require('./helpers/evmScript')
+const { createExecutorId, encodeCallScript } = require('./helpers/evmScript')
 const reverts = require('./helpers/revertStrings')
 
 const Kernel = artifacts.require('Kernel')
@@ -20,6 +20,7 @@ const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+const EMPTY_BYTES = '0x'
 
 contract.only('EVM Script', accounts => {
   let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg
@@ -119,7 +120,7 @@ contract.only('EVM Script', accounts => {
 
         assertEvent(receipt, 'DisableExecutor')
         assert.isFalse(executorEntry[1], "executor should now be disabled")
-        assert.equal(await evmScriptReg.getScriptExecutor(`0x0000000${installedExecutorId}`), ZERO_ADDR, 'getting disabled executor should return zero addr')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return zero addr')
       })
 
       it('can re-enable an executor', async () => {
@@ -128,14 +129,14 @@ contract.only('EVM Script', accounts => {
         await evmScriptReg.disableScriptExecutor(installedExecutorId, { from: boss })
         let executorEntry = await evmScriptReg.executors(installedExecutorId)
         assert.isFalse(executorEntry[1], "executor should now be disabled")
-        assert.equal(await evmScriptReg.getScriptExecutor(`0x0000000${installedExecutorId}`), ZERO_ADDR, 'getting disabled executor should return zero addr')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return zero addr')
 
         const receipt = await evmScriptReg.enableScriptExecutor(installedExecutorId, { from: boss })
         executorEntry = await evmScriptReg.executors(installedExecutorId)
 
         assertEvent(receipt, 'EnableExecutor')
         assert.isTrue(executorEntry[1], "executor should now be re-enabled")
-        assert.notEqual(await evmScriptReg.getScriptExecutor(`0x0000000${installedExecutorId}`), ZERO_ADDR, 'getting disabled executor should return non-zero addr')
+        assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return non-zero addr')
       })
 
       it('fails to disable an executor without the correct permissions', async () => {
@@ -178,7 +179,7 @@ contract.only('EVM Script', accounts => {
     beforeEach(async () => {
       executionTarget = await ExecutionTarget.new()
 
-      const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
+      const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
       executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
       await executorApp.initialize()
     })
@@ -189,11 +190,11 @@ contract.only('EVM Script', accounts => {
     })
 
     it('fails to execute if spec ID is 0', async () => {
-      await assertRevert(executorApp.execute('0x00000000'), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+      await assertRevert(executorApp.execute(createExecutorId(0)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
     })
 
     it('fails to execute if spec ID is unknown', async () => {
-      await assertRevert(executorApp.execute('0x00000004'), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+      await assertRevert(executorApp.execute(createExecutorId(4)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
     })
 
     context('> CallsScript', () => {
@@ -216,17 +217,17 @@ contract.only('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        await assertRevert(callsScriptBase.execScript(script, '0x', []), reverts.INIT_NOT_INITIALIZED)
+        await assertRevert(callsScriptBase.execScript(script, EMPTY_BYTES, []), reverts.INIT_NOT_INITIALIZED)
       })
 
       it('is the correct executor type', async () => {
         const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
-        const executor = IEVMScriptExecutor.at(await evmScriptReg.getScriptExecutor('0x00000001'))
+        const executor = IEVMScriptExecutor.at(await evmScriptReg.getScriptExecutor(createExecutorId(1)))
         assert.equal(await executor.executorType(), CALLS_SCRIPT_TYPE)
       })
 
       it('gets the correct executor from the app', async () => {
-        const script = '0x00000001'
+        const script = createExecutorId(1)
         const executor = await evmScriptReg.getScriptExecutor(script)
 
         const scriptExecutor = await executorApp.getEVMScriptExecutor(script)
@@ -244,10 +245,10 @@ contract.only('EVM Script', accounts => {
         // Check logs
         // The Executor always uses 0x for the input and callscripts always have 0x returns
         const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
-        assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor('0x00000001'), 'should log the same executor')
+        assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor(createExecutorId(1)), 'should log the same executor')
         assert.equal(scriptResult.args.script, script, 'should log the same script')
-        assert.equal(scriptResult.args.input, '0x', 'should log the same input')
-        assert.equal(scriptResult.args.returnData, '0x', 'should log the return data')
+        assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
+        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the return data')
       })
 
       it("can execute if call doesn't contain blacklist addresses", async () => {
@@ -320,7 +321,7 @@ contract.only('EVM Script', accounts => {
 
             // Remove too much of the address (should just remove first 12 0s of padding as addr)
             return script + addr.slice(24 + 4)
-          }, '0x00000001') // spec 1
+          }, createExecutorId(1)) // spec 1
         }
 
         const encodeCallScriptCalldataUnderflow = actions => {
@@ -330,7 +331,7 @@ contract.only('EVM Script', accounts => {
 
             // Remove too much of the calldataLength (should just remove first 28 0s of padding as uint32)
             return script + addr.slice(24) + length.slice(56 + 4)
-          }, '0x00000001') // spec 1
+          }, createExecutorId(1)) // spec 1
         }
 
         it('fails if data length is too small to contain address', async () => {
@@ -360,7 +361,7 @@ contract.only('EVM Script', accounts => {
 
             // Remove 12 first 0s of padding for addr and 28 0s for uint32
             return script + addr.slice(24) + length.slice(56) + calldata.slice(2)
-          }, '0x00000001') // spec 1
+          }, createExecutorId(1)) // spec 1
         }
 
         it('fails if data length is too big', async () => {
@@ -408,7 +409,7 @@ contract.only('EVM Script', accounts => {
 
     context('> Uninitialized', () => {
       beforeEach(async () => {
-        const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
+        const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
         executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
         // Explicitly don't initialize the executorApp
       })
