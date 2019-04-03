@@ -243,7 +243,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @return boolean indicating whether the ACL allows the role or not
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
-        return hasPermission(_who, _where, _what, ConversionHelpers.castBytesToUintArray(_how));
+        return hasPermission(_who, _where, _what, ConversionHelpers.dangerouslyCastBytesToUintArray(_how));
     }
 
     function hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) public view returns (bool) {

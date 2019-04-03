@@ -48,7 +48,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
             return false;
         }
 
-        return linkedKernel.hasPermission(_sender, address(this), _role, ConversionHelpers.castUintArrayToBytes(_params));
+        return linkedKernel.hasPermission(
+            _sender,
+            address(this),
+            _role,
+            ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)
+        );
     }
 
     /**

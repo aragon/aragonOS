@@ -230,7 +230,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
 
     modifier auth(bytes32 _role, uint256[] memory _params) {
         require(
-            hasPermission(msg.sender, address(this), _role, ConversionHelpers.castUintArrayToBytes(_params)),
+            hasPermission(msg.sender, address(this), _role, ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)),
             ERROR_AUTH_FAILED
         );
         _;
