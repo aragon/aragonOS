@@ -16,7 +16,7 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 // Mocks
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
-const MockScriptExecutorApp = artifacts.require('MockScriptExecutorApp')
+const AppStubScriptExecutor = artifacts.require('AppStubScriptExecutor')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
@@ -46,7 +46,7 @@ contract('EVM Script', accounts => {
         reg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
 
         await acl.createPermission(boss, dao.address, await dao.APP_MANAGER_ROLE(), boss, { from: boss })
-        executorAppBase = await MockScriptExecutorApp.new()
+        executorAppBase = await AppStubScriptExecutor.new()
         await dao.setApp(APP_BASES_NAMESPACE, executorAppId, executorAppBase.address, { from: boss })
     })
 
@@ -184,7 +184,7 @@ contract('EVM Script', accounts => {
     context('> Uninitialized executor', () => {
         beforeEach(async () => {
             const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
-            executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             // Explicitly don't initialize the executorApp
             executionTarget = await ExecutionTarget.new()
         })
@@ -200,7 +200,7 @@ contract('EVM Script', accounts => {
     context('> Executor', () => {
         beforeEach(async () => {
             const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, '0x', false, { from: boss })
-            executorApp = MockScriptExecutorApp.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+            executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
             await executorApp.initialize()
             executionTarget = await ExecutionTarget.new()
         })
