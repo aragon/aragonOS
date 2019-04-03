@@ -6,7 +6,7 @@ module.exports = {
         const eventSignature = abi.encodeEventSignature(eventAbi)
         const eventLogs = receipt.logs.filter(l => l.topics[0] === eventSignature)
         return eventLogs.map(log => {
-            log.event = abi.name
+            log.event = eventAbi.name
             log.args = abi.decodeLog(eventAbi.inputs, log.data, log.topics.slice(1))
             return log
         })

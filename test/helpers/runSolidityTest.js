@@ -1,3 +1,25 @@
+const { decodeEventsOfType } = require('./decodeEvent')
+
+const ASSERT_LIB_EVENTS_ABI = [
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "result",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "name": "message",
+        "type": "string"
+      }
+    ],
+    "name": "TestEvent",
+    "type": "event"
+  },
+]
+
 const HOOKS_MAP = {
   beforeAll: 'before',
   beforeEach: 'beforeEach',
@@ -5,11 +27,12 @@ const HOOKS_MAP = {
   afterAll: 'afterAll',
 }
 
-const processResult = receipt => {
-  if (!receipt) {
+const processResult = txReceipt => {
+  if (!txReceipt || !txReceipt.receipt) {
     return
   }
-  receipt.logs.forEach(log => {
+  const decodedLogs = decodeEventsOfType(txReceipt.receipt, ASSERT_LIB_EVENTS_ABI, 'TestEvent')
+  decodedLogs.forEach(log => {
     if (log.event === 'TestEvent' && log.args.result !== true) {
       throw new Error(log.args.message)
     }
@@ -27,7 +50,7 @@ const linkLib = async (contract, libName) => {
 
   const prefix = underscores(PREFIX_UNDERSCORES)
   const suffix = underscores(ADDR_LENGTH - PREFIX_UNDERSCORES - libName.length)
-  
+
   const libPlaceholder = `${prefix}${libName}${suffix}`
 
   const lib = await artifacts.require(libName).new()
