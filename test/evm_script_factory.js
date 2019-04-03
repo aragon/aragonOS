@@ -8,7 +8,7 @@ const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
 // Mocks
-const AppStubScriptExecutor = artifacts.require('AppStubScriptExecutor')
+const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
@@ -16,14 +16,14 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script Factory', accounts => {
-  let evmScriptRegBase, executorAppBase, callsScriptBase
+  let evmScriptRegBase, callsScriptBase
   let daoFact, regFact, dao, acl, evmScriptReg
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE, CREATE_PERMISSIONS_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
 
   const permissionsRoot = accounts[0]
 
-  const executorAppId = '0x1234'
+  const scriptRunnerAppId = '0x1234'
 
   before(async () => {
     const kernelBase = await Kernel.new(true) // petrify immediately
@@ -76,24 +76,24 @@ contract('EVM Script Factory', accounts => {
   })
 
   context('> Executor app', () => {
-    let executorAppBase, executorApp, executionTarget
+    let scriptRunnerAppBase, scriptRunnerApp, executionTarget
 
     before(async () => {
-      executorAppBase = await AppStubScriptExecutor.new()
+      scriptRunnerAppBase = await AppStubScriptRunner.new()
     })
 
     beforeEach(async () => {
       // Set up app management permissions
       await acl.createPermission(permissionsRoot, dao.address, APP_MANAGER_ROLE, permissionsRoot)
 
-      const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false)
-      executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-      await executorApp.initialize()
+      const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false)
+      scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      await scriptRunnerApp.initialize()
       executionTarget = await ExecutionTarget.new()
     })
 
     it('gets the correct executor registry from the app', async () => {
-      const registryFromApp = await executorApp.getEVMScriptRegistry()
+      const registryFromApp = await scriptRunnerApp.getEVMScriptRegistry()
       assert.equal(evmScriptReg.address, registryFromApp, 'app should return the same EVMScriptRegistry')
     })
 
@@ -101,7 +101,7 @@ contract('EVM Script Factory', accounts => {
       const script = createExecutorId(1)
       const executor = await evmScriptReg.getScriptExecutor(script)
 
-      const scriptExecutor = await executorApp.getEVMScriptExecutor(script)
+      const scriptExecutor = await scriptRunnerApp.getEVMScriptExecutor(script)
       assert.equal(executor, scriptExecutor, 'app should return the same evm script executor')
     })
 
@@ -109,7 +109,7 @@ contract('EVM Script Factory', accounts => {
       const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
       const script = encodeCallScript([action], 1)
 
-      const receipt = await executorApp.execute(script)
+      const receipt = await scriptRunnerApp.runScript(script)
 
       assert.equal(await executionTarget.counter(), 1, 'should have executed action')
 

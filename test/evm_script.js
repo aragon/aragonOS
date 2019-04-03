@@ -14,7 +14,7 @@ const CallsScript = artifacts.require('CallsScript')
 const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 
 // Mocks
-const AppStubScriptExecutor = artifacts.require('AppStubScriptExecutor')
+const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
@@ -23,19 +23,20 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script', accounts => {
-  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg
+  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg, scriptExecutorMock
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
 
   const boss = accounts[1]
 
-  const executorAppId = '0x1234'
+  const scriptRunnerAppId = '0x1234'
 
   before(async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
     aclBase = await ACL.new()
     evmScriptRegBase = await EVMScriptRegistry.new()
     const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
+    scriptExecutorMock = await EVMScriptExecutorMock.new()
 
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     APP_ADDR_NAMESPACE = await kernelBase.APP_ADDR_NAMESPACE()
@@ -61,12 +62,6 @@ contract('EVM Script', accounts => {
   })
 
   context('> Registry', () => {
-    let executorMock
-
-    before(async () => {
-      executorMock = await EVMScriptExecutorMock.new()
-    })
-
     beforeEach(async () => {
       await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
     })
@@ -85,26 +80,26 @@ contract('EVM Script', accounts => {
     })
 
     it('can add a new executor', async () => {
-      const receipt = await evmScriptReg.addScriptExecutor(executorMock.address, { from: boss })
+      const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
       const newExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
       const [executorAddress, executorEnabled] = await evmScriptReg.executors(newExecutorId)
       const newExecutor = IEVMScriptExecutor.at(executorAddress)
 
-      assert.equal(await executorMock.executorType(), await newExecutor.executorType(), "executor type should be the same")
-      assert.equal(await executorMock.address, await executorAddress, "executor address should be the same")
+      assert.equal(await scriptExecutorMock.executorType(), await newExecutor.executorType(), "executor type should be the same")
+      assert.equal(await scriptExecutorMock.address, await executorAddress, "executor address should be the same")
       assert.isTrue(executorEnabled, "new executor should be enabled")
     })
 
     it('fails to add a new executor without the correct permissions', async () => {
-      await assertRevert(evmScriptReg.addScriptExecutor(executorMock.address), reverts.APP_AUTH_FAILED)
+      await assertRevert(evmScriptReg.addScriptExecutor(scriptExecutorMock.address), reverts.APP_AUTH_FAILED)
     })
 
     context('> Existing executor', () => {
       let installedExecutorId
 
       beforeEach(async () => {
-        const receipt = await evmScriptReg.addScriptExecutor(executorMock.address, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
         installedExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
       })
@@ -169,53 +164,51 @@ contract('EVM Script', accounts => {
     })
   })
 
-  context('> Executor', () => {
-    let executorApp
+  context('> ScriptRunner', () => {
+    let scriptRunnerApp
 
     before(async () => {
-      executorAppBase = await AppStubScriptExecutor.new()
+      scriptRunnerAppBase = await AppStubScriptRunner.new()
     })
 
     beforeEach(async () => {
-      const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
-      executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-      await executorApp.initialize()
+      const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
+      scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      await scriptRunnerApp.initialize()
     })
 
     it('gets the correct executor registry from the app', async () => {
-      const registryFromApp = await executorApp.getEVMScriptRegistry()
+      const registryFromApp = await scriptRunnerApp.getEVMScriptRegistry()
       assert.equal(evmScriptReg.address, registryFromApp, 'app should return the same EVMScriptRegistry')
     })
 
     it('fails to execute if spec ID is 0', async () => {
-      await assertRevert(executorApp.execute(createExecutorId(0)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+      await assertRevert(scriptRunnerApp.runScript(createExecutorId(0)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
     })
 
     it('fails to execute if spec ID is unknown', async () => {
-      await assertRevert(executorApp.execute(createExecutorId(4)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+      await assertRevert(scriptRunnerApp.runScript(createExecutorId(4)), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
     })
 
     context('> Uninitialized', () => {
       beforeEach(async () => {
-        const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
-        executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
-        // Explicitly don't initialize the executorApp
+        // Install mock executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
+
+        // Install new script runner app
+        const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
+        scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        // Explicitly don't initialize the scriptRunnerApp
       })
 
       it('fails to execute any executor', async () => {
-        const action = { to: ZERO_ADDR, calldata: executionTarget.contract.execute.getData() }
-        const script = encodeCallScript([action])
-
-        await assertRevert(executorApp.execute(script), reverts.INIT_NOT_INITIALIZED)
+        await assertRevert(scriptRunnerApp.runScript(createExecutorId(1)), reverts.INIT_NOT_INITIALIZED)
       })
     })
 
     context('> Registry actions', () => {
-      let executorMock, executorSpecId
-
-      before(async () => {
-        executorMock = await EVMScriptExecutorMock.new()
-      })
+      let executorSpecId
 
       beforeEach(async () => {
         // Let boss enable and disable executors
@@ -223,7 +216,7 @@ contract('EVM Script', accounts => {
 
         // Install mock executor onto registry
         await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
-        const receipt = await evmScriptReg.addScriptExecutor(executorMock.address, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
         executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
       })
@@ -231,7 +224,7 @@ contract('EVM Script', accounts => {
       it("can't execute disabled spec ID", async () => {
         await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
 
-        await assertRevert(executorApp.execute(encodeCallScript([])), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
+        await assertRevert(scriptRunnerApp.runScript(encodeCallScript([])), reverts.EVMRUN_EXECUTOR_UNAVAILABLE)
       })
 
       it('can execute once spec ID is re-enabled', async () => {
@@ -239,7 +232,7 @@ contract('EVM Script', accounts => {
         await evmScriptReg.disableScriptExecutor(executorSpecId, { from: boss })
         await evmScriptReg.enableScriptExecutor(executorSpecId, { from: boss })
 
-        await executorApp.execute(encodeCallScript([]))
+        await scriptRunnerApp.runScript(encodeCallScript([]))
       })
     })
 
@@ -260,7 +253,7 @@ contract('EVM Script', accounts => {
         executionTarget = await ExecutionTarget.new()
       })
 
-      it('fails if directly calling base executor', async () => {
+      it('fails if directly calling calls script', async () => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
@@ -277,7 +270,7 @@ contract('EVM Script', accounts => {
         const script = createExecutorId(1)
         const executor = await evmScriptReg.getScriptExecutor(script)
 
-        const scriptExecutor = await executorApp.getEVMScriptExecutor(script)
+        const scriptExecutor = await scriptRunnerApp.getEVMScriptExecutor(script)
         assert.equal(executor, scriptExecutor, 'app should return the same evm script executor')
       })
 
@@ -285,12 +278,12 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        const receipt = await executorApp.execute(script)
+        const receipt = await scriptRunnerApp.runScript(script)
 
         assert.equal(await executionTarget.counter(), 1, 'should have executed action')
 
         // Check logs
-        // The Executor always uses 0x for the input and callscripts always have 0x returns
+        // The executor app always uses 0x for the input and the calls script always returns 0x output
         const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
         assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor(createExecutorId(1)), 'should log the same executor')
         assert.equal(scriptResult.args.script, script, 'should log the same script')
@@ -302,7 +295,7 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        await executorApp.executeWithBan(script, ['0x1234'])
+        await scriptRunnerApp.runScriptWithBan(script, ['0x1234'])
 
         assert.equal(await executionTarget.counter(), 1, 'should have executed action')
       })
@@ -311,7 +304,7 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action, action, action, action])
 
-        await executorApp.execute(script)
+        await scriptRunnerApp.runScript(script)
 
         assert.equal(await executionTarget.counter(), 4, 'should have executed multiple actions')
       })
@@ -324,7 +317,7 @@ contract('EVM Script', accounts => {
 
         const script = encodeCallScript([action2, action, action2, action, action2])
 
-        await executorApp.execute(script)
+        await scriptRunnerApp.runScript(script)
 
         assert.equal(await executionTarget.counter(), 2, 'should have executed action')
         assert.equal(await executionTarget2.counter(), 3, 'should have executed action')
@@ -334,7 +327,7 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.setCounter.getData(101) }
         const script = encodeCallScript([action])
 
-        await executorApp.execute(script)
+        await scriptRunnerApp.runScript(script)
 
         assert.equal(await executionTarget.counter(), 101, 'should have set counter')
       })
@@ -346,11 +339,11 @@ contract('EVM Script', accounts => {
         const script = encodeCallScript([action1, action2])
 
         // EVMScriptRunner doesn't pass through the revert yet
-        await assertRevert(executorApp.execute(script), reverts.EVMRUN_EXECUTION_REVERTED)
+        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
       })
 
       it('can execute empty script', async () => {
-        await executorApp.execute(encodeCallScript([]))
+        await scriptRunnerApp.runScript(encodeCallScript([]))
       })
 
       it('fails to execute if has blacklist addresses being called', async () => {
@@ -358,7 +351,7 @@ contract('EVM Script', accounts => {
         const script = encodeCallScript([action])
 
         // EVMScriptRunner doesn't pass through the revert yet
-        await assertRevert(executorApp.executeWithBan(script, [executionTarget.address]), reverts.EVMRUN_EXECUTION_REVERTED)
+        await assertRevert(scriptRunnerApp.runScriptWithBan(script, [executionTarget.address]), reverts.EVMRUN_EXECUTION_REVERTED)
       })
 
       context('> Script underflow', () => {
@@ -386,7 +379,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptAddressUnderflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(executorApp.execute(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
         })
 
         it('fails if data length is too small to contain calldata', async () => {
@@ -394,7 +387,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptCalldataUnderflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(executorApp.execute(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
         })
       })
 
@@ -416,7 +409,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptCalldataOverflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(executorApp.execute(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
         })
       })
     })
