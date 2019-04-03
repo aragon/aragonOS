@@ -27,7 +27,7 @@ contract('EVM Script', accounts => {
   let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg, scriptExecutorMock, scriptExecutorRevertMock
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
-  let ERROR_MOCK_REVERT
+  let ERROR_MOCK_REVERT, ERROR_EXECUTION_TARGET
 
   const boss = accounts[1]
 
@@ -37,9 +37,10 @@ contract('EVM Script', accounts => {
     kernelBase = await Kernel.new(true) // petrify immediately
     aclBase = await ACL.new()
     evmScriptRegBase = await EVMScriptRegistry.new()
-    const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
     scriptExecutorMock = await EVMScriptExecutorMock.new()
     scriptExecutorRevertMock = await EVMScriptExecutorRevertMock.new()
+    const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
+    const executionTarget = await ExecutionTarget.new()
 
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     APP_ADDR_NAMESPACE = await kernelBase.APP_ADDR_NAMESPACE()
@@ -50,6 +51,7 @@ contract('EVM Script', accounts => {
     REGISTRY_MANAGER_ROLE = await evmScriptRegBase.REGISTRY_MANAGER_ROLE()
 
     ERROR_MOCK_REVERT = await scriptExecutorRevertMock.ERROR_MOCK_REVERT()
+    ERROR_EXECUTION_TARGET = await executionTarget.ERROR_EXECUTION_TARGET()
   })
 
   beforeEach(async () => {
@@ -409,7 +411,7 @@ contract('EVM Script', accounts => {
 
         const script = encodeCallScript([action1, action2])
 
-        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMCALLS_CALL_REVERTED)
+        await assertRevert(scriptRunnerApp.runScript(script), ERROR_EXECUTION_TARGET)
       })
 
       it('can execute empty script', async () => {

@@ -16,7 +16,6 @@ contract CallsScript is BaseEVMScriptExecutor {
 
     string private constant ERROR_BLACKLISTED_CALL = "EVMCALLS_BLACKLISTED_CALL";
     string private constant ERROR_INVALID_LENGTH = "EVMCALLS_INVALID_LENGTH";
-    string private constant ERROR_CALL_REVERTED = "EVMCALLS_CALL_REVERTED";
 
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
@@ -62,9 +61,16 @@ contract CallsScript is BaseEVMScriptExecutor {
                     0,                    // don't write output
                     0                     // don't write output
                 )
-            }
 
-            require(success, ERROR_CALL_REVERTED);
+                switch success
+                case 0 {
+                    // If the call errored, forward its full error data
+                    let ptr := mload(0x40)
+                    returndatacopy(ptr, 0, returndatasize)
+                    revert(ptr, returndatasize)
+                }
+                default { }
+            }
         }
         // No need to allocate empty bytes for the return as this can only be called via an delegatecall
         // (due to the isInitialized modifier)
