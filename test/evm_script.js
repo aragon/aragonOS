@@ -222,7 +222,7 @@ contract('EVM Script', accounts => {
             })
         })
 
-        context('> Spec ID 1', () => {
+        context('> CallsScript (Spec ID 1)', () => {
             it('is the correct executor type', async () => {
                 const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
                 const executor = IEVMScriptExecutor.at(await reg.getScriptExecutor('0x00000001'))
@@ -270,7 +270,7 @@ contract('EVM Script', accounts => {
 
                 await executorApp.execute(script)
 
-                assert.equal(await executionTarget.counter(), 4, 'should have executed action')
+                assert.equal(await executionTarget.counter(), 4, 'should have executed multiple actions')
             })
 
             it('executes multi action script to multiple addresses', async () => {
@@ -381,26 +381,26 @@ contract('EVM Script', accounts => {
                     })
                 })
             })
+        })
 
-            context('> Registry actions', () => {
-                it("can't be executed once disabled", async () => {
-                    await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
-                    await reg.disableScriptExecutor(1, { from: boss })
+        context('> Registry actions', () => {
+            it("can execute disabled spec ID", async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+                await reg.disableScriptExecutor(1, { from: boss })
 
-                    return assertRevert(async () => {
-                        await executorApp.execute(encodeCallScript([]))
-                    })
-                })
-
-                it('can be re-enabled', async () => {
-                    await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
-
-                    // Disable then re-enable the executor
-                    await reg.disableScriptExecutor(1, { from: boss })
-                    await reg.enableScriptExecutor(1, { from: boss })
-
+                return assertRevert(async () => {
                     await executorApp.execute(encodeCallScript([]))
                 })
+            })
+
+            it('can execute once spec ID is re-enabled', async () => {
+                await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
+
+                // Disable then re-enable the executor
+                await reg.disableScriptExecutor(1, { from: boss })
+                await reg.enableScriptExecutor(1, { from: boss })
+
+                await executorApp.execute(encodeCallScript([]))
             })
         })
     })
