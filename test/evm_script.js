@@ -170,15 +170,13 @@ contract('EVM Script', accounts => {
   })
 
   context('> Executor', () => {
-    let executorApp, executionTarget
+    let executorApp
 
     before(async () => {
       executorAppBase = await AppStubScriptExecutor.new()
     })
 
     beforeEach(async () => {
-      executionTarget = await ExecutionTarget.new()
-
       const receipt = await dao.newAppInstance(executorAppId, executorAppBase.address, EMPTY_BYTES, false, { from: boss })
       executorApp = AppStubScriptExecutor.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
       await executorApp.initialize()
@@ -205,7 +203,7 @@ contract('EVM Script', accounts => {
       })
 
       it('fails to execute any executor', async () => {
-        const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+        const action = { to: ZERO_ADDR, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
         await assertRevert(executorApp.execute(script), reverts.INIT_NOT_INITIALIZED)
@@ -246,7 +244,7 @@ contract('EVM Script', accounts => {
     })
 
     context('> CallsScript', () => {
-      let callsScriptBase
+      let callsScriptBase, executionTarget
 
       beforeEach(async () => {
         callsScriptBase = await CallsScript.new()
@@ -258,10 +256,11 @@ contract('EVM Script', accounts => {
         // Sanity check it's at spec ID 1
         const callsScriptExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
         assert.equal(callsScriptExecutorId, 1, 'CallsScript should be installed as spec ID 1')
+
+        executionTarget = await ExecutionTarget.new()
       })
 
       it('fails if directly calling base executor', async () => {
-        const executionTarget = await ExecutionTarget.new()
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
