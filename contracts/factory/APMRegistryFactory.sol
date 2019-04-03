@@ -19,7 +19,16 @@ contract APMRegistryFactory is APMInternalAppNames {
 
     event DeployAPM(bytes32 indexed node, address apm);
 
-    // Needs either one ENS or ENSFactory
+    /**
+    * @notice Create a new factory for deploying Aragon Package Managers (aragonPM)
+    * @dev Requires either a given ENS registrar or ENSFactory (used for generating a new ENS in test environments).
+    * @param _daoFactory Base factory for deploying DAOs
+    * @param _registryBase APMRegistry base contract location
+    * @param _repoBase Repo base contract location
+    * @param _ensSubBase ENSSubdomainRegistrar base contract location
+    * @param _ens ENS instance
+    * @param _ensFactory ENSFactory (used to generated a new ENS if no ENS is given)
+    */
     constructor(
         DAOFactory _daoFactory,
         APMRegistry _registryBase,
@@ -40,6 +49,13 @@ contract APMRegistryFactory is APMInternalAppNames {
         ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
     }
 
+    /**
+    * @notice Create a new Aragon Package Manager (aragonPM) DAO, holding the `_label` subdomain from parent `_tld` and controlled by `_root`
+    * @param _tld The parent node of the controlled subdomain
+    * @param _label The subdomain label
+    * @param _root Manager for the new aragonPM DAO
+    * @return The new aragonPM's APMRegistry app
+    */
     function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
         bytes32 node = keccak256(abi.encodePacked(_tld, _label));
 

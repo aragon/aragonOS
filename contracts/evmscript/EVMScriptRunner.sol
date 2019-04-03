@@ -54,13 +54,23 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
             output := mload(0x40) // free mem ptr get
             mstore(0x40, add(output, add(returndatasize, 0x20))) // free mem ptr set
 
-            // Copy result
-            // No ABI decoding is needed on success as `execScript()`'s return type is `bytes`
-            returndatacopy(output, 0, returndatasize)
-
-            if iszero(success) {
-                // If the call errored, forward its error data
+            switch success
+            case 0 {
+                // If the call errored, forward its full error data
+                returndatacopy(output, 0, returndatasize)
                 revert(output, returndatasize)
+            }
+            default {
+                // Copy result
+                //
+                // Needs to perform an ABI decode for the expected `bytes` return type of
+                // `executor.execScript()` as solidity will automatically ABI encode the returned bytes as:
+                //    [ position of the first dynamic length return value = 0x20 (32 bytes) ]
+                //    [ output length (32 bytes) ]
+                //    [ output content (N bytes) ]
+                //
+                // Perform the ABI decode by ignoring the first 32 bytes of the return data
+                returndatacopy(output, 0x20, sub(returndatasize, 0x20))
             }
         }
 

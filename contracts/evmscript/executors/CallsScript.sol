@@ -35,7 +35,7 @@ contract CallsScript is BaseEVMScriptExecutor {
 
             address contractAddress = _script.addressAt(location);
             // Check address being called is not blacklist
-            for (uint i = 0; i < _blacklist.length; i++) {
+            for (uint256 i = 0; i < _blacklist.length; i++) {
                 require(contractAddress != _blacklist[i], ERROR_BLACKLISTED_CALL);
             }
 
@@ -53,12 +53,21 @@ contract CallsScript is BaseEVMScriptExecutor {
 
             bool success;
             assembly {
-                success := call(sub(gas, 5000), contractAddress, 0, calldataStart, calldataLength, 0, 0)
+                success := call(
+                    sub(gas, 5000),       // forward gas left - 5000
+                    contractAddress,      // address
+                    0,                    // no value
+                    calldataStart,        // calldata start
+                    calldataLength,       // calldata length
+                    0,                    // don't write output
+                    0                     // don't write output
+                )
             }
 
             require(success, ERROR_CALL_REVERTED);
         }
         // No need to allocate empty bytes for the return as this can only be called via an delegatecall
+        // (due to the isInitialized modifier)
     }
 
     function executorType() external pure returns (bytes32) {
