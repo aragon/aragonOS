@@ -61,7 +61,7 @@ contract('EVM Script', accounts => {
     const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
     const script = encodeCallScript([action])
 
-    await assertRevert(() => callsScriptBase.execScript(script, '0x', []))
+    await assertRevert(callsScriptBase.execScript(script, '0x', []))
   })
 
   context('> Registry', () => {
@@ -70,16 +70,12 @@ contract('EVM Script', accounts => {
     })
 
     it('fails if reinitializing registry', async () => {
-      await assertRevert(async () => {
-        await reg.initialize()
-      })
+      await assertRevert(reg.initialize())
     })
 
     it('fails to get an executor if not enough bytes are given', async () => {
-      await assertRevert(async () => {
-        // Not enough bytes are given (need 4, given 3)
-        await reg.getScriptExecutor('0x'.padEnd(6, 0))
-      })
+      // Not enough bytes are given (need 4, given 3)
+      await assertRevert(reg.getScriptExecutor('0x'.padEnd(6, 0)))
     })
 
     context('> New executor', () => {
@@ -136,47 +132,35 @@ contract('EVM Script', accounts => {
       })
 
       it('fails to add a new executor without the correct permissions', async () => {
-        await assertRevert(async () => {
-          await reg.addScriptExecutor(executorMock.address)
-        })
+        await assertRevert(reg.addScriptExecutor(executorMock.address))
       })
 
       it('fails to disable an executor without the correct permissions', async () => {
-        await assertRevert(async () => {
-          await reg.disableScriptExecutor(newExecutorId)
-        })
+        await assertRevert(reg.disableScriptExecutor(newExecutorId))
       })
 
       it('fails to enable an executor without the correct permissions', async () => {
         await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
         await reg.disableScriptExecutor(newExecutorId, { from: boss })
 
-        await assertRevert(async () => {
-          await reg.enableScriptExecutor(newExecutorId)
-        })
+        await assertRevert(reg.enableScriptExecutor(newExecutorId))
       })
 
       it('fails to enable an already enabled executor', async () => {
         await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
-        await assertRevert(async () => {
-          await reg.enableScriptExecutor(newExecutorId, { from: boss })
-        })
+        await assertRevert(reg.enableScriptExecutor(newExecutorId, { from: boss }))
       })
 
       it('fails to enable a non-existent executor', async () => {
         await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
-        await assertRevert(async () => {
-          await reg.enableScriptExecutor(newExecutorId + 1, { from: boss })
-        })
+        await assertRevert(reg.enableScriptExecutor(newExecutorId + 1, { from: boss }))
       })
 
       it('fails to disable an already disabled executor', async () => {
         await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
         await reg.disableScriptExecutor(newExecutorId, { from: boss })
 
-        await assertRevert(async () => {
-          await reg.disableScriptExecutor(newExecutorId, { from: boss })
-        })
+        await assertRevert(reg.disableScriptExecutor(newExecutorId, { from: boss }))
       })
     })
   })
@@ -193,7 +177,7 @@ contract('EVM Script', accounts => {
       const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
       const script = encodeCallScript([action])
 
-      await assertRevert(() => executorApp.execute(script))
+      await assertRevert(executorApp.execute(script))
     })
   })
 
@@ -211,15 +195,11 @@ contract('EVM Script', accounts => {
     })
 
     it('fails to execute if spec ID is 0', async () => {
-      return assertRevert(async () => {
-        await executorApp.execute('0x00000000')
-      })
+      await assertRevert(executorApp.execute('0x00000000'))
     })
 
     it('fails to execute if spec ID is unknown', async () => {
-      return assertRevert(async () => {
-        await executorApp.execute('0x00000004')
-      })
+      await assertRevert(executorApp.execute('0x00000004'))
     })
 
     context('> CallsScript (Spec ID 1)', () => {
@@ -302,9 +282,7 @@ contract('EVM Script', accounts => {
 
         const script = encodeCallScript([action1, action2])
 
-        return assertRevert(async () => {
-          await executorApp.execute(script)
-        })
+        await assertRevert(executorApp.execute(script))
       })
 
       it('can execute empty script', async () => {
@@ -315,9 +293,7 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        return assertRevert(async () => {
-          await executorApp.executeWithBan(script, [executionTarget.address])
-        })
+        await assertRevert(executorApp.executeWithBan(script, [executionTarget.address]))
       })
 
       context('> Script underflow', () => {
@@ -344,18 +320,14 @@ contract('EVM Script', accounts => {
           const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
           const script = encodeCallScriptAddressUnderflow([action])
 
-          return assertRevert(async () => {
-            await executorApp.execute(script)
-          })
+          await assertRevert(executorApp.execute(script))
         })
 
         it('fails if data length is too small to contain calldata', async () => {
           const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
           const script = encodeCallScriptCalldataUnderflow([action])
 
-          return assertRevert(async () => {
-            await executorApp.execute(script)
-          })
+          await assertRevert(executorApp.execute(script))
         })
       })
 
@@ -376,9 +348,7 @@ contract('EVM Script', accounts => {
           const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
           const script = encodeCallScriptCalldataOverflow([action])
 
-          return assertRevert(async () => {
-            await executorApp.execute(script)
-          })
+          await assertRevert(executorApp.execute(script))
         })
       })
     })
@@ -388,9 +358,7 @@ contract('EVM Script', accounts => {
         await acl.createPermission(boss, reg.address, await reg.REGISTRY_MANAGER_ROLE(), boss, { from: boss })
         await reg.disableScriptExecutor(1, { from: boss })
 
-        return assertRevert(async () => {
-          await executorApp.execute(encodeCallScript([]))
-        })
+        await assertRevert(executorApp.execute(encodeCallScript([])))
       })
 
       it('can execute once spec ID is re-enabled', async () => {
