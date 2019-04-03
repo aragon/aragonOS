@@ -236,6 +236,52 @@ contract('EVM Script', accounts => {
       })
     })
 
+    context('> Returned bytes', () => {
+      beforeEach(async () => {
+        // Install mock executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
+
+        // Sanity check it's at spec ID 1
+        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        assert.equal(executorSpecId, 1, 'CallsScript should be installed as spec ID 1')
+      })
+
+      it('properly returns if no bytes are returned from executor', async () => {
+        // Only executes executor with bytes for spec ID
+        const inputScript = createExecutorId(1)
+        const receipt = await scriptRunnerApp.runScript(inputScript)
+
+        // Check logs
+        // The executor app always uses 0x for the input and the mock script executor should return
+        // an empty bytes array if only the spec ID is given
+        const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
+        assert.equal(scriptResult.args.script, inputScript, 'should log the same script')
+        assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
+        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the correct return data')
+      })
+
+      for (inputBytes of [
+        soliditySha3('test').slice(2, 10),                                       // bytes4
+        soliditySha3('test').slice(2),                                           // bytes32
+        `${soliditySha3('test').slice(2)}${soliditySha3('test2').slice(2, 10)}`, // bytes36
+        `${soliditySha3('test').slice(2)}${soliditySha3('test2').slice(2)}`,     // bytes64
+      ]) {
+        it(`properly returns bytes (length: ${inputBytes.length / 2}) from executor`, async () => {
+          const inputScript = `${createExecutorId(1)}${inputBytes}`
+          const receipt = await scriptRunnerApp.runScript(inputScript)
+
+          // Check logs
+          // The executor app always uses 0x for the input and the mock script executor should return
+          // the full input script since it's more than just the spec ID
+          const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
+          assert.equal(scriptResult.args.script, inputScript, 'should log the same script')
+          assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
+          assert.equal(scriptResult.args.returnData, inputScript, 'should log the correct return data')
+        })
+      }
+    })
+
     context('> CallsScript', () => {
       let callsScriptBase, executionTarget
 
@@ -288,7 +334,7 @@ contract('EVM Script', accounts => {
         assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor(createExecutorId(1)), 'should log the same executor')
         assert.equal(scriptResult.args.script, script, 'should log the same script')
         assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
-        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the return data')
+        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the empty return data')
       })
 
       it("can execute if call doesn't contain blacklist addresses", async () => {
