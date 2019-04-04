@@ -17,15 +17,17 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
+const EVMScriptExecutorRevertMock = artifacts.require('EVMScriptExecutorRevertMock')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script', accounts => {
-  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg, scriptExecutorMock
+  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg, scriptExecutorMock, scriptExecutorRevertMock
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
+  let ERROR_MOCK_REVERT, ERROR_EXECUTION_TARGET
 
   const boss = accounts[1]
 
@@ -35,8 +37,10 @@ contract('EVM Script', accounts => {
     kernelBase = await Kernel.new(true) // petrify immediately
     aclBase = await ACL.new()
     evmScriptRegBase = await EVMScriptRegistry.new()
-    const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
     scriptExecutorMock = await EVMScriptExecutorMock.new()
+    scriptExecutorRevertMock = await EVMScriptExecutorRevertMock.new()
+    const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
+    const executionTarget = await ExecutionTarget.new()
 
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     APP_ADDR_NAMESPACE = await kernelBase.APP_ADDR_NAMESPACE()
@@ -45,6 +49,9 @@ contract('EVM Script', accounts => {
     EVMSCRIPT_REGISTRY_APP_ID = await evmScriptRegConstants.getEVMScriptRegistryAppId()
     REGISTRY_ADD_EXECUTOR_ROLE = await evmScriptRegBase.REGISTRY_ADD_EXECUTOR_ROLE()
     REGISTRY_MANAGER_ROLE = await evmScriptRegBase.REGISTRY_MANAGER_ROLE()
+
+    ERROR_MOCK_REVERT = await scriptExecutorRevertMock.ERROR_MOCK_REVERT()
+    ERROR_EXECUTION_TARGET = await executionTarget.ERROR_EXECUTION_TARGET()
   })
 
   beforeEach(async () => {
@@ -282,6 +289,26 @@ contract('EVM Script', accounts => {
       }
     })
 
+    context('> Reverted script', () => {
+      beforeEach(async () => {
+        // Install mock reverting executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorRevertMock.address, { from: boss })
+
+        // Sanity check it's at spec ID 1
+        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        assert.equal(executorSpecId, 1, 'CallsScript should be installed as spec ID 1')
+      })
+
+      it('forwards the revert data correctly', async () => {
+        // Only executes executor with bytes for spec ID
+        const inputScript = createExecutorId(1)
+
+        // Should revert and forward the script executor's revert message
+        assertRevert(scriptRunnerApp.runScript(inputScript), ERROR_MOCK_REVERT)
+      })
+    })
+
     context('> CallsScript', () => {
       let callsScriptBase, executionTarget
 
@@ -384,8 +411,7 @@ contract('EVM Script', accounts => {
 
         const script = encodeCallScript([action1, action2])
 
-        // EVMScriptRunner doesn't pass through the revert yet
-        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
+        await assertRevert(scriptRunnerApp.runScript(script), ERROR_EXECUTION_TARGET)
       })
 
       it('can execute empty script', async () => {
@@ -396,8 +422,7 @@ contract('EVM Script', accounts => {
         const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
         const script = encodeCallScript([action])
 
-        // EVMScriptRunner doesn't pass through the revert yet
-        await assertRevert(scriptRunnerApp.runScriptWithBan(script, [executionTarget.address]), reverts.EVMRUN_EXECUTION_REVERTED)
+        await assertRevert(scriptRunnerApp.runScriptWithBan(script, [executionTarget.address]), reverts.EVMCALLS_BLACKLISTED_CALL)
       })
 
       context('> Script underflow', () => {
@@ -425,7 +450,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptAddressUnderflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMCALLS_INVALID_LENGTH)
         })
 
         it('fails if data length is too small to contain calldata', async () => {
@@ -433,7 +458,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptCalldataUnderflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMCALLS_INVALID_LENGTH)
         })
       })
 
@@ -455,7 +480,7 @@ contract('EVM Script', accounts => {
           const script = encodeCallScriptCalldataOverflow([action])
 
           // EVMScriptRunner doesn't pass through the revert yet
-          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_EXECUTION_REVERTED)
+          await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMCALLS_INVALID_LENGTH)
         })
       })
     })
