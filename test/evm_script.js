@@ -407,11 +407,27 @@ contract('EVM Script', accounts => {
 
       it('execution fails if one call fails', async () => {
         const action1 = { to: executionTarget.address, calldata: executionTarget.contract.setCounter.getData(101) }
-        const action2 = { to: executionTarget.address, calldata: executionTarget.contract.failExecute.getData() }
+        const action2 = { to: executionTarget.address, calldata: executionTarget.contract.failExecute.getData(true) }
 
         const script = encodeCallScript([action1, action2])
 
         await assertRevert(scriptRunnerApp.runScript(script), ERROR_EXECUTION_TARGET)
+      })
+
+      it('execution fails with correctly forwarded error data', async () => {
+        const action1 = { to: executionTarget.address, calldata: executionTarget.contract.failExecute.getData(true) }
+
+        const script = encodeCallScript([action1])
+
+        await assertRevert(scriptRunnerApp.runScript(script), ERROR_EXECUTION_TARGET)
+      })
+
+      it('execution fails with default error data if no error data is returned', async () => {
+        const action1 = { to: executionTarget.address, calldata: executionTarget.contract.failExecute.getData(false) }
+
+        const script = encodeCallScript([action1])
+
+        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMCALLS_CALL_REVERTED)
       })
 
       it('can execute empty script', async () => {

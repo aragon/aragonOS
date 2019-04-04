@@ -17,6 +17,10 @@ contract CallsScript is BaseEVMScriptExecutor {
     string private constant ERROR_BLACKLISTED_CALL = "EVMCALLS_BLACKLISTED_CALL";
     string private constant ERROR_INVALID_LENGTH = "EVMCALLS_INVALID_LENGTH";
 
+    /* This is manually crafted in assembly
+    string private constant ERROR_CALL_REVERTED = "EVMCALLS_CALL_REVERTED";
+    */
+
     event LogScriptCall(address indexed sender, address indexed src, address indexed dst);
 
     /**
@@ -64,10 +68,25 @@ contract CallsScript is BaseEVMScriptExecutor {
 
                 switch success
                 case 0 {
-                    // If the call errored, forward its full error data
                     let ptr := mload(0x40)
-                    returndatacopy(ptr, 0, returndatasize)
-                    revert(ptr, returndatasize)
+
+                    switch returndatasize
+                    case 0 {
+                        // No error data was returned, revert with "EVMCALLS_CALL_REVERTED"
+                        // See remix: doing a `revert("EVMCALLS_CALL_REVERTED")` always results in
+                        // this memory layout
+                        mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                        mstore(add(ptr, 0x20), 0x0000002000000000000000000000000000000000000000000000000000000000)
+                        mstore(add(ptr, 0x40), 0x0000001645564d43414c4c535f43414c4c5f5245564552544544000000000000)
+                        mstore(add(ptr, 0x60), 0)
+
+                        revert(ptr, 100)
+                    }
+                    default {
+                        // Forward the full return data
+                        returndatacopy(ptr, 0, returndatasize)
+                        revert(ptr, returndatasize)
+                    }
                 }
                 default { }
             }

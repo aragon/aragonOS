@@ -10,8 +10,12 @@ contract ExecutionTarget {
         emit Executed(counter);
     }
 
-    function failExecute() public pure {
-        revert(ERROR_EXECUTION_TARGET);
+    function failExecute(bool errorWithData) public pure {
+        if (errorWithData) {
+            revert(ERROR_EXECUTION_TARGET);
+        } else {
+            revert();
+        }
     }
 
     function setCounter(uint x) public {
