@@ -49,6 +49,7 @@ contract KeccakConstants {
     // Unstructured storage
     bytes32 public constant initializationBlockPosition = keccak256(abi.encodePacked("aragonOS.initializable.initializationBlock"));
     bytes32 public constant depositablePosition = keccak256(abi.encodePacked("aragonOS.depositableStorage.depositable"));
+    bytes32 public constant reentrancyGuardPosition = keccak256(abi.encodePacked("aragonOS.reentrancyGuard.mutex"));
     bytes32 public constant kernelPosition = keccak256(abi.encodePacked("aragonOS.appStorage.kernel"));
     bytes32 public constant appIdPosition = keccak256(abi.encodePacked("aragonOS.appStorage.appId"));
     bytes32 public constant pinnedCodePosition = keccak256(abi.encodePacked("aragonOS.appStorage.pinnedCode"));
