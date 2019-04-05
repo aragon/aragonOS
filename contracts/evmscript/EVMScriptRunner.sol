@@ -33,7 +33,6 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         protectState
         returns (bytes)
     {
-        // TODO: Too much data flying around, maybe extracting spec id here is cheaper
         IEVMScriptExecutor executor = getEVMScriptExecutor(_script);
         require(address(executor) != address(0), ERROR_EXECUTOR_UNAVAILABLE);
 
