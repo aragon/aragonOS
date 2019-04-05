@@ -52,7 +52,6 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
             )
 
             output := mload(0x40) // free mem ptr get
-            mstore(0x40, add(output, add(returndatasize, 0x20))) // free mem ptr set
 
             switch success
             case 0 {
@@ -70,7 +69,10 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
                 //    [ output content (N bytes) ]
                 //
                 // Perform the ABI decode by ignoring the first 32 bytes of the return data
-                returndatacopy(output, 0x20, sub(returndatasize, 0x20))
+                let copysize := sub(returndatasize, 0x20)
+                returndatacopy(output, 0x20, copysize)
+
+                mstore(0x40, add(output, copysize)) // free mem ptr set
             }
         }
 

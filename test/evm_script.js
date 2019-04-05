@@ -287,6 +287,26 @@ contract('EVM Script', accounts => {
           assert.equal(scriptResult.args.returnData, inputScript, 'should log the correct return data')
         })
       }
+
+      it('properly allocates the free memory pointer after no bytes were returned from executor', async () => {
+        const inputScript = createExecutorId(1)
+        const receipt = await scriptRunnerApp.runScriptWithNewBytesAllocation(inputScript)
+
+        // Check logs for returned bytes
+        const returnedBytes = receipt.logs.filter(l => l.event == 'ReturnedBytes')[0]
+        assert.equal(returnedBytes.args.returnedBytes, EMPTY_BYTES, 'should log the correct return data')
+      })
+
+      it('properly allocates the free memory pointer after returning bytes from executor', async () => {
+        const inputBytes = `${soliditySha3('test').slice(2)}${soliditySha3('mock').slice(2)}`
+        // Adjust to completely fill a 32-byte words (64 in this case: 4 + 32 + 32 - 4)
+        const inputScript = `${createExecutorId(1)}${inputBytes}`.slice(0, -8)
+        const receipt = await scriptRunnerApp.runScriptWithNewBytesAllocation(inputScript)
+
+        // Check logs for returned bytes
+        const returnedBytes = receipt.logs.filter(l => l.event == 'ReturnedBytes')[0]
+        assert.equal(returnedBytes.args.returnedBytes, inputScript, 'should log the correct return data')
+      })
     })
 
     context('> Reverted script', () => {
