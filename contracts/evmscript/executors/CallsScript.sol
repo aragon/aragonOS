@@ -75,15 +75,15 @@ contract CallsScript is BaseEVMScriptExecutor {
                         // No error data was returned, revert with "EVMCALLS_CALL_REVERTED"
                         // See remix: doing a `revert("EVMCALLS_CALL_REVERTED")` always results in
                         // this memory layout
-                        mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                        mstore(add(ptr, 0x20), 0x0000002000000000000000000000000000000000000000000000000000000000)
-                        mstore(add(ptr, 0x40), 0x0000001645564d43414c4c535f43414c4c5f5245564552544544000000000000)
-                        mstore(add(ptr, 0x60), 0)
+                        mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)         // error identifier
+                        mstore(add(ptr, 0x04), 0x0000000000000000000000000000000000000000000000000000000000000020) // starting offset
+                        mstore(add(ptr, 0x24), 0x0000000000000000000000000000000000000000000000000000000000000016) // reason length
+                        mstore(add(ptr, 0x44), 0x45564d43414c4c535f43414c4c5f524556455254454400000000000000000000) // reason
 
                         revert(ptr, 100) // 100 = 4 + 3 * 32 (error identifier + 3 words for the ABI encoded error)
                     }
                     default {
-                        // Forward the full return data
+                        // Forward the full error data
                         returndatacopy(ptr, 0, returndatasize)
                         revert(ptr, returndatasize)
                     }
