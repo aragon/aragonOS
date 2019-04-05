@@ -59,7 +59,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
     }
 
     /**
-    * @notice Create new repo in registry with `_name` and first repo version
+    * @notice Create new repo in registry with `_name` and publish a first version with contract `_contractAddress` and content `@fromHex(_contentURI)`
     * @param _name Repo name
     * @param _dev Address that will be given permission to create versions
     * @param _initialSemanticVersion Semantic version for new repo version

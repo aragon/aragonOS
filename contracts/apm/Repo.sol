@@ -38,7 +38,7 @@ contract Repo is AragonApp {
     }
 
     /**
-    * @notice Create new version for repo
+    * @notice Create new version with contract `_contractAddress` and content `@fromHex(_contentURI)`
     * @param _newSemanticVersion Semantic version for new repo version
     * @param _contractAddress address for smart contract logic for version (if set to 0, it uses last versions' contractAddress)
     * @param _contentURI External URI for fetching new version's content
