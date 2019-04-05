@@ -80,7 +80,7 @@ contract CallsScript is BaseEVMScriptExecutor {
                         mstore(add(ptr, 0x40), 0x0000001645564d43414c4c535f43414c4c5f5245564552544544000000000000)
                         mstore(add(ptr, 0x60), 0)
 
-                        revert(ptr, 100)
+                        revert(ptr, 100) // 100 = 4 + 3 * 32 (error identifier + 3 words for the ABI encoded error)
                     }
                     default {
                         // Forward the full return data
