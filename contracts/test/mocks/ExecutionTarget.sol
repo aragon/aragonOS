@@ -2,6 +2,7 @@ pragma solidity 0.4.24;
 
 
 contract ExecutionTarget {
+    string public constant ERROR_EXECUTION_TARGET = "EXECUTION_TARGET_REVERTED";
     uint public counter;
 
     function execute() public {
@@ -9,8 +10,12 @@ contract ExecutionTarget {
         emit Executed(counter);
     }
 
-    function failExecute() public pure {
-        revert();
+    function failExecute(bool errorWithData) public pure {
+        if (errorWithData) {
+            revert(ERROR_EXECUTION_TARGET);
+        } else {
+            revert();
+        }
     }
 
     function setCounter(uint x) public {
