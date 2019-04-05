@@ -115,4 +115,14 @@ contract('Constants', accounts => {
     const initializableMock = await getContract('InitializableStorageMock').new()
     assert.equal(await initializableMock.getInitializationBlockPosition(), await keccakConstants.initializationBlockPosition(), "initializationBlockPosition doesn't match")
   })
+
+  it('checks ReentrancyGuard unstructured storage constants', async () => {
+    const reentrancyGuardMock = await getContract('ReentrancyGuardMock').new()
+    // Note that this is a bit of a roundabout test for this unstructured storage slot. Since the
+    // position is declared as private in the base ReentrancyGuard contract, we redefine in the
+    // mock.
+    // This test therefore also relies on the ReentrancyGuard's own tests to make sure we've
+    // redefined the storage position correctly in the mock.
+    assert.equal(await reentrancyGuardMock.getReentrancyMutexPosition(), await keccakConstants.reentrancyGuardPosition(), "reentrancyGuardPosition doesn't match")
+  })
 })

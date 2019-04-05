@@ -7,6 +7,7 @@ const AppProxyPinnedStorageMock = artifacts.require('AppProxyPinnedStorageMock')
 const DepositableStorageMock = artifacts.require('DepositableStorageMock')
 const InitializableStorageMock = artifacts.require('InitializableStorageMock')
 const KernelPinnedStorageMock = artifacts.require('KernelPinnedStorageMock')
+const ReentrancyGuardMock = artifacts.require('ReentrancyGuardMock')
 
 contract('Unstructured storage', accounts => {
   context('> AppStorage', () => {
@@ -19,7 +20,7 @@ contract('Unstructured storage', accounts => {
     it('tests Kernel storage', async () => {
       const kernel = await Kernel.new(true)
       await appStorage.setKernelExt(kernel.address)
-      //checks
+      // checks
       assert.equal(
         await web3.eth.getStorageAt(appStorage.address, (await appStorage.getKernelPosition())),
         (await appStorage.kernel()).toString(),
@@ -35,7 +36,7 @@ contract('Unstructured storage', accounts => {
     it('tests appID storage', async () => {
       const appId = '0x1234000000000000000000000000000000000000000000000000000000000000'
       await appStorage.setAppIdExt(appId)
-      //checks
+      // checks
       assert.equal(
         await web3.eth.getStorageAt(appStorage.address, (await appStorage.getAppIdPosition())),
         (await appStorage.appId()).toString(),
@@ -61,7 +62,7 @@ contract('Unstructured storage', accounts => {
     it('tests pinnedCode storage', async () => {
       const pinnedCode = '0x1200000000000000000000000000000000005678'
       await appPinned.setPinnedCodeExt(pinnedCode)
-      //checks
+      // checks
       assert.equal(
         await web3.eth.getStorageAt(appPinned.address, (await appPinned.getPinnedCodePosition())),
         (await appPinned.pinnedCodeExt()).toString(),
@@ -85,7 +86,7 @@ contract('Unstructured storage', accounts => {
     it('tests depositable', async () => {
       // set values
       await depositableMock.setDepositableExt(true)
-      //checks
+      // checks
       assert.equal(
         await web3.eth.getStorageAt(depositableMock.address, (await depositableMock.getDepositablePosition())),
         true,
@@ -105,7 +106,7 @@ contract('Unstructured storage', accounts => {
       // set values
       await initializableMock.initialize()
       const blockNumber = web3.eth.blockNumber
-      //checks
+      // checks
       assert.equal(
         parseInt(
           await web3.eth.getStorageAt(
@@ -127,6 +128,25 @@ contract('Unstructured storage', accounts => {
         ),
         (await initializableMock.getInitializationBlock()).toString(),
         'Init block should match'
+      )
+    })
+  })
+
+  context('> ReentrancyGuard', () => {
+    let reentrancyGuardMock
+
+    beforeEach(async () => {
+      reentrancyGuardMock = await ReentrancyGuardMock.new()
+    })
+
+    it('tests reentrancy mutex', async () => {
+      // set values
+      await reentrancyGuardMock.setReentrancyMutex(true)
+      // checks
+      assert.equal(
+        await web3.eth.getStorageAt(reentrancyGuardMock.address, (await reentrancyGuardMock.getReentrancyMutexPosition())),
+        true,
+        'Reentrancy mutex should match'
       )
     })
   })
