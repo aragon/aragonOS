@@ -22,6 +22,9 @@ contract TestConversionHelpers {
         // Check length
         Assert.equal(arrBytes.length, arrLength * 32, "should have correct length as bytes array");
 
+        // Check values
+        assertValues(arrBytes);
+
         // Check memory position (conversion should be in place)
         uint256 arrMemLoc;
         uint256 arrBytesMemLoc;
@@ -46,6 +49,9 @@ contract TestConversionHelpers {
         // Check length
         Assert.equal(arrLength, arrReconverted.length, "should have correct length after reconverting");
 
+        // Check values
+        assertValues(arrReconverted);
+
         // Check memory position (conversion should be in place)
         uint256 arrMemLoc;
         uint256 arrReconvertedMemLoc;
@@ -54,11 +60,6 @@ contract TestConversionHelpers {
             arrReconvertedMemLoc := arrReconverted
         }
         Assert.equal(arrMemLoc, arrReconvertedMemLoc, "should have same memory location after reconverting");
-
-        // Check values
-        Assert.equal(arrReconverted[0], FIRST, "should have correct index value at 0");
-        Assert.equal(arrReconverted[1], SECOND, "should have correct index value at 1");
-        Assert.equal(arrReconverted[2], THIRD, "should have correct index value at 2");
     }
 
     function testBytesConvertedToUintArray() public {
@@ -81,6 +82,9 @@ contract TestConversionHelpers {
         // Check length
         Assert.equal(arrUint.length, arrLength / 32, "should have correct length as uint256 array");
 
+        // Check values
+        assertValues(arrUint);
+
         // Check memory position (conversion should be in place)
         uint256 arrMemLoc;
         uint256 arrUintMemLoc;
@@ -89,11 +93,6 @@ contract TestConversionHelpers {
             arrUintMemLoc := arrUint
         }
         Assert.equal(arrMemLoc, arrUintMemLoc, "should have same memory location after conversion");
-
-        // Check values
-        Assert.equal(arrUint[0], FIRST, "should have correct index value at 0");
-        Assert.equal(arrUint[1], SECOND, "should have correct index value at 1");
-        Assert.equal(arrUint[2], THIRD, "should have correct index value at 2");
     }
 
     function testBytesIntactIfConvertedBack() public {
@@ -117,6 +116,9 @@ contract TestConversionHelpers {
         // Check length
         Assert.equal(arrLength, arrReconverted.length, "should have correct length after reconverting");
 
+        // Check values
+        assertValues(arrReconverted);
+
         // Check memory position (conversion should be in place)
         uint256 arrMemLoc;
         uint256 arrReconvertedMemLoc;
@@ -125,12 +127,22 @@ contract TestConversionHelpers {
             arrReconvertedMemLoc := arrReconverted
         }
         Assert.equal(arrMemLoc, arrReconvertedMemLoc, "should have same memory location after reconverting");
+    }
 
-        // Check values
+    function assertValues(uint256[] memory _data) {
+        Assert.equal(_data[0], FIRST, "should have correct index value at 0");
+        Assert.equal(_data[1], SECOND, "should have correct index value at 1");
+        Assert.equal(_data[2], THIRD, "should have correct index value at 2");
+    }
+
+    function assertValues(bytes memory _data) {
+        uint256 first;
+        uint256 second;
+        uint256 third;
         assembly {
-            first := mload(add(arrReconvertedMemLoc, 0x20))
-            second := mload(add(arrReconvertedMemLoc, 0x40))
-            third := mload(add(arrReconvertedMemLoc, 0x60))
+            first := mload(add(_data, 0x20))
+            second := mload(add(_data, 0x40))
+            third := mload(add(_data, 0x60))
         }
         Assert.equal(first, FIRST, "should have correct first value");
         Assert.equal(second, SECOND, "should have correct second value");
