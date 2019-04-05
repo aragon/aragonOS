@@ -5,11 +5,12 @@
 pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
+import "../acl/ACLSyntaxSugar.sol";
 import "../common/Autopetrified.sol";
+import "../common/ConversionHelpers.sol";
 import "../common/ReentrancyGuard.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
-import "../acl/ACLSyntaxSugar.sol";
 
 
 // Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
@@ -48,16 +49,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
             return false;
         }
 
-        // Force cast the uint256[] into a bytes array, by overwriting its length
-        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
-        // with _params and a new length, and _params becomes invalid from this point forward
-        bytes memory how;
-        uint256 byteLength = _params.length * 32;
-        assembly {
-            how := _params
-            mstore(how, byteLength)
-        }
-        return linkedKernel.hasPermission(_sender, address(this), _role, how);
+        return linkedKernel.hasPermission(
+            _sender,
+            address(this),
+            _role,
+            ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)
+        );
     }
 
     /**

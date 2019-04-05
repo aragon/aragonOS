@@ -5,11 +5,12 @@ import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
-import "../lib/misc/ERCProxy.sol";
+import "../common/ConversionHelpers.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
+import "../lib/misc/ERCProxy.sol";
 
 
 // solium-disable-next-line max-len
@@ -227,18 +228,11 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         }
     }
 
-    modifier auth(bytes32 _role, uint256[] memory params) {
-        // Force cast the uint256[] into a bytes array, by overwriting its length
-        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
-        // with params and a new length, and params becomes invalid from this point forward
-        bytes memory how;
-        uint256 byteLength = params.length * 32;
-        assembly {
-            how := params
-            mstore(how, byteLength)
-        }
-
-        require(hasPermission(msg.sender, address(this), _role, how), ERROR_AUTH_FAILED);
+    modifier auth(bytes32 _role, uint256[] memory _params) {
+        require(
+            hasPermission(msg.sender, address(this), _role, ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)),
+            ERROR_AUTH_FAILED
+        );
         _;
     }
 }
