@@ -39,7 +39,10 @@ contract('Kernel ACL', accounts => {
     })
 
     // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
-    for (const kernelType of ['Kernel', 'KernelProxy']) {
+    for (const testKernelType of ['Kernel', 'KernelProxy']) {
+        // Bind the parameterized variables locally
+        const kernelType = testKernelType
+
         context(`> ${kernelType}`, () => {
             let kernelBase, acl, kernel, kernelAddr
 
@@ -155,20 +158,20 @@ contract('Kernel ACL', accounts => {
                     )
 
                     // Allows setting code for namespace other than 0
-                    for (grantee of [child, secondChild]) {
+                    for (const grantee of [child, secondChild]) {
                         const receipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })
                         assertEvent(receipt, 'SetApp')
                     }
 
                     // Fail if setting code for namespace 0
-                    for (grantee of [child, secondChild]) {
+                    for (const grantee of [child, secondChild]) {
                         await assertRevert(async () => {
                             await kernel.setApp('0x00', APP_ID, appBase.address, { from: grantee })
                         })
                     }
 
                     // Fail if setting code for empty namespace (which becomes 0)
-                    for (grantee of [child, secondChild]) {
+                    for (const grantee of [child, secondChild]) {
                         await assertRevert(async () => {
                             await kernel.setApp(EMPTY_BYTES, APP_ID, appBase.address, { from: grantee })
                         })
@@ -181,7 +184,7 @@ contract('Kernel ACL', accounts => {
                     assertEvent(receipt, 'SetPermissionParams', 0) // should not have emitted this
 
                     // Any entity can succesfully perform action
-                    for (granteeIndex of [4, 5, 6]) {
+                    for (const granteeIndex of [4, 5, 6]) {
                         const grantee = accounts[granteeIndex]
                         assert.isTrue(await acl.hasPermission(grantee, kernelAddr, APP_MANAGER_ROLE), `account[${granteeIndex}] should have perm`)
                         const setReceipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })

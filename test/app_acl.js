@@ -46,7 +46,10 @@ contract('App ACL', accounts => {
 
   // Test the app itself and when it's behind the proxies to make sure their behaviours are the same
   const appProxyTypes = ['AppProxyUpgradeable', 'AppProxyPinned']
-  for (const appType of ['App', ...appProxyTypes]) {
+  for (const testAppType of ['App', ...appProxyTypes]) {
+    // Bind the parameterized variables locally
+    const appType = testAppType
+
     context(`> ${appType}`, () => {
       let appBase, app
 
