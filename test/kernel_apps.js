@@ -44,10 +44,7 @@ contract('Kernel apps', accounts => {
     })
 
     // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
-    for (const testKernelType of ['Kernel', 'KernelProxy']) {
-        // Bind the parameterized variables locally
-        const kernelType = testKernelType
-
+    for (const kernelType of ['Kernel', 'KernelProxy']) {
         context(`> ${kernelType}`, () => {
             let acl, kernel, kernelBase, app, appProxy
 
@@ -89,10 +86,7 @@ contract('Kernel apps', accounts => {
                 'AppProxy': 'newAppInstance',
                 'AppProxyPinned': 'newPinnedAppInstance',
             }
-            for (const testAppProxyType of Object.keys(newAppProxyMapping)) {
-                // Bind the parameterized variables locally
-                const appProxyType = testAppProxyType
-
+            for (const appProxyType of Object.keys(newAppProxyMapping)) {
                 // NOTE: we have to do really hacky workarounds here due to truffle not supporting
                 // function overloads.
                 // Especially awful is how we only get the full version of `newAppInstance()` but

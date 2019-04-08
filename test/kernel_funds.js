@@ -20,18 +20,12 @@ contract('Kernel funds', accounts => {
     aclBase = await ACL.new()
   })
 
-  for (const testKernelBaseType of [Kernel, KernelDepositableMock]) {
-    // Bind the parameterized variables locally
-    const kernelBaseType = testKernelBaseType
-
+  for (const kernelBaseType of [Kernel, KernelDepositableMock]) {
     context(`> ${kernelBaseType.contractName}`, () => {
       const onlyKernelDepositable = onlyIf(() => kernelBaseType === KernelDepositableMock)
 
       // Test both the base itself and the KernelProxy to make sure their behaviours are the same
-      for (const testKernelType of ['Base', 'Proxy']) {
-        // Bind the parameterized variables locally
-        const kernelType  = testKernelType
-
+      for (const kernelType of ['Base', 'Proxy']) {
         context(`> ${kernelType}`, () => {
           let kernelBase, kernel
 

@@ -145,10 +145,7 @@ contract('Recovery to vault', accounts => {
   })
 
   // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
-  for (const testKernelType of ['Kernel', 'KernelProxy']) {
-    // Bind the parameterized variables locally
-    const kernelType = testKernelType
-
+  for (const kernelType of ['Kernel', 'KernelProxy']) {
     context(`> ${kernelType}`, () => {
       let kernelBase, kernel
 
@@ -173,10 +170,7 @@ contract('Recovery to vault', accounts => {
       })
 
       // Test both the Vault itself and when it's behind a proxy to make sure their recovery behaviours are the same
-      for (const testVaultType of ['Vault', 'VaultProxy']) {
-        // Bind the parameterized variables locally
-        const vaultType = testVaultType
-
+      for (const vaultType of ['Vault', 'VaultProxy']) {
         const skipCoverageIfVaultProxy = test => {
           // The VaultMock isn't instrumented during coverage, but the AppProxy is, and so
           // transferring to the fallback fails when we're testing with the proxy.
@@ -213,10 +207,7 @@ contract('Recovery to vault', accounts => {
             )
           )
 
-          for (const testGroup of tokenTestGroups) {
-            // Bind the parameterized variables locally
-            const { title, tokenContract } = testGroup
-
+          for (const { title, tokenContract } of tokenTestGroups) {
             it(`kernel recovers ${title}`, async () => {
               await recoverTokens({
                 tokenContract,
@@ -281,10 +272,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault })
             ))
 
-            for (const testGroup of tokenTestGroups) {
-              // Bind the parameterized variables locally
-              const { title, tokenContract } = testGroup
-
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,
@@ -323,10 +311,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault, shouldFail: true })
             ))
 
-            for (const testGroup of tokenTestGroups) {
-              // Bind the parameterized variables locally
-              const { title, tokenContract } = testGroup
-
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`allows recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,

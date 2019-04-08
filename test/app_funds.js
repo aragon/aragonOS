@@ -43,10 +43,7 @@ contract('App funds', accounts => {
       unsafeBase: UnsafeAppStubDepositable,
     }
   ]
-  for (const appBaseGroup of appBaseGroups) {
-    // Bind the parameterized variables locally
-    const { base: appBaseType, unsafeBase: unsafeAppBaseType } = appBaseGroup
-
+  for (const { base: appBaseType, unsafeBase: unsafeAppBaseType } of appBaseGroups) {
     context(`> ${appBaseType.contractName}`, () => {
       const onlyAppStubDepositable = onlyIf(() => appBaseType === AppStubDepositable)
 

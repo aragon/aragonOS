@@ -57,9 +57,7 @@ contract('App proxy', accounts => {
     'AppProxyUpgradeable': AppProxyUpgradeable,
     'AppProxyPinned': AppProxyPinned,
   }
-  for (const testAppProxyType of Object.keys(appProxyContractMapping)) {
-    // Bind the parameterized variables locally
-    const appProxyType = testAppProxyType
+  for (const appProxyType of Object.keys(appProxyContractMapping)) {
     const appProxyContract = appProxyContractMapping[appProxyType]
 
     const onlyAppProxyUpgradeable = onlyIf(() => appProxyType === 'AppProxyUpgradeable')

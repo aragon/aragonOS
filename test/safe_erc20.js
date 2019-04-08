@@ -36,10 +36,7 @@ contract('SafeERC20', accounts => {
     },
   ]
 
-  for (const testGroup of testGroups) {
-    // Bind the parameterized variables locally
-    const { title, tokenContract } = testGroup
-
+  for (const { title, tokenContract } of testGroups) {
     context(`> ${title}`, () => {
       let tokenMock
 

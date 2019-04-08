@@ -39,10 +39,7 @@ contract('Kernel ACL', accounts => {
     })
 
     // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
-    for (const testKernelType of ['Kernel', 'KernelProxy']) {
-        // Bind the parameterized variables locally
-        const kernelType = testKernelType
-
+    for (const kernelType of ['Kernel', 'KernelProxy']) {
         context(`> ${kernelType}`, () => {
             let kernelBase, acl, kernel, kernelAddr
 
