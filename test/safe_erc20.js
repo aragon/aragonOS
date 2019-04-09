@@ -36,7 +36,7 @@ contract('SafeERC20', accounts => {
     },
   ]
 
-  for ({ title, tokenContract} of testGroups) {
+  for (const { title, tokenContract } of testGroups) {
     context(`> ${title}`, () => {
       let tokenMock
 

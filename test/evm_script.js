@@ -268,7 +268,7 @@ contract('EVM Script', accounts => {
         assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the correct return data')
       })
 
-      for (inputBytes of [
+      for (const inputBytes of [
         soliditySha3('test').slice(2, 10),                                       // bytes4
         soliditySha3('test').slice(2),                                           // bytes32
         `${soliditySha3('test').slice(2)}${soliditySha3('test2').slice(2, 10)}`, // bytes36

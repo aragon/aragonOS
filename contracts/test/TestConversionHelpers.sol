@@ -129,13 +129,13 @@ contract TestConversionHelpers {
         Assert.equal(arrMemLoc, arrReconvertedMemLoc, "should have same memory location after reconverting");
     }
 
-    function assertValues(uint256[] memory _data) {
+    function assertValues(uint256[] memory _data) public {
         Assert.equal(_data[0], FIRST, "should have correct index value at 0");
         Assert.equal(_data[1], SECOND, "should have correct index value at 1");
         Assert.equal(_data[2], THIRD, "should have correct index value at 2");
     }
 
-    function assertValues(bytes memory _data) {
+    function assertValues(bytes memory _data) public {
         uint256 first;
         uint256 second;
         uint256 third;

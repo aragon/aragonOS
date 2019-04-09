@@ -207,7 +207,7 @@ contract('Recovery to vault', accounts => {
             )
           )
 
-          for ({ title, tokenContract} of tokenTestGroups) {
+          for (const { title, tokenContract } of tokenTestGroups) {
             it(`kernel recovers ${title}`, async () => {
               await recoverTokens({
                 tokenContract,
@@ -215,9 +215,7 @@ contract('Recovery to vault', accounts => {
                 target: kernel
               })
             })
-          }
 
-          for ({ title, tokenContract} of tokenTestGroups) {
             it(`kernel reverts on failing recovery for ${title}`, async () => {
               await failingRecoverTokens({
                 tokenContract,
@@ -274,7 +272,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault })
             ))
 
-            for ({ title, tokenContract} of tokenTestGroups) {
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,
@@ -282,9 +280,7 @@ contract('Recovery to vault', accounts => {
                   vault,
                 })
               })
-            }
 
-            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
@@ -315,7 +311,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault, shouldFail: true })
             ))
 
-            for ({ title, tokenContract} of tokenTestGroups) {
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`allows recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,
@@ -323,9 +319,7 @@ contract('Recovery to vault', accounts => {
                   vault,
                 })
               })
-            }
 
-            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
