@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
+import "./TimeHelpers.sol";
 import "./UnstructuredStorage.sol";
-import "../common/TimeHelpers.sol";
 
 
 contract Initializable is TimeHelpers {
