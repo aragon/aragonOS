@@ -16,6 +16,10 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
     string private constant ERROR_EXECUTOR_UNAVAILABLE = "EVMRUN_EXECUTOR_UNAVAILABLE";
     string private constant ERROR_PROTECTED_STATE_MODIFIED = "EVMRUN_PROTECTED_STATE_MODIFIED";
 
+    /* This is manually crafted in assembly
+    string private constant ERROR_EXECUTOR_INVALID_RETURN = "EVMRUN_EXECUTOR_INVALID_RETURN";
+    */
+
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
     function getEVMScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
@@ -59,19 +63,34 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
                 revert(output, returndatasize)
             }
             default {
-                // Copy result
-                //
-                // Needs to perform an ABI decode for the expected `bytes` return type of
-                // `executor.execScript()` as solidity will automatically ABI encode the returned bytes as:
-                //    [ position of the first dynamic length return value = 0x20 (32 bytes) ]
-                //    [ output length (32 bytes) ]
-                //    [ output content (N bytes) ]
-                //
-                // Perform the ABI decode by ignoring the first 32 bytes of the return data
-                let copysize := sub(returndatasize, 0x20)
-                returndatacopy(output, 0x20, copysize)
+                switch gt(returndatasize, 0x3f)
+                case 0 {
+                    // Need at least 0x40 bytes returned for properly ABI-encoded bytes values,
+                    // revert with "EVMRUN_EXECUTOR_INVALID_RETURN"
+                    // See remix: doing a `revert("EVMRUN_EXECUTOR_INVALID_RETURN")` always results in
+                    // this memory layout
+                    mstore(output, 0x08c379a000000000000000000000000000000000000000000000000000000000)         // error identifier
+                    mstore(add(output, 0x04), 0x0000000000000000000000000000000000000000000000000000000000000020) // starting offset
+                    mstore(add(output, 0x24), 0x000000000000000000000000000000000000000000000000000000000000001e) // reason length
+                    mstore(add(output, 0x44), 0x45564d52554e5f4558454355544f525f494e56414c49445f52455455524e0000) // reason
 
-                mstore(0x40, add(output, copysize)) // free mem ptr set
+                    revert(output, 100) // 100 = 4 + 3 * 32 (error identifier + 3 words for the ABI encoded error)
+                }
+                default {
+                    // Copy result
+                    //
+                    // Needs to perform an ABI decode for the expected `bytes` return type of
+                    // `executor.execScript()` as solidity will automatically ABI encode the returned bytes as:
+                    //    [ position of the first dynamic length return value = 0x20 (32 bytes) ]
+                    //    [ output length (32 bytes) ]
+                    //    [ output content (N bytes) ]
+                    //
+                    // Perform the ABI decode by ignoring the first 32 bytes of the return data
+                    let copysize := sub(returndatasize, 0x20)
+                    returndatacopy(output, 0x20, copysize)
+
+                    mstore(0x40, add(output, copysize)) // free mem ptr set
+                }
             }
         }
 

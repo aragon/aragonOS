@@ -17,6 +17,7 @@ const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
 const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
+const EVMScriptExecutorNoReturnMock = artifacts.require('EVMScriptExecutorNoReturnMock')
 const EVMScriptExecutorRevertMock = artifacts.require('EVMScriptExecutorRevertMock')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
@@ -24,7 +25,8 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script', accounts => {
-  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg, scriptExecutorMock, scriptExecutorRevertMock
+  let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg
+  let scriptExecutorMock, scriptExecutorNoReturnMock, scriptExecutorRevertMock
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
   let ERROR_MOCK_REVERT, ERROR_EXECUTION_TARGET
@@ -38,6 +40,7 @@ contract('EVM Script', accounts => {
     aclBase = await ACL.new()
     evmScriptRegBase = await EVMScriptRegistry.new()
     scriptExecutorMock = await EVMScriptExecutorMock.new()
+    scriptExecutorNoReturnMock = await EVMScriptExecutorNoReturnMock.new()
     scriptExecutorRevertMock = await EVMScriptExecutorRevertMock.new()
     const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
     const executionTarget = await ExecutionTarget.new()
@@ -251,7 +254,7 @@ contract('EVM Script', accounts => {
 
         // Sanity check it's at spec ID 1
         const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
-        assert.equal(executorSpecId, 1, 'CallsScript should be installed as spec ID 1')
+        assert.equal(executorSpecId, 1, 'EVMScriptExecutorMock should be installed as spec ID 1')
       })
 
       it('properly returns if no bytes are returned from executor', async () => {
@@ -309,6 +312,25 @@ contract('EVM Script', accounts => {
       })
     })
 
+    context('> No return from script', () => {
+      beforeEach(async () => {
+        // Install mock executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorNoReturnMock.address, { from: boss })
+
+        // Sanity check it's at spec ID 1
+        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        assert.equal(executorSpecId, 1, 'EVMScriptExecutorNoReturnMock should be installed as spec ID 1')
+      })
+
+      it('fails if not return data is returned for ABI-encoded bytes', async () => {
+        const inputScript = createExecutorId(1)
+
+        // Should revert with invalid return
+        assertRevert(scriptRunnerApp.runScript(inputScript), reverts.EVMRUN_EXECUTOR_INVALID_RETURN)
+      })
+    })
+
     context('> Reverted script', () => {
       beforeEach(async () => {
         // Install mock reverting executor onto registry
@@ -317,7 +339,7 @@ contract('EVM Script', accounts => {
 
         // Sanity check it's at spec ID 1
         const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
-        assert.equal(executorSpecId, 1, 'CallsScript should be installed as spec ID 1')
+        assert.equal(executorSpecId, 1, 'EVMScriptExecutorRevertMock should be installed as spec ID 1')
       })
 
       it('forwards the revert data correctly', async () => {
