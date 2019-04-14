@@ -1,7 +1,19 @@
 pragma solidity 0.4.24;
 
 import "./helpers/Assert.sol";
+import "./helpers/ThrowProxy.sol";
+
 import "../common/ConversionHelpers.sol";
+
+
+contract InvalidBytesLengthConversionThrows {
+    function tryConvertLength(uint256 _badLength) public {
+        bytes memory arr = new bytes(_badLength);
+
+        // Do failing conversion
+        uint256[] memory arrUint = ConversionHelpers.dangerouslyCastBytesToUintArray(arr);
+    }
+}
 
 
 contract TestConversionHelpers {
@@ -127,6 +139,23 @@ contract TestConversionHelpers {
             arrReconvertedMemLoc := arrReconverted
         }
         Assert.equal(arrMemLoc, arrReconvertedMemLoc, "should have same memory location after reconverting");
+    }
+
+    function testBytesConversionThrowsOnInvalidLength() public {
+        InvalidBytesLengthConversionThrows thrower = new InvalidBytesLengthConversionThrows();
+        ThrowProxy throwProxy = new ThrowProxy(address(thrower));
+
+        InvalidBytesLengthConversionThrows(throwProxy).tryConvertLength(15);
+        throwProxy.assertThrows("should have reverted due to invalid length");
+
+        InvalidBytesLengthConversionThrows(throwProxy).tryConvertLength(36);
+        throwProxy.assertThrows("should have reverted due to invalid length");
+
+        InvalidBytesLengthConversionThrows(throwProxy).tryConvertLength(61);
+        throwProxy.assertThrows("should have reverted due to invalid length");
+
+        InvalidBytesLengthConversionThrows(throwProxy).tryConvertLength(128);
+        throwProxy.assertItDoesntThrow("should not have reverted as length was valid");
     }
 
     function assertValues(uint256[] memory _data) public {
