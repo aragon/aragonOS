@@ -5,18 +5,20 @@
 pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
+import "../acl/ACLSyntaxSugar.sol";
 import "../common/Autopetrified.sol";
+import "../common/ConversionHelpers.sol";
+import "../common/ReentrancyGuard.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
-import "../acl/ACLSyntaxSugar.sol";
 
 
 // Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
 // that they can never be initialized.
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
-// ACLSyntaxSugar and EVMScriptRunner are not directly used by this contract, but are included so
-// that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunner, ACLSyntaxSugar {
+// ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
+// are included so that they are automatically usable by subclassing contracts
+contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
@@ -47,16 +49,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, EVMScriptRunn
             return false;
         }
 
-        // Force cast the uint256[] into a bytes array, by overwriting its length
-        // Note that the bytes array doesn't need to be initialized as we immediately overwrite it
-        // with _params and a new length, and _params becomes invalid from this point forward
-        bytes memory how;
-        uint256 byteLength = _params.length * 32;
-        assembly {
-            how := _params
-            mstore(how, byteLength)
-        }
-        return linkedKernel.hasPermission(_sender, address(this), _role, how);
+        return linkedKernel.hasPermission(
+            _sender,
+            address(this),
+            _role,
+            ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)
+        );
     }
 
     /**

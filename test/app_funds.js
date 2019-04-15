@@ -33,7 +33,7 @@ contract('App funds', accounts => {
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
   })
 
-  const appBases = [
+  const appBaseGroups = [
     {
       base: AppStub,
       unsafeBase: UnsafeAppStub,
@@ -43,7 +43,7 @@ contract('App funds', accounts => {
       unsafeBase: UnsafeAppStubDepositable,
     }
   ]
-  for ({ base: appBaseType, unsafeBase: unsafeAppBaseType } of appBases) {
+  for (const { base: appBaseType, unsafeBase: unsafeAppBaseType } of appBaseGroups) {
     context(`> ${appBaseType.contractName}`, () => {
       const onlyAppStubDepositable = onlyIf(() => appBaseType === AppStubDepositable)
 

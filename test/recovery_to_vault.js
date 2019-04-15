@@ -23,6 +23,7 @@ const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 const getEvent = (receipt, event, arg) => { return receipt.logs.filter(l => l.event == event)[0].args[arg] }
 
 const APP_ID = hash('stub.aragonpm.test')
+const EMPTY_BYTES = '0x'
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
 contract('Recovery to vault', accounts => {
@@ -190,7 +191,7 @@ contract('Recovery to vault', accounts => {
               vault = vaultBase
             } else if (vaultType === 'VaultProxy') {
               // This doesn't automatically setup the recovery address
-              const receipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', false)
+              const receipt = await kernel.newAppInstance(vaultId, vaultBase.address, EMPTY_BYTES, false)
               const vaultProxyAddress = getEvent(receipt, 'NewAppProxy', 'proxy')
               vault = VaultMock.at(vaultProxyAddress)
             }
@@ -206,7 +207,7 @@ contract('Recovery to vault', accounts => {
             )
           )
 
-          for ({ title, tokenContract} of tokenTestGroups) {
+          for (const { title, tokenContract } of tokenTestGroups) {
             it(`kernel recovers ${title}`, async () => {
               await recoverTokens({
                 tokenContract,
@@ -214,9 +215,7 @@ contract('Recovery to vault', accounts => {
                 target: kernel
               })
             })
-          }
 
-          for ({ title, tokenContract} of tokenTestGroups) {
             it(`kernel reverts on failing recovery for ${title}`, async () => {
               await failingRecoverTokens({
                 tokenContract,
@@ -249,7 +248,7 @@ contract('Recovery to vault', accounts => {
           context('> Proxied app with kernel', () => {
             beforeEach(async () => {
               // Setup app
-              const receipt = await kernel.newAppInstance(APP_ID, appBase.address, '0x', false)
+              const receipt = await kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false)
               const appProxy = getEvent(receipt, 'NewAppProxy', 'proxy')
               const app = AppStubDepositable.at(appProxy)
               await app.enableDeposits()
@@ -265,7 +264,7 @@ contract('Recovery to vault', accounts => {
 
             it('cannot send ETH with data to proxy', async () => {
               await assertRevert(async () => {
-                await target.sendTransaction({ value: 1, data: '0x1', gas: SEND_ETH_GAS })
+                await target.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS })
               })
             })
 
@@ -273,7 +272,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault })
             ))
 
-            for ({ title, tokenContract} of tokenTestGroups) {
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,
@@ -281,9 +280,7 @@ contract('Recovery to vault', accounts => {
                   vault,
                 })
               })
-            }
 
-            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
@@ -301,7 +298,7 @@ contract('Recovery to vault', accounts => {
           context('> Conditional fund recovery', () => {
             beforeEach(async () => {
               // Setup app with conditional recovery code
-              const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address, '0x', false)
+              const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address, EMPTY_BYTES, false)
               const appProxy = getEvent(receipt, 'NewAppProxy', 'proxy')
               const app = AppStubConditionalRecovery.at(appProxy)
               await app.initialize()
@@ -314,7 +311,7 @@ contract('Recovery to vault', accounts => {
               await recoverEth({ target, vault, shouldFail: true })
             ))
 
-            for ({ title, tokenContract} of tokenTestGroups) {
+            for (const { title, tokenContract } of tokenTestGroups) {
               it(`allows recovers ${title}`, async () => {
                 await recoverTokens({
                   tokenContract,
@@ -322,9 +319,7 @@ contract('Recovery to vault', accounts => {
                   vault,
                 })
               })
-            }
 
-            for ({ title, tokenContract} of tokenTestGroups) {
               it(`reverts on failing recovery for ${title}`, async () => {
                 await failingRecoverTokens({
                   tokenContract,
@@ -358,7 +353,7 @@ contract('Recovery to vault', accounts => {
       // Create a new vault and set that vault as the default vault in the kernel
       const vaultId = hash('vault.aragonpm.test')
       const vaultBase = await VaultMock.new()
-      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, '0x', true)
+      const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, EMPTY_BYTES, true)
       const vaultAddress = getEvent(vaultReceipt, 'NewAppProxy', 'proxy')
       vault = VaultMock.at(vaultAddress)
       await vault.initialize()

@@ -13,6 +13,9 @@ const KernelProxy = artifacts.require('KernelProxy')
 const AppStub = artifacts.require('AppStub')
 const APP_ID = hash('stub.aragonpm.test')
 
+const EMPTY_BYTES = '0x'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
 contract('Kernel ACL', accounts => {
     let aclBase, appBase
     let APP_MANAGER_ROLE, APP_BASES_NAMESPACE, DEFAULT_ACL_APP_ID, ANY_ENTITY
@@ -70,7 +73,7 @@ contract('Kernel ACL', accounts => {
             it('cannot initialize proxied ACL outside of Kernel', async () => {
                 // Set up ACL proxy
                 await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot)
-                const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address, '0x', false)
+                const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address, EMPTY_BYTES, false)
                 const newAcl = ACL.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
 
                 return assertRevert(async () => {
@@ -152,15 +155,22 @@ contract('Kernel ACL', accounts => {
                     )
 
                     // Allows setting code for namespace other than 0
-                    for (grantee of [child, secondChild]) {
-                        const receipt = await kernel.setApp('0x121212', '0x0', appBase.address, { from: grantee })
+                    for (const grantee of [child, secondChild]) {
+                        const receipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })
                         assertEvent(receipt, 'SetApp')
                     }
 
                     // Fail if setting code for namespace 0
-                    for (grantee of [child, secondChild]) {
+                    for (const grantee of [child, secondChild]) {
                         await assertRevert(async () => {
-                            await kernel.setApp('0x0', APP_ID, appBase.address, { from: grantee })
+                            await kernel.setApp('0x00', APP_ID, appBase.address, { from: grantee })
+                        })
+                    }
+
+                    // Fail if setting code for empty namespace (which becomes 0)
+                    for (const grantee of [child, secondChild]) {
+                        await assertRevert(async () => {
+                            await kernel.setApp(EMPTY_BYTES, APP_ID, appBase.address, { from: grantee })
                         })
                     }
                 })
@@ -171,7 +181,7 @@ contract('Kernel ACL', accounts => {
                     assertEvent(receipt, 'SetPermissionParams', 0) // should not have emitted this
 
                     // Any entity can succesfully perform action
-                    for (granteeIndex of [4, 5, 6]) {
+                    for (const granteeIndex of [4, 5, 6]) {
                         const grantee = accounts[granteeIndex]
                         assert.isTrue(await acl.hasPermission(grantee, kernelAddr, APP_MANAGER_ROLE), `account[${granteeIndex}] should have perm`)
                         const setReceipt = await kernel.setApp('0x121212', APP_ID, appBase.address, { from: grantee })
@@ -249,7 +259,7 @@ contract('Kernel ACL', accounts => {
 
                     it('removes manager', async () => {
                         const noManager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
-                        assert.equal('0x0000000000000000000000000000000000000000', noManager, 'manager should have been removed')
+                        assert.equal(ZERO_ADDR, noManager, 'manager should have been removed')
                     })
 
                     it('old manager lost power', async () => {
