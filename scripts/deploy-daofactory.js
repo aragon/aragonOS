@@ -4,24 +4,45 @@ const globalArtifacts = this.artifacts // Not injected unless called directly vi
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
+const defaultKernelBase = process.env.KERNEL_BASE
+const defaultAclBaseAddress = process.env.ACL_BASE
+
 module.exports = async (
   truffleExecCallback,
   {
     artifacts = globalArtifacts,
+    kernelBaseAddress = defaultKernelBase,
+    aclBaseAddress = defaultAclBaseAddress,
     withEvmScriptRegistryFactory = true,
     verbose = true
   } = {}
 ) => {
+  const log = (...args) => {
+    if (verbose) { console.log(...args) }
+  }
+
   const ACL = artifacts.require('ACL')
   const Kernel = artifacts.require('Kernel')
 
   const DAOFactory = artifacts.require('DAOFactory')
 
-  const kernelBase = await Kernel.new(true) // immediately petrify
-  await logDeploy(kernelBase, { verbose })
+  let kernelBase
+  if (kernelBaseAddress) {
+    kernelBase = Kernel.at(kernelBaseAddress)
+    log(`Skipping deploying new Kernel base, using provided address: ${kernelBaseAddress}`)
+  } else {
+    kernelBase = await Kernel.new(true) // immediately petrify
+    await logDeploy(kernelBase, { verbose })
+  }
 
-  const aclBase = await ACL.new()
-  await logDeploy(aclBase, { verbose })
+  let aclBase
+  if (aclBaseAddress) {
+    aclBase = ACL.at(aclBaseAddress)
+    log(`Skipping deploying new ACL base, using provided address: ${aclBaseAddress}`)
+  } else {
+    aclBase = await ACL.new()
+    await logDeploy(aclBase, { verbose })
+  }
 
   let evmScriptRegistryFactory
   if (withEvmScriptRegistryFactory) {
