@@ -69,6 +69,9 @@ contract TestDelegateProxy is DelegateProxy {
 
     // keep as last test as it will kill this contract
     function testDieIfMinReturn0() public {
+        Assert.isTrue(true, ''); // Make at least one assertion to satisfy the runner
+
         delegatedFwd(target, target.die.selector.toBytes());
+        Assert.fail('should be dead');
     }
 }
