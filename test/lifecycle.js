@@ -1,5 +1,6 @@
 const { assertRevert } = require('./helpers/assertThrow')
 const { getBlockNumber } = require('./helpers/web3')
+const reverts = require('./helpers/revertStrings')
 
 // Mocks
 const LifecycleMock = artifacts.require('LifecycleMock')
@@ -35,6 +36,14 @@ contract('Lifecycle', accounts => {
     it('has correct initialization block', async () => {
       assert.equal(await lifecycle.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
     })
+
+    it('cannot be re-initialized', async () => {
+      assertRevert(lifecycle.initializeMock(), reverts.INIT_ALREADY_INITIALIZED)
+    })
+
+    it('cannot be petrified', async () => {
+      assertRevert(lifecycle.petrifyMock(), reverts.INIT_ALREADY_INITIALIZED)
+    })
   })
 
   context('> Petrified', () => {
@@ -48,6 +57,10 @@ contract('Lifecycle', accounts => {
 
     it('is petrified', async () => {
       assert.isTrue(await lifecycle.isPetrified(), 'should be petrified')
+    })
+
+    it('cannot be petrified again', async () => {
+      assertRevert(lifecycle.petrifyMock(), reverts.INIT_ALREADY_INITIALIZED)
     })
 
     it('has initialization block in the future', async () => {
