@@ -160,16 +160,35 @@ contract('EVM Script', accounts => {
         await assertRevert(evmScriptReg.enableScriptExecutor(installedExecutorId, { from: boss }), reverts.EVMREG_EXECUTOR_ENABLED)
       })
 
-      it('fails to enable a non-existent executor', async () => {
-        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
-        await assertRevert(evmScriptReg.enableScriptExecutor(installedExecutorId + 1, { from: boss }), reverts.EVMREG_INEXISTENT_EXECUTOR)
-      })
-
       it('fails to disable an already disabled executor', async () => {
         await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
         await evmScriptReg.disableScriptExecutor(installedExecutorId, { from: boss })
 
         await assertRevert(evmScriptReg.disableScriptExecutor(installedExecutorId, { from: boss }), reverts.EVMREG_EXECUTOR_DISABLED)
+      })
+    })
+
+    context('> Non-existing executor', () => {
+      it('fails to enable a non-existent executor', async () => {
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
+
+        // 0 is reserved
+        await assertRevert(evmScriptReg.enableScriptExecutor(0, { from: boss }), reverts.EVMREG_INEXISTENT_EXECUTOR)
+
+        // No executors should be installed yet
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDR, 'No executors should be installed yet')
+        await assertRevert(evmScriptReg.enableScriptExecutor(1, { from: boss }), reverts.EVMREG_INEXISTENT_EXECUTOR)
+      })
+
+      it('fails to disable a non-existent executor', async () => {
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
+
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDR, 'No executors should be installed yet')
+        await assertRevert(
+          evmScriptReg.disableScriptExecutor(1, { from: boss }),
+          // On disable only an enable check is performed as it doubles as an existence check
+          reverts.EVMREG_EXECUTOR_DISABLED
+        )
       })
     })
   })
