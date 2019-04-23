@@ -27,7 +27,7 @@ const HOOKS_MAP = {
   afterAll: 'afterAll',
 }
 
-const processResult = txReceipt => {
+const processResult = (txReceipt, mustAssert) => {
   if (!txReceipt || !txReceipt.receipt) {
     return
   }
@@ -37,6 +37,9 @@ const processResult = txReceipt => {
       throw new Error(log.args.message)
     }
   })
+  if (mustAssert && !decodedLogs.length) {
+    throw new Error('No assertions made')
+  }
 }
 
 /*
@@ -81,13 +84,15 @@ function runSolidityTest(c, mochaContext) {
         if (interface.type === 'function') {
           if (['beforeAll', 'beforeEach', 'afterEach', 'afterAll'].includes(interface.name)) {
             // Set up hooks
-            global[HOOKS_MAP[interface.name]](() => {
-              return deployed[interface.name]().then(processResult)
-            })
+            global[HOOKS_MAP[interface.name]](() =>
+              deployed[interface.name]()
+                .then(receipt => processResult(receipt, false))
+            )
           } else if (interface.name.startsWith('test')) {
-            it(interface.name, () => {
-              return deployed[interface.name]().then(processResult)
-            })
+            it(interface.name, () =>
+              deployed[interface.name]()
+                .then(receipt => processResult(receipt, true))
+            )
           }
         }
       })
