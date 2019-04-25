@@ -217,6 +217,40 @@ contract('Kernel ACL', accounts => {
                     })
                 })
 
+                it('can revoke all permissions on a role', async () => {
+                    const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt, 'SetPermission')
+                    const receipt2 = await acl.grantPermission(accounts[3], kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt2, 'SetPermission')
+                    const revokeAllReceipt = await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(revokeAllReceipt, 'RevokeAllPermissions')
+                    assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isFalse(await acl.hasPermission(accounts[3], kernelAddr, APP_MANAGER_ROLE))
+                })
+
+                it('can revoke all permissions on a role for the specified app only', async () => {
+                    const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt, 'SetPermission')
+                    const createReceipt = await acl.createPermission(child, kernelAddr, '0x1234', child, { from: permissionsRoot })
+                    assertEvent(createReceipt, 'SetPermission')
+                    assertEvent(createReceipt, 'ChangePermissionManager')
+                    const revokeAllReceipt = await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(revokeAllReceipt, 'RevokeAllPermissions')
+                    assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    assert.isTrue(await acl.hasPermission(child, kernelAddr, '0x1234'))
+                })
+
+                it('can reassign a role with a new era', async () => {
+                    const receipt = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt, 'SetPermission')
+                    const revokeAllReceipt = await acl.revokeAll(kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(revokeAllReceipt, 'RevokeAllPermissions')
+                    assert.isFalse(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                    const receipt2 = await acl.grantPermission(child, kernelAddr, APP_MANAGER_ROLE, { from: granted })
+                    assertEvent(receipt2, 'SetPermission')
+                    assert.isTrue(await acl.hasPermission(child, kernelAddr, APP_MANAGER_ROLE))
+                })
+
                 context('> transferring managership', () => {
                     const newManager = accounts[3]
                     assert.notEqual(newManager, granted, 'newManager should not be the same as granted')

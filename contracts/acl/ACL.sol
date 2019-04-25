@@ -6,11 +6,14 @@ import "../common/TimeHelpers.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
+import "../lib/math/SafeMath.sol";
 
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
+    using SafeMath for uint256;
+
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     */
@@ -55,9 +58,13 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     // Who is the manager of a permission
     mapping (bytes32 => address) internal permissionManager;
 
+    // Eras for the different roles
+    mapping (bytes32 => uint256) internal roleEras;
+
     event SetPermission(address indexed entity, address indexed app, bytes32 indexed role, bool allowed);
     event SetPermissionParams(address indexed entity, address indexed app, bytes32 indexed role, bytes32 paramsHash);
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
+    event RevokeAllPermissions(address indexed app, bytes32 indexed role);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
         require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
@@ -144,6 +151,21 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         onlyPermissionManager(_app, _role)
     {
         _setPermission(_entity, _app, _role, NO_PERMISSION);
+    }
+
+    /**
+    * @dev Revokes all permissions for a specified role if allowed. This requires `msg.sender` to be the the permission manager
+    * @notice Revoke from all the ability to perform actions requiring `_role` on `_app`
+    * @param _app Address of the app in which the role will be revoked
+    * @param _role Identifier for the group of actions in app being revoked
+    */
+    function revokeAll(address _app, bytes32 _role)
+        external
+        onlyPermissionManager(_app, _role)
+    {
+        bytes32 hash = roleHash(_app, _role);
+        roleEras[hash] = roleEras[hash].add(1);
+        emit RevokeAllPermissions(_app, _role);
     }
 
     /**
@@ -461,7 +483,14 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return keccak256(abi.encodePacked("ROLE", _where, _what));
     }
 
-    function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+    function permissionHash(address _who, address _where, bytes32 _what) internal view returns (bytes32) {
+        uint256 roleEra = roleEras[roleHash(_where, _what)];
+
+        // Backward compatibility for DAOs with earlier versions of the ACL
+        if (roleEra == 0) {
+            return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
+        }
+
+        return keccak256(abi.encodePacked("PERMISSION", roleEra, _who, _where, _what));
     }
 }
