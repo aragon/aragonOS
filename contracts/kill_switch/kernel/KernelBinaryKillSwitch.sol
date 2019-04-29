@@ -7,10 +7,10 @@ import "../base/BinaryKillSwitch.sol";
 contract KernelBinaryKillSwitch is KernelKillSwitch, BinaryKillSwitch {
     constructor(bool _shouldPetrify) Kernel(_shouldPetrify) public {}
 
-    function setContractIgnore(address _contract, bool _ignored)
+    function setContractAction(address _contract, ContractAction _action)
         external
-        auth(SET_IGNORED_CONTRACTS_ROLE, arr(_contract, msg.sender))
+        auth(SET_CONTRACT_ACTION_ROLE, arr(_contract, msg.sender))
     {
-        _setContractIgnore(_contract, _ignored);
+        _setContractAction(_contract, _action);
     }
 }

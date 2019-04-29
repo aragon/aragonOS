@@ -13,10 +13,6 @@ contract SeveritiesKillSwitch is KillSwitch {
 
     function setLowestAllowedSeverity(address _contract, IssuesRegistry.Severity _severity) external;
 
-    function isContractIgnored(address _contract) public view returns (bool) {
-        return lowestAllowedSeverityByContract[_contract] == IssuesRegistry.Severity.None;
-    }
-
     function isSeverityIgnored(address _contract, IssuesRegistry.Severity _severity) public view returns (bool) {
         IssuesRegistry.Severity lowestAllowedSeverity = lowestAllowedSeverityByContract[_contract];
         return lowestAllowedSeverity >= _severity;

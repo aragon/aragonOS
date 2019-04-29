@@ -5,10 +5,10 @@ import "../base/BinaryKillSwitch.sol";
 
 
 contract AppBinaryKillSwitch is AppKillSwitch, BinaryKillSwitch {
-    function setContractIgnore(address _contract, bool _ignored)
+    function setContractAction(address _contract, ContractAction _action)
         external
-        authP(SET_IGNORED_CONTRACTS_ROLE, arr(_baseApp(), msg.sender))
+        authP(SET_CONTRACT_ACTION_ROLE, arr(_baseApp(), msg.sender))
     {
-        _setContractIgnore(_contract, _ignored);
+        _setContractAction(_contract, _action);
     }
 }

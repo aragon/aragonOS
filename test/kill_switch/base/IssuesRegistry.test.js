@@ -1,14 +1,12 @@
+const { SEVERITY } = require('../helpers/enums')
 const { assertRevert } = require('../../helpers/assertThrow')
+const { getEventArgument } = require('../helpers/events')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-
-const SEVERITY = { NONE: 0, LOW: 1, MID: 2, HIGH: 3, CRITICAL: 4 }
-
-const getEventArgument = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
 
 contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
   let kernelBase, aclBase, issuesRegistryBase, registryFactory, dao, acl, issuesRegistry
