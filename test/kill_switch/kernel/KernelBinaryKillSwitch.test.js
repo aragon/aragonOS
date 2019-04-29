@@ -1,4 +1,6 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const { ACTION, SEVERITY } = require('../helpers/enums')
+const { getEventArgument } = require('../helpers/events')
 const itBehavesLikeBinaryKillSwitch = require('../base/itBehavesLikeBinaryKillSwitch')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
@@ -9,10 +11,6 @@ const RegularKernel = artifacts.require('Kernel')
 const KernelKillSwitch = artifacts.require('KernelBinaryKillSwitch')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-
-const SEVERITY = { NONE: 0, LOW: 1, MID: 2, HIGH: 3, CRITICAL: 4 }
-
-const getEventArgument = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
 
 contract('KernelBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   let killSwitchedKernelBase, regularKernelBase, aclBase, appBase, issuesRegistryBase, registryFactory
@@ -53,8 +51,8 @@ contract('KernelBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) =
 
     const APP_MANAGER_ROLE = await killSwitchedKernelBase.APP_MANAGER_ROLE()
     await killSwitchedAcl.createPermission(root, killSwitchedDao.address, APP_MANAGER_ROLE, root, { from: root })
-    const SET_IGNORED_CONTRACTS_ROLE = await killSwitchedDao.SET_IGNORED_CONTRACTS_ROLE()
-    await killSwitchedAcl.createPermission(owner, killSwitchedDao.address, SET_IGNORED_CONTRACTS_ROLE, root, { from: root })
+    const SET_CONTRACT_ACTION_ROLE = await killSwitchedDao.SET_CONTRACT_ACTION_ROLE()
+    await killSwitchedAcl.createPermission(owner, killSwitchedDao.address, SET_CONTRACT_ACTION_ROLE, root, { from: root })
   })
 
   beforeEach('create sample app from DAO with kernel binary kill switch', async () => {
@@ -84,18 +82,30 @@ contract('KernelBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) =
       })
     }
 
-    context('when there is no bug registered', () => {
-      context('when the contract being called is not ignored', () => {
+    const itExecutesTheCallWhenNotDenied = () => {
+      context('when the contract being called is checked', () => {
         itExecutesTheCall()
       })
 
       context('when the contract being called is ignored', () => {
         beforeEach('ignore calling contract', async () => {
-          await killSwitchedDao.setContractIgnore(appBase.address, true, { from: owner })
+          await killSwitchedDao.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
         })
 
         itExecutesTheCall()
       })
+
+      context('when the contract being called is denied', () => {
+        beforeEach('deny calling contract', async () => {
+          await killSwitchedDao.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+        })
+
+        itDoesNotExecuteTheCall()
+      })
+    }
+
+    context('when there is no bug registered', () => {
+      itExecutesTheCallWhenNotDenied()
     })
 
     context('when there is a bug registered', () => {
@@ -104,16 +114,24 @@ contract('KernelBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) =
       })
 
       context('when the bug was not fixed yet', () => {
-        context('when the contract being called is not ignored', () => {
+        context('when the contract being called is checked', () => {
           itDoesNotExecuteTheCall()
         })
 
         context('when the contract being called is ignored', () => {
           beforeEach('ignore calling contract', async () => {
-            await killSwitchedDao.setContractIgnore(appBase.address, true, { from: owner })
+            await killSwitchedDao.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
           })
 
           itExecutesTheCall()
+        })
+
+        context('when the contract being called is denied', () => {
+          beforeEach('deny calling contract', async () => {
+            await killSwitchedDao.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+          })
+
+          itDoesNotExecuteTheCall()
         })
       })
 
@@ -122,17 +140,7 @@ contract('KernelBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) =
           await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
         })
 
-        context('when the contract being called is not ignored', () => {
-          itExecutesTheCall()
-        })
-
-        context('when the contract being called is ignored', () => {
-          beforeEach('ignore calling contract', async () => {
-            await killSwitchedDao.setContractIgnore(appBase.address, true, { from: owner })
-          })
-
-          itExecutesTheCall()
-        })
+        itExecutesTheCallWhenNotDenied()
       })
     })
   })

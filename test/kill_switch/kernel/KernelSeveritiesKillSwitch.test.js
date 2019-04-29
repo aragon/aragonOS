@@ -1,4 +1,6 @@
+const { ACTION, SEVERITY } = require('../helpers/enums')
 const { assertRevert } = require('../../helpers/assertThrow')
+const { getEventArgument } = require('../helpers/events')
 const itBehavesLikeSeveritiesKillSwitch = require('../base/itBehavesLikeSeveritiesKillSwitch')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
@@ -9,10 +11,6 @@ const RegularKernel = artifacts.require('Kernel')
 const KernelKillSwitch = artifacts.require('KernelSeveritiesKillSwitch')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-
-const SEVERITY = { NONE: 0, LOW: 1, MID: 2, HIGH: 3, CRITICAL: 4 }
-
-const getEventArgument = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
 
 contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   let killSwitchedKernelBase, regularKernelBase, aclBase, appBase, issuesRegistryBase, registryFactory
@@ -53,6 +51,8 @@ contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone
 
     const APP_MANAGER_ROLE = await killSwitchedKernelBase.APP_MANAGER_ROLE()
     await killSwitchedAcl.createPermission(root, killSwitchedDao.address, APP_MANAGER_ROLE, root, { from: root })
+    const SET_CONTRACT_ACTION_ROLE = await killSwitchedDao.SET_CONTRACT_ACTION_ROLE()
+    await killSwitchedAcl.createPermission(owner, killSwitchedDao.address, SET_CONTRACT_ACTION_ROLE, root, { from: root })
     const SET_LOWEST_ALLOWED_SEVERITY_ROLE = await killSwitchedDao.SET_LOWEST_ALLOWED_SEVERITY_ROLE()
     await killSwitchedAcl.createPermission(owner, killSwitchedDao.address, SET_LOWEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
   })
@@ -105,7 +105,7 @@ contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone
 
       context('when the bug was not fixed yet', () => {
         context('when there is no lowest allowed severity set for the contract being called', () => {
-          itExecutesTheCall()
+          itDoesNotExecuteTheCall()
         })
 
         context('when there is a lowest allowed severity set for the contract being called', () => {
