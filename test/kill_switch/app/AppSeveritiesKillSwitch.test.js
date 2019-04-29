@@ -1,4 +1,5 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const itBehavesLikeSeveritiesKillSwitch = require('../base/itBehavesLikeSeveritiesKillSwitch')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const KillSwitchedApp = artifacts.require('AppKillSwitchedAppMock')
@@ -57,76 +58,19 @@ contract('AppSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone]) 
     await app.initialize(appKillSwitch.address, owner)
   })
 
-  describe('when the function being called is not tagged', () => {
-    const itExecutesTheCall = () => {
-      it('executes the call', async () => {
-        assert.equal(await app.read(), 42)
-      })
-    }
-
-    context('when there is no bug registered', () => {
-      context('when there is no lowest allowed severity set for the contract being called', () => {
-        itExecutesTheCall()
-      })
-
-      context('when there is a lowest allowed severity set for the contract being called', () => {
-        beforeEach('set lowest allowed severity', async () => {
-          await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-        })
-
-        itExecutesTheCall()
-      })
+  describe('binary kill switch', function () {
+    beforeEach('bind kill switch', function () {
+      this.killSwitch = appKillSwitch
     })
-    
-    context('when there is a bug registered', () => {
-      beforeEach('register a bug', async () => {
-        await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
-      })
 
-      context('when there is no lowest allowed severity set for the contract being called', () => {
-        itExecutesTheCall()
-      })
-
-      context('when there is a lowest allowed severity set for the contract being called', () => {
-        context('when there lowest allowed severity is under the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-          })
-  
-          itExecutesTheCall()
-        })
-
-        context('when there lowest allowed severity is equal to the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
-          })
-
-          itExecutesTheCall()
-        })
-
-        context('when there lowest allowed severity is greater than the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-          })
-
-          itExecutesTheCall()
-        })
-      })
-    })
+    itBehavesLikeSeveritiesKillSwitch(owner, anyone)
   })
 
-  describe('when the function being called is tagged', () => {
-    describe('when the function being called is always evaluated', () => {
-      const itExecutesTheCall = (from = owner) => {
+  describe('integration', () => {
+    context('when the function being called is not tagged', () => {
+      const itExecutesTheCall = () => {
         it('executes the call', async () => {
-          await app.write(10, { from })
-          assert.equal(await app.read(), 10)
-        })
-      }
-
-      const itDoesNotExecuteTheCall = (from = owner) => {
-        it('does not execute the call', async () => {
-          await assertRevert(app.write(10, { from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          assert.equal(await app.read(), 42)
         })
       }
 
@@ -149,234 +93,285 @@ contract('AppSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone]) 
           await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
         })
 
-        context('when the bug was not fixed yet', () => {
-          context('when there is no lowest allowed severity set for the contract being called', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
-          })
-
-          context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when there lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itDoesNotExecuteTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itDoesNotExecuteTheCall(anyone)
-              })
-            })
-
-            context('when there lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itDoesNotExecuteTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itDoesNotExecuteTheCall(anyone)
-              })
-            })
-
-            context('when there lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
-            })
-          })
+        context('when there is no lowest allowed severity set for the contract being called', () => {
+          itExecutesTheCall()
         })
 
-        context('when the bug was already fixed', () => {
-          beforeEach('fix bug', async () => {
-            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+        context('when there is a lowest allowed severity set for the contract being called', () => {
+          context('when the lowest allowed severity is under the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+            })
+
+            itExecutesTheCall()
           })
 
-          context('when there is no lowest allowed severity set for the contract being called', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
+          context('when the lowest allowed severity is equal to the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
             })
 
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
+            itExecutesTheCall()
           })
 
-          context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when there lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
+          context('when the lowest allowed severity is greater than the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
             })
 
-            context('when there lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
-            })
-
-            context('when there lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
-            })
+            itExecutesTheCall()
           })
         })
       })
     })
 
-    describe('when the function being called is evaluated only when the sender is not the owner', () => {
-      const itExecutesTheCall = (from = owner) => {
-        it('executes the call', async () => {
-          await app.reset({ from })
-          assert.equal(await app.read(), 0)
-        })
-      }
+    context('when the function being called is tagged', () => {
+      describe('when the function being called is always evaluated', () => {
+        const itExecutesTheCall = (from = owner) => {
+          it('executes the call', async () => {
+            await app.write(10, { from })
+            assert.equal(await app.read(), 10)
+          })
+        }
 
-      const itDoesNotExecuteTheCall = (from = owner) => {
-        it('does not execute the call', async () => {
-          await assertRevert(app.reset({ from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
-        })
-      }
+        const itDoesNotExecuteTheCall = (from = owner) => {
+          it('does not execute the call', async () => {
+            await assertRevert(app.write(10, { from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          })
+        }
 
-      context('when there is no bug registered', () => {
-        context('when there is no lowest allowed severity set for the contract being called', () => {
-          itExecutesTheCall()
-        })
-
-        context('when there is a lowest allowed severity set for the contract being called', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+        context('when there is no bug registered', () => {
+          context('when there is no lowest allowed severity set for the contract being called', () => {
+            itExecutesTheCall()
           })
 
-          itExecutesTheCall()
+          context('when there is a lowest allowed severity set for the contract being called', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
+        })
+
+        context('when there is a bug registered', () => {
+          beforeEach('register a bug', async () => {
+            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
+          })
+
+          context('when the bug was not fixed yet', () => {
+            context('when there is no lowest allowed severity set for the contract being called', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
+            })
+
+            context('when there is a lowest allowed severity set for the contract being called', () => {
+              context('when the lowest allowed severity is under the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itDoesNotExecuteTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itDoesNotExecuteTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is equal to the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is greater than the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+            })
+          })
+
+          context('when the bug was already fixed', () => {
+            beforeEach('fix bug', async () => {
+              await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+            })
+
+            context('when there is no lowest allowed severity set for the contract being called', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
+            })
+
+            context('when there is a lowest allowed severity set for the contract being called', () => {
+              context('when the lowest allowed severity is under the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is equal to the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is greater than the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+            })
+          })
         })
       })
 
-      context('when there is a bug registered', () => {
-        beforeEach('register a bug', async () => {
-          await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
-        })
+      describe('when the function being called is evaluated only when the sender is not the owner', () => {
+        const itExecutesTheCall = (from = owner) => {
+          it('executes the call', async () => {
+            await app.reset({ from })
+            assert.equal(await app.read(), 0)
+          })
+        }
 
-        context('when the bug was not fixed yet', () => {
+        const itDoesNotExecuteTheCall = (from = owner) => {
+          it('does not execute the call', async () => {
+            await assertRevert(app.reset({ from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          })
+        }
+
+        context('when there is no bug registered', () => {
           context('when there is no lowest allowed severity set for the contract being called', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
+            itExecutesTheCall()
           })
 
           context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when there lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itDoesNotExecuteTheCall(anyone)
-              })
+            beforeEach('set lowest allowed severity', async () => {
+              await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
             })
 
-            context('when there lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itDoesNotExecuteTheCall(anyone)
-              })
-            })
-
-            context('when there lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-              })
-
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
-            })
+            itExecutesTheCall()
           })
         })
 
-        context('when the bug was already fixed', () => {
-          beforeEach('fix bug', async () => {
-            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+        context('when there is a bug registered', () => {
+          beforeEach('register a bug', async () => {
+            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
           })
 
-          context('when there is no lowest allowed severity set for the contract being called', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
+          context('when the bug was not fixed yet', () => {
+            context('when there is no lowest allowed severity set for the contract being called', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
             })
 
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
+            context('when there is a lowest allowed severity set for the contract being called', () => {
+              context('when the lowest allowed severity is under the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itDoesNotExecuteTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is equal to the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
+
+              context('when the lowest allowed severity is greater than the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
+              })
             })
           })
 
-          context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when there lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-              })
+          context('when the bug was already fixed', () => {
+            beforeEach('fix bug', async () => {
+              await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+            })
 
+            context('when there is no lowest allowed severity set for the contract being called', () => {
               context('when the sender is the owner', () => {
                 itExecutesTheCall(owner)
               })
@@ -386,31 +381,47 @@ contract('AppSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone]) 
               })
             })
 
-            context('when there lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+            context('when there is a lowest allowed severity set for the contract being called', () => {
+              context('when the lowest allowed severity is under the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
               })
 
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
+              context('when the lowest allowed severity is equal to the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+                })
+
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
+
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
               })
 
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
-              })
-            })
+              context('when the lowest allowed severity is greater than the reported bug severity', () => {
+                beforeEach('set lowest allowed severity', async () => {
+                  await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+                })
 
-            context('when there lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await appKillSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-              })
+                context('when the sender is the owner', () => {
+                  itExecutesTheCall(owner)
+                })
 
-              context('when the sender is the owner', () => {
-                itExecutesTheCall(owner)
-              })
-
-              context('when the sender is not the owner', () => {
-                itExecutesTheCall(anyone)
+                context('when the sender is not the owner', () => {
+                  itExecutesTheCall(anyone)
+                })
               })
             })
           })

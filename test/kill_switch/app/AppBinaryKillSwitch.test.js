@@ -1,4 +1,5 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const itBehavesLikeBinaryKillSwitch = require('../base/itBehavesLikeBinaryKillSwitch')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const KillSwitchedApp = artifacts.require('AppKillSwitchedAppMock')
@@ -57,58 +58,19 @@ contract('AppBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
     await app.initialize(appKillSwitch.address, owner)
   })
 
-  context('when the function being called is not tagged', () => {
-    const itExecutesTheCall = () => {
-      it('executes the call', async () => {
-        assert.equal(await app.read(), 42)
-      })
-    }
-
-    context('when there is no bug registered', () => {
-      context('when the contract being called is not ignored', () => {
-        itExecutesTheCall()
-      })
-
-      context('when the contract being called is ignored', () => {
-        beforeEach('ignore calling contract', async () => {
-          await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
-        })
-
-        itExecutesTheCall()
-      })
+  describe('binary kill switch', function () {
+    beforeEach('bind kill switch', function () {
+      this.killSwitch = appKillSwitch
     })
 
-    context('when there is a bug registered', () => {
-      beforeEach('register a bug', async () => {
-        await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
-      })
-
-      context('when the contract being called is not ignored', () => {
-        itExecutesTheCall()
-      })
-
-      context('when the contract being called is ignored', () => {
-        beforeEach('ignore calling contract', async () => {
-          await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
-        })
-
-        itExecutesTheCall()
-      })
-    })
+    itBehavesLikeBinaryKillSwitch(owner, anyone)
   })
 
-  context('when the function being called is tagged', () => {
-    context('when the function being called is always evaluated', () => {
-      const itExecutesTheCall = (from = owner) => {
+  describe('integration', () => {
+    context('when the function being called is not tagged', () => {
+      const itExecutesTheCall = () => {
         it('executes the call', async () => {
-          await app.write(10, { from })
-          assert.equal(await app.read(), 10)
-        })
-      }
-
-      const itDoesNotExecuteTheCall = (from = owner) => {
-        it('does not execute the call', async () => {
-          await assertRevert(app.write(10, { from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          assert.equal(await app.read(), 42)
         })
       }
 
@@ -131,106 +93,129 @@ contract('AppBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
         })
 
-        context('when the bug was not fixed yet', () => {
-          context('when the contract being called is not ignored', () => {
-            context('when the sender is the owner', () => {
-              itDoesNotExecuteTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itDoesNotExecuteTheCall(anyone)
-            })
-          })
-
-          context('when the contract being called is ignored', () => {
-            beforeEach('ignore calling contract', async () => {
-              await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
-            })
-
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
-          })
+        context('when the contract being called is not ignored', () => {
+          itExecutesTheCall()
         })
 
-        context('when the bug was already fixed', () => {
-          beforeEach('fix bug', async () => {
-            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+        context('when the contract being called is ignored', () => {
+          beforeEach('ignore calling contract', async () => {
+            await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
           })
 
-          context('when the contract being called is not ignored', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
-          })
-
-          context('when the contract being called is ignored', () => {
-            beforeEach('ignore calling contract', async () => {
-              await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
-            })
-
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
-          })
+          itExecutesTheCall()
         })
       })
     })
 
-    context('when the function being called is evaluated only when the sender is not the owner', () => {
-      const itExecutesTheCall = (from = owner) => {
-        it('executes the call', async () => {
-          await app.reset({ from })
-          assert.equal(await app.read(), 0)
-        })
-      }
+    context('when the function being called is tagged', () => {
+      context('when the function being called is always evaluated', () => {
+        const itExecutesTheCall = (from = owner) => {
+          it('executes the call', async () => {
+            await app.write(10, { from })
+            assert.equal(await app.read(), 10)
+          })
+        }
 
-      const itDoesNotExecuteTheCall = (from = owner) => {
-        it('does not execute the call', async () => {
-          await assertRevert(app.reset({ from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
-        })
-      }
+        const itDoesNotExecuteTheCall = (from = owner) => {
+          it('does not execute the call', async () => {
+            await assertRevert(app.write(10, { from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          })
+        }
 
-      context('when there is no bug registered', () => {
-        context('when the contract being called is not ignored', () => {
-          itExecutesTheCall()
-        })
-
-        context('when the contract being called is ignored', () => {
-          beforeEach('ignore calling contract', async () => {
-            await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+        context('when there is no bug registered', () => {
+          context('when the contract being called is not ignored', () => {
+            itExecutesTheCall()
           })
 
-          itExecutesTheCall()
+          context('when the contract being called is ignored', () => {
+            beforeEach('ignore calling contract', async () => {
+              await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
+        })
+
+        context('when there is a bug registered', () => {
+          beforeEach('register a bug', async () => {
+            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
+          })
+
+          context('when the bug was not fixed yet', () => {
+            context('when the contract being called is not ignored', () => {
+              context('when the sender is the owner', () => {
+                itDoesNotExecuteTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itDoesNotExecuteTheCall(anyone)
+              })
+            })
+
+            context('when the contract being called is ignored', () => {
+              beforeEach('ignore calling contract', async () => {
+                await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+              })
+
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
+            })
+          })
+
+          context('when the bug was already fixed', () => {
+            beforeEach('fix bug', async () => {
+              await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+            })
+
+            context('when the contract being called is not ignored', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
+            })
+
+            context('when the contract being called is ignored', () => {
+              beforeEach('ignore calling contract', async () => {
+                await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+              })
+
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
+            })
+          })
         })
       })
 
-      context('when there is a bug registered', () => {
-        beforeEach('register a bug', async () => {
-          await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
-        })
+      context('when the function being called is evaluated only when the sender is not the owner', () => {
+        const itExecutesTheCall = (from = owner) => {
+          it('executes the call', async () => {
+            await app.reset({ from })
+            assert.equal(await app.read(), 0)
+          })
+        }
 
-        context('when the bug was not fixed yet', () => {
+        const itDoesNotExecuteTheCall = (from = owner) => {
+          it('does not execute the call', async () => {
+            await assertRevert(app.reset({ from }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+          })
+        }
+
+        context('when there is no bug registered', () => {
           context('when the contract being called is not ignored', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itDoesNotExecuteTheCall(anyone)
-            })
+            itExecutesTheCall()
           })
 
           context('when the contract being called is ignored', () => {
@@ -238,42 +223,68 @@ contract('AppBinaryKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
             })
 
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
-            })
-
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
-            })
+            itExecutesTheCall()
           })
         })
 
-        context('when the bug was already fixed', () => {
-          beforeEach('fix bug', async () => {
-            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+        context('when there is a bug registered', () => {
+          beforeEach('register a bug', async () => {
+            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
           })
 
-          context('when the contract being called is not ignored', () => {
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
+          context('when the bug was not fixed yet', () => {
+            context('when the contract being called is not ignored', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itDoesNotExecuteTheCall(anyone)
+              })
             })
 
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
+            context('when the contract being called is ignored', () => {
+              beforeEach('ignore calling contract', async () => {
+                await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+              })
+
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
             })
           })
 
-          context('when the contract being called is ignored', () => {
-            beforeEach('ignore calling contract', async () => {
-              await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+          context('when the bug was already fixed', () => {
+            beforeEach('fix bug', async () => {
+              await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
             })
 
-            context('when the sender is the owner', () => {
-              itExecutesTheCall(owner)
+            context('when the contract being called is not ignored', () => {
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
             })
 
-            context('when the sender is not the owner', () => {
-              itExecutesTheCall(anyone)
+            context('when the contract being called is ignored', () => {
+              beforeEach('ignore calling contract', async () => {
+                await appKillSwitch.setContractIgnore(appBase.address, true, { from: owner })
+              })
+
+              context('when the sender is the owner', () => {
+                itExecutesTheCall(owner)
+              })
+
+              context('when the sender is not the owner', () => {
+                itExecutesTheCall(anyone)
+              })
             })
           })
         })
