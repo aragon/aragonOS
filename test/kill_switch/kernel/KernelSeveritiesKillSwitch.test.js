@@ -1,4 +1,5 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const itBehavesLikeSeveritiesKillSwitch = require('../base/itBehavesLikeSeveritiesKillSwitch')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const KernelKillSwitchAppMock = artifacts.require('KernelKillSwitchAppMock')
@@ -13,7 +14,7 @@ const SEVERITY = { NONE: 0, LOW: 1, MID: 2, HIGH: 3, CRITICAL: 4 }
 
 const getEventArgument = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
 
-contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner]) => {
+contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   let killSwitchedKernelBase, regularKernelBase, aclBase, appBase, issuesRegistryBase, registryFactory
   let regularDao, regularAcl, killSwitchedDao, killSwitchedAcl, issuesRegistry, app
 
@@ -62,101 +63,111 @@ contract('KernelSeveritiesKillSwitch', ([_, root, owner, securityPartner]) => {
     await app.initialize(owner)
   })
 
-  const itExecutesTheCall = () => {
-    it('executes the call', async () => {
-      assert.equal(await app.read(), 42)
-    })
-  }
-
-  const itDoesNotExecuteTheCall = () => {
-    it('does not execute the call', async () => {
-      await assertRevert(app.read(), 'KERNEL_CONTRACT_CALL_NOT_ALLOWED')
-    })
-  }
-
-  context('when there is no bug registered', () => {
-    context('when there is no lowest allowed severity set for the contract being called', () => {
-      itExecutesTheCall()
+  describe('severities kill switch', function () {
+    beforeEach('bind kill switch', function () {
+      this.killSwitch = killSwitchedDao
     })
 
-    context('when there is a lowest allowed severity set for the contract being called', () => {
-      beforeEach('set lowest allowed severity', async () => {
-        await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-      })
-
-      itExecutesTheCall()
-    })
+    itBehavesLikeSeveritiesKillSwitch(owner, anyone)
   })
 
-  context('when there is a bug registered', () => {
-    beforeEach('register a bug', async () => {
-      await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
-    })
+  describe('integration', () => {
+    const itExecutesTheCall = () => {
+      it('executes the call', async () => {
+        assert.equal(await app.read(), 42)
+      })
+    }
 
-    context('when the bug was not fixed yet', () => {
+    const itDoesNotExecuteTheCall = () => {
+      it('does not execute the call', async () => {
+        await assertRevert(app.read(), 'KERNEL_CONTRACT_CALL_NOT_ALLOWED')
+      })
+    }
+
+    context('when there is no bug registered', () => {
       context('when there is no lowest allowed severity set for the contract being called', () => {
         itExecutesTheCall()
       })
 
       context('when there is a lowest allowed severity set for the contract being called', () => {
-        context('when there lowest allowed severity is under the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-          })
-
-          itDoesNotExecuteTheCall()
+        beforeEach('set lowest allowed severity', async () => {
+          await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
         })
 
-        context('when there lowest allowed severity is equal to the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
-          })
-
-          itDoesNotExecuteTheCall()
-        })
-
-        context('when there lowest allowed severity is greater than the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
-          })
-
-          itExecutesTheCall()
-        })
+        itExecutesTheCall()
       })
     })
 
-    context('when the bug was already fixed', () => {
-      beforeEach('fix bug', async () => {
-        await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+    context('when there is a bug registered', () => {
+      beforeEach('register a bug', async () => {
+        await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
       })
 
-      context('when there is no lowest allowed severity set for the contract being called', () => {
-        itExecutesTheCall()
-      })
-
-      context('when there is a lowest allowed severity set for the contract being called', () => {
-        context('when there lowest allowed severity is under the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
-          })
-
+      context('when the bug was not fixed yet', () => {
+        context('when there is no lowest allowed severity set for the contract being called', () => {
           itExecutesTheCall()
         })
 
-        context('when there lowest allowed severity is equal to the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+        context('when there is a lowest allowed severity set for the contract being called', () => {
+          context('when the lowest allowed severity is under the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+            })
+
+            itDoesNotExecuteTheCall()
           })
 
+          context('when the lowest allowed severity is equal to the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
+
+          context('when the lowest allowed severity is greater than the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
+        })
+      })
+
+      context('when the bug was already fixed', () => {
+        beforeEach('fix bug', async () => {
+          await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+        })
+
+        context('when there is no lowest allowed severity set for the contract being called', () => {
           itExecutesTheCall()
         })
 
-        context('when there lowest allowed severity is greater than the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+        context('when there is a lowest allowed severity set for the contract being called', () => {
+          context('when the lowest allowed severity is under the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+            })
+
+            itExecutesTheCall()
           })
 
-          itExecutesTheCall()
+          context('when the lowest allowed severity is equal to the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
+
+          context('when the lowest allowed severity is greater than the reported bug severity', () => {
+            beforeEach('set lowest allowed severity', async () => {
+              await killSwitchedDao.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+            })
+
+            itExecutesTheCall()
+          })
         })
       })
     })
