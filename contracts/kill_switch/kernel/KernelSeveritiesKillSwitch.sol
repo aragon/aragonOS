@@ -5,7 +5,9 @@ import "../base/SeveritiesKillSwitch.sol";
 
 
 contract KernelSeveritiesKillSwitch is KernelKillSwitch, SeveritiesKillSwitch {
-    constructor(bool _shouldPetrify) Kernel(_shouldPetrify) public {}
+    constructor(bool _shouldPetrify) Kernel(_shouldPetrify) public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 
     function setContractAction(address _contract, ContractAction _action)
         external

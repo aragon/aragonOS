@@ -14,11 +14,11 @@ contract KillSwitch {
     event IssuesRegistrySet(address issuesRegistry, address sender);
     event ContractActionSet(address contractAddress, ContractAction action);
 
+    function setContractAction(address _contract, ContractAction _action) external;
+
     function getContractAction(address _contract) public view returns (ContractAction) {
         return contractActions[_contract];
     }
-
-    function setContractAction(address _contract, ContractAction _action) external;
 
     function isSeverityIgnored(address _contract, IssuesRegistry.Severity _severity) public view returns (bool);
 
@@ -32,20 +32,30 @@ contract KillSwitch {
 
     function shouldDenyCallingContract(address _base, address _instance, address _sender, bytes _data, uint256 _value) public returns (bool) {
         // if the call should not be evaluated, then allow given call
-        if (!_shouldEvaluateCall(_base, _instance, _sender, _data, _value)) return false;
+        if (!_shouldEvaluateCall(_base, _instance, _sender, _data, _value)) {
+            return false;
+        }
 
         // if the call should be denied, then deny given call
-        if (isContractDenied(_base)) return true;
+        if (isContractDenied(_base)) {
+            return true;
+        }
 
         // if the contract issues are ignored, then allow given call
-        if (isContractIgnored(_base)) return false;
+        if (isContractIgnored(_base)) {
+            return false;
+        }
 
         // if the issues registry has not been set, then allow given call
-        if (issuesRegistry == address(0)) return false;
+        if (issuesRegistry == address(0)) {
+            return false;
+        }
 
         // if the contract severity found is ignored, then allow given call
         IssuesRegistry.Severity _severityFound = issuesRegistry.getSeverityFor(_base);
-        if (isSeverityIgnored(_base, _severityFound)) return false;
+        if (isSeverityIgnored(_base, _severityFound)) {
+            return false;
+        }
 
         // if none of the conditions above were met, then deny given call
         return true;
@@ -58,7 +68,7 @@ contract KillSwitch {
      *      block information, among many other options.
      * @return Always true by default.
      */
-    function _shouldEvaluateCall(address /*_base*/, address /*_instance*/, address /*_sender*/, bytes /*_data*/, uint256 /*_value*/) internal returns (bool) {
+    function _shouldEvaluateCall(address, address, address, bytes, uint256) internal returns (bool) {
         return true;
     }
 

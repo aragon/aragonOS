@@ -24,7 +24,7 @@ contract IssuesRegistry is AragonApp {
         return issuesSeverity[entry];
     }
 
-    function setSeverityFor(address entry, Severity severity) authP(SET_ENTRY_SEVERITY_ROLE, arr(entry, msg.sender)) public {
+    function setSeverityFor(address entry, Severity severity) public authP(SET_ENTRY_SEVERITY_ROLE, arr(entry, msg.sender)) {
         issuesSeverity[entry] = severity;
         emit SeveritySet(entry, severity, msg.sender);
     }
