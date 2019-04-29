@@ -35,6 +35,6 @@ contract KernelKillSwitch is Kernel, KillSwitch {
         /*  not correspond to the application call in this context.                                       */
         /**************************************************************************************************/
 
-        return super._shouldEvaluateCall(_base, _instance ,_sender, _data, _value);
+        return super._shouldEvaluateCall(_base, _instance, _sender, _data, _value);
     }
 }
