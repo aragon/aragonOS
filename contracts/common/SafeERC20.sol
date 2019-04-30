@@ -29,7 +29,7 @@ library SafeERC20 {
                 add(_calldata, 0x20), // calldata start
                 mload(_calldata),     // calldata length
                 ptr,                  // write output over free memory
-                0x20                  // uint256 return
+                0x20                  // write 32 bytes
             )
 
             if gt(success, 0) {
@@ -41,7 +41,7 @@ library SafeERC20 {
                     ret := 1
                 }
 
-                // 32 bytes returned: check if non-zero
+                // 32 bytes returned: check if true
                 case 0x20 {
                     // Only return success if returned data was true
                     // Already have output in ptr
