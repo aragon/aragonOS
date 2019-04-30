@@ -10,7 +10,7 @@ contract KillSwitchedApp is AragonApp {
     KillSwitch internal killSwitch;
 
     modifier killSwitched {
-        bool _isCallAllowed = !killSwitch.shouldDenyCallingContract(_baseApp(), address(this), msg.sender, msg.data, msg.value);
+        bool _isCallAllowed = !killSwitch.shouldDenyCallingContract(_baseApp());
         require(_isCallAllowed, ERROR_CONTRACT_CALL_NOT_ALLOWED);
         _;
     }

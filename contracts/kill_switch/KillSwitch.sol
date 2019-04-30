@@ -92,24 +92,19 @@ contract KillSwitch is IsContract, AragonApp {
         return highestAllowedSeverity >= severityFound;
     }
 
-    function shouldDenyCallingContract(address _base, address _instance, address _sender, bytes _data, uint256 _value) public returns (bool) {
-        // if the call should not be evaluated, then allow given call
-        if (!_shouldEvaluateCall(_base, _instance, _sender, _data, _value)) {
-            return false;
-        }
-
+    function shouldDenyCallingContract(address _contract) public returns (bool) {
         // if the call should be denied, then deny given call
-        if (isContractDenied(_base)) {
+        if (isContractDenied(_contract)) {
             return true;
         }
 
         // if the contract issues are ignored, then allow given call
-        if (isContractIgnored(_base)) {
+        if (isContractIgnored(_contract)) {
             return false;
         }
 
         // if the contract severity found is ignored, then allow given call
-        if (isSeverityIgnored(_base)) {
+        if (isSeverityIgnored(_contract)) {
             return false;
         }
 
@@ -121,16 +116,5 @@ contract KillSwitch is IsContract, AragonApp {
         require(isContract(_defaultIssuesRegistry), ERROR_ISSUES_REGISTRY_NOT_CONTRACT);
         defaultIssuesRegistry = _defaultIssuesRegistry;
         emit DefaultIssuesRegistrySet(address(_defaultIssuesRegistry));
-    }
-
-    /**
-     * @dev This function allows different kill-switch implementations to provide a custom logic to tell whether a
-     *      certain call should be denied or not. This is important to ensure recoverability. For example, custom
-     *      implementations could override this function to provide a decision based on the msg.sender, timestamp,
-     *      block information, among many other options.
-     * @return Always true by default.
-     */
-    function _shouldEvaluateCall(address, address, address, bytes, uint256) internal returns (bool) {
-        return true;
     }
 }
