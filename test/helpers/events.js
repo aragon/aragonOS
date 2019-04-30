@@ -1,5 +1,9 @@
-const getEventArgument = (receipt, event, arg) => receipt.logs.find(l => l.event === event).args[arg]
+const getEvent = (receipt, event) => getEvents(receipt, event)[0]
+const getEvents = (receipt, event) => receipt.logs.filter(l => l.event === event)
+const getEventArgument = (receipt, event, arg) => getEvent(receipt, event).args[arg]
 
 module.exports = {
-  getEventArgument
+  getEvent,
+  getEvents,
+  getEventArgument,
 }

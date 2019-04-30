@@ -1,6 +1,6 @@
 const { ACTION, SEVERITY } = require('./enums')
 const { assertRevert } = require('../helpers/assertThrow')
-const { getEventArgument } = require('../helpers/events')
+const { getEvents, getEvent, getEventArgument } = require('../helpers/events')
 
 const KillSwitch = artifacts.require('KillSwitch')
 const IssuesRegistry = artifacts.require('IssuesRegistry')
@@ -11,9 +11,11 @@ const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-contract('KillSwitch', ([_, root, owner, securityPartner]) => {
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   let kernelBase, aclBase, appBase, killSwitchBase, issuesRegistryBase
-  let registryFactory, dao, acl, issuesRegistry, app, killSwitch
+  let registryFactory, dao, acl, defaultIssuesRegistry, specificIssuesRegistry, app, killSwitch
 
   before('deploy base implementations', async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -33,20 +35,36 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
   })
 
-  beforeEach('create issues registry', async () => {
+  beforeEach('create default issues registry', async () => {
     const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-    issuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await issuesRegistry.initialize()
+    defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    await defaultIssuesRegistry.initialize()
     const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
-    await acl.createPermission(securityPartner, issuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+    await acl.createPermission(securityPartner, defaultIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+  })
+
+  beforeEach('create specific issues registry', async () => {
+    const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
+    specificIssuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    await specificIssuesRegistry.initialize()
+    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
+    await acl.createPermission(securityPartner, specificIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
   })
 
   beforeEach('create kill switch', async () => {
     const receipt = await dao.newAppInstance('0x1235', killSwitchBase.address, '0x', false, { from: root })
     killSwitch = KillSwitch.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await killSwitch.initialize(issuesRegistry.address)
+    await killSwitch.initialize(defaultIssuesRegistry.address)
+
+    const SET_DEFAULT_ISSUES_REGISTRY_ROLE = await killSwitchBase.SET_DEFAULT_ISSUES_REGISTRY_ROLE()
+    await acl.createPermission(owner, killSwitch.address, SET_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
+
+    const SET_ISSUES_REGISTRY_ROLE = await killSwitchBase.SET_ISSUES_REGISTRY_ROLE()
+    await acl.createPermission(owner, killSwitch.address, SET_ISSUES_REGISTRY_ROLE, root, { from: root })
+
     const SET_CONTRACT_ACTION_ROLE = await killSwitchBase.SET_CONTRACT_ACTION_ROLE()
     await acl.createPermission(owner, killSwitch.address, SET_CONTRACT_ACTION_ROLE, root, { from: root })
+
     const SET_HIGHEST_ALLOWED_SEVERITY_ROLE = await killSwitchBase.SET_HIGHEST_ALLOWED_SEVERITY_ROLE()
     await acl.createPermission(owner, killSwitch.address, SET_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
   })
@@ -103,6 +121,17 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
           assert.equal(await killSwitch.getContractAction(appBase.address), ACTION.DENY)
         })
+
+        it('emits an event', async () => {
+          const receipt = await await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from })
+
+          const events = getEvents(receipt, 'ContractActionSet')
+          assert.equal(events.length, 1, 'number of ContractActionSet events does not match')
+
+          const event = getEvent(receipt, 'ContractActionSet').args
+          assert.equal(event.action, ACTION.DENY, 'action does not match')
+          assert.equal(event.contractAddress, appBase.address, 'contract address does not match')
+        })
       })
 
       context('when there was an action already set', function () {
@@ -120,8 +149,81 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
     })
 
     context('when the sender is not the owner', function () {
+      const from = anyone
+
       it('reverts', async function () {
-        await assertRevert(killSwitch.setContractAction(appBase.address, ACTION.DENY))
+        await assertRevert(killSwitch.setContractAction(appBase.address, ACTION.DENY, { from }))
+      })
+    })
+  })
+
+  describe('getIssuesRegistry', function () {
+    context('when there was no specific issues registry set', () => {
+      it('returns the default registry', async () => {
+        assert.equal(await killSwitch.getIssuesRegistry(appBase.address), defaultIssuesRegistry.address)
+      })
+    })
+
+    context('when there is a specific issues registry set', () => {
+      beforeEach('set specific issues registry', async () => {
+        await killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from: owner })
+      })
+
+      it('returns the default registry', async () => {
+        assert.equal(await killSwitch.getIssuesRegistry(appBase.address), specificIssuesRegistry.address)
+      })
+    })
+  })
+
+  describe('setIssuesRegistry', function () {
+    context('when the sender is the owner', function () {
+      const from = owner
+
+      context('when the given address is not a contract', () => {
+        it('reverts', async () => {
+          await assertRevert(killSwitch.setIssuesRegistry(appBase.address, ZERO_ADDRESS, { from }))
+        })
+      })
+
+      context('when the given address is a contract', () => {
+        context('when there was no specific issues registry set yet', function () {
+          it('sets the given implementation', async () => {
+            await killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from })
+
+            assert.equal(await killSwitch.getIssuesRegistry(appBase.address), specificIssuesRegistry.address)
+          })
+
+          it('emits an event', async () => {
+            const receipt = await killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from })
+
+            const events = getEvents(receipt, 'IssuesRegistrySet')
+            assert.equal(events.length, 1, 'number of IssuesRegistrySet events does not match')
+
+            const event = getEvent(receipt, 'IssuesRegistrySet').args
+            assert.equal(event.contractAddress, appBase.address, 'contract address does not match')
+            assert.equal(event.issuesRegistry, specificIssuesRegistry.address, 'issues registry address does not match')
+          })
+        })
+
+        context('when there was a specific issues registry set', function () {
+          beforeEach('set specific issues registry', async () => {
+            await killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from })
+          })
+
+          it('changes the issues registry', async () => {
+            await killSwitch.setIssuesRegistry(appBase.address, defaultIssuesRegistry.address, { from })
+
+            assert.equal(await killSwitch.getIssuesRegistry(appBase.address), defaultIssuesRegistry.address)
+          })
+        })
+      })
+    })
+
+    context('when the sender is not the owner', function () {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from }))
       })
     })
   })
@@ -147,7 +249,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
     context('when there is a bug registered', () => {
       beforeEach('register a bug', async () => {
-        await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
+        await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
       })
 
       context('when there is no highest allowed severity set for the contract being called', () => {
@@ -200,6 +302,17 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
           assert.equal(await killSwitch.getHighestAllowedSeverity(appBase.address), SEVERITY.HIGH)
         })
+
+        it('emits an event', async () => {
+          const receipt = await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.HIGH, { from })
+
+          const events = getEvents(receipt, 'HighestAllowedSeveritySet')
+          assert.equal(events.length, 1, 'number of ContractActionSet events does not match')
+
+          const event = getEvent(receipt, 'HighestAllowedSeveritySet').args
+          assert.equal(event.contractAddress, appBase.address, 'contract address does not match')
+          assert.equal(event.severity, SEVERITY.HIGH, 'highest severity does not match')
+        })
       })
 
       context('when there was a previous severity set', function () {
@@ -217,8 +330,10 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
     })
 
     context('when the sender is not the owner', function () {
+      const from = anyone
+
       it('reverts', async function () {
-        await assertRevert(killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID))
+        await assertRevert(killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from }))
       })
     })
   })
@@ -262,7 +377,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
       context('when there is a bug registered', () => {
         beforeEach('register a bug', async () => {
-          await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
+          await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
         })
 
         context('when there is no highest allowed severity set for the contract being called', () => {
@@ -345,7 +460,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
       context('when there is a bug registered', () => {
         beforeEach('register a bug', async () => {
-          await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
+          await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
         })
 
         context('when the bug was not fixed yet', () => {
@@ -418,7 +533,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
         context('when the bug was already fixed', () => {
           beforeEach('fix bug', async () => {
-            await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
+            await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
           })
 
           context('when there is no highest allowed severity set for the contract being called', () => {
