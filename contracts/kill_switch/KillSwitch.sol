@@ -6,17 +6,17 @@ import "./IssuesRegistry.sol";
 contract KillSwitch is AragonApp {
     bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
     bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
-    bytes32 constant public SET_LOWEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_LOWEST_ALLOWED_SEVERITY_ROLE");
+    bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
 
     enum ContractAction { Check, Ignore, Deny }
 
     IssuesRegistry public issuesRegistry;
     mapping (address => ContractAction) internal contractActions;
-    mapping (address => IssuesRegistry.Severity) internal lowestAllowedSeverityByContract;
+    mapping (address => IssuesRegistry.Severity) internal highestAllowedSeverityByContract;
 
     event IssuesRegistrySet(address issuesRegistry, address sender);
     event ContractActionSet(address contractAddress, ContractAction action);
-    event LowestAllowedSeveritySet(address indexed _contract, IssuesRegistry.Severity severity);
+    event HighestAllowedSeveritySet(address indexed _contract, IssuesRegistry.Severity severity);
 
     function initialize(IssuesRegistry _issuesRegistry) external onlyInit {
         initialized();
@@ -31,12 +31,12 @@ contract KillSwitch is AragonApp {
         emit ContractActionSet(_contract, _action);
     }
 
-    function setLowestAllowedSeverity(address _contract, IssuesRegistry.Severity _severity)
+    function setHighestAllowedSeverity(address _contract, IssuesRegistry.Severity _severity)
         external
-        authP(SET_LOWEST_ALLOWED_SEVERITY_ROLE, arr(_contract, msg.sender))
+        authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_contract, msg.sender))
     {
-        lowestAllowedSeverityByContract[_contract] = _severity;
-        emit LowestAllowedSeveritySet(_contract, _severity);
+        highestAllowedSeverityByContract[_contract] = _severity;
+        emit HighestAllowedSeveritySet(_contract, _severity);
     }
 
     function setIssuesRegistry(IssuesRegistry _issuesRegistry)
@@ -50,8 +50,8 @@ contract KillSwitch is AragonApp {
         return contractActions[_contract];
     }
 
-    function getLowestAllowedSeverity(address _contract) public view returns (IssuesRegistry.Severity) {
-        return lowestAllowedSeverityByContract[_contract];
+    function getHighestAllowedSeverity(address _contract) public view returns (IssuesRegistry.Severity) {
+        return highestAllowedSeverityByContract[_contract];
     }
 
     function isContractIgnored(address _contract) public view returns (bool) {
@@ -64,8 +64,8 @@ contract KillSwitch is AragonApp {
 
     function isSeverityIgnored(address _contract) public view returns (bool) {
         IssuesRegistry.Severity severityFound = issuesRegistry.getSeverityFor(_contract);
-        IssuesRegistry.Severity lowestAllowedSeverity = getLowestAllowedSeverity(_contract);
-        return lowestAllowedSeverity >= severityFound;
+        IssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_contract);
+        return highestAllowedSeverity >= severityFound;
     }
 
     function shouldDenyCallingContract(address _base, address _instance, address _sender, bytes _data, uint256 _value) public returns (bool) {

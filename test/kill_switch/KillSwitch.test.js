@@ -47,8 +47,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
     await killSwitch.initialize(issuesRegistry.address)
     const SET_CONTRACT_ACTION_ROLE = await killSwitchBase.SET_CONTRACT_ACTION_ROLE()
     await acl.createPermission(owner, killSwitch.address, SET_CONTRACT_ACTION_ROLE, root, { from: root })
-    const SET_LOWEST_ALLOWED_SEVERITY_ROLE = await killSwitchBase.SET_LOWEST_ALLOWED_SEVERITY_ROLE()
-    await acl.createPermission(owner, killSwitch.address, SET_LOWEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
+    const SET_HIGHEST_ALLOWED_SEVERITY_ROLE = await killSwitchBase.SET_HIGHEST_ALLOWED_SEVERITY_ROLE()
+    await acl.createPermission(owner, killSwitch.address, SET_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
   })
 
   beforeEach('create kill switched app', async () => {
@@ -128,15 +128,15 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
 
   describe('isSeverityIgnored', function () {
     context('when there is no bug registered', () => {
-      context('when there is no lowest allowed severity set for the contract being called', () => {
+      context('when there is no highest allowed severity set for the contract being called', () => {
         it('returns true', async () => {
           assert.isTrue(await killSwitch.isSeverityIgnored(appBase.address))
         })
       })
 
-      context('when there is a lowest allowed severity set for the contract being called', () => {
-        beforeEach('set lowest allowed severity', async () => {
-          await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+      context('when there is a highest allowed severity set for the contract being called', () => {
+        beforeEach('set highest allowed severity', async () => {
+          await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
         })
 
         it('returns true', async () => {
@@ -150,16 +150,16 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
         await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
       })
 
-      context('when there is no lowest allowed severity set for the contract being called', () => {
+      context('when there is no highest allowed severity set for the contract being called', () => {
         it('returns false', async () => {
           assert.isFalse(await killSwitch.isSeverityIgnored(appBase.address))
         })
       })
 
-      context('when there is a lowest allowed severity set for the contract being called', () => {
-        context('when the lowest allowed severity is under the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+      context('when there is a highest allowed severity set for the contract being called', () => {
+        context('when the highest allowed severity is under the reported bug severity', () => {
+          beforeEach('set highest allowed severity', async () => {
+            await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
           })
 
           it('returns false', async () => {
@@ -167,9 +167,9 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
           })
         })
 
-        context('when the lowest allowed severity is equal to the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+        context('when the highest allowed severity is equal to the reported bug severity', () => {
+          beforeEach('set highest allowed severity', async () => {
+            await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
           })
 
           it('returns true', async () => {
@@ -177,9 +177,9 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
           })
         })
 
-        context('when the lowest allowed severity is greater than the reported bug severity', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+        context('when the highest allowed severity is greater than the reported bug severity', () => {
+          beforeEach('set highest allowed severity', async () => {
+            await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
           })
 
           it('returns true', async () => {
@@ -190,35 +190,35 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
     })
   })
 
-  describe('setLowestAllowedSeverity', function () {
+  describe('setHighestAllowedSeverity', function () {
     context('when the contract is the owner', function () {
       const from = owner
 
       context('when there was no severity set', function () {
-        it('sets the lowest allowed severity', async function () {
-          await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.HIGH, { from })
+        it('sets the highest allowed severity', async function () {
+          await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.HIGH, { from })
 
-          assert.equal(await killSwitch.getLowestAllowedSeverity(appBase.address), SEVERITY.HIGH)
+          assert.equal(await killSwitch.getHighestAllowedSeverity(appBase.address), SEVERITY.HIGH)
         })
       })
 
       context('when there was a previous severity set', function () {
-        beforeEach('set lowest  allowed severity', async function () {
-          await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from })
-          assert.equal(await killSwitch.getLowestAllowedSeverity(appBase.address), SEVERITY.LOW)
+        beforeEach('set highest  allowed severity', async function () {
+          await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from })
+          assert.equal(await killSwitch.getHighestAllowedSeverity(appBase.address), SEVERITY.LOW)
         })
 
-        it('changes the lowest allowed severity', async function () {
-          await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from })
+        it('changes the highest allowed severity', async function () {
+          await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from })
 
-          assert.equal(await killSwitch.getLowestAllowedSeverity(appBase.address), SEVERITY.MID)
+          assert.equal(await killSwitch.getHighestAllowedSeverity(appBase.address), SEVERITY.MID)
         })
       })
     })
 
     context('when the sender is not the owner', function () {
       it('reverts', async function () {
-        await assertRevert(killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID))
+        await assertRevert(killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID))
       })
     })
   })
@@ -247,13 +247,13 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
       }
 
       context('when there is no bug registered', () => {
-        context('when there is no lowest allowed severity set for the contract being called', () => {
+        context('when there is no highest allowed severity set for the contract being called', () => {
           itExecutesTheCallEvenIfDenied()
         })
 
-        context('when there is a lowest allowed severity set for the contract being called', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+        context('when there is a highest allowed severity set for the contract being called', () => {
+          beforeEach('set highest allowed severity', async () => {
+            await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
           })
 
           itExecutesTheCallEvenIfDenied()
@@ -265,26 +265,26 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
           await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
         })
 
-        context('when there is no lowest allowed severity set for the contract being called', () => {
+        context('when there is no highest allowed severity set for the contract being called', () => {
           itExecutesTheCallEvenIfDenied()
         })
 
-        context('when there is a lowest allowed severity set for the contract being called', () => {
-          context('when the lowest allowed severity is under the reported bug severity', () => {
+        context('when there is a highest allowed severity set for the contract being called', () => {
+          context('when the highest allowed severity is under the reported bug severity', () => {
             itExecutesTheCallEvenIfDenied()
           })
 
-          context('when the lowest allowed severity is equal to the reported bug severity', () => {
-            beforeEach('set lowest allowed severity', async () => {
-              await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+          context('when the highest allowed severity is equal to the reported bug severity', () => {
+            beforeEach('set highest allowed severity', async () => {
+              await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
             })
 
             itExecutesTheCallEvenIfDenied()
           })
 
-          context('when the lowest allowed severity is greater than the reported bug severity', () => {
-            beforeEach('set lowest allowed severity', async () => {
-              await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+          context('when the highest allowed severity is greater than the reported bug severity', () => {
+            beforeEach('set highest allowed severity', async () => {
+              await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
             })
 
             itExecutesTheCallEvenIfDenied()
@@ -330,13 +330,13 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
       }
 
       context('when there is no bug registered', () => {
-        context('when there is no lowest allowed severity set for the contract being called', () => {
+        context('when there is no highest allowed severity set for the contract being called', () => {
           itExecutesTheCallWhenNotDenied()
         })
 
-        context('when there is a lowest allowed severity set for the contract being called', () => {
-          beforeEach('set lowest allowed severity', async () => {
-            await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+        context('when there is a highest allowed severity set for the contract being called', () => {
+          beforeEach('set highest allowed severity', async () => {
+            await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
           })
 
           itExecutesTheCallWhenNotDenied()
@@ -349,7 +349,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
         })
 
         context('when the bug was not fixed yet', () => {
-          context('when there is no lowest allowed severity set for the contract being called', () => {
+          context('when there is no highest allowed severity set for the contract being called', () => {
             context('when the contract being called is checked', () => {
               itDoesNotExecuteTheCall()
             })
@@ -371,10 +371,10 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
             })
           })
 
-          context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when the lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+          context('when there is a highest allowed severity set for the contract being called', () => {
+            context('when the highest allowed severity is under the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
               })
 
               context('when the contract being called is checked', () => {
@@ -398,17 +398,17 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
               })
             })
 
-            context('when the lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+            context('when the highest allowed severity is equal to the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
               })
 
               itExecutesTheCallWhenNotDenied()
             })
 
-            context('when the lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+            context('when the highest allowed severity is greater than the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
               })
 
               itExecutesTheCallWhenNotDenied()
@@ -421,30 +421,30 @@ contract('KillSwitch', ([_, root, owner, securityPartner]) => {
             await issuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
           })
 
-          context('when there is no lowest allowed severity set for the contract being called', () => {
+          context('when there is no highest allowed severity set for the contract being called', () => {
             itExecutesTheCallWhenNotDenied()
           })
 
-          context('when there is a lowest allowed severity set for the contract being called', () => {
-            context('when the lowest allowed severity is under the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
+          context('when there is a highest allowed severity set for the contract being called', () => {
+            context('when the highest allowed severity is under the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
               })
 
               itExecutesTheCallWhenNotDenied()
             })
 
-            context('when the lowest allowed severity is equal to the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+            context('when the highest allowed severity is equal to the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
               })
 
               itExecutesTheCallWhenNotDenied()
             })
 
-            context('when the lowest allowed severity is greater than the reported bug severity', () => {
-              beforeEach('set lowest allowed severity', async () => {
-                await killSwitch.setLowestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
+            context('when the highest allowed severity is greater than the reported bug severity', () => {
+              beforeEach('set highest allowed severity', async () => {
+                await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.CRITICAL, { from: owner })
               })
 
               itExecutesTheCallWhenNotDenied()
