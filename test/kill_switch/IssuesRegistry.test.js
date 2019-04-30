@@ -1,5 +1,5 @@
-const { SEVERITY } = require('../helpers/enums')
-const { assertRevert } = require('../../helpers/assertThrow')
+const { SEVERITY } = require('./enums')
+const { assertRevert } = require('../helpers/assertThrow')
 const { getEventArgument } = require('../helpers/events')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
@@ -28,8 +28,8 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
   })
 
   beforeEach('create issues registry', async () => {
-    const issuesRegistryReceipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-    issuesRegistry = IssuesRegistry.at(getEventArgument(issuesRegistryReceipt, 'NewAppProxy', 'proxy'))
+    const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
+    issuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
     await issuesRegistry.initialize()
     const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
     await acl.createPermission(owner, issuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })

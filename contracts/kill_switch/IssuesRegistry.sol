@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../../apps/AragonApp.sol";
+import "../apps/AragonApp.sol";
 
 
 contract IssuesRegistry is AragonApp {

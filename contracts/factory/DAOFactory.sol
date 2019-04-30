@@ -3,7 +3,6 @@ pragma solidity 0.4.24;
 import "../kernel/IKernel.sol";
 import "../kernel/Kernel.sol";
 import "../kernel/KernelProxy.sol";
-import "../kill_switch/kernel/KernelKillSwitch.sol";
 
 import "../acl/IACL.sol";
 import "../acl/ACL.sol";
@@ -48,26 +47,6 @@ contract DAOFactory {
         } else {
             dao.initialize(baseACL, this);
             _setupNewDaoPermissions(_root, dao);
-        }
-
-        emit DeployDAO(address(dao));
-        return dao;
-    }
-
-    /**
-    * @notice Create a new DAO with `_root` set as the initial admin and `_issuesRegistry` as the source of truth for kill-switch purpose
-    * @param _root Address that will be granted control to setup DAO permissions
-    * @param _issuesRegistry Address of the registry of issues that will be used in case of critical situations by the kernel kill switch
-    * @return Newly created DAO
-    */
-    function newDAOWithKillSwitch(address _root, IssuesRegistry _issuesRegistry) public returns (KernelKillSwitch) {
-        KernelKillSwitch dao = KernelKillSwitch(new KernelProxy(baseKernel));
-
-        if (address(regFactory) == address(0)) {
-            dao.initialize(_issuesRegistry, baseACL, _root);
-        } else {
-            dao.initialize(_issuesRegistry, baseACL, address(this));
-            _setupNewDaoPermissions(_root, Kernel(dao));
         }
 
         emit DeployDAO(address(dao));

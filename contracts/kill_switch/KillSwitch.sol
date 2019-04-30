@@ -3,24 +3,56 @@ pragma solidity 0.4.24;
 import "./IssuesRegistry.sol";
 
 
-contract KillSwitch {
+contract KillSwitch is AragonApp {
+    bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
     bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
+    bytes32 constant public SET_LOWEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_LOWEST_ALLOWED_SEVERITY_ROLE");
 
     enum ContractAction { Check, Ignore, Deny }
 
     IssuesRegistry public issuesRegistry;
     mapping (address => ContractAction) internal contractActions;
+    mapping (address => IssuesRegistry.Severity) internal lowestAllowedSeverityByContract;
 
     event IssuesRegistrySet(address issuesRegistry, address sender);
     event ContractActionSet(address contractAddress, ContractAction action);
+    event LowestAllowedSeveritySet(address indexed _contract, IssuesRegistry.Severity severity);
 
-    function setContractAction(address _contract, ContractAction _action) external;
+    function initialize(IssuesRegistry _issuesRegistry) external onlyInit {
+        initialized();
+        _setIssuesRegistry(_issuesRegistry);
+    }
+
+    function setContractAction(address _contract, ContractAction _action)
+        external
+        authP(SET_CONTRACT_ACTION_ROLE, arr(_contract, msg.sender))
+    {
+        contractActions[_contract] = _action;
+        emit ContractActionSet(_contract, _action);
+    }
+
+    function setLowestAllowedSeverity(address _contract, IssuesRegistry.Severity _severity)
+        external
+        authP(SET_LOWEST_ALLOWED_SEVERITY_ROLE, arr(_contract, msg.sender))
+    {
+        lowestAllowedSeverityByContract[_contract] = _severity;
+        emit LowestAllowedSeveritySet(_contract, _severity);
+    }
+
+    function setIssuesRegistry(IssuesRegistry _issuesRegistry)
+        external
+        authP(SET_ISSUES_REGISTRY_ROLE, arr(msg.sender))
+    {
+        _setIssuesRegistry(_issuesRegistry);
+    }
 
     function getContractAction(address _contract) public view returns (ContractAction) {
         return contractActions[_contract];
     }
 
-    function isSeverityIgnored(address _contract, IssuesRegistry.Severity _severity) public view returns (bool);
+    function getLowestAllowedSeverity(address _contract) public view returns (IssuesRegistry.Severity) {
+        return lowestAllowedSeverityByContract[_contract];
+    }
 
     function isContractIgnored(address _contract) public view returns (bool) {
         return getContractAction(_contract) == ContractAction.Ignore;
@@ -28,6 +60,12 @@ contract KillSwitch {
 
     function isContractDenied(address _contract) public view returns (bool) {
         return getContractAction(_contract) == ContractAction.Deny;
+    }
+
+    function isSeverityIgnored(address _contract) public view returns (bool) {
+        IssuesRegistry.Severity severityFound = issuesRegistry.getSeverityFor(_contract);
+        IssuesRegistry.Severity lowestAllowedSeverity = getLowestAllowedSeverity(_contract);
+        return lowestAllowedSeverity >= severityFound;
     }
 
     function shouldDenyCallingContract(address _base, address _instance, address _sender, bytes _data, uint256 _value) public returns (bool) {
@@ -52,13 +90,17 @@ contract KillSwitch {
         }
 
         // if the contract severity found is ignored, then allow given call
-        IssuesRegistry.Severity _severityFound = issuesRegistry.getSeverityFor(_base);
-        if (isSeverityIgnored(_base, _severityFound)) {
+        if (isSeverityIgnored(_base)) {
             return false;
         }
 
         // if none of the conditions above were met, then deny given call
         return true;
+    }
+
+    function _setIssuesRegistry(IssuesRegistry _issuesRegistry) internal {
+        issuesRegistry = _issuesRegistry;
+        emit IssuesRegistrySet(_issuesRegistry, msg.sender);
     }
 
     /**
@@ -70,15 +112,5 @@ contract KillSwitch {
      */
     function _shouldEvaluateCall(address, address, address, bytes, uint256) internal returns (bool) {
         return true;
-    }
-
-    function _setIssuesRegistry(IssuesRegistry _issuesRegistry) internal {
-        issuesRegistry = _issuesRegistry;
-        emit IssuesRegistrySet(_issuesRegistry, msg.sender);
-    }
-
-    function _setContractAction(address _contract, ContractAction _action) internal {
-        contractActions[_contract] = _action;
-        emit ContractActionSet(_contract, _action);
     }
 }
