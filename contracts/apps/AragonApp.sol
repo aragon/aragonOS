@@ -20,6 +20,7 @@ import "../evmscript/EVMScriptRunner.sol";
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
+    string private constant ERROR_CONTRACT_CALL_NOT_ALLOWED = "APP_CONTRACT_CALL_NOT_ALLOWED";
 
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
@@ -28,6 +29,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
 
     modifier authP(bytes32 _role, uint256[] _params) {
         require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
+        _;
+    }
+
+    modifier killSwitched {
+        bool _shouldDenyCall = kernel().killSwitch().shouldDenyCallingContract(_baseApp());
+        require(!_shouldDenyCall, ERROR_CONTRACT_CALL_NOT_ALLOWED);
         _;
     }
 
@@ -64,5 +71,13 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         return kernel().getRecoveryVault(); // if kernel is not set, it will revert
+    }
+
+    /**
+    * @dev Get the address of the base implementation for the current app
+    * @return Address of the base implementation
+    */
+    function _baseApp() internal view returns (address) {
+        return kernel().getApp(KERNEL_APP_BASES_NAMESPACE, appId());
     }
 }

@@ -1,10 +1,9 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { getBalance } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
+const { onlyIf } = require('../../helpers/onlyIf')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
-const Kernel = artifacts.require('Kernel')
+const Kernel = artifacts.require('KernelOverloadMock')
 const KernelProxy = artifacts.require('KernelProxy')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const AppProxyPinned = artifacts.require('AppProxyPinned')
@@ -13,7 +12,6 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const AppStub2 = artifacts.require('AppStub2')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
-const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
@@ -21,7 +19,7 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('Kernel apps', accounts => {
     let aclBase, appBase1, appBase2
-    let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE
+    let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
     let UPGRADEABLE, FORWARDING
 
     const permissionsRoot = accounts[0]
@@ -46,7 +44,7 @@ contract('Kernel apps', accounts => {
     // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
     for (const kernelType of ['Kernel', 'KernelProxy']) {
         context(`> ${kernelType}`, () => {
-            let acl, kernel, kernelBase, app, appProxy
+            let acl, kernel, kernelBase
 
             before(async () => {
                 if (kernelType === 'KernelProxy') {
@@ -82,26 +80,14 @@ contract('Kernel apps', accounts => {
                 })
             })
 
-            const newAppProxyMapping = {
-                'AppProxy': 'newAppInstance',
-                'AppProxyPinned': 'newPinnedAppInstance',
-            }
-            for (const appProxyType of Object.keys(newAppProxyMapping)) {
-                // NOTE: we have to do really hacky workarounds here due to truffle not supporting
-                // function overloads.
-                // Especially awful is how we only get the full version of `newAppInstance()` but
-                // not `newPinnedAppInstance()`, forcing us to apply the KernelOverloadMock on
-                // different proxy instances
-                let kernelOverload
-                const newInstanceFn = newAppProxyMapping[appProxyType]
-
+            for (const appProxyType of ['AppProxy', 'AppProxyPinned']) {
                 const onlyAppProxy = onlyIf(() => appProxyType === 'AppProxy')
                 const onlyAppProxyPinned = onlyIf(() => appProxyType === 'AppProxyPinned')
 
                 context(`> new ${appProxyType} instances`, () => {
                     onlyAppProxy(() =>
                         it('creates a new upgradeable app proxy instance', async () => {
-                            const receipt = await kernel.newAppInstance(APP_ID, appBase1.address, EMPTY_BYTES, false)
+                            const receipt = await kernel.newAppInstanceWithPayload(APP_ID, appBase1.address, EMPTY_BYTES, false)
                             const appProxy = AppProxyUpgradeable.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
@@ -113,7 +99,7 @@ contract('Kernel apps', accounts => {
 
                     onlyAppProxyPinned(() =>
                         it('creates a new non upgradeable app proxy instance', async () => {
-                            const receipt = await kernel.newPinnedAppInstance(APP_ID, appBase1.address)
+                            const receipt = await kernel.newPinnedAppInstanceWithoutPayload(APP_ID, appBase1.address)
                             const appProxy = AppProxyPinned.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
@@ -124,31 +110,23 @@ contract('Kernel apps', accounts => {
                     )
 
                     context('> full new app instance overload', async () => {
-                        beforeEach(async () => {
-                            if (appProxyType === 'AppProxy') {
-                                // No need to apply the overload
-                                kernelOverload = kernel
-                            } else if (appProxyType === 'AppProxyPinned') {
-                                kernelOverload = await KernelOverloadMock.new(kernel.address)
-                                await acl.grantPermission(kernelOverload.address, kernel.address, APP_MANAGER_ROLE)
-                            }
-                        })
+                        const newInstanceFn = appProxyType === 'AppProxy' ? 'newAppInstanceWithPayload' : 'newPinnedAppInstanceWithPayload'
 
                         it('sets the app base when not previously registered', async() => {
                             assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
-                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
+                            await kernel[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
                         })
 
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
                             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
                         })
 
                         it("also sets the default app", async () => {
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, true)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, true)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Check that both the app base and default app are set
@@ -162,7 +140,7 @@ contract('Kernel apps', accounts => {
                         it("allows initializing proxy", async () => {
                             const initData = appBase1.initialize.request().params[0].data
 
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, initData, false)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address, initData, false)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Make sure app was initialized
@@ -175,7 +153,7 @@ contract('Kernel apps', accounts => {
 
                         it("fails if the app base is not given", async() => {
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR, EMPTY_BYTES, false)
+                                await kernel[newInstanceFn](APP_ID, ZERO_ADDR, EMPTY_BYTES, false)
                             })
                         })
 
@@ -186,37 +164,29 @@ contract('Kernel apps', accounts => {
 
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, existingBase)
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, differentBase, EMPTY_BYTES, false)
+                                await kernel[newInstanceFn](APP_ID, differentBase, EMPTY_BYTES, false)
                             })
                         })
                     })
 
                     context('> minimized new app instance overload', async () => {
-                        beforeEach(async () => {
-                            if (appProxyType === 'AppProxy') {
-                                kernelOverload = await KernelOverloadMock.new(kernel.address)
-                                await acl.grantPermission(kernelOverload.address, kernel.address, APP_MANAGER_ROLE)
-                            } else if (appProxyType === 'AppProxyPinned') {
-                                // No need to apply the overload
-                                kernelOverload = kernel
-                            }
-                        })
+                        const newInstanceFn = appProxyType === 'AppProxy' ? 'newAppInstanceWithoutPayload' : 'newPinnedAppInstanceWithoutPayload'
 
                         it('sets the app base when not previously registered', async() => {
                             assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
-                            await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            await kernel[newInstanceFn](APP_ID, appBase1.address)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
                         })
 
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address)
                             assert.isFalse(receipt.logs.includes(l => l.event == 'SetApp'))
                         })
 
                         it("does not set the default app", async () => {
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Check that only the app base is set
@@ -230,7 +200,7 @@ contract('Kernel apps', accounts => {
                         it("does not allow initializing proxy", async () => {
                             const initData = appBase1.initialize.request().params[0].data
 
-                            const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
+                            const receipt = await kernel[newInstanceFn](APP_ID, appBase1.address)
                             const appProxyAddr = receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy
 
                             // Make sure app was not initialized
@@ -243,7 +213,7 @@ contract('Kernel apps', accounts => {
 
                         it("fails if the app base is not given", async() => {
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR)
+                                await kernel[newInstanceFn](APP_ID, ZERO_ADDR)
                             })
                         })
 
@@ -254,7 +224,7 @@ contract('Kernel apps', accounts => {
 
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, existingBase)
                             return assertRevert(async () => {
-                                await kernelOverload[newInstanceFn](APP_ID, differentBase)
+                                await kernel[newInstanceFn](APP_ID, differentBase)
                             })
                         })
                     })

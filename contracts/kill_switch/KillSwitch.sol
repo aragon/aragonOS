@@ -1,10 +1,12 @@
 pragma solidity 0.4.24;
 
-import "./IssuesRegistry.sol";
+import "./IKillSwitch.sol";
+import "./IIssuesRegistry.sol";
+import "../apps/AragonApp.sol";
 import "../common/IsContract.sol";
 
 
-contract KillSwitch is IsContract, AragonApp {
+contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
     bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
     bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
@@ -16,24 +18,24 @@ contract KillSwitch is IsContract, AragonApp {
 
     struct Settings {
         ContractAction action;
-        IssuesRegistry.Severity highestAllowedSeverity;
-        IssuesRegistry issuesRegistry;
+        IIssuesRegistry.Severity highestAllowedSeverity;
+        IIssuesRegistry issuesRegistry;
     }
 
-    IssuesRegistry public defaultIssuesRegistry;
+    IIssuesRegistry public defaultIssuesRegistry;
     mapping (address => Settings) internal contractSettings;
 
     event DefaultIssuesRegistrySet(address issuesRegistry);
     event ContractActionSet(address indexed contractAddress, ContractAction action);
     event IssuesRegistrySet(address indexed contractAddress, address issuesRegistry);
-    event HighestAllowedSeveritySet(address indexed contractAddress, IssuesRegistry.Severity severity);
+    event HighestAllowedSeveritySet(address indexed contractAddress, IIssuesRegistry.Severity severity);
 
-    function initialize(IssuesRegistry _defaultIssuesRegistry) external onlyInit {
+    function initialize(IIssuesRegistry _defaultIssuesRegistry) external onlyInit {
         initialized();
         _setDefaultIssuesRegistry(_defaultIssuesRegistry);
     }
 
-    function setDefaultIssuesRegistry(IssuesRegistry _defaultIssuesRegistry)
+    function setDefaultIssuesRegistry(IIssuesRegistry _defaultIssuesRegistry)
         external
         authP(SET_DEFAULT_ISSUES_REGISTRY_ROLE, arr(msg.sender))
     {
@@ -48,7 +50,7 @@ contract KillSwitch is IsContract, AragonApp {
         emit ContractActionSet(_contract, _action);
     }
 
-    function setHighestAllowedSeverity(address _contract, IssuesRegistry.Severity _severity)
+    function setHighestAllowedSeverity(address _contract, IIssuesRegistry.Severity _severity)
         external
         authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_contract, msg.sender))
     {
@@ -56,7 +58,7 @@ contract KillSwitch is IsContract, AragonApp {
         emit HighestAllowedSeveritySet(_contract, _severity);
     }
 
-    function setIssuesRegistry(address _contract, IssuesRegistry _issuesRegistry)
+    function setIssuesRegistry(address _contract, IIssuesRegistry _issuesRegistry)
         external
         authP(SET_ISSUES_REGISTRY_ROLE, arr(_contract, msg.sender))
     {
@@ -65,34 +67,7 @@ contract KillSwitch is IsContract, AragonApp {
         emit IssuesRegistrySet(_contract, address(_issuesRegistry));
     }
 
-    function getContractAction(address _contract) public view returns (ContractAction) {
-        return contractSettings[_contract].action;
-    }
-
-    function getHighestAllowedSeverity(address _contract) public view returns (IssuesRegistry.Severity) {
-        return contractSettings[_contract].highestAllowedSeverity;
-    }
-
-    function getIssuesRegistry(address _contract) public view returns (IssuesRegistry) {
-        IssuesRegistry foundRegistry = contractSettings[_contract].issuesRegistry;
-        return foundRegistry == IssuesRegistry(0) ? defaultIssuesRegistry : foundRegistry;
-    }
-
-    function isContractIgnored(address _contract) public view returns (bool) {
-        return getContractAction(_contract) == ContractAction.Ignore;
-    }
-
-    function isContractDenied(address _contract) public view returns (bool) {
-        return getContractAction(_contract) == ContractAction.Deny;
-    }
-
-    function isSeverityIgnored(address _contract) public view returns (bool) {
-        IssuesRegistry.Severity severityFound = getIssuesRegistry(_contract).getSeverityFor(_contract);
-        IssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_contract);
-        return highestAllowedSeverity >= severityFound;
-    }
-
-    function shouldDenyCallingContract(address _contract) public returns (bool) {
+    function shouldDenyCallingContract(address _contract) external returns (bool) {
         // if the call should be denied, then deny given call
         if (isContractDenied(_contract)) {
             return true;
@@ -112,7 +87,34 @@ contract KillSwitch is IsContract, AragonApp {
         return true;
     }
 
-    function _setDefaultIssuesRegistry(IssuesRegistry _defaultIssuesRegistry) internal {
+    function getContractAction(address _contract) public view returns (ContractAction) {
+        return contractSettings[_contract].action;
+    }
+
+    function getHighestAllowedSeverity(address _contract) public view returns (IIssuesRegistry.Severity) {
+        return contractSettings[_contract].highestAllowedSeverity;
+    }
+
+    function getIssuesRegistry(address _contract) public view returns (IIssuesRegistry) {
+        IIssuesRegistry foundRegistry = contractSettings[_contract].issuesRegistry;
+        return foundRegistry == IIssuesRegistry(0) ? defaultIssuesRegistry : foundRegistry;
+    }
+
+    function isContractIgnored(address _contract) public view returns (bool) {
+        return getContractAction(_contract) == ContractAction.Ignore;
+    }
+
+    function isContractDenied(address _contract) public view returns (bool) {
+        return getContractAction(_contract) == ContractAction.Deny;
+    }
+
+    function isSeverityIgnored(address _contract) public view returns (bool) {
+        IIssuesRegistry.Severity severityFound = getIssuesRegistry(_contract).getSeverityFor(_contract);
+        IIssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_contract);
+        return highestAllowedSeverity >= severityFound;
+    }
+
+    function _setDefaultIssuesRegistry(IIssuesRegistry _defaultIssuesRegistry) internal {
         require(isContract(_defaultIssuesRegistry), ERROR_ISSUES_REGISTRY_NOT_CONTRACT);
         defaultIssuesRegistry = _defaultIssuesRegistry;
         emit DefaultIssuesRegistrySet(address(_defaultIssuesRegistry));

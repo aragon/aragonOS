@@ -1,19 +1,21 @@
 pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
+import "./IIssuesRegistry.sol";
 
 
-contract IssuesRegistry is AragonApp {
+contract IssuesRegistry is IIssuesRegistry, AragonApp {
     bytes32 constant public SET_ENTRY_SEVERITY_ROLE = keccak256("SET_ENTRY_SEVERITY_ROLE");
-
-    enum Severity { None, Low, Mid, High, Critical }
 
     mapping (address => Severity) internal issuesSeverity;
 
-    event SeveritySet(address indexed entry, Severity severity, address sender);
-
-    function initialize() public onlyInit {
+    function initialize() external onlyInit {
         initialized();
+    }
+
+    function setSeverityFor(address entry, Severity severity) external authP(SET_ENTRY_SEVERITY_ROLE, arr(entry, msg.sender)) {
+        issuesSeverity[entry] = severity;
+        emit SeveritySet(entry, severity, msg.sender);
     }
 
     function isSeverityFor(address entry) public view isInitialized returns (bool) {
@@ -22,10 +24,5 @@ contract IssuesRegistry is AragonApp {
 
     function getSeverityFor(address entry) public view isInitialized returns (Severity) {
         return issuesSeverity[entry];
-    }
-
-    function setSeverityFor(address entry, Severity severity) public authP(SET_ENTRY_SEVERITY_ROLE, arr(entry, msg.sender)) {
-        issuesSeverity[entry] = severity;
-        emit SeveritySet(entry, severity, msg.sender);
     }
 }

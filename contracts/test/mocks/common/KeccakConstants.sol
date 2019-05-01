@@ -22,6 +22,7 @@ contract KeccakConstants {
     bytes32 public constant KERNEL_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("kernel")));
     bytes32 public constant DEFAULT_ACL_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("acl")));
     bytes32 public constant DEFAULT_VAULT_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("vault")));
+    bytes32 public constant DEFAULT_KILL_SWITCH_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("killSwitch")));
 
     // ACL
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256(abi.encodePacked("CREATE_PERMISSIONS_ROLE"));

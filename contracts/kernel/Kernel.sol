@@ -10,6 +10,8 @@ import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
+import "../kill_switch/IKillSwitch.sol";
+import "../kill_switch/IIssuesRegistry.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
@@ -52,6 +54,27 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, acl);
 
         recoveryVaultAppId = KERNEL_DEFAULT_VAULT_APP_ID;
+    }
+
+    /**
+    * @dev Initialize can only be called once. It saves the block number in which it was initialized.
+    * @notice Initialize this kernel instance, its ACL setting `_permissionsCreator` as the entity that can create other permissions, and a KillSwitch instance setting `_issuesRegistry
+    * @param _baseAcl Address of base ACL app
+    * @param _permissionsCreator Entity that will be given permission over createPermission
+    * @param _baseKillSwitch Address of base KillSwitch app
+    * @param _issuesRegistry Issues registry that will act as the default source of truth to provide info about applications issues
+    */
+    function initializeWithKillSwitch(IACL _baseAcl, address _permissionsCreator, IKillSwitch _baseKillSwitch, IIssuesRegistry _issuesRegistry)
+        public onlyInit
+    {
+        // Set and create ACL app
+        initialize(_baseAcl, _permissionsCreator);
+
+        // Set and create KillSwitch app
+        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID, _baseKillSwitch);
+        IKillSwitch killSwitch = IKillSwitch(newAppProxy(this, KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
+        killSwitch.initialize(_issuesRegistry);
+        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID, killSwitch);
     }
 
     /**
@@ -169,6 +192,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
     function KERNEL_APP_ID() external pure returns (bytes32) { return KERNEL_CORE_APP_ID; }
     function DEFAULT_ACL_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_ACL_APP_ID; }
+    function DEFAULT_KILL_SWITCH_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_KILL_SWITCH_APP_ID; }
     /* solium-enable function-order, mixedcase */
 
     /**
@@ -195,6 +219,14 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function acl() public view returns (IACL) {
         return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
+    }
+
+    /**
+    * @dev Get the installed KillSwitch app
+    * @return KillSwitch app
+    */
+    function killSwitch() public view returns (IKillSwitch) {
+        return IKillSwitch(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
     }
 
     /**

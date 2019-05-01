@@ -5,21 +5,23 @@ const { getEventArgument } = require('../helpers/events')
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
+const KillSwitch = artifacts.require('KillSwitch')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
 contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
-  let kernelBase, aclBase, issuesRegistryBase, registryFactory, dao, acl, issuesRegistry
+  let kernelBase, aclBase, issuesRegistryBase, registryFactory, dao, acl, issuesRegistry, killSwitchBase
 
   before('deploy base implementations', async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
     aclBase = await ACL.new()
+    killSwitchBase = await KillSwitch.new()
     registryFactory = await EVMScriptRegistryFactory.new()
     issuesRegistryBase = await IssuesRegistry.new()
   })
 
   before('deploy DAO', async () => {
-    const daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, registryFactory.address)
+    const daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
     const kernelReceipt = await daoFactory.newDAO(root)
     dao = Kernel.at(getEventArgument(kernelReceipt, 'DeployDAO', 'dao'))
     acl = ACL.at(await dao.acl())

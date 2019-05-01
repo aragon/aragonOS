@@ -4,10 +4,10 @@ const keccak256 = require('js-sha3').keccak_256
 
 const ENS = artifacts.require('ENS')
 const ENSFactory = artifacts.require('ENSFactory')
-const PublicResolver = artifacts.require('PublicResolver')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
+const KillSwitch = artifacts.require('KillSwitch')
 
 const APMRegistry = artifacts.require('APMRegistry')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
@@ -41,7 +41,8 @@ contract('ENSSubdomainRegistrar', accounts => {
 
         const kernelBase = await Kernel.new(true) // petrify immediately
         const aclBase = await ACL.new()
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR)
+        const killSwitchBase = await KillSwitch.new()
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
 
         APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     })

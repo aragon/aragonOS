@@ -1,14 +1,14 @@
 pragma solidity 0.4.24;
 
-import "../../kill_switch/KillSwitchedApp.sol";
+import "../../apps/AragonApp.sol";
 
 
-contract KillSwitchedAppMock is KillSwitchedApp {
+contract KillSwitchedAppMock is AragonApp {
     address public owner;
     uint256 internal data;
 
-    function initialize(KillSwitch _killSwitch, address _owner) public onlyInit {
-        super.initialize(_killSwitch);
+    function initialize(address _owner) public onlyInit {
+        initialized();
         data = 42;
         owner = _owner;
     }

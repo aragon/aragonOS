@@ -8,6 +8,7 @@ const PublicResolver = artifacts.require('PublicResolver')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
+const KillSwitch = artifacts.require('KillSwitch')
 const DAOFactory = artifacts.require('DAOFactory')
 
 const APMRegistry = artifacts.require('APMRegistry')
@@ -41,7 +42,8 @@ contract('APMRegistry', accounts => {
 
         const kernelBase = await Kernel.new(true) // petrify immediately
         const aclBase = await ACL.new()
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR)
+        const killSwitchBase = await KillSwitch.new()
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
     })
 
     beforeEach(async () => {

@@ -1,10 +1,6 @@
-const namehash = require('eth-ens-namehash').hash
-const keccak_256 = require('js-sha3').keccak_256
-
 const getContract = name => artifacts.require(name)
-const keccak256 = (name) => '0x' + keccak_256(name)
 
-contract('Constants', accounts => {
+contract('Constants', () => {
   let keccakConstants
 
   before(async () => {
@@ -31,6 +27,7 @@ contract('Constants', accounts => {
     assert.equal(await kernelConstants.getKernelAppId(), await keccakConstants.KERNEL_APP_ID(), "kernel app id doesn't match")
     assert.equal(await kernelConstants.getDefaultACLAppId(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default ACL id doesn't match")
     assert.equal(await kernelConstants.getDefaultVaultAppId(), await keccakConstants.DEFAULT_VAULT_APP_ID(), "default vault id doesn't match")
+    assert.equal(await kernelConstants.getDefaultKillSwitchAppId(), await keccakConstants.DEFAULT_KILL_SWITCH_APP_ID(), "default kill switch id doesn't match")
     assert.equal(await kernelConstants.getKernelCoreNamespace(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppBasesNamespace(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppAddrNamespace(), await keccakConstants.KERNEL_APP_ADDR_NAMESPACE(), "app namespace doesn't match")
@@ -39,6 +36,7 @@ contract('Constants', accounts => {
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
     assert.equal(await kernel.KERNEL_APP_ID(), await keccakConstants.KERNEL_APP_ID(), "app id doesn't match")
     assert.equal(await kernel.DEFAULT_ACL_APP_ID(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default acl id doesn't match")
+    assert.equal(await kernel.DEFAULT_KILL_SWITCH_APP_ID(), await keccakConstants.DEFAULT_KILL_SWITCH_APP_ID(), "default kill switch id doesn't match")
     assert.equal(await kernel.CORE_NAMESPACE(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernel.APP_BASES_NAMESPACE(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernel.APP_ADDR_NAMESPACE(), await keccakConstants.KERNEL_APP_ADDR_NAMESPACE(), "app namespace doesn't match")

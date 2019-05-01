@@ -26,36 +26,38 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
     appBase = await KillSwitchedApp.new()
   })
 
-  before('deploy DAO', async () => {
-    const daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, registryFactory.address)
-    const kernelReceipt = await daoFactory.newDAO(root)
-    dao = Kernel.at(getEventArgument(kernelReceipt, 'DeployDAO', 'dao'))
+  beforeEach('create issues registries', async () => {
+    const daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+    const daoReceipt = await daoFactory.newDAO(root)
+    const issuesRegistryDAO = Kernel.at(getEventArgument(daoReceipt, 'DeployDAO', 'dao'))
+    const issuesRegistryACL = ACL.at(await issuesRegistryDAO.acl())
+
+    const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+    await issuesRegistryACL.createPermission(root, issuesRegistryDAO.address, APP_MANAGER_ROLE, root, { from: root })
+
+    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
+
+    const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
+    defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(defaultRegistryReceipt, 'NewAppProxy', 'proxy'))
+    await defaultIssuesRegistry.initialize()
+    await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+
+    const specificRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
+    specificIssuesRegistry = IssuesRegistry.at(getEventArgument(specificRegistryReceipt, 'NewAppProxy', 'proxy'))
+    await specificIssuesRegistry.initialize()
+    await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+  })
+
+  beforeEach('deploy DAO', async () => {
+    const daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+    const receipt = await daoFactory.newDAOWithKillSwitch(root, defaultIssuesRegistry.address)
+    dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+
     acl = ACL.at(await dao.acl())
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-  })
 
-  beforeEach('create default issues registry', async () => {
-    const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-    defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await defaultIssuesRegistry.initialize()
-    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
-    await acl.createPermission(securityPartner, defaultIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
-  })
-
-  beforeEach('create specific issues registry', async () => {
-    const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-    specificIssuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await specificIssuesRegistry.initialize()
-    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
-    await acl.createPermission(securityPartner, specificIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
-  })
-
-  beforeEach('create kill switch', async () => {
-    const receipt = await dao.newAppInstance('0x1235', killSwitchBase.address, '0x', false, { from: root })
-    killSwitch = KillSwitch.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await killSwitch.initialize(defaultIssuesRegistry.address)
-
+    killSwitch = KillSwitch.at(await dao.killSwitch())
     const SET_DEFAULT_ISSUES_REGISTRY_ROLE = await killSwitchBase.SET_DEFAULT_ISSUES_REGISTRY_ROLE()
     await acl.createPermission(owner, killSwitch.address, SET_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
 
@@ -72,7 +74,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   beforeEach('create kill switched app', async () => {
     const receipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
     app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
-    await app.initialize(killSwitch.address, owner)
+    await app.initialize(owner)
   })
 
   describe('isContractIgnored', function () {
@@ -112,7 +114,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   describe('setContractAction', function () {
-    context('when the sender is the owner', function () {
+    context('when the sender is authorized', function () {
       const from = owner
 
       context('when there was no action set yet', function () {
@@ -148,7 +150,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
     })
 
-    context('when the sender is not the owner', function () {
+    context('when the sender is not authorized', function () {
       const from = anyone
 
       it('reverts', async function () {
@@ -176,7 +178,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   describe('setIssuesRegistry', function () {
-    context('when the sender is the owner', function () {
+    context('when the sender is authorized', function () {
       const from = owner
 
       context('when the given address is not a contract', () => {
@@ -219,11 +221,64 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
     })
 
-    context('when the sender is not the owner', function () {
+    context('when the sender is not authorized', function () {
       const from = anyone
 
       it('reverts', async () => {
         await assertRevert(killSwitch.setIssuesRegistry(appBase.address, specificIssuesRegistry.address, { from }))
+      })
+    })
+  })
+
+  describe('setDefaultIssuesRegistry', function () {
+    context('when the sender is authorized', function () {
+      const from = owner
+
+      context('when the given address is not a contract', () => {
+        it('reverts', async () => {
+          await assertRevert(killSwitch.setDefaultIssuesRegistry(ZERO_ADDRESS, { from }))
+        })
+      })
+
+      context('when the given address is a contract', () => {
+        context('when there was no specific issues registry set yet', function () {
+          it('sets the given implementation', async () => {
+            await killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from })
+
+            assert.equal(await killSwitch.defaultIssuesRegistry(), specificIssuesRegistry.address)
+          })
+
+          it('emits an event', async () => {
+            const receipt = await killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from })
+
+            const events = getEvents(receipt, 'DefaultIssuesRegistrySet')
+            assert.equal(events.length, 1, 'number of DefaultIssuesRegistrySet events does not match')
+
+            const event = getEvent(receipt, 'DefaultIssuesRegistrySet').args
+            assert.equal(event.issuesRegistry, specificIssuesRegistry.address, 'issues registry address does not match')
+          })
+        })
+
+        context('when there was a specific issues registry set', function () {
+          beforeEach('set specific issues registry', async () => {
+            await killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from })
+            assert.equal(await killSwitch.defaultIssuesRegistry(), specificIssuesRegistry.address)
+          })
+
+          it('changes the issues registry', async () => {
+            await killSwitch.setDefaultIssuesRegistry(defaultIssuesRegistry.address, { from })
+
+            assert.equal(await killSwitch.defaultIssuesRegistry(), defaultIssuesRegistry.address)
+          })
+        })
+      })
+    })
+
+    context('when the sender is not authorized', function () {
+      const from = anyone
+
+      it('reverts', async () => {
+        await assertRevert(killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from }))
       })
     })
   })
@@ -293,7 +348,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   describe('setHighestAllowedSeverity', function () {
-    context('when the contract is the owner', function () {
+    context('when the sender is authorized', function () {
       const from = owner
 
       context('when there was no severity set', function () {
@@ -329,7 +384,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
     })
 
-    context('when the sender is not the owner', function () {
+    context('when the sender is not authorized', function () {
       const from = anyone
 
       it('reverts', async function () {
