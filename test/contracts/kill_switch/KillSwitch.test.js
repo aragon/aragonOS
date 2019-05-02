@@ -1,6 +1,6 @@
 const { ACTION, SEVERITY } = require('./enums')
-const { assertRevert } = require('../helpers/assertThrow')
-const { getEvents, getEvent, getEventArgument } = require('../helpers/events')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { getEvents, getEvent, getEventArgument } = require('../../helpers/events')
 
 const KillSwitch = artifacts.require('KillSwitch')
 const IssuesRegistry = artifacts.require('IssuesRegistry')

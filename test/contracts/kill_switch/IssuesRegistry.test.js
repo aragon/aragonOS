@@ -1,6 +1,6 @@
 const { SEVERITY } = require('./enums')
-const { assertRevert } = require('../helpers/assertThrow')
-const { getEventArgument } = require('../helpers/events')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { getEventArgument } = require('../../helpers/events')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const ACL = artifacts.require('ACL')
