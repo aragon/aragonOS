@@ -1,5 +1,5 @@
-const { assertRevert } = require('./helpers/assertThrow')
-const { getBlockNumber } = require('./helpers/web3')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { getBlockNumber } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
 

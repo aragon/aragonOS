@@ -1,6 +1,6 @@
-const { assertRevert } = require('./helpers/assertThrow')
-const { onlyIf } = require('./helpers/onlyIf')
-const { getBalance } = require('./helpers/web3')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { onlyIf } = require('../../helpers/onlyIf')
+const { getBalance } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
 const ACL = artifacts.require('ACL')

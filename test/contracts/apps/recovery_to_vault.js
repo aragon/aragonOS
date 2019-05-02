@@ -1,7 +1,7 @@
-const assertEvent = require('./helpers/assertEvent')
-const { assertRevert } = require('./helpers/assertThrow')
-const { skipCoverage } = require('./helpers/coverage')
-const { getBalance } = require('./helpers/web3')
+const assertEvent = require('../../helpers/assertEvent')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { skipCoverage } = require('../../helpers/coverage')
+const { getBalance } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
 const DAOFactory = artifacts.require('DAOFactory')

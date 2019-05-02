@@ -1,10 +1,10 @@
 const { rawEncode } = require('ethereumjs-abi')
 const { soliditySha3 } = require('web3-utils')
 
-const assertEvent = require('./helpers/assertEvent')
-const { assertRevert } = require('./helpers/assertThrow')
-const { createExecutorId, encodeCallScript } = require('./helpers/evmScript')
-const reverts = require('./helpers/revertStrings')
+const assertEvent = require('../../helpers/assertEvent')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
+const reverts = require('../../helpers/revertStrings')
 
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')

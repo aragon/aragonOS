@@ -1,5 +1,5 @@
 const { soliditySha3 } = require('web3-utils')
-const { createExecutorId, encodeCallScript } = require('./helpers/evmScript')
+const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')

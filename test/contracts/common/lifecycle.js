@@ -1,6 +1,6 @@
-const { assertRevert } = require('./helpers/assertThrow')
-const { getBlockNumber } = require('./helpers/web3')
-const reverts = require('./helpers/revertStrings')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { getBlockNumber } = require('../../helpers/web3')
+const reverts = require('../../helpers/revertStrings')
 
 // Mocks
 const LifecycleMock = artifacts.require('LifecycleMock')

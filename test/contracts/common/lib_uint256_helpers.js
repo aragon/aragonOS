@@ -1,4 +1,4 @@
-const { assertRevert } = require('./helpers/assertThrow')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 contract('Uint256 Helpers test', accounts => {
   let uint256Mock

@@ -1,5 +1,5 @@
-const assertEvent = require('./helpers/assertEvent')
-const { assertRevert } = require('./helpers/assertThrow')
+const assertEvent = require('../../helpers/assertEvent')
+const { assertRevert } = require('../../helpers/assertThrow')
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
 const keccak_256 = require('js-sha3').keccak_256

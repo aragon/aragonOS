@@ -1,4 +1,4 @@
-const { assertRevert } = require('./helpers/assertThrow')
+const { assertRevert } = require('../../../helpers/assertThrow')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')

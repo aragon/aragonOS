@@ -1,4 +1,4 @@
-const { assertRevert } = require('./helpers/assertThrow')
+const { assertRevert } = require('../../../helpers/assertThrow')
 
 contract('SafeMath64 lib test', accounts => {
   let safeMath64Mock

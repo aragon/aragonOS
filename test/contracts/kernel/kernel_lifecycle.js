@@ -1,6 +1,6 @@
-const assertEvent = require('./helpers/assertEvent')
-const { assertRevert } = require('./helpers/assertThrow')
-const { getBlockNumber } = require('./helpers/web3')
+const assertEvent = require('../../helpers/assertEvent')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { getBlockNumber } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
 const ACL = artifacts.require('ACL')

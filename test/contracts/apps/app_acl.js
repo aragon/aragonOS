@@ -1,5 +1,5 @@
-const { assertRevert } = require('./helpers/assertThrow')
-const { onlyIf } = require('./helpers/onlyIf')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { onlyIf } = require('../../helpers/onlyIf')
 const { hash } = require('eth-ens-namehash')
 
 const ACL = artifacts.require('ACL')

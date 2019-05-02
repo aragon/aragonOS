@@ -1,5 +1,5 @@
-const { assertRevert } = require('./helpers/assertThrow')
-const { decodeEventsOfType } = require('./helpers/decodeEvent')
+const { assertRevert } = require('../../helpers/assertThrow')
+const { decodeEventsOfType } = require('../../helpers/decodeEvent')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
