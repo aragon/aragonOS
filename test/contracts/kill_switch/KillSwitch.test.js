@@ -1,4 +1,5 @@
 const { ACTION, SEVERITY } = require('./enums')
+const { skipCoverage } = require('../../helpers/coverage')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getEvents, getEvent, getEventArgument } = require('../../helpers/events')
 
@@ -631,12 +632,12 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
     })
 
-    it('kill switch should overload ~32k of gas to a function', async () => {
+    it('kill switch should overload ~32k of gas to a function', skipCoverage(async () => {
       const { receipt: { cumulativeGasUsed: gasUsedWithKillSwitch } } = await app.write(10, { from: owner })
       const { receipt: { cumulativeGasUsed: gasUsedWithoutKillSwitch } } = await app.writeWithoutKillSwitch(10, { from: owner })
 
       const killSwitchCost = gasUsedWithKillSwitch - gasUsedWithoutKillSwitch
       assert(killSwitchCost <= 32000, 'kill switch should overload ~32k of gas')
-    })
+    }))
   })
 })
