@@ -13,7 +13,7 @@ contract IssuesRegistry is IIssuesRegistry, AragonApp {
         initialized();
     }
 
-    function setSeverityFor(address entry, Severity severity) external authP(SET_ENTRY_SEVERITY_ROLE, arr(entry, msg.sender)) {
+    function setSeverityFor(address entry, Severity severity) external authP(SET_ENTRY_SEVERITY_ROLE, arr(entry)) {
         issuesSeverity[entry] = severity;
         emit SeveritySet(entry, severity, msg.sender);
     }

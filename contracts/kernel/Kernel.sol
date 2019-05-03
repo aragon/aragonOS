@@ -58,7 +58,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
 
     /**
     * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initialize this kernel instance, its ACL setting `_permissionsCreator` as the entity that can create other permissions, and a KillSwitch instance setting `_issuesRegistry
+    * @notice Initialize this kernel instance, its ACL setting `_permissionsCreator` as the entity that can create other permissions, and a KillSwitch instance setting `_issuesRegistry`
     * @param _baseAcl Address of base ACL app
     * @param _permissionsCreator Entity that will be given permission over createPermission
     * @param _baseKillSwitch Address of base KillSwitch app

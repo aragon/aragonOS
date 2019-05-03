@@ -7,10 +7,18 @@ import "../common/IsContract.sol";
 
 
 contract KillSwitch is IKillSwitch, IsContract, AragonApp {
-    bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
-    bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
-    bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
-    bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
+    /*
+     * Hardcoded constants to save gas
+     * bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
+     * bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
+     * bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
+     * bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
+     */
+
+    bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = 0xec32b556caaf18ff28362d6b89f3f678177fb74ae2c5c78bfbac6b1dedfa6b43;
+    bytes32 constant public SET_ISSUES_REGISTRY_ROLE = 0xc347b194ad4bc72077d417e05508bb224b4be509950d86cc7756e39a78fb725b;
+    bytes32 constant public SET_CONTRACT_ACTION_ROLE = 0xc7e0b4d70cab2a2679fe330e7c518a6e245cc494b086c284bfeb5f5d03fbe3f6;
+    bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = 0xca159ccee5d02309b609308bfc70aecedaf2d2023cd19f9c223d8e9875a256ba;
 
     string constant private ERROR_ISSUES_REGISTRY_NOT_CONTRACT = "KS_ISSUES_REGISTRY_NOT_CONTRACT";
 
@@ -37,14 +45,14 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
 
     function setDefaultIssuesRegistry(IIssuesRegistry _defaultIssuesRegistry)
         external
-        authP(SET_DEFAULT_ISSUES_REGISTRY_ROLE, arr(msg.sender))
+        auth(SET_DEFAULT_ISSUES_REGISTRY_ROLE)
     {
         _setDefaultIssuesRegistry(_defaultIssuesRegistry);
     }
 
     function setContractAction(address _contract, ContractAction _action)
         external
-        authP(SET_CONTRACT_ACTION_ROLE, arr(_contract, msg.sender))
+        authP(SET_CONTRACT_ACTION_ROLE, arr(_contract))
     {
         contractSettings[_contract].action = _action;
         emit ContractActionSet(_contract, _action);
@@ -60,7 +68,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
 
     function setIssuesRegistry(address _contract, IIssuesRegistry _issuesRegistry)
         external
-        authP(SET_ISSUES_REGISTRY_ROLE, arr(_contract, msg.sender))
+        authP(SET_ISSUES_REGISTRY_ROLE, arr(_contract))
     {
         require(isContract(_issuesRegistry), ERROR_ISSUES_REGISTRY_NOT_CONTRACT);
         contractSettings[_contract].issuesRegistry = _issuesRegistry;
@@ -68,7 +76,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     }
 
     function shouldDenyCallingContract(address _contract) external returns (bool) {
-        // if the call should be denied, then deny given call
+        // if the contract should be denied, then deny given call
         if (isContractDenied(_contract)) {
             return true;
         }

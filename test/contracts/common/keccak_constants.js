@@ -123,4 +123,13 @@ contract('Constants', () => {
     // redefined the storage position correctly in the mock.
     assert.equal(await reentrancyGuardMock.getReentrancyMutexPosition(), await keccakConstants.reentrancyGuardPosition(), "reentrancyGuardPosition doesn't match")
   })
+
+  it('checks KillSwitch constants', async () => {
+    const killSwitch = await getContract('KillSwitch').new()
+
+    assert.equal(await killSwitch.SET_DEFAULT_ISSUES_REGISTRY_ROLE(), await keccakConstants.SET_DEFAULT_ISSUES_REGISTRY_ROLE())
+    assert.equal(await killSwitch.SET_ISSUES_REGISTRY_ROLE(), await keccakConstants.SET_ISSUES_REGISTRY_ROLE())
+    assert.equal(await killSwitch.SET_CONTRACT_ACTION_ROLE(), await keccakConstants.SET_CONTRACT_ACTION_ROLE())
+    assert.equal(await killSwitch.SET_HIGHEST_ALLOWED_SEVERITY_ROLE(), await keccakConstants.SET_HIGHEST_ALLOWED_SEVERITY_ROLE())
+  })
 })

@@ -624,4 +624,19 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
     })
   })
+
+  describe('gas costs', () => {
+    beforeEach('set an allowed severity issue', async () => {
+      await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.MID, { from: owner })
+      await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
+    })
+
+    it('kill switch should overload ~32k of gas to a function', async () => {
+      const { receipt: { cumulativeGasUsed: gasUsedWithKillSwitch } } = await app.write(10, { from: owner })
+      const { receipt: { cumulativeGasUsed: gasUsedWithoutKillSwitch } } = await app.writeWithoutKillSwitch(10, { from: owner })
+
+      const killSwitchCost = gasUsedWithKillSwitch - gasUsedWithoutKillSwitch
+      assert(killSwitchCost <= 32000, 'kill switch should overload ~32k of gas')
+    })
+  })
 })

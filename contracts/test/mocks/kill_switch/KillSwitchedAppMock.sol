@@ -21,6 +21,10 @@ contract KillSwitchedAppMock is AragonApp {
         data = _data;
     }
 
+    function writeWithoutKillSwitch(uint256 _data) public {
+        data = _data;
+    }
+
     function reset() public killSwitched {
         data = 0;
     }
