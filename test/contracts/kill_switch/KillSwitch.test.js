@@ -78,38 +78,82 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
     await app.initialize(owner)
   })
 
-  describe('isContractIgnored', function () {
-    context('when the contract is checked', function () {
-      it('returns false', async function () {
-        assert.isFalse(await killSwitch.isContractIgnored(appBase.address))
+  describe('isContractAllowed', function () {
+    context('when there was no action previously set', function () {
+      it('returns true', async function () {
+        assert.isTrue(await killSwitch.isContractAllowed(appBase.address))
       })
     })
 
-    context('when the contract is ignored', function () {
-      beforeEach('ignore contract', async function () {
-        await killSwitch.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
+    context('when there was an action set', function () {
+      context('when the contract is allowed', function () {
+        beforeEach('allow contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from: owner })
+        })
+
+        it('returns true', async function () {
+          assert.isTrue(await killSwitch.isContractAllowed(appBase.address))
+        })
       })
 
-      it('returns true', async function () {
-        assert.isTrue(await killSwitch.isContractIgnored(appBase.address))
+      context('when the contract is being checked', function () {
+        beforeEach('check contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.CHECK, { from: owner })
+        })
+
+        it('returns false', async function () {
+          assert.isFalse(await killSwitch.isContractAllowed(appBase.address))
+        })
+      })
+
+      context('when the contract is denied', function () {
+        beforeEach('deny contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+        })
+
+        it('returns false', async function () {
+          assert.isFalse(await killSwitch.isContractAllowed(appBase.address))
+        })
       })
     })
   })
 
   describe('isContractDenied', function () {
-    context('when the contract is not denied', function () {
+    context('when there was no action previously set', function () {
       it('returns false', async function () {
         assert.isFalse(await killSwitch.isContractDenied(appBase.address))
       })
     })
 
-    context('when the contract is ignored', function () {
-      beforeEach('ignore contract', async function () {
-        await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+    context('when there was an action set', function () {
+      context('when the contract is allowed', function () {
+        beforeEach('allow contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from: owner })
+        })
+
+        it('returns false', async function () {
+          assert.isFalse(await killSwitch.isContractDenied(appBase.address))
+        })
       })
 
-      it('returns true', async function () {
-        assert.isTrue(await killSwitch.isContractDenied(appBase.address))
+      context('when the contract is being checked', function () {
+        beforeEach('check contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.CHECK, { from: owner })
+        })
+
+        it('returns false', async function () {
+          assert.isFalse(await killSwitch.isContractDenied(appBase.address))
+        })
+      })
+
+      context('when the contract is denied', function () {
+        beforeEach('deny contract', async function () {
+          await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+        })
+
+        it('returns true', async function () {
+          assert.isTrue(await killSwitch.isContractDenied(appBase.address))
+        })
       })
     })
   })
@@ -144,9 +188,9 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         })
 
         it('changes the contract action', async function () {
-          await killSwitch.setContractAction(appBase.address, ACTION.IGNORE, { from })
+          await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from })
 
-          assert.equal(await killSwitch.getContractAction(appBase.address), ACTION.IGNORE)
+          assert.equal(await killSwitch.getContractAction(appBase.address), ACTION.ALLOW)
         })
       })
     })
@@ -404,7 +448,19 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           })
         }
 
-        context('when the contract being called is not denied', () => {
+        context('when the contract being called is denied', () => {
+          beforeEach('check calling contract', async () => {
+            await killSwitch.setContractAction(appBase.address, ACTION.CHECK, { from: owner })
+          })
+
+          itExecutesTheCall()
+        })
+
+        context('when the contract being called is denied', () => {
+          beforeEach('allow calling contract', async () => {
+            await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from: owner })
+          })
+
           itExecutesTheCall()
         })
 
@@ -479,24 +535,34 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       }
 
       const itExecutesTheCallWhenNotDenied = () => {
-        context('when the contract being called is checked', () => {
+        context('when there was no action previously set', () => {
           itExecutesTheCall()
         })
 
-        context('when the contract being called is ignored', () => {
-          beforeEach('ignore calling contract', async () => {
-            await killSwitch.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
+        context('when there was an action set', () => {
+          context('when the contract being called is being checked', () => {
+            beforeEach('allow calling contract', async () => {
+              await killSwitch.setContractAction(appBase.address, ACTION.CHECK, {from: owner})
+            })
+
+            itExecutesTheCall()
           })
 
-          itExecutesTheCall()
-        })
+          context('when the contract being called is allowed', () => {
+            beforeEach('allow calling contract', async () => {
+              await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, {from: owner})
+            })
 
-        context('when the contract being called is denied', () => {
-          beforeEach('deny calling contract', async () => {
-            await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+            itExecutesTheCall()
           })
 
-          itDoesNotExecuteTheCall()
+          context('when the contract being called is denied', () => {
+            beforeEach('deny calling contract', async () => {
+              await killSwitch.setContractAction(appBase.address, ACTION.DENY, {from: owner})
+            })
+
+            itDoesNotExecuteTheCall()
+          })
         })
       }
 
@@ -521,24 +587,34 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
         context('when the bug was not fixed yet', () => {
           context('when there is no highest allowed severity set for the contract being called', () => {
-            context('when the contract being called is checked', () => {
-              itDoesNotExecuteTheCall()
-            })
-
-            context('when the contract being called is ignored', () => {
-              beforeEach('ignore calling contract', async () => {
-                await killSwitch.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
-              })
-
+            context('when there was no action previously set', () => {
               itExecutesTheCall()
             })
 
-            context('when the contract being called is denied', () => {
-              beforeEach('deny calling contract', async () => {
-                await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+            context('when there was an action set', () => {
+              context('when the contract being called is allowed', () => {
+                beforeEach('allow calling contract', async () => {
+                  await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from: owner })
+                })
+
+                itExecutesTheCall()
               })
 
-              itDoesNotExecuteTheCall()
+              context('when the contract being called is being checked', () => {
+                beforeEach('allow calling contract', async () => {
+                  await killSwitch.setContractAction(appBase.address, ACTION.CHECK, {from: owner})
+                })
+
+                itDoesNotExecuteTheCall()
+              })
+
+              context('when the contract being called is denied', () => {
+                beforeEach('deny calling contract', async () => {
+                  await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+                })
+
+                itDoesNotExecuteTheCall()
+              })
             })
           })
 
@@ -548,24 +624,34 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                 await killSwitch.setHighestAllowedSeverity(appBase.address, SEVERITY.LOW, { from: owner })
               })
 
-              context('when the contract being called is checked', () => {
-                itDoesNotExecuteTheCall()
-              })
-
-              context('when the contract being called is ignored', () => {
-                beforeEach('ignore calling contract', async () => {
-                  await killSwitch.setContractAction(appBase.address, ACTION.IGNORE, { from: owner })
-                })
-
+              context('when there was no action previously set', () => {
                 itExecutesTheCall()
               })
 
-              context('when the contract being called is denied', () => {
-                beforeEach('deny calling contract', async () => {
-                  await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+              context('when there was an action set', () => {
+                context('when the contract being called is allowed', () => {
+                  beforeEach('allow calling contract', async () => {
+                    await killSwitch.setContractAction(appBase.address, ACTION.ALLOW, { from: owner })
+                  })
+
+                  itExecutesTheCall()
                 })
 
-                itDoesNotExecuteTheCall()
+                context('when the contract being called is being checked', () => {
+                  beforeEach('allow calling contract', async () => {
+                    await killSwitch.setContractAction(appBase.address, ACTION.CHECK, {from: owner})
+                  })
+
+                  itDoesNotExecuteTheCall()
+                })
+
+                context('when the contract being called is denied', () => {
+                  beforeEach('deny calling contract', async () => {
+                    await killSwitch.setContractAction(appBase.address, ACTION.DENY, { from: owner })
+                  })
+
+                  itDoesNotExecuteTheCall()
+                })
               })
             })
 

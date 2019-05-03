@@ -22,7 +22,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
 
     string constant private ERROR_ISSUES_REGISTRY_NOT_CONTRACT = "KS_ISSUES_REGISTRY_NOT_CONTRACT";
 
-    enum ContractAction { Check, Ignore, Deny }
+    enum ContractAction { Allow, Check, Deny }
 
     struct Settings {
         ContractAction action;
@@ -76,13 +76,13 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     }
 
     function shouldDenyCallingContract(address _contract) external returns (bool) {
-        // if the contract should be denied, then deny given call
+        // if the contract is denied, then deny given call
         if (isContractDenied(_contract)) {
             return true;
         }
 
-        // if the contract issues are ignored, then allow given call
-        if (isContractIgnored(_contract)) {
+        // if the contract is allowed, then allow given call
+        if (isContractAllowed(_contract)) {
             return false;
         }
 
@@ -108,8 +108,8 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
         return foundRegistry == IIssuesRegistry(0) ? defaultIssuesRegistry : foundRegistry;
     }
 
-    function isContractIgnored(address _contract) public view returns (bool) {
-        return getContractAction(_contract) == ContractAction.Ignore;
+    function isContractAllowed(address _contract) public view returns (bool) {
+        return getContractAction(_contract) == ContractAction.Allow;
     }
 
     function isContractDenied(address _contract) public view returns (bool) {
