@@ -21,6 +21,7 @@ import "../evmscript/EVMScriptRunner.sol";
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
     string private constant ERROR_CONTRACT_CALL_NOT_ALLOWED = "APP_CONTRACT_CALL_NOT_ALLOWED";
+    string private constant ERROR_UNEXPECTED_KERNEL_RESPONSE = "APP_UNEXPECTED_KERNEL_RESPONSE";
 
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
@@ -33,8 +34,27 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     }
 
     modifier killSwitched {
-        bool _shouldDenyCall = kernel().killSwitch().shouldDenyCallingContract(_baseApp());
-        require(!_shouldDenyCall, ERROR_CONTRACT_CALL_NOT_ALLOWED);
+        IKernel _kernel = kernel();
+        bytes4 selector = _kernel.shouldDenyCallingContract.selector;
+        bytes memory callData = abi.encodeWithSelector(selector, appId());
+        bool success = address(_kernel).call(callData);
+
+        // perform a check only if kernel supports "shouldDenyCallingContract" method
+        if (success) {
+            uint256 _outputLength;
+            assembly { _outputLength := returndatasize }
+            // we expect 32 bytes length returned value here
+            require(_outputLength == 32, ERROR_UNEXPECTED_KERNEL_RESPONSE);
+
+            bool _shouldDenyCall;
+            assembly {
+                let ptr := mload(0x40)                  // get next free memory pointer
+                mstore(0x40, add(ptr, returndatasize))  // set next free memory pointer
+                returndatacopy(ptr, 0, returndatasize)  // copy call return value
+                _shouldDenyCall := mload(ptr)           // read data
+            }
+            require(!_shouldDenyCall, ERROR_CONTRACT_CALL_NOT_ALLOWED);
+        }
         _;
     }
 
@@ -71,13 +91,5 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         return kernel().getRecoveryVault(); // if kernel is not set, it will revert
-    }
-
-    /**
-    * @dev Get the address of the base implementation for the current app
-    * @return Address of the base implementation
-    */
-    function _baseApp() internal view returns (address) {
-        return kernel().getApp(KERNEL_APP_BASES_NAMESPACE, appId());
     }
 }

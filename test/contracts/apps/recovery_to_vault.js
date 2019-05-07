@@ -4,11 +4,9 @@ const { skipCoverage } = require('../../helpers/coverage')
 const { getBalance } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 
-const DAOFactory = artifacts.require('DAOFactory')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
 const ACL = artifacts.require('ACL')
-const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 // Mocks
 const AppStubDepositable = artifacts.require('AppStubDepositable')

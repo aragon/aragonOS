@@ -6,9 +6,9 @@ const { assertRevert } = require('../../helpers/assertThrow')
 const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
 const reverts = require('../../helpers/revertStrings')
 
+const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-const ACL = artifacts.require('ACL')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const CallsScript = artifacts.require('CallsScript')
 const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
@@ -194,7 +194,7 @@ contract('EVM Script', accounts => {
   })
 
   context('> ScriptRunner', () => {
-    let scriptRunnerApp
+    let scriptRunnerAppBase, scriptRunnerApp
 
     before(async () => {
       scriptRunnerAppBase = await AppStubScriptRunner.new()

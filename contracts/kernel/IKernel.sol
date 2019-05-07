@@ -22,4 +22,5 @@ contract IKernel is IKernelEvents, IVaultRecoverable {
 
     function setApp(bytes32 namespace, bytes32 appId, address app) public;
     function getApp(bytes32 namespace, bytes32 appId) public view returns (address);
+    function shouldDenyCallingContract(bytes32 appId) public returns (bool);
 }

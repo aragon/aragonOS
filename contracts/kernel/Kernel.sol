@@ -185,6 +185,21 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         recoveryVaultAppId = _recoveryVaultAppId;
     }
 
+    /**
+    * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings
+    * @param _appId Identifier for app to be checked
+    * @return True is the given call should be denied, false otherwise
+    */
+    function shouldDenyCallingContract(bytes32 _appId) public returns (bool) {
+        IKillSwitch _killSwitch = killSwitch();
+        if (address(_killSwitch) == address(0)) {
+            return false;
+        }
+
+        address _baseApp = getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
+        return _killSwitch.shouldDenyCallingContract(_baseApp);
+    }
+
     // External access to default app id and namespace constants to mimic default getters for constants
     /* solium-disable function-order, mixedcase */
     function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
