@@ -33,7 +33,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         _;
     }
 
-    modifier killSwitched {
+    modifier killSwitchProtected {
         IKernel _kernel = kernel();
         bytes4 selector = _kernel.shouldDenyCallingContract.selector;
         bytes memory callData = abi.encodeWithSelector(selector, appId());

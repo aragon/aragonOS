@@ -17,7 +17,7 @@ contract KillSwitchedAppMock is AragonApp {
         return data;
     }
 
-    function write(uint256 _data) public killSwitched {
+    function write(uint256 _data) public killSwitchProtected {
         data = _data;
     }
 
@@ -25,7 +25,7 @@ contract KillSwitchedAppMock is AragonApp {
         data = _data;
     }
 
-    function reset() public killSwitched {
+    function reset() public killSwitchProtected {
         data = 0;
     }
 }
