@@ -6,8 +6,6 @@ contract IIssuesRegistry {
 
     event SeveritySet(address indexed implementation, Severity severity, address sender);
 
-    function initialize() external;
-
     function setSeverityFor(address implementation, Severity severity) external;
 
     function isSeverityFor(address implementation) public view returns (bool);

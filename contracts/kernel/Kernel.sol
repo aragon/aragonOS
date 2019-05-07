@@ -22,9 +22,9 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
 
+    string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
-    string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -54,27 +54,6 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, acl);
 
         recoveryVaultAppId = KERNEL_DEFAULT_VAULT_APP_ID;
-    }
-
-    /**
-    * @dev Initialize can only be called once. It saves the block number in which it was initialized.
-    * @notice Initialize this kernel instance, its ACL setting `_permissionsCreator` as the entity that can create other permissions, and a KillSwitch instance setting `_issuesRegistry`
-    * @param _baseAcl Address of base ACL app
-    * @param _permissionsCreator Entity that will be given permission over createPermission
-    * @param _baseKillSwitch Address of base KillSwitch app
-    * @param _issuesRegistry Issues registry that will act as the default source of truth to provide info about applications issues
-    */
-    function initializeWithKillSwitch(IACL _baseAcl, address _permissionsCreator, IKillSwitch _baseKillSwitch, IIssuesRegistry _issuesRegistry)
-        public onlyInit
-    {
-        // Set and create ACL app
-        initialize(_baseAcl, _permissionsCreator);
-
-        // Set and create KillSwitch app
-        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID, _baseKillSwitch);
-        IKillSwitch killSwitch = IKillSwitch(newAppProxy(this, KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
-        killSwitch.initialize(_issuesRegistry);
-        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID, killSwitch);
     }
 
     /**

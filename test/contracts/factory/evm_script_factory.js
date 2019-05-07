@@ -49,7 +49,7 @@ contract('EVM Script Factory', accounts => {
   beforeEach(async () => {
     const receipt = await daoFact.newDAO(permissionsRoot)
     dao = Kernel.at(receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
-    evmScriptReg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
+    evmScriptReg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.registry)
 
     acl = ACL.at(await dao.acl())
   })
