@@ -37,10 +37,10 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
     await acl.createPermission(owner, issuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
   })
 
-  describe('isSeverityFor', () => {
+  describe('hasSeverity', () => {
     context('when there was no severity set before', () => {
       it('returns false', async () => {
-        assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
+        assert.isFalse(await issuesRegistry.hasSeverity(implementation), 'did not expect severity for given implementation')
       })
     })
 
@@ -51,7 +51,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
 
       context('when the issues was not fixed yet', () => {
         it('returns true', async () => {
-          assert.isTrue(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
+          assert.isTrue(await issuesRegistry.hasSeverity(implementation), 'did not expect severity for given implementation')
         })
       })
 
@@ -61,7 +61,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
         })
 
         it('returns false', async () => {
-          assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
+          assert.isFalse(await issuesRegistry.hasSeverity(implementation), 'did not expect severity for given implementation')
         })
       })
     })

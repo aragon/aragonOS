@@ -21,7 +21,7 @@ contract IssuesRegistry is IIssuesRegistry, AragonApp {
         emit SeveritySet(implementation, severity, msg.sender);
     }
 
-    function isSeverityFor(address implementation) public view isInitialized returns (bool) {
+    function hasSeverity(address implementation) public view isInitialized returns (bool) {
         return issuesSeverity[implementation] != Severity.None;
     }
 
