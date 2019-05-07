@@ -36,17 +36,17 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     await issuesRegistryACL.createPermission(root, issuesRegistryDAO.address, APP_MANAGER_ROLE, root, { from: root })
 
-    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
+    const SET_SEVERITY_ROLE = await issuesRegistryBase.SET_SEVERITY_ROLE()
 
     const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
     defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(defaultRegistryReceipt, 'NewAppProxy', 'proxy'))
     await defaultIssuesRegistry.initialize()
-    await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+    await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
 
     const specificRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
     specificIssuesRegistry = IssuesRegistry.at(getEventArgument(specificRegistryReceipt, 'NewAppProxy', 'proxy'))
     await specificIssuesRegistry.initialize()
-    await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+    await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
   })
 
   beforeEach('deploy DAO', async () => {

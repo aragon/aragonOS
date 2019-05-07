@@ -5,7 +5,7 @@ import "./IIssuesRegistry.sol";
 
 
 contract IssuesRegistry is IIssuesRegistry, AragonApp {
-    bytes32 constant public SET_ENTRY_SEVERITY_ROLE = keccak256("SET_ENTRY_SEVERITY_ROLE");
+    bytes32 constant public SET_SEVERITY_ROLE = keccak256("SET_SEVERITY_ROLE");
 
     mapping (address => Severity) internal issuesSeverity;
 
@@ -13,16 +13,16 @@ contract IssuesRegistry is IIssuesRegistry, AragonApp {
         initialized();
     }
 
-    function setSeverityFor(address entry, Severity severity) external authP(SET_ENTRY_SEVERITY_ROLE, arr(entry)) {
-        issuesSeverity[entry] = severity;
-        emit SeveritySet(entry, severity, msg.sender);
+    function setSeverityFor(address implementation, Severity severity) external authP(SET_SEVERITY_ROLE, arr(implementation)) {
+        issuesSeverity[implementation] = severity;
+        emit SeveritySet(implementation, severity, msg.sender);
     }
 
-    function isSeverityFor(address entry) public view isInitialized returns (bool) {
-        return issuesSeverity[entry] != Severity.None;
+    function isSeverityFor(address implementation) public view isInitialized returns (bool) {
+        return issuesSeverity[implementation] != Severity.None;
     }
 
-    function getSeverityFor(address entry) public view isInitialized returns (Severity) {
-        return issuesSeverity[entry];
+    function getSeverityFor(address implementation) public view isInitialized returns (Severity) {
+        return issuesSeverity[implementation];
     }
 }

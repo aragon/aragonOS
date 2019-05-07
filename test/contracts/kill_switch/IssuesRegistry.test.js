@@ -33,14 +33,14 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
     const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
     issuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
     await issuesRegistry.initialize()
-    const SET_ENTRY_SEVERITY_ROLE = await issuesRegistryBase.SET_ENTRY_SEVERITY_ROLE()
-    await acl.createPermission(owner, issuesRegistry.address, SET_ENTRY_SEVERITY_ROLE, root, { from: root })
+    const SET_SEVERITY_ROLE = await issuesRegistryBase.SET_SEVERITY_ROLE()
+    await acl.createPermission(owner, issuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
   })
 
   describe('isSeverityFor', () => {
     context('when there was no severity set before', () => {
       it('returns false', async () => {
-        assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given entry')
+        assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
       })
     })
 
@@ -51,7 +51,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
 
       context('when the issues was not fixed yet', () => {
         it('returns true', async () => {
-          assert.isTrue(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given entry')
+          assert.isTrue(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
         })
       })
 
@@ -61,7 +61,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
         })
 
         it('returns false', async () => {
-          assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given entry')
+          assert.isFalse(await issuesRegistry.isSeverityFor(implementation), 'did not expect severity for given implementation')
         })
       })
     })
@@ -94,13 +94,13 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
 
         const events = logs.filter(l => l.event === 'SeveritySet')
         assert.equal(events.length, 1, 'number of SeveritySet events does not match')
-        assert.equal(events[0].args.entry, implementation, 'entry address does not match')
+        assert.equal(events[0].args.implementation, implementation, 'implementation address does not match')
         assert.equal(events[0].args.severity, SEVERITY.LOW, 'severity does not match')
         assert.equal(events[0].args.sender, owner, 'sender does not match')
       })
 
       context('when there was no severity set before', () => {
-        it('sets the severity for the given entry', async () => {
+        it('sets the severity for the given implementation', async () => {
           await issuesRegistry.setSeverityFor(implementation, SEVERITY.MID, { from })
 
           assert.equal(await issuesRegistry.getSeverityFor(implementation), SEVERITY.MID, 'severity does not match')
@@ -112,7 +112,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
           await issuesRegistry.setSeverityFor(implementation, SEVERITY.MID, { from })
         })
 
-        it('changes the severity for the given entry', async () => {
+        it('changes the severity for the given implementation', async () => {
           await issuesRegistry.setSeverityFor(implementation, SEVERITY.LOW, { from })
 
           assert.equal(await issuesRegistry.getSeverityFor(implementation), SEVERITY.LOW, 'severity does not match')

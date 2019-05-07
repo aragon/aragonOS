@@ -4,13 +4,13 @@ pragma solidity 0.4.24;
 contract IIssuesRegistry {
     enum Severity { None, Low, Mid, High, Critical }
 
-    event SeveritySet(address indexed entry, Severity severity, address sender);
+    event SeveritySet(address indexed implementation, Severity severity, address sender);
 
     function initialize() external;
 
-    function setSeverityFor(address entry, Severity severity) external;
+    function setSeverityFor(address implementation, Severity severity) external;
 
-    function isSeverityFor(address entry) public view returns (bool);
+    function isSeverityFor(address implementation) public view returns (bool);
 
-    function getSeverityFor(address entry) public view returns (Severity);
+    function getSeverityFor(address implementation) public view returns (Severity);
 }
