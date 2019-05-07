@@ -60,7 +60,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
 
     function setHighestAllowedSeverity(address _contract, IIssuesRegistry.Severity _severity)
         external
-        authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_contract, msg.sender))
+        authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_contract))
     {
         contractSettings[_contract].highestAllowedSeverity = _severity;
         emit HighestAllowedSeveritySet(_contract, _severity);
