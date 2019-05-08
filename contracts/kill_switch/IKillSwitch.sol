@@ -4,5 +4,5 @@ import "./IIssuesRegistry.sol";
 
 
 contract IKillSwitch {
-    function shouldDenyCallingContract(address _contract) external returns (bool);
+    function shouldDenyCallingApp(bytes32 _appId, address _base, address _proxy) external returns (bool);
 }

@@ -30,8 +30,9 @@ contract KeccakConstants {
 
     // KillSwitch
     bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
+    bytes32 constant public SET_ALLOWED_INSTANCES_ROLE = keccak256("SET_ALLOWED_INSTANCES_ROLE");
+    bytes32 constant public SET_DENIED_BASE_IMPLS_ROLE = keccak256("SET_DENIED_BASE_IMPLS_ROLE");
     bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
-    bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
     bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
 
     // APMRegistry

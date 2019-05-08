@@ -176,7 +176,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         }
 
         address _baseApp = getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
-        return _killSwitch.shouldDenyCallingContract(_baseApp);
+        return _killSwitch.shouldDenyCallingApp(_appId, _baseApp, msg.sender);
     }
 
     // External access to default app id and namespace constants to mimic default getters for constants

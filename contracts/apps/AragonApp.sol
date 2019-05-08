@@ -39,7 +39,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         bytes memory callData = abi.encodeWithSelector(selector, appId());
         bool success = address(_kernel).call(callData);
 
-        // perform a check only if kernel supports "shouldDenyCallingContract" method
+        // perform a check only if kernel supports "shouldDenyCallingApp" method
         if (success) {
             uint256 _outputLength;
             assembly { _outputLength := returndatasize }

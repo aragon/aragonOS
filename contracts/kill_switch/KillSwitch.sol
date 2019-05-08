@@ -10,33 +10,35 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     /*
      * Hardcoded constants to save gas
      * bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
+     * bytes32 constant public SET_ALLOWED_INSTANCES_ROLE = keccak256("SET_ALLOWED_INSTANCES_ROLE");
+     * bytes32 constant public SET_DENIED_BASE_IMPLS_ROLE = keccak256("SET_DENIED_BASE_IMPLS_ROLE");
      * bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
-     * bytes32 constant public SET_CONTRACT_ACTION_ROLE = keccak256("SET_CONTRACT_ACTION_ROLE");
      * bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
      */
 
     bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = 0xec32b556caaf18ff28362d6b89f3f678177fb74ae2c5c78bfbac6b1dedfa6b43;
+    bytes32 constant public SET_ALLOWED_INSTANCES_ROLE = 0x98ff612ed29ae4d49b4e102b7554cfaba413a7f9c345ecd1c920f91df1eb22e8;
+    bytes32 constant public SET_DENIED_BASE_IMPLS_ROLE = 0x6ec1c2a4f70ec94acd884927a40806e8282a03b3a489ac3c5551aee638767a33;
     bytes32 constant public SET_ISSUES_REGISTRY_ROLE = 0xc347b194ad4bc72077d417e05508bb224b4be509950d86cc7756e39a78fb725b;
-    bytes32 constant public SET_CONTRACT_ACTION_ROLE = 0xc7e0b4d70cab2a2679fe330e7c518a6e245cc494b086c284bfeb5f5d03fbe3f6;
     bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = 0xca159ccee5d02309b609308bfc70aecedaf2d2023cd19f9c223d8e9875a256ba;
 
     string constant private ERROR_ISSUES_REGISTRY_NOT_CONTRACT = "KS_ISSUES_REGISTRY_NOT_CONTRACT";
 
-    enum ContractAction { Allow, Check, Deny }
-
-    struct Settings {
-        ContractAction action;
-        IIssuesRegistry.Severity highestAllowedSeverity;
+    struct IssuesSettings {
         IIssuesRegistry issuesRegistry;
+        IIssuesRegistry.Severity highestAllowedSeverity;
     }
 
     IIssuesRegistry public defaultIssuesRegistry;
-    mapping (address => Settings) internal contractSettings;
+    mapping (address => bool) internal allowedInstances;
+    mapping (address => bool) internal deniedBaseImplementations;
+    mapping (bytes32 => IssuesSettings) internal appsIssuesSettings;
 
     event DefaultIssuesRegistrySet(address issuesRegistry);
-    event ContractActionSet(address indexed contractAddress, ContractAction action);
-    event IssuesRegistrySet(address indexed contractAddress, address issuesRegistry);
-    event HighestAllowedSeveritySet(address indexed contractAddress, IIssuesRegistry.Severity severity);
+    event AllowedInstanceSet(address indexed instance, bool allowed);
+    event DeniedBaseImplementationSet(address indexed base, bool denied);
+    event IssuesRegistrySet(bytes32 indexed appId, address issuesRegistry);
+    event HighestAllowedSeveritySet(bytes32 indexed appId, IIssuesRegistry.Severity severity);
 
     function initialize(IIssuesRegistry _defaultIssuesRegistry) external onlyInit {
         initialized();
@@ -50,44 +52,58 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
         _setDefaultIssuesRegistry(_defaultIssuesRegistry);
     }
 
-    function setContractAction(address _contract, ContractAction _action)
+    function setAllowedInstance(address _instance, bool _allowed)
         external
-        authP(SET_CONTRACT_ACTION_ROLE, arr(_contract))
+        authP(SET_ALLOWED_INSTANCES_ROLE, arr(_instance))
     {
-        contractSettings[_contract].action = _action;
-        emit ContractActionSet(_contract, _action);
+        allowedInstances[_instance] = _allowed;
+        emit AllowedInstanceSet(_instance, _allowed);
     }
 
-    function setHighestAllowedSeverity(address _contract, IIssuesRegistry.Severity _severity)
+    function setDeniedBaseImplementation(address _base, bool _denied)
         external
-        authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_contract))
+        authP(SET_DENIED_BASE_IMPLS_ROLE, arr(_base))
     {
-        contractSettings[_contract].highestAllowedSeverity = _severity;
-        emit HighestAllowedSeveritySet(_contract, _severity);
+        deniedBaseImplementations[_base] = _denied;
+        emit DeniedBaseImplementationSet(_base, _denied);
     }
 
-    function setIssuesRegistry(address _contract, IIssuesRegistry _issuesRegistry)
+    function setIssuesRegistry(bytes32 _appId, IIssuesRegistry _issuesRegistry)
         external
-        authP(SET_ISSUES_REGISTRY_ROLE, arr(_contract))
+        authP(SET_ISSUES_REGISTRY_ROLE, arr(_appId))
     {
         require(isContract(_issuesRegistry), ERROR_ISSUES_REGISTRY_NOT_CONTRACT);
-        contractSettings[_contract].issuesRegistry = _issuesRegistry;
-        emit IssuesRegistrySet(_contract, address(_issuesRegistry));
+        appsIssuesSettings[_appId].issuesRegistry = _issuesRegistry;
+        emit IssuesRegistrySet(_appId, address(_issuesRegistry));
     }
 
-    function shouldDenyCallingContract(address _contract) external returns (bool) {
-        // if the contract is denied, then deny given call
-        if (isContractDenied(_contract)) {
-            return true;
-        }
+    function setHighestAllowedSeverity(bytes32 _appId, IIssuesRegistry.Severity _severity)
+        external
+        authP(SET_HIGHEST_ALLOWED_SEVERITY_ROLE, arr(_appId))
+    {
+        appsIssuesSettings[_appId].highestAllowedSeverity = _severity;
+        emit HighestAllowedSeveritySet(_appId, _severity);
+    }
 
-        // if the contract is allowed, then allow given call
-        if (isContractAllowed(_contract)) {
+    /**
+     * @dev Note that we are not checking if the appId, base address and instance address are valid and if they correspond
+     *      to each other in order to reduce extra calls. However, since this is only a query method, wrong input
+     *      can only result in invalid output. Internally, this method is used from the Kernel to stop calls if needed,
+     *      and we have several tests to make sure its usage is working as expected.
+     */
+    function shouldDenyCallingApp(bytes32 _appId, address _base, address _instance) external returns (bool) {
+        // if the instance is allowed, then allow given call
+        if (isInstanceAllowed(_instance)) {
             return false;
         }
 
-        // if the contract severity found is ignored, then allow given call
-        if (isSeverityIgnored(_contract)) {
+        // if the base implementation is denied, then deny given call
+        if (isBaseImplementationDenied(_base)) {
+            return true;
+        }
+
+        // if the app severity found is ignored, then allow given call
+        if (isSeverityIgnored(_appId, _base)) {
             return false;
         }
 
@@ -95,31 +111,27 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
         return true;
     }
 
-    function getContractAction(address _contract) public view returns (ContractAction) {
-        return contractSettings[_contract].action;
+    function isInstanceAllowed(address _instance) public view returns (bool) {
+        return allowedInstances[_instance];
     }
 
-    function getHighestAllowedSeverity(address _contract) public view returns (IIssuesRegistry.Severity) {
-        return contractSettings[_contract].highestAllowedSeverity;
+    function isBaseImplementationDenied(address _base) public view returns (bool) {
+        return deniedBaseImplementations[_base];
     }
 
-    function getIssuesRegistry(address _contract) public view returns (IIssuesRegistry) {
-        IIssuesRegistry foundRegistry = contractSettings[_contract].issuesRegistry;
+    function isSeverityIgnored(bytes32 _appId, address _base) public view returns (bool) {
+        IIssuesRegistry.Severity severityFound = getIssuesRegistry(_appId).getSeverityFor(_base);
+        IIssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_appId);
+        return highestAllowedSeverity >= severityFound;
+    }
+
+    function getIssuesRegistry(bytes32 _appId) public view returns (IIssuesRegistry) {
+        IIssuesRegistry foundRegistry = appsIssuesSettings[_appId].issuesRegistry;
         return foundRegistry == IIssuesRegistry(0) ? defaultIssuesRegistry : foundRegistry;
     }
 
-    function isContractAllowed(address _contract) public view returns (bool) {
-        return getContractAction(_contract) == ContractAction.Allow;
-    }
-
-    function isContractDenied(address _contract) public view returns (bool) {
-        return getContractAction(_contract) == ContractAction.Deny;
-    }
-
-    function isSeverityIgnored(address _contract) public view returns (bool) {
-        IIssuesRegistry.Severity severityFound = getIssuesRegistry(_contract).getSeverityFor(_contract);
-        IIssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_contract);
-        return highestAllowedSeverity >= severityFound;
+    function getHighestAllowedSeverity(bytes32 _appId) public view returns (IIssuesRegistry.Severity) {
+        return appsIssuesSettings[_appId].highestAllowedSeverity;
     }
 
     function _setDefaultIssuesRegistry(IIssuesRegistry _defaultIssuesRegistry) internal {

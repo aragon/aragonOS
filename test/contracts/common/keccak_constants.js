@@ -128,8 +128,9 @@ contract('Constants', () => {
     const killSwitch = await getContract('KillSwitch').new()
 
     assert.equal(await killSwitch.SET_DEFAULT_ISSUES_REGISTRY_ROLE(), await keccakConstants.SET_DEFAULT_ISSUES_REGISTRY_ROLE())
+    assert.equal(await killSwitch.SET_ALLOWED_INSTANCES_ROLE(), await keccakConstants.SET_ALLOWED_INSTANCES_ROLE())
+    assert.equal(await killSwitch.SET_DENIED_BASE_IMPLS_ROLE(), await keccakConstants.SET_DENIED_BASE_IMPLS_ROLE())
     assert.equal(await killSwitch.SET_ISSUES_REGISTRY_ROLE(), await keccakConstants.SET_ISSUES_REGISTRY_ROLE())
-    assert.equal(await killSwitch.SET_CONTRACT_ACTION_ROLE(), await keccakConstants.SET_CONTRACT_ACTION_ROLE())
     assert.equal(await killSwitch.SET_HIGHEST_ALLOWED_SEVERITY_ROLE(), await keccakConstants.SET_HIGHEST_ALLOWED_SEVERITY_ROLE())
   })
 })
