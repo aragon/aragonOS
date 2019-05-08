@@ -55,32 +55,20 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       daoFactory = await DAOFactory.new(kernelWithoutKillSwitchBase.address, aclBase.address, ZERO_ADDRESS, registryFactory.address)
     })
 
-    beforeEach('deploy DAO without a kill switch', async () => {
-      const receipt = await daoFactory.newDAO(root)
-      dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+    beforeEach('deploy DAO without a kill switch and create kill-switched sample app', async () => {
+      const daoFactoryReceipt = await daoFactory.newDAO(root)
+      dao = Kernel.at(getEventArgument(daoFactoryReceipt, 'DeployDAO', 'dao'))
       acl = ACL.at(await dao.acl())
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-    })
 
-    beforeEach('create kill switched app', async () => {
-      const receipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
-      app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+      const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
+      app = KillSwitchedApp.at(getEventArgument(appReceipt, 'NewAppProxy', 'proxy'))
       await app.initialize(owner)
     })
 
-    describe('integration', () => {
-      context('when the function being called is not tagged', () => {
-        it('executes the call', async () => {
-          assert.equal(await app.read(), 42)
-        })
-      })
-
-      context('when the function being called is tagged', () => {
-        it('executes the call', async () => {
-          await app.write(10, { from: owner })
-          assert.equal(await app.read(), 10)
-        })
-      })
+    it('executes the call', async () => {
+      await app.write(10, { from: owner })
+      assert.equal(await app.read(), 10)
     })
   })
 
@@ -92,16 +80,14 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
       })
 
-      beforeEach('deploy DAO without a kill switch', async () => {
-        const receipt = await daoFactory.newDAO(root)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+      before('deploy DAO without a kill switch and create kill-switched sample app', async () => {
+        const daoFactoryReceipt = await daoFactory.newDAO(root)
+        dao = Kernel.at(getEventArgument(daoFactoryReceipt, 'DeployDAO', 'dao'))
         acl = ACL.at(await dao.acl())
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-      })
 
-      beforeEach('create kill switched app', async () => {
-        const receipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
-        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
+        app = KillSwitchedApp.at(getEventArgument(appReceipt, 'NewAppProxy', 'proxy'))
         await app.initialize(owner)
       })
 
@@ -126,14 +112,12 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         daoFactory = await DAOFactory.new(kernelWithNonCompliantKillSwitchBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
       })
 
-      beforeEach('deploy DAO with a kill switch', async () => {
-        const receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistryBase.address)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+      before('deploy DAO with a kill switch and create kill-switched sample app', async () => {
+        const daoFactoryReceipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistryBase.address)
+        dao = Kernel.at(getEventArgument(daoFactoryReceipt, 'DeployDAO', 'dao'))
         acl = ACL.at(await dao.acl())
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-      })
 
-      beforeEach('create kill switched app', async () => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
         app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
         await app.initialize(owner)
@@ -161,7 +145,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, failingKillSwitchBase.address, registryFactory.address)
       })
 
-      beforeEach('create issues registry', async () => {
+      before('create issues registry', async () => {
         const daoReceipt = await daoFactory.newDAO(root)
         const issuesRegistryDAO = Kernel.at(getEventArgument(daoReceipt, 'DeployDAO', 'dao'))
         const issuesRegistryACL = ACL.at(await issuesRegistryDAO.acl())
@@ -780,17 +764,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           }
 
           context('when there is no bug registered', () => {
-            context('when there is no highest allowed severity set for the app being called', () => {
-              itExecutesTheCallEvenIfDenied()
-            })
-
-            context('when there is a highest allowed severity set for the contract being called', () => {
-              beforeEach('set highest allowed severity', async () => {
-                await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
-              })
-
-              itExecutesTheCallEvenIfDenied()
-            })
+            itExecutesTheCallEvenIfDenied()
           })
 
           context('when there is a bug registered', () => {
@@ -798,35 +772,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
             })
 
-            context('when there is no highest allowed severity set for the contract being called', () => {
-              itExecutesTheCallEvenIfDenied()
-            })
-
-            context('when there is a highest allowed severity set for the contract being called', () => {
-              context('when the highest allowed severity is under the reported bug severity', () => {
-                beforeEach('set highest allowed severity bellow the one reported', async () => {
-                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
-                })
-
-                itExecutesTheCallEvenIfDenied()
-              })
-
-              context('when the highest allowed severity is equal to the reported bug severity', () => {
-                beforeEach('set highest allowed severity equal to the one reported', async () => {
-                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
-                })
-
-                itExecutesTheCallEvenIfDenied()
-              })
-
-              context('when the highest allowed severity is greater than the reported bug severity', () => {
-                beforeEach('set highest allowed severity above the one reported', async () => {
-                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.HIGH, { from: owner })
-                })
-
-                itExecutesTheCallEvenIfDenied()
-              })
-            })
+            itExecutesTheCallEvenIfDenied()
           })
         })
 
@@ -937,17 +883,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           }
 
           context('when there is no bug registered', () => {
-            context('when there is no highest allowed severity set for the contract being called', () => {
-              itExecutesTheCallUnlessDisallowedAndDenied()
-            })
-
-            context('when there is a highest allowed severity set for the contract being called', () => {
-              beforeEach('set highest allowed severity', async () => {
-                await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
-              })
-
-              itExecutesTheCallUnlessDisallowedAndDenied()
-            })
+            itExecutesTheCallUnlessDisallowedAndDenied()
           })
 
           context('when there is a bug registered', () => {
