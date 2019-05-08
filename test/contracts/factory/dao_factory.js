@@ -99,6 +99,14 @@ contract('DAO Factory', ([_, root]) => {
       assert.equal(await dao.getApp(APP_ADDR_NAMESPACE, KILL_SWITCH_APP_ID), killSwitch.address)
       assert.equal(await dao.getApp(APP_BASES_NAMESPACE, KILL_SWITCH_APP_ID), killSwitchBase.address)
     })
+
+    it('allows the kernel, acl and kill switch instances by default', async () => {
+      const killSwitch = KillSwitch.at(await dao.killSwitch())
+
+      assert(await killSwitch.isInstanceAllowed(dao.address), 'Kernel instance should be allowed')
+      assert(await killSwitch.isInstanceAllowed(acl.address), 'ACL instance should be allowed')
+      assert(await killSwitch.isInstanceAllowed(killSwitch.address), 'kill switch instance should be allowed')
+    })
   }
 
   const itDoesNotCreateAKillSwitch = () => {
