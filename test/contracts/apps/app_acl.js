@@ -1,6 +1,6 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { onlyIf } = require('../../helpers/onlyIf')
 const { hash } = require('eth-ens-namehash')
+const { onlyIf } = require('../../helpers/onlyIf')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -95,9 +95,7 @@ contract('App ACL', accounts => {
       })
 
       it('fails when called by unauthorized entity', async () => {
-        return assertRevert(async () => {
-          await app.setValue(10, { from: unauthorized })
-        })
+        await assertRevert(app.setValue(10, { from: unauthorized }))
       })
 
       onlyAppProxyUpgradeable(() =>
@@ -106,9 +104,7 @@ contract('App ACL', accounts => {
           const appProxy = await AppProxyUpgradeable.new(kernel.address, unknownId, EMPTY_BYTES)
           const app = AppStub.at(appProxy.address)
 
-          return assertRevert(async () => {
-            await app.setValue(10)
-          })
+          await assertRevert(app.setValue(10))
         })
       )
 
@@ -138,9 +134,7 @@ contract('App ACL', accounts => {
         })
 
         it('parametrized app call fails if param eval fails', async () => {
-          return assertRevert(async () => {
-            await app.setValueParam(failValue, { from: paramsGrantee })
-          })
+          await assertRevert(app.setValueParam(failValue, { from: paramsGrantee }))
         })
       })
     })

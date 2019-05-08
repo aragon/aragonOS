@@ -1,37 +1,30 @@
+const { hash } = require('eth-ens-namehash')
+const { keccak_256 } = require('js-sha3')
 const { assertRevert } = require('../../helpers/assertThrow')
-const namehash = require('eth-ens-namehash').hash
-const keccak256 = require('js-sha3').keccak_256
+const { getEventArgument } = require('../../helpers/assertEvent')(web3)
 
 const ENS = artifacts.require('ENS')
 const ENSFactory = artifacts.require('ENSFactory')
-const PublicResolver = artifacts.require('PublicResolver')
 
-const Kernel = artifacts.require('Kernel')
+const Repo = artifacts.require('Repo')
 const ACL = artifacts.require('ACL')
-
+const Kernel = artifacts.require('Kernel')
+const DAOFactory = artifacts.require('DAOFactory')
 const APMRegistry = artifacts.require('APMRegistry')
+const APMRegistryFactory = artifacts.require('APMRegistryFactory')
 const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 const ENSSubdomainRegistrar = artifacts.require('ENSSubdomainRegistrar')
-const Repo = artifacts.require('Repo')
-const APMRegistryFactory = artifacts.require('APMRegistryFactory')
-const DAOFactory = artifacts.require('DAOFactory')
 
 const EMPTY_BYTES = '0x'
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 // Using APMFactory in order to reuse it
-contract('ENSSubdomainRegistrar', accounts => {
+contract('ENSSubdomainRegistrar', ([_, apmOwner, notOwner]) => {
     let baseDeployed, apmFactory, ensFactory, dao, daoFactory, ens, registrar
     let APP_BASES_NAMESPACE
 
-    const ensOwner = accounts[0]
-    const apmOwner = accounts[1]
-    const repoDev  = accounts[2]
-    const notOwner = accounts[5]
-
-    const rootNode = namehash('aragonpm.eth')
-    const holanode = namehash('hola.aragonpm.eth')
-    const holalabel = '0x'+keccak256('hola')
+    const holanode = hash('hola.aragonpm.eth')
+    const holalabel = '0x'+keccak_256('hola')
 
     before(async () => {
         const bases = [APMRegistry, Repo, ENSSubdomainRegistrar]
@@ -51,8 +44,8 @@ contract('ENSSubdomainRegistrar', accounts => {
         apmFactory = await APMRegistryFactory.new(daoFactory.address, ...baseAddrs, ZERO_ADDR, ensFactory.address)
         ens = ENS.at(await apmFactory.ens())
 
-        const receipt = await apmFactory.newAPM(namehash('eth'), '0x'+keccak256('aragonpm'), apmOwner)
-        const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
+        const receipt = await apmFactory.newAPM(hash('eth'), '0x'+keccak_256('aragonpm'), apmOwner)
+        const apmAddr = getEventArgument(receipt, 'DeployAPM', 'apm')
         const registry = APMRegistry.at(apmAddr)
 
         dao = Kernel.at(await registry.kernel())
@@ -68,26 +61,20 @@ contract('ENSSubdomainRegistrar', accounts => {
     it('can create name', async () => {
         await registrar.createName(holalabel, apmOwner, { from: apmOwner })
 
-        assert.equal(await ens.owner(namehash('hola.aragonpm.eth')), apmOwner, 'should have created name')
+        assert.equal(await ens.owner(hash('hola.aragonpm.eth')), apmOwner, 'should have created name')
     })
 
     it('fails if creating names twice', async () => {
         await registrar.createName(holalabel, apmOwner, { from: apmOwner })
-        return assertRevert(async () => {
-            await registrar.createName(holalabel, apmOwner, { from: apmOwner })
-        })
+        await assertRevert(registrar.createName(holalabel, apmOwner, { from: apmOwner }))
     })
 
     it('fails if deleting name not yet created', async () => {
-        return assertRevert(async () => {
-            await registrar.deleteName(holalabel, { from: apmOwner })
-        })
+        await assertRevert(registrar.deleteName(holalabel, { from: apmOwner }))
     })
 
     it('fails if not authorized to create name', async () => {
-        return assertRevert(async () => {
-            await registrar.createName(holalabel, apmOwner, { from: notOwner })
-        })
+        await assertRevert(registrar.createName(holalabel, apmOwner, { from: notOwner }))
     })
 
     it('can delete names', async () => {
@@ -106,11 +93,9 @@ contract('ENSSubdomainRegistrar', accounts => {
 
     it('fails if initializing without rootnode ownership', async () => {
         const ens = await ENS.new()
-        const newRegProxy = await AppProxyUpgradeable.new(dao.address, namehash('apm-enssub.aragonpm.eth'), EMPTY_BYTES)
+        const newRegProxy = await AppProxyUpgradeable.new(dao.address, hash('apm-enssub.aragonpm.eth'), EMPTY_BYTES)
         const newReg = ENSSubdomainRegistrar.at(newRegProxy.address)
 
-        await assertRevert(async () => {
-            await newReg.initialize(ens.address, holanode)
-        })
+        await assertRevert(newReg.initialize(ens.address, holanode))
     })
 })

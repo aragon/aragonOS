@@ -1,6 +1,6 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getBalance } = require('../../helpers/web3')
 const { onlyIf } = require('../../helpers/onlyIf')
+const { getBalance } = require('../../helpers/web3')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -11,9 +11,8 @@ const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-contract('Kernel funds', accounts => {
+contract('Kernel funds', ([permissionsRoot]) => {
   let aclBase
-  const permissionsRoot = accounts[0]
 
   // Initial setup
   before(async () => {
@@ -48,17 +47,13 @@ contract('Kernel funds', accounts => {
             // Before initialization
             assert.isFalse(await kernel.hasInitialized(), 'should not have been initialized')
 
-            await assertRevert(async () => {
-              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-            })
+            await assertRevert(kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS }))
 
             // After initialization
-            await kernel.initialize(aclBase.address, permissionsRoot);
+            await kernel.initialize(aclBase.address, permissionsRoot)
             assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
 
-            await assertRevert(async () => {
-              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-            })
+            await assertRevert(kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS }))
           })
 
           onlyKernelDepositable(() => {
@@ -68,7 +63,7 @@ contract('Kernel funds', accounts => {
               assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
 
               // After initialization
-              await kernel.initialize(aclBase.address, permissionsRoot);
+              await kernel.initialize(aclBase.address, permissionsRoot)
               assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
               assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
             })
@@ -77,8 +72,8 @@ contract('Kernel funds', accounts => {
               const amount = 1
               const initialBalance = await getBalance(kernel.address)
 
-              await kernel.initialize(aclBase.address, permissionsRoot);
-              await kernel.enableDeposits();
+              await kernel.initialize(aclBase.address, permissionsRoot)
+              await kernel.enableDeposits()
               assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
               assert.isTrue(await kernel.isDepositable(), 'should be depositable')
 

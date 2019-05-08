@@ -1,32 +1,28 @@
-const namehash = require('eth-ens-namehash').hash
+const { hash } = require('eth-ens-namehash')
 const APMNamehashMock = artifacts.require('APMNamehashMock')
 
-contract('APM Name Hash', accounts => {
+contract('APM Name Hash', () => {
   let apmNamehashMock
 
   before(async() => {
-    //console.log("eth: " + namehash('eth'))
-    //console.log("aragonpm.eth: " + namehash('aragonpm.eth'))
     apmNamehashMock = await APMNamehashMock.new()
   })
 
-  const checkName = async (name) => {
-    const node = namehash(name + '.aragonpm.eth')
-    //await apmNamehashMock.getAPMNamehash(name)
+  const assertNamehash = async (name) => {
+    const node = hash(name + '.aragonpm.eth')
     const apmNamehash = await apmNamehashMock.getAPMNamehash(name)
-    //console.log("node: " + node)
-    return apmNamehash.toString() == node
+    assert.equal(node, apmNamehash.toString(), 'hashes do not match')
   }
 
   it('Kernel name hash matches', async () => {
-    assert.isTrue(await checkName('kernel'), 'hashes should match')
+    await assertNamehash('kernel')
   })
 
   it('ACL name hash matches', async () => {
-    assert.isTrue(await checkName('acl'), 'hashes should match')
+    await assertNamehash('acl')
   })
 
   it('EVM Registry name hash matches', async () => {
-    assert.isTrue(await checkName('evmreg'), 'hashes should match')
+    await assertNamehash('evmreg')
   })
 })

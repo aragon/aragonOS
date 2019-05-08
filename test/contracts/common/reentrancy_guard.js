@@ -2,7 +2,7 @@ const { assertRevert } = require('../../helpers/assertThrow')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
-contract('ReentrancyGuard', accounts => {
+contract('ReentrancyGuard', () => {
   let reentrancyMock
 
   async function assertReentrancyMutex(mutex, msg) {
@@ -49,9 +49,7 @@ contract('ReentrancyGuard', accounts => {
     })
 
     it('can not call non-re-entrant function if re-entrancy mutex is enabled', async () => {
-      await assertRevert(async () => {
-        await reentrancyMock.nonReentrantCall(ZERO_ADDR)
-      })
+      await assertRevert(reentrancyMock.nonReentrantCall(ZERO_ADDR))
       assert.equal((await reentrancyMock.callCounter()).toString(), 0, 'should not have called')
     })
   })
@@ -85,9 +83,7 @@ contract('ReentrancyGuard', accounts => {
       })
 
       it('disallows re-entering non-re-entrant call', async () => {
-        await assertRevert(async () => {
-          await reentrancyMock.nonReentrantCall(reentrantActor.address)
-        })
+        await assertRevert(reentrancyMock.nonReentrantCall(reentrantActor.address))
         assert.equal((await reentrancyMock.callCounter()).toString(), 0, 'should not have completed any calls')
       })
 

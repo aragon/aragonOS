@@ -62,27 +62,19 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails to create a KernelProxy if the base is 0', async () => {
-        return assertRevert(async () => {
-            await KernelProxy.new(ZERO_ADDR)
-        })
+        await assertRevert(KernelProxy.new(ZERO_ADDR))
     })
 
     it('fails to create a KernelProxy if the base is not a contract', async () => {
-        return assertRevert(async () => {
-            await KernelProxy.new('0x1234')
-        })
+        await assertRevert(KernelProxy.new('0x1234'))
     })
 
     it('fails to upgrade kernel without permission', async () => {
-        return assertRevert(async () => {
-            await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[0])
-        })
+        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[0]))
     })
 
     it('fails when calling upgraded functionality on old version', async () => {
-        return assertRevert(async () => {
-            await UpgradedKernel.at(kernelAddr).isUpgraded()
-        })
+        await assertRevert(UpgradedKernel.at(kernelAddr).isUpgraded())
     })
 
     it('successfully upgrades kernel', async () => {
@@ -96,8 +88,6 @@ contract('Kernel upgrade', accounts => {
     it('fails if upgrading to kernel that is not a contract', async () => {
         await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
 
-        return assertRevert(async () => {
-            await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, '0x1234')
-        })
+        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, '0x1234'))
     })
 })

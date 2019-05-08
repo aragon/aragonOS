@@ -1,25 +1,21 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getBlockNumber } = require('../../helpers/web3')
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
+const { getBlockNumber } = require('../../helpers/web3')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-
 const AragonApp = artifacts.require('AragonApp')
-const AppProxyUpgradeable = artifacts.require('AppProxyUpgradeable')
 
 // Mocks
 const UnsafeAragonAppMock = artifacts.require('UnsafeAragonAppMock')
 
-const APP_ID = hash('app.aragonpm.test')
 const FAKE_ROLE = soliditySha3('FAKE_ROLE')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
-contract('App base lifecycle', accounts => {
+contract('App base lifecycle', ([permissionsRoot]) => {
   let aclBase, kernelBase
-  const permissionsRoot = accounts[0]
 
   before(async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -88,9 +84,7 @@ contract('App base lifecycle', accounts => {
       })
 
       it('throws on reinitialization', async () => {
-        return assertRevert(async () => {
-          await app.initialize()
-        })
+        await assertRevert(app.initialize())
       })
 
       it('should still not be usable without a kernel', async () => {

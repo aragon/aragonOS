@@ -1,6 +1,6 @@
 const { assertRevert } = require('../../helpers/assertThrow')
 
-contract('Uint256 Helpers test', accounts => {
+contract('Uint256 Helpers test', () => {
   let uint256Mock
 
   before(async () => {
@@ -9,13 +9,11 @@ contract('Uint256 Helpers test', accounts => {
 
   it('converts from uint256 to uint64', async () => {
     const a = 1234
-    assert.equal((await uint256Mock.convert(a)).toString(), a, "Values should match")
+    assert.equal((await uint256Mock.convert(a)).toString(), a, 'values should match')
   })
 
   it('fails converting from uint256 to uint64 if too big', async () => {
     const a = new web3.BigNumber(2).pow(64)
-    return assertRevert(async () => {
-      await uint256Mock.convert(a)
-    })
+    await assertRevert(uint256Mock.convert(a))
   })
 })
