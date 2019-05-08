@@ -3,32 +3,39 @@ const { skipCoverage } = require('../../helpers/coverage')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getEvents, getEvent, getEventArgument } = require('../../helpers/events')
 
-const KillSwitch = artifacts.require('KillSwitch')
-const IssuesRegistry = artifacts.require('IssuesRegistry')
-const KillSwitchedApp = artifacts.require('KillSwitchedAppMock')
-const KernelWithoutKillSwitchMock = artifacts.require('KernelWithoutKillSwitchMock')
-
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
+const KillSwitch = artifacts.require('KillSwitch')
+const IssuesRegistry = artifacts.require('IssuesRegistry')
+const KillSwitchedApp = artifacts.require('KillSwitchedAppMock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
+
+const FailingKillSwitchMock = artifacts.require('FailingKillSwitchMock')
+const KernelWithoutKillSwitchMock = artifacts.require('KernelWithoutKillSwitchMock')
+const KernelWithNonCompliantKillSwitchMock = artifacts.require('KernelWithNonCompliantKillSwitchMock')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
-  let registryFactory, dao, acl, app
-  let kernelBase, aclBase, appBase, killSwitchBase, issuesRegistryBase, daoFactory, oldKernelBase
+  let dao, acl, app, registryFactory
+  let kernelBase, aclBase, appBase, killSwitchBase, issuesRegistryBase, daoFactory
+  let kernelWithoutKillSwitchBase, kernelWithNonCompliantKillSwitchBase, failingKillSwitchBase
   let CORE_NAMESPACE, KERNEL_APP_ID, APP_MANAGER_ROLE, SET_SEVERITY_ROLE, SET_DEFAULT_ISSUES_REGISTRY_ROLE, SET_ISSUES_REGISTRY_ROLE, SET_ALLOWED_INSTANCES_ROLE, SET_DENIED_BASE_IMPLS_ROLE, SET_HIGHEST_ALLOWED_SEVERITY_ROLE
 
   before('deploy base implementations', async () => {
+    // real
     kernelBase = await Kernel.new(true) // petrify immediately
     aclBase = await ACL.new()
     registryFactory = await EVMScriptRegistryFactory.new()
     killSwitchBase = await KillSwitch.new()
     issuesRegistryBase = await IssuesRegistry.new()
+
+    // mocks
     appBase = await KillSwitchedApp.new()
-    oldKernelBase = await KernelWithoutKillSwitchMock.new()
-    daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+    failingKillSwitchBase = await FailingKillSwitchMock.new()
+    kernelWithoutKillSwitchBase = await KernelWithoutKillSwitchMock.new()
+    kernelWithNonCompliantKillSwitchBase = await KernelWithNonCompliantKillSwitchMock.new()
   })
 
   before('load constants and roles', async () => {
@@ -44,14 +51,15 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   context('when the kernel version does not support kill-switch logic', async () => {
-    beforeEach('deploy DAO with a kernel version not supporting kill-switch logic', async () => {
+    before('create DAO factory', async () => {
+      daoFactory = await DAOFactory.new(kernelWithoutKillSwitchBase.address, aclBase.address, ZERO_ADDRESS, registryFactory.address)
+    })
+
+    beforeEach('deploy DAO without a kill switch', async () => {
       const receipt = await daoFactory.newDAO(root)
       dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
       acl = ACL.at(await dao.acl())
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-
-      // update the kernel to a mock version that doesn't supports kill-switch logic to mimic already deployed ones
-      await dao.setApp(CORE_NAMESPACE, KERNEL_APP_ID, oldKernelBase.address, { from: root })
     })
 
     beforeEach('create kill switched app', async () => {
@@ -77,7 +85,13 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   context('when the kernel version does support kill-switch logic', async () => {
+    const SAMPLE_APP_ID = '0x1236000000000000000000000000000000000000000000000000000000000000'
+
     context('when the kernel was not initialized with a kill-switch', async () => {
+      before('create DAO factory using a kernel that supports kill-switch logic', async () => {
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+      })
+
       beforeEach('deploy DAO without a kill switch', async () => {
         const receipt = await daoFactory.newDAO(root)
         dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
@@ -107,11 +121,188 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
     })
 
-    context('when the kernel was initialized with a kill-switch', async () => {
+    context('when the kernel is initialized with a non-compliant kill-switch implementation', async () => {
+      before('create DAO factory', async () => {
+        daoFactory = await DAOFactory.new(kernelWithNonCompliantKillSwitchBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+      })
+
+      beforeEach('deploy DAO with a kill switch', async () => {
+        const receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistryBase.address)
+        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+        acl = ACL.at(await dao.acl())
+        await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+      })
+
+      beforeEach('create kill switched app', async () => {
+        const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
+        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        await app.initialize(owner)
+      })
+
+      describe('integration', () => {
+        context('when the function being called is not tagged', () => {
+          it('executes the call', async () => {
+            assert.equal(await app.read(), 42)
+          })
+        })
+
+        context('when the function being called is tagged', () => {
+          it('does not execute the call', async () => {
+            await assertRevert(app.write(10, { from: owner }), 'APP_UNEXPECTED_KERNEL_RESPONSE')
+          })
+        })
+      })
+    })
+
+    context('when the kernel is initialized with a failing kill-switch implementation', async () => {
+      let killSwitch, defaultIssuesRegistry
+
+      before('create DAO factory', async () => {
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, failingKillSwitchBase.address, registryFactory.address)
+      })
+
+      beforeEach('create issues registry', async () => {
+        const daoReceipt = await daoFactory.newDAO(root)
+        const issuesRegistryDAO = Kernel.at(getEventArgument(daoReceipt, 'DeployDAO', 'dao'))
+        const issuesRegistryACL = ACL.at(await issuesRegistryDAO.acl())
+
+        await issuesRegistryACL.createPermission(root, issuesRegistryDAO.address, APP_MANAGER_ROLE, root, { from: root })
+
+        const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
+        defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(defaultRegistryReceipt, 'NewAppProxy', 'proxy'))
+        await defaultIssuesRegistry.initialize()
+        await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
+      })
+
+      beforeEach('deploy DAO with a kill switch', async () => {
+        const receipt = await daoFactory.newDAOWithKillSwitch(root, defaultIssuesRegistry.address)
+        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+        acl = ACL.at(await dao.acl())
+        killSwitch = KillSwitch.at(await dao.killSwitch())
+
+        await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, SET_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, SET_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, SET_ALLOWED_INSTANCES_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, SET_DENIED_BASE_IMPLS_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, SET_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
+      })
+
+      beforeEach('create kill switched app', async () => {
+        const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
+        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        await app.initialize(owner)
+      })
+
+      describe('integration', () => {
+        const itExecutesTheCall = () => {
+          it('executes the call', async () => {
+            await app.write(10, { from: owner })
+            assert.equal(await app.read(), 10)
+          })
+        }
+
+        context('when the function being called is not tagged', () => {
+          itExecutesTheCall()
+        })
+
+        context('when the function being called is tagged', () => {
+          const itAlwaysExecutesTheCall = () => {
+            context('when the instance being called is allowed', () => {
+              beforeEach('allow instance', async () => {
+                await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+              })
+
+              context('when the base implementation is not denied', () => {
+                beforeEach('do not deny base implementation', async () => {
+                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+                })
+
+                itExecutesTheCall()
+              })
+
+              context('when the base implementation is denied', () => {
+                beforeEach('deny base implementation', async () => {
+                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+                })
+
+                itExecutesTheCall()
+              })
+            })
+
+            context('when the instance being called is not marked as allowed', () => {
+              beforeEach('dot not allow instance', async () => {
+                await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+              })
+
+              context('when the base implementation is not denied', () => {
+                beforeEach('do not deny base implementation', async () => {
+                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+                })
+
+                itExecutesTheCall()
+              })
+
+              context('when the base implementation is denied', () => {
+                beforeEach('deny base implementation', async () => {
+                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+                })
+
+                itExecutesTheCall()
+              })
+            })
+          }
+
+          context('when there is no bug registered', () => {
+            itAlwaysExecutesTheCall()
+          })
+
+          context('when there is a bug registered', () => {
+            beforeEach('register a bug', async () => {
+              await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
+            })
+
+            context('when there is no highest allowed severity set for the contract being called', () => {
+              itAlwaysExecutesTheCall()
+            })
+
+            context('when there is a highest allowed severity set for the contract being called', () => {
+              context('when the highest allowed severity is under the reported bug severity', () => {
+                beforeEach('set highest allowed severity below the one reported', async () => {
+                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
+                })
+
+                itAlwaysExecutesTheCall()
+              })
+
+              context('when the highest allowed severity is equal to the reported bug severity', () => {
+                beforeEach('set highest allowed severity equal to the one reported', async () => {
+                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
+                })
+
+                itAlwaysExecutesTheCall()
+              })
+
+              context('when the highest allowed severity is greater than the reported bug severity', () => {
+                beforeEach('set highest allowed severity above the one reported', async () => {
+                  await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.CRITICAL, { from: owner })
+                })
+
+                itAlwaysExecutesTheCall()
+              })
+            })
+          })
+        })
+      })
+    })
+
+    context('when the kernel is initialized with a safe kill-switch implementation', async () => {
       let killSwitch, defaultIssuesRegistry, specificIssuesRegistry
 
-      const SAMPLE_APP_ID = '0x1236000000000000000000000000000000000000000000000000000000000000'
-      
+      before('create DAO factory', async () => {
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+      })
+
       beforeEach('create issues registries', async () => {
         const daoReceipt = await daoFactory.newDAO(root)
         const issuesRegistryDAO = Kernel.at(getEventArgument(daoReceipt, 'DeployDAO', 'dao'))

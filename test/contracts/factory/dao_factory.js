@@ -1,3 +1,4 @@
+const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument } = require('../../helpers/events')
 
 const DAOFactory = artifacts.require('DAOFactory')
@@ -111,7 +112,7 @@ contract('DAO Factory', ([_, root]) => {
   describe('newDAO', () => {
     context('when it was created with an EVM scripts registry factory', () => {
       before('create factory with an EVM scripts registry factory', async () => {
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, scriptsRegistryFactory.address)
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR, scriptsRegistryFactory.address)
       })
 
       before('create a DAO', async () => {
@@ -127,7 +128,7 @@ contract('DAO Factory', ([_, root]) => {
 
     context('when it was created without an EVM scripts registry factory', () => {
       before('create factory without an EVM scripts registry factory', async () => {
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR, ZERO_ADDR)
       })
 
       before('create a DAO', async () => {
@@ -143,36 +144,60 @@ contract('DAO Factory', ([_, root]) => {
   })
 
   describe('newDAOWithKillSwitch', () => {
-    context('when it was created with an EVM scripts registry factory', () => {
-      before('create factory with an EVM scripts registry factory', async () => {
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, scriptsRegistryFactory.address)
+    context('when it was created with a base kill switch', () => {
+      context('when it was created with an EVM scripts registry factory', () => {
+        before('create factory with an EVM scripts registry factory', async () => {
+          daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, scriptsRegistryFactory.address)
+        })
+
+        before('create a DAO', async () => {
+          receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address)
+          dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+          acl = ACL.at(await dao.acl())
+        })
+
+        itCreatesADao()
+        itDoesCreateAnEVMScriptsRegistry()
+        itDoesCreateAKillSwitch()
       })
 
-      before('create a DAO', async () => {
-        receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-        acl = ACL.at(await dao.acl())
-      })
+      context('when it was created without an EVM scripts registry factory', () => {
+        before('create factory without an EVM scripts registry factory', async () => {
+          daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
+        })
 
-      itCreatesADao()
-      itDoesCreateAnEVMScriptsRegistry()
-      itDoesCreateAKillSwitch()
+        before('create a DAO', async () => {
+          receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address)
+          dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+          acl = ACL.at(await dao.acl())
+        })
+
+        itCreatesADao()
+        itDoesNotCreateAnEVMScriptsRegistry()
+        itDoesCreateAKillSwitch()
+      })
     })
 
-    context('when it was created without an EVM scripts registry factory', () => {
-      before('create factory without an EVM scripts registry factory', async () => {
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
+    context('when it was created without a base kill switch', () => {
+      context('when it was created with an EVM scripts registry factory', () => {
+        before('create factory with an EVM scripts registry factory', async () => {
+          daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR, scriptsRegistryFactory.address)
+        })
+
+        it('reverts', async () => {
+          await assertRevert(daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address), 'DF_MISSING_BASE_KILL_SWITCH')
+        })
       })
 
-      before('create a DAO', async () => {
-        receipt = await daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-        acl = ACL.at(await dao.acl())
-      })
+      context('when it was created without an EVM scripts registry factory', () => {
+        before('create factory without an EVM scripts registry factory', async () => {
+          daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR, ZERO_ADDR)
+        })
 
-      itCreatesADao()
-      itDoesNotCreateAnEVMScriptsRegistry()
-      itDoesCreateAKillSwitch()
+        it('reverts', async () => {
+          await assertRevert(daoFactory.newDAOWithKillSwitch(root, issuesRegistry.address), 'DF_MISSING_BASE_KILL_SWITCH')
+        })
+      })
     })
   })
 })

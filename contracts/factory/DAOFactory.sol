@@ -13,6 +13,8 @@ import "./EVMScriptRegistryFactory.sol";
 
 
 contract DAOFactory {
+    string private constant ERROR_MISSING_BASE_KILL_SWITCH = "DF_MISSING_BASE_KILL_SWITCH";
+
     IKernel public baseKernel;
     IACL public baseACL;
     KillSwitch public baseKillSwitch;
@@ -39,10 +41,12 @@ contract DAOFactory {
         if (address(_scriptsRegistryFactory) != address(0)) {
             scriptsRegistryFactory = _scriptsRegistryFactory;
         }
+        if (address(_baseKillSwitch) != address(0)) {
+            baseKillSwitch = _baseKillSwitch;
+        }
 
         baseKernel = _baseKernel;
         baseACL = _baseACL;
-        baseKillSwitch = _baseKillSwitch;
     }
 
     /**
@@ -67,6 +71,8 @@ contract DAOFactory {
     * @return Newly created DAO
     */
     function newDAOWithKillSwitch(address _root, IssuesRegistry _issuesRegistry) public returns (Kernel) {
+        require(address(baseKillSwitch) != address(0), ERROR_MISSING_BASE_KILL_SWITCH);
+
         Kernel dao = _createDAO(address(this));
         _createKillSwitch(dao, _issuesRegistry);
 
