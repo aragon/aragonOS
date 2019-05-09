@@ -1,14 +1,14 @@
+const reverts = require('../../helpers/revertStrings')
 const { rawEncode } = require('ethereumjs-abi')
 const { soliditySha3 } = require('web3-utils')
-
-const assertEvent = require('../../helpers/assertEvent')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
-const reverts = require('../../helpers/revertStrings')
+const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
+const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
+const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-const ACL = artifacts.require('ACL')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const CallsScript = artifacts.require('CallsScript')
 const IEVMScriptExecutor = artifacts.require('IEVMScriptExecutor')
@@ -24,16 +24,14 @@ const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConst
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
-contract('EVM Script', accounts => {
+contract('EVM Script', ([_, boss]) => {
   let kernelBase, aclBase, evmScriptRegBase, dao, acl, evmScriptReg
   let scriptExecutorMock, scriptExecutorNoReturnMock, scriptExecutorRevertMock
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
   let ERROR_MOCK_REVERT, ERROR_EXECUTION_TARGET
 
-  const boss = accounts[1]
-
-  const scriptRunnerAppId = '0x1234'
+  const SCRIPT_RUNNER_APP_ID = '0x1234'
 
   before(async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -68,7 +66,7 @@ contract('EVM Script', accounts => {
     // Set up script registry (MUST use correct app ID and set as default app)
     const initPayload = evmScriptRegBase.contract.initialize.getData()
     const evmScriptRegReceipt = await dao.newAppInstance(EVMSCRIPT_REGISTRY_APP_ID, evmScriptRegBase.address, initPayload, true, { from: boss })
-    evmScriptReg = EVMScriptRegistry.at(evmScriptRegReceipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+    evmScriptReg = EVMScriptRegistry.at(getNewProxyAddress(evmScriptRegReceipt))
   })
 
   context('> Registry', () => {
@@ -92,7 +90,7 @@ contract('EVM Script', accounts => {
     it('can add a new executor', async () => {
       const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
-      const newExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+      const newExecutorId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
       const [executorAddress, executorEnabled] = await evmScriptReg.executors(newExecutorId)
       const newExecutor = IEVMScriptExecutor.at(executorAddress)
 
@@ -110,8 +108,7 @@ contract('EVM Script', accounts => {
 
       beforeEach(async () => {
         const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
-
-        installedExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        installedExecutorId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
       })
 
       it('can disable an executor', async () => {
@@ -123,7 +120,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.disableScriptExecutor(installedExecutorId, { from: boss })
         executorEntry = await evmScriptReg.executors(installedExecutorId)
 
-        assertEvent(receipt, 'DisableExecutor')
+        assertAmountOfEvents(receipt, 'DisableExecutor')
         assert.isFalse(executorEntry[1], "executor should now be disabled")
         assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return zero addr')
       })
@@ -139,7 +136,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.enableScriptExecutor(installedExecutorId, { from: boss })
         executorEntry = await evmScriptReg.executors(installedExecutorId)
 
-        assertEvent(receipt, 'EnableExecutor')
+        assertAmountOfEvents(receipt, 'EnableExecutor')
         assert.isTrue(executorEntry[1], "executor should now be re-enabled")
         assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return non-zero addr')
       })
@@ -201,8 +198,8 @@ contract('EVM Script', accounts => {
     })
 
     beforeEach(async () => {
-      const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
-      scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
+      scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
       await scriptRunnerApp.initialize()
     })
 
@@ -226,8 +223,8 @@ contract('EVM Script', accounts => {
         await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
         // Install new script runner app
-        const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
-        scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+        const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
+        scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
         // Explicitly don't initialize the scriptRunnerApp
       })
 
@@ -247,7 +244,7 @@ contract('EVM Script', accounts => {
         await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
         const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
-        executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        executorSpecId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
       })
 
       it("can't execute disabled spec ID", async () => {
@@ -272,7 +269,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMock.address, { from: boss })
 
         // Sanity check it's at spec ID 1
-        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        const executorSpecId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
         assert.equal(executorSpecId, 1, 'EVMScriptExecutorMock should be installed as spec ID 1')
       })
 
@@ -284,10 +281,7 @@ contract('EVM Script', accounts => {
         // Check logs
         // The executor app always uses 0x for the input and the mock script executor should return
         // an empty bytes array if only the spec ID is given
-        const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
-        assert.equal(scriptResult.args.script, inputScript, 'should log the same script')
-        assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
-        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the correct return data')
+        assertEvent(receipt, 'ScriptResult', { script: inputScript, input: EMPTY_BYTES, returnData: EMPTY_BYTES })
       })
 
       for (const inputBytes of [
@@ -303,10 +297,7 @@ contract('EVM Script', accounts => {
           // Check logs
           // The executor app always uses 0x for the input and the mock script executor should return
           // the full input script since it's more than just the spec ID
-          const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
-          assert.equal(scriptResult.args.script, inputScript, 'should log the same script')
-          assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
-          assert.equal(scriptResult.args.returnData, inputScript, 'should log the correct return data')
+          assertEvent(receipt, 'ScriptResult', { script: inputScript, input: EMPTY_BYTES, returnData: inputScript })
         })
       }
 
@@ -315,8 +306,7 @@ contract('EVM Script', accounts => {
         const receipt = await scriptRunnerApp.runScriptWithNewBytesAllocation(inputScript)
 
         // Check logs for returned bytes
-        const returnedBytes = receipt.logs.filter(l => l.event == 'ReturnedBytes')[0]
-        assert.equal(returnedBytes.args.returnedBytes, EMPTY_BYTES, 'should log the correct return data')
+        assertEvent(receipt, 'ReturnedBytes', { returnedBytes: EMPTY_BYTES })
       })
 
       it('properly allocates the free memory pointer after returning bytes from executor', async () => {
@@ -326,8 +316,7 @@ contract('EVM Script', accounts => {
         const receipt = await scriptRunnerApp.runScriptWithNewBytesAllocation(inputScript)
 
         // Check logs for returned bytes
-        const returnedBytes = receipt.logs.filter(l => l.event == 'ReturnedBytes')[0]
-        assert.equal(returnedBytes.args.returnedBytes, inputScript, 'should log the correct return data')
+        assertEvent(receipt, 'ReturnedBytes', { returnedBytes: inputScript })
       })
     })
 
@@ -338,7 +327,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorNoReturnMock.address, { from: boss })
 
         // Sanity check it's at spec ID 1
-        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        const executorSpecId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
         assert.equal(executorSpecId, 1, 'EVMScriptExecutorNoReturnMock should be installed as spec ID 1')
       })
 
@@ -346,7 +335,7 @@ contract('EVM Script', accounts => {
         const inputScript = createExecutorId(1)
 
         // Should revert with invalid return
-        assertRevert(scriptRunnerApp.runScript(inputScript), reverts.EVMRUN_EXECUTOR_INVALID_RETURN)
+        await assertRevert(scriptRunnerApp.runScript(inputScript), reverts.EVMRUN_EXECUTOR_INVALID_RETURN)
       })
     })
 
@@ -357,7 +346,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorRevertMock.address, { from: boss })
 
         // Sanity check it's at spec ID 1
-        const executorSpecId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        const executorSpecId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
         assert.equal(executorSpecId, 1, 'EVMScriptExecutorRevertMock should be installed as spec ID 1')
       })
 
@@ -366,7 +355,7 @@ contract('EVM Script', accounts => {
         const inputScript = createExecutorId(1)
 
         // Should revert and forward the script executor's revert message
-        assertRevert(scriptRunnerApp.runScript(inputScript), ERROR_MOCK_REVERT)
+        await assertRevert(scriptRunnerApp.runScript(inputScript), ERROR_MOCK_REVERT)
       })
     })
 
@@ -381,7 +370,7 @@ contract('EVM Script', accounts => {
         const receipt = await evmScriptReg.addScriptExecutor(callsScriptBase.address, { from: boss })
 
         // Sanity check it's at spec ID 1
-        const callsScriptExecutorId = receipt.logs.filter(l => l.event == 'EnableExecutor')[0].args.executorId
+        const callsScriptExecutorId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
         assert.equal(callsScriptExecutorId, 1, 'CallsScript should be installed as spec ID 1')
 
         executionTarget = await ExecutionTarget.new()
@@ -418,11 +407,8 @@ contract('EVM Script', accounts => {
 
         // Check logs
         // The executor app always uses 0x for the input and the calls script always returns 0x output
-        const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
-        assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor(createExecutorId(1)), 'should log the same executor')
-        assert.equal(scriptResult.args.script, script, 'should log the same script')
-        assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
-        assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the empty return data')
+        const expectedExecutor = await evmScriptReg.getScriptExecutor(createExecutorId(1))
+        assertEvent(receipt, 'ScriptResult', { executor: expectedExecutor, script, input: EMPTY_BYTES, returnData: EMPTY_BYTES })
       })
 
       it("can execute if call doesn't contain blacklist addresses", async () => {

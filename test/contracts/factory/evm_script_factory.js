@@ -1,5 +1,6 @@
-const { soliditySha3 } = require('web3-utils')
+const { assertEvent } = require('../../helpers/assertEvent')(web3)
 const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
+const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -15,15 +16,13 @@ const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConst
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
-contract('EVM Script Factory', accounts => {
+contract('EVM Script Factory', ([permissionsRoot]) => {
   let evmScriptRegBase, callsScriptBase
   let daoFact, regFact, dao, acl, evmScriptReg
   let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE, CREATE_PERMISSIONS_ROLE
   let EVMSCRIPT_REGISTRY_APP_ID, REGISTRY_ADD_EXECUTOR_ROLE, REGISTRY_MANAGER_ROLE
 
-  const permissionsRoot = accounts[0]
-
-  const scriptRunnerAppId = '0x1234'
+  const SCRIPT_RUNNER_APP_ID = '0x1234'
 
   before(async () => {
     const kernelBase = await Kernel.new(true) // petrify immediately
@@ -47,8 +46,8 @@ contract('EVM Script Factory', accounts => {
 
   beforeEach(async () => {
     const receipt = await daoFact.newDAO(permissionsRoot)
-    dao = Kernel.at(receipt.logs.filter(l => l.event == 'DeployDAO')[0].args.dao)
-    evmScriptReg = EVMScriptRegistry.at(receipt.logs.filter(l => l.event == 'DeployEVMScriptRegistry')[0].args.reg)
+    dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+    evmScriptReg = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
 
     acl = ACL.at(await dao.acl())
   })
@@ -86,8 +85,8 @@ contract('EVM Script Factory', accounts => {
       // Set up app management permissions
       await acl.createPermission(permissionsRoot, dao.address, APP_MANAGER_ROLE, permissionsRoot)
 
-      const receipt = await dao.newAppInstance(scriptRunnerAppId, scriptRunnerAppBase.address, EMPTY_BYTES, false)
-      scriptRunnerApp = AppStubScriptRunner.at(receipt.logs.filter(l => l.event == 'NewAppProxy')[0].args.proxy)
+      const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false)
+      scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
       await scriptRunnerApp.initialize()
       executionTarget = await ExecutionTarget.new()
     })
@@ -113,13 +112,9 @@ contract('EVM Script Factory', accounts => {
 
       assert.equal(await executionTarget.counter(), 1, 'should have executed action')
 
-      // Check logs
       // The executor always uses 0x for the input and callscripts always have 0x returns
-      const scriptResult = receipt.logs.filter(l => l.event == 'ScriptResult')[0]
-      assert.equal(scriptResult.args.executor, await evmScriptReg.getScriptExecutor(createExecutorId(1)), 'should log the same executor')
-      assert.equal(scriptResult.args.script, script, 'should log the same script')
-      assert.equal(scriptResult.args.input, EMPTY_BYTES, 'should log the same input')
-      assert.equal(scriptResult.args.returnData, EMPTY_BYTES, 'should log the return data')
+      const expectedExecutor = await evmScriptReg.getScriptExecutor(createExecutorId(1))
+      assertEvent(receipt, 'ScriptResult', { executor: expectedExecutor, script, input: EMPTY_BYTES, returnData: EMPTY_BYTES })
     })
   })
 })

@@ -1,7 +1,7 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { hash } = require('eth-ens-namehash')
 const { onlyIf } = require('../../helpers/onlyIf')
 const { getBlockNumber } = require('../../helpers/web3')
-const { hash } = require('eth-ens-namehash')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -19,12 +19,10 @@ const APP_ID = hash('stub.aragonpm.test')
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
-contract('App proxy', accounts => {
+contract('App proxy', ([permissionsRoot]) => {
   let aclBase, appBase1, appBase2, kernelBase, acl, kernel
   let APP_BASES_NAMESPACE, APP_ROLE
   let UPGRADEABLE, FORWARDING
-
-  const permissionsRoot = accounts[0]
 
   // Initial setup
   before(async () => {
@@ -103,9 +101,7 @@ contract('App proxy', accounts => {
         it('fails if initializing on constructor before setting app code', async () => {
           const initializationPayload = appBase1.contract.initialize.getData()
 
-          return assertRevert(async () => {
-            await AppProxyUpgradeable.new(kernel.address, APP_ID, initializationPayload)
-          })
+          await assertRevert(AppProxyUpgradeable.new(kernel.address, APP_ID, initializationPayload))
         })
       })
 
@@ -113,32 +109,24 @@ contract('App proxy', accounts => {
         const FAKE_APP_ID = hash('fake.aragonpm.test')
 
         it("fails if code hasn't been set yet", async () => {
-          await assertRevert(async () => {
-            await AppProxyPinned.new(kernel.address, FAKE_APP_ID, EMPTY_BYTES)
-          })
+          await assertRevert(AppProxyPinned.new(kernel.address, FAKE_APP_ID, EMPTY_BYTES))
         })
 
         it("fails if code set isn't a contract", async () => {
           const kernelMock = await KernelSetAppMock.new()
           await kernelMock.setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, '0x1234')
 
-          await assertRevert(async () => {
-            await AppProxyPinned.new(kernelMock.address, FAKE_APP_ID, EMPTY_BYTES)
-          })
+          await assertRevert(AppProxyPinned.new(kernelMock.address, FAKE_APP_ID, EMPTY_BYTES))
         })
       })
 
       context('> Fails on bad kernel', () => {
         it('fails if kernel address is 0', async () => {
-          return assertRevert(async () => {
-            await appProxyContract.new(ZERO_ADDR, APP_ID, EMPTY_BYTES)
-          })
+          await assertRevert(appProxyContract.new(ZERO_ADDR, APP_ID, EMPTY_BYTES))
         })
 
         it('fails if kernel address is not a contract', async () => {
-          return assertRevert(async () => {
-            await appProxyContract.new('0x1234', APP_ID, EMPTY_BYTES)
-          })
+          await assertRevert(appProxyContract.new('0x1234', APP_ID, EMPTY_BYTES))
         })
       })
 
@@ -167,16 +155,12 @@ contract('App proxy', accounts => {
         })
 
         it('cannot reinitialize', async () => {
-          return assertRevert(async () => {
-            await app.initialize()
-          })
+          await assertRevert(app.initialize())
         })
 
         it('fails if init fails', async () => {
           const badInit = '0x1234'
-          return assertRevert(async () => {
-            await appProxyContract.new(kernel.address, APP_ID, badInit)
-          })
+          await assertRevert(appProxyContract.new(kernel.address, APP_ID, badInit))
         })
 
         it('should return values correctly', async () => {
@@ -208,9 +192,7 @@ contract('App proxy', accounts => {
         })
 
         it("fails calling functionality requiring initialization (if it's not)", async () => {
-          return assertRevert(async () => {
-            await app.requiresInitialization()
-          })
+          await assertRevert(app.requiresInitialization())
         })
 
         it('allows calling functionality requiring initialization after initializing', async () => {
@@ -246,9 +228,7 @@ contract('App proxy', accounts => {
             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase2.address)
 
             // The upgraded app (AppStub2) doesn't have `setValue()` anymore
-            return assertRevert(async () => {
-              await app.setValue(10)
-            })
+            await assertRevert(app.setValue(10))
           })
         })
 

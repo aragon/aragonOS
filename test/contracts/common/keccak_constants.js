@@ -1,10 +1,6 @@
-const namehash = require('eth-ens-namehash').hash
-const keccak_256 = require('js-sha3').keccak_256
-
 const getContract = name => artifacts.require(name)
-const keccak256 = (name) => '0x' + keccak_256(name)
 
-contract('Constants', accounts => {
+contract('Constants', () => {
   let keccakConstants
 
   before(async () => {
