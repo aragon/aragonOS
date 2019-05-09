@@ -10,7 +10,7 @@ contract('Repo', accounts => {
 
     beforeEach(async () => {
         repo = await Repo.new()
-        await repo.initialize();
+        await repo.initialize()
     })
 
     it('computes correct valid bumps', async () => {
@@ -32,9 +32,7 @@ contract('Repo', accounts => {
 
     // valid version as being a correct bump from 0.0.0
     it('cannot create invalid first version', async () => {
-        return assertRevert(async () => {
-            await repo.newVersion([1, 1, 0], ZERO_ADDR, EMPTY_BYTES)
-        })
+        await assertRevert(repo.newVersion([1, 1, 0], ZERO_ADDR, EMPTY_BYTES))
     })
 
     context('creating initial version', () => {
@@ -78,21 +76,15 @@ contract('Repo', accounts => {
         })
 
         it('fails when changing contract address in non major version', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 1, 0], accounts[2], initialContent)
-            })
+            await assertRevert(repo.newVersion([1, 1, 0], accounts[2], initialContent))
         })
 
         it('fails when version bump is invalid', async () => {
-            return assertRevert(async () => {
-                await repo.newVersion([1, 2, 0], initialCode, initialContent)
-            })
+            await assertRevert(repo.newVersion([1, 2, 0], initialCode, initialContent))
         })
 
         it('fails if requesting version 0', async () => {
-            return assertRevert(async () => {
-                await repo.getByVersionId(0)
-            })
+            await assertRevert(repo.getByVersionId(0))
         })
 
         context('adding new version', () => {

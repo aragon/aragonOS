@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../../helpers/assertThrow')
+const { getEventArgument } = require('../../helpers/events')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')
@@ -6,14 +6,9 @@ const TokenMock = artifacts.require('TokenMock')
 const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
 const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
 
-const assertMockResult = (receipt, result) => {
-  const events = receipt.logs.filter(x => x.event == 'Result')
-  const eventArg = events[0].args.result
-  assert.equal(eventArg, result, `Result not expected (got ${eventArg} instead of ${result})`)
-}
+const assertMockResult = (receipt, result) => assert.equal(getEventArgument(receipt, 'Result', 'result'), result, `result does not match`)
 
-contract('SafeERC20', accounts => {
-  const [owner, receiver] = accounts
+contract('SafeERC20', ([owner, receiver]) => {
   const initialBalance = 10000
   let safeERC20Mock
 

@@ -1,7 +1,8 @@
 const { SEVERITY } = require('./enums')
 const { skipCoverage } = require('../../helpers/coverage')
 const { assertRevert } = require('../../helpers/assertThrow')
-const { getEvents, getEvent, getEventArgument } = require('../../helpers/events')
+const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
+const { getNewProxyAddress, getEventArgument } = require('../../helpers/events')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -62,7 +63,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
       const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
-      app = KillSwitchedApp.at(getEventArgument(appReceipt, 'NewAppProxy', 'proxy'))
+      app = KillSwitchedApp.at(getNewProxyAddress(appReceipt))
       await app.initialize(owner)
     })
 
@@ -87,7 +88,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
         const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
-        app = KillSwitchedApp.at(getEventArgument(appReceipt, 'NewAppProxy', 'proxy'))
+        app = KillSwitchedApp.at(getNewProxyAddress(appReceipt))
         await app.initialize(owner)
       })
 
@@ -119,7 +120,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
-        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
       })
 
@@ -153,7 +154,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         await issuesRegistryACL.createPermission(root, issuesRegistryDAO.address, APP_MANAGER_ROLE, root, { from: root })
 
         const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-        defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(defaultRegistryReceipt, 'NewAppProxy', 'proxy'))
+        defaultIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(defaultRegistryReceipt))
         await defaultIssuesRegistry.initialize()
         await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
       })
@@ -174,7 +175,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
       beforeEach('create kill switched app', async () => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
-        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
       })
 
@@ -295,12 +296,12 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         await issuesRegistryACL.createPermission(root, issuesRegistryDAO.address, APP_MANAGER_ROLE, root, { from: root })
 
         const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-        defaultIssuesRegistry = IssuesRegistry.at(getEventArgument(defaultRegistryReceipt, 'NewAppProxy', 'proxy'))
+        defaultIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(defaultRegistryReceipt))
         await defaultIssuesRegistry.initialize()
         await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
 
         const specificRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-        specificIssuesRegistry = IssuesRegistry.at(getEventArgument(specificRegistryReceipt, 'NewAppProxy', 'proxy'))
+        specificIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(specificRegistryReceipt))
         await specificIssuesRegistry.initialize()
         await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
       })
@@ -320,7 +321,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
       beforeEach('create kill switched app', async () => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
-        app = KillSwitchedApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+        app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
       })
 
@@ -368,12 +369,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             it('emits an event', async () => {
               const receipt = await killSwitch.setAllowedInstance(app.address, true, { from })
 
-              const events = getEvents(receipt, 'AllowedInstanceSet')
-              assert.equal(events.length, 1, 'number of AllowedInstanceSet events does not match')
-
-              const event = getEvent(receipt, 'AllowedInstanceSet').args
-              assert.equal(event.allowed, true, 'allowed value does not match')
-              assert.equal(event.instance, app.address, 'instance address does not match')
+              assertAmountOfEvents(receipt, 'AllowedInstanceSet')
+              assertEvent(receipt, 'AllowedInstanceSet', { allowed: true, instance: app.address })
             })
           })
 
@@ -443,12 +440,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             it('emits an event', async () => {
               const receipt = await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from })
 
-              const events = getEvents(receipt, 'DeniedBaseImplementationSet')
-              assert.equal(events.length, 1, 'number of DeniedBaseImplementationSet events does not match')
-
-              const event = getEvent(receipt, 'DeniedBaseImplementationSet').args
-              assert.equal(event.base, appBase.address, 'base address does not match')
-              assert.equal(event.denied, true, 'denied value does not match')
+              assertAmountOfEvents(receipt, 'DeniedBaseImplementationSet')
+              assertEvent(receipt, 'DeniedBaseImplementationSet', { base: appBase.address, denied: true })
             })
           })
 
@@ -513,12 +506,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               it('emits an event', async () => {
                 const receipt = await killSwitch.setIssuesRegistry(SAMPLE_APP_ID, specificIssuesRegistry.address, { from })
 
-                const events = getEvents(receipt, 'IssuesRegistrySet')
-                assert.equal(events.length, 1, 'number of IssuesRegistrySet events does not match')
-
-                const event = getEvent(receipt, 'IssuesRegistrySet').args
-                assert.equal(event.appId, SAMPLE_APP_ID, 'app id does not match')
-                assert.equal(event.issuesRegistry, specificIssuesRegistry.address, 'issues registry address does not match')
+                assertAmountOfEvents(receipt, 'IssuesRegistrySet')
+                assertEvent(receipt, 'IssuesRegistrySet', { appId: SAMPLE_APP_ID, issuesRegistry: specificIssuesRegistry.address })
               })
             })
 
@@ -566,11 +555,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               it('emits an event', async () => {
                 const receipt = await killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from })
 
-                const events = getEvents(receipt, 'DefaultIssuesRegistrySet')
-                assert.equal(events.length, 1, 'number of DefaultIssuesRegistrySet events does not match')
-
-                const event = getEvent(receipt, 'DefaultIssuesRegistrySet').args
-                assert.equal(event.issuesRegistry, specificIssuesRegistry.address, 'issues registry address does not match')
+                assertAmountOfEvents(receipt, 'DefaultIssuesRegistrySet')
+                assertEvent(receipt, 'DefaultIssuesRegistrySet', { issuesRegistry: specificIssuesRegistry.address })
               })
             })
 
@@ -676,12 +662,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             it('emits an event', async () => {
               const receipt = await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.HIGH, { from })
 
-              const events = getEvents(receipt, 'HighestAllowedSeveritySet')
-              assert.equal(events.length, 1, 'number of ContractActionSet events does not match')
-
-              const event = getEvent(receipt, 'HighestAllowedSeveritySet').args
-              assert.equal(event.appId, SAMPLE_APP_ID, 'app id does not match')
-              assert.equal(event.severity, SEVERITY.HIGH, 'highest severity does not match')
+              assertAmountOfEvents(receipt, 'HighestAllowedSeveritySet')
+              assertEvent(receipt, 'HighestAllowedSeveritySet', { appId: SAMPLE_APP_ID, severity: SEVERITY.HIGH })
             })
           })
 

@@ -1,6 +1,7 @@
 const { SEVERITY } = require('./enums')
 const { assertRevert } = require('../../helpers/assertThrow')
-const { getEventArgument } = require('../../helpers/events')
+const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
+const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const IssuesRegistry = artifacts.require('IssuesRegistry')
 const ACL = artifacts.require('ACL')
@@ -31,7 +32,7 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
 
   beforeEach('create issues registry', async () => {
     const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
-    issuesRegistry = IssuesRegistry.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    issuesRegistry = IssuesRegistry.at(getNewProxyAddress(receipt))
     await issuesRegistry.initialize()
     const SET_SEVERITY_ROLE = await issuesRegistryBase.SET_SEVERITY_ROLE()
     await acl.createPermission(owner, issuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
@@ -90,13 +91,10 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
       const from = owner
 
       it('emits an event', async () => {
-        const { logs } = await issuesRegistry.setSeverityFor(implementation, SEVERITY.LOW, { from })
+        const receipt = await issuesRegistry.setSeverityFor(implementation, SEVERITY.LOW, { from })
 
-        const events = logs.filter(l => l.event === 'SeveritySet')
-        assert.equal(events.length, 1, 'number of SeveritySet events does not match')
-        assert.equal(events[0].args.implementation, implementation, 'implementation address does not match')
-        assert.equal(events[0].args.severity, SEVERITY.LOW, 'severity does not match')
-        assert.equal(events[0].args.sender, owner, 'sender does not match')
+        assertAmountOfEvents(receipt, 'SeveritySet')
+        assertEvent(receipt, 'SeveritySet', { implementation, severity: SEVERITY.LOW, sender: owner })
       })
 
       context('when there was no severity set before', () => {

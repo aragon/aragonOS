@@ -1,5 +1,5 @@
-const AppStub = artifacts.require('AppStub')
 const Kernel = artifacts.require('Kernel')
+const AppStub = artifacts.require('AppStub')
 
 // Mocks
 const AppStorageMock = artifacts.require('AppStorageMock')
@@ -9,7 +9,7 @@ const InitializableStorageMock = artifacts.require('InitializableStorageMock')
 const KernelPinnedStorageMock = artifacts.require('KernelPinnedStorageMock')
 const ReentrancyGuardMock = artifacts.require('ReentrancyGuardMock')
 
-contract('Unstructured storage', accounts => {
+contract('Unstructured storage', () => {
   context('> AppStorage', () => {
     let appStorage
 

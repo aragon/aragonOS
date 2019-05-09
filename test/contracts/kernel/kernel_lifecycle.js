@@ -1,7 +1,7 @@
-const assertEvent = require('../../helpers/assertEvent')
+const { hash } = require('eth-ens-namehash')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getBlockNumber } = require('../../helpers/web3')
-const { hash } = require('eth-ens-namehash')
+const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,31 +13,31 @@ const APP_ID = hash('stub.aragonpm.test')
 const VAULT_ID = hash('vault.aragonpm.test')
 const EMPTY_BYTES = '0x'
 
-contract('Kernel lifecycle', accounts => {
+contract('Kernel lifecycle', ([root, someone]) => {
   let aclBase, appBase
   let DEFAULT_ACL_APP_ID, APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
 
   const testUnaccessibleFunctionalityWhenUninitialized = async (kernel) => {
     // hasPermission should always return false when uninitialized
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(root, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
-    await assertRevert(() => kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
-    await assertRevert(() => kernel.newPinnedAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
-    await assertRevert(() => kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
-    await assertRevert(() => kernel.setRecoveryVaultAppId(VAULT_ID))
+    await assertRevert(kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
+    await assertRevert(kernel.newPinnedAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
+    await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
+    await assertRevert(kernel.setRecoveryVaultAppId(VAULT_ID))
   }
 
   const testUsability = async (kernel) => {
     // Make sure we haven't already setup the required permission
-    assert.isFalse(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(root, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // Then set the required permission
     const acl = ACL.at(await kernel.acl())
-    await acl.createPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, accounts[0])
-    assert.isTrue(await kernel.hasPermission(accounts[0], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
-    assert.isFalse(await kernel.hasPermission(accounts[1], kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root)
+    assert.isTrue(await kernel.hasPermission(root, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
+    assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // And finally test functionality
     await kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false)
@@ -73,9 +73,7 @@ contract('Kernel lifecycle', accounts => {
       })
 
       it('throws on initialization', async () => {
-        await assertRevert(async () => {
-          await kernelBase.initialize(accounts[0], accounts[0])
-        })
+        await assertRevert(kernelBase.initialize(root, root))
       })
 
       it('should not be usable', async () => {
@@ -99,7 +97,7 @@ contract('Kernel lifecycle', accounts => {
       })
 
       it('is initializable and usable', async () => {
-        await kernel.initialize(aclBase.address, accounts[0])
+        await kernel.initialize(aclBase.address, root)
         assert.isTrue(await kernel.hasInitialized(), 'should be initialized')
         assert.isFalse(await kernel.isPetrified(), 'should not be petrified')
 
@@ -133,25 +131,17 @@ contract('Kernel lifecycle', accounts => {
     })
 
     context('> Initialized', () => {
-      let initReceipt
+      let initReceipt, acl
 
       beforeEach(async () => {
-        initReceipt = await kernel.initialize(aclBase.address, accounts[0])
+        initReceipt = await kernel.initialize(aclBase.address, root)
         acl = ACL.at(await kernel.acl())
       })
 
       it('set the ACL correctly', async () => {
-        assertEvent(initReceipt, 'SetApp', 2)
-        const setAppLogs = initReceipt.logs.filter(l => l.event == 'SetApp')
-        const ACLBaseLog = setAppLogs[0]
-        const ACLAppLog = setAppLogs[1]
-
-        assert.equal(ACLBaseLog.args.namespace, APP_BASES_NAMESPACE, 'should set base acl first')
-        assert.equal(ACLBaseLog.args.appId, DEFAULT_ACL_APP_ID, 'should set base acl first')
-        assert.equal(ACLBaseLog.args.app, aclBase.address, 'should set base acl first')
-        assert.equal(ACLAppLog.args.namespace, APP_ADDR_NAMESPACE, 'should set default acl second')
-        assert.equal(ACLAppLog.args.appId, DEFAULT_ACL_APP_ID, 'should set default acl second')
-        assert.equal(ACLAppLog.args.app, acl.address, 'should set default acl second')
+        assertAmountOfEvents(initReceipt, 'SetApp', 2)
+        assertEvent(initReceipt, 'SetApp', { namespace: APP_BASES_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: aclBase.address }, 0)
+        assertEvent(initReceipt, 'SetApp', { namespace: APP_ADDR_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: acl.address }, 1)
       })
 
       it('is now initialized', async () => {
@@ -167,9 +157,7 @@ contract('Kernel lifecycle', accounts => {
       })
 
       it('throws on reinitialization', async () => {
-        return assertRevert(async () => {
-          await kernel.initialize(accounts[0], accounts[0])
-        })
+        await assertRevert(kernel.initialize(root, root))
       })
 
       it('should now be usable', async () => {

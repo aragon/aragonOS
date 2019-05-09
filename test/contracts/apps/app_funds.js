@@ -1,7 +1,7 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getBalance } = require('../../helpers/web3')
 const { onlyIf } = require('../../helpers/onlyIf')
+const { getBalance } = require('../../helpers/web3')
+const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -19,11 +19,9 @@ const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-contract('App funds', accounts => {
+contract('App funds', ([permissionsRoot]) => {
   let aclBase, kernelBase
   let APP_BASES_NAMESPACE
-
-  const permissionsRoot = accounts[0]
 
   before(async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -84,15 +82,13 @@ contract('App funds', accounts => {
               app = appBaseType.at(appProxy.address)
             }
 
-            await app.initialize();
+            await app.initialize()
           })
 
           it('cannot receive ETH', async () => {
             assert.isTrue(await app.hasInitialized(), 'should have been initialized')
 
-            await assertRevert(async () => {
-              await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-            })
+            await assertRevert(app.sendTransaction({ value: 1, gas: SEND_ETH_GAS }))
           })
 
           onlyAppStubDepositable(() => {
