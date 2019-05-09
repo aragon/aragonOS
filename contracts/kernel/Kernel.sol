@@ -169,14 +169,14 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @param _appId Identifier for app to be checked
     * @return True is the given call should be denied, false otherwise
     */
-    function shouldDenyCallingContract(bytes32 _appId) public returns (bool) {
+    function shouldDenyCallingContract(bytes32 _appId, address _instance) public returns (bool) {
         IKillSwitch _killSwitch = killSwitch();
         if (address(_killSwitch) == address(0)) {
             return false;
         }
 
         address _baseApp = getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
-        return _killSwitch.shouldDenyCallingApp(_appId, _baseApp, msg.sender);
+        return _killSwitch.shouldDenyCallingApp(_appId, _baseApp, _instance);
     }
 
     // External access to default app id and namespace constants to mimic default getters for constants

@@ -16,7 +16,7 @@ contract KernelWithoutKillSwitchMock is Kernel {
         revert(ERROR_METHOD_NOT_FOUND);
     }
 
-    function shouldDenyCallingContract(bytes32 _appId) public returns (bool) {
+    function shouldDenyCallingContract(bytes32 _appId, address _instance) public returns (bool) {
         revert(ERROR_METHOD_NOT_FOUND);
     }
 }

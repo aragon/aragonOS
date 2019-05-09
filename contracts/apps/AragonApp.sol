@@ -36,7 +36,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     modifier killSwitchProtected {
         IKernel _kernel = kernel();
         bytes4 selector = _kernel.shouldDenyCallingContract.selector;
-        bytes memory callData = abi.encodeWithSelector(selector, appId());
+        bytes memory callData = abi.encodeWithSelector(selector, appId(), address(this));
         bool success = address(_kernel).call(callData);
 
         // perform a check only if kernel supports "shouldDenyCallingApp" method
