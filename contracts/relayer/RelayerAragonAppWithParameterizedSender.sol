@@ -17,13 +17,13 @@ contract RelayerAragonAppWithParameterizedSender is BaseRelayer {
     function exec(address from, uint256 nonce, bytes calldata, bytes signature) external refundGas auth(OFF_CHAIN_RELAYER_SERVICE_ROLE) {
         assertValidTransaction(from, nonce, calldata, signature);
 
-        setUsedNonce(from, nonce, true);
+        setLastNonce(from, nonce);
         bool success = address(this).call(calldata);
         if (!success) revertForwardingError();
         emit TransactionRelayed(from, address(this), nonce, calldata);
     }
 
     function isNonceUsed(address _account, uint256 _nonce) public view returns (bool) {
-        return usedNonce(_account, _nonce);
+        return lastNonce(_account) >= _nonce;
     }
 }

@@ -8,7 +8,7 @@ contract RelayerAragonAppWithVolatileSender is BaseRelayer {
         assertValidTransaction(from, nonce, calldata, signature);
 
         setVolatileStorageSender(from);
-        setUsedNonce(from, nonce, true);
+        setLastNonce(from, nonce);
 
         bool success = address(this).call(calldata);
         if (!success) revertForwardingError();
@@ -18,7 +18,7 @@ contract RelayerAragonAppWithVolatileSender is BaseRelayer {
     }
 
     function isNonceUsed(address _account, uint256 _nonce) public view returns (bool) {
-        return usedNonce(_account, _nonce);
+        return lastNonce(_account) >= _nonce;
     }
 
     function sender() internal view returns (address) {

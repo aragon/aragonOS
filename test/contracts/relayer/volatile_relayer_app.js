@@ -8,7 +8,7 @@ const SampleApp = artifacts.require('RelayerAragonAppWithVolatileSenderMock')
 const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 
 contract('VolatileRelayerApp', ([_, root, sender, vault, offChainRelayerService]) => {
-  let daoFactory, dao, acl, app, relayedTx, nonce = 0
+  let daoFactory, dao, acl, app, relayedTx, nonce = 1
   let kernelBase, aclBase, sampleAppBase
   let WRITING_ROLE, APP_MANAGER_ROLE, OFF_CHAIN_RELAYER_SERVICE_ROLE
 
@@ -56,7 +56,7 @@ contract('VolatileRelayerApp', ([_, root, sender, vault, offChainRelayerService]
     assert.equal((await app.read()).toString(), 10, 'app value does not match')
   })
 
-  it('overloads a transaction with ~84k of gas', async () => {
+  it('overloads a transaction with ~83k of gas', async () => {
     const { receipt: { cumulativeGasUsed: relayedGasUsed } } = relayedTx
     const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
 
@@ -65,6 +65,6 @@ contract('VolatileRelayerApp', ([_, root, sender, vault, offChainRelayerService]
     console.log('nonRelayerGasUsed:', nonRelayerGasUsed)
     console.log('gasOverload:', gasOverload)
 
-    assert.isBelow(gasOverload, 84000, 'relayed txs gas overload is higher than 84k')
+    assert.isBelow(gasOverload, 83000, 'relayed txs gas overload is higher than 83k')
   })
 })

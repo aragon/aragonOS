@@ -8,7 +8,7 @@ const SampleApp = artifacts.require('RelayerAragonAppWithParameterizedSenderMock
 const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 
 contract('ParameterizedRelayerApp', ([_, root, sender, vault, offChainRelayerService]) => {
-  let daoFactory, dao, acl, app, relayedTx, nonce = 0
+  let daoFactory, dao, acl, app, relayedTx, nonce = 1
   let kernelBase, aclBase, sampleAppBase
   let WRITING_ROLE, APP_MANAGER_ROLE, OFF_CHAIN_RELAYER_SERVICE_ROLE
 

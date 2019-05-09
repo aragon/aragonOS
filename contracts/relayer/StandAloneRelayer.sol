@@ -4,18 +4,18 @@ import "./BaseRelayer.sol";
 
 
 contract StandAloneRelayer is BaseRelayer {
-    mapping (address => mapping (uint256 => bool)) internal usedNonces;
+    mapping (address => uint256) internal lastUsedNonce;
 
     function relay(address from, address to, uint256 nonce, bytes calldata, bytes signature) external refundGas auth(OFF_CHAIN_RELAYER_SERVICE_ROLE) {
         assertValidTransaction(from, nonce, calldata, signature);
 
-        usedNonces[from][nonce] = true;
+        lastUsedNonce[from] = nonce;
         bool success = to.call(calldata);
         if (!success) revertForwardingError();
         emit TransactionRelayed(from, to, nonce, calldata);
     }
 
     function isNonceUsed(address sender, uint256 nonce) public view returns (bool) {
-        return usedNonces[sender][nonce];
+        return lastUsedNonce[sender] >= nonce;
     }
 }
