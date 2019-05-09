@@ -1,7 +1,7 @@
 const { hash } = require('eth-ens-namehash')
 const { keccak_256 } = require('js-sha3')
 const { assertRevert } = require('../../helpers/assertThrow')
-const { getEventArgument } = require('../../helpers/assertEvent')(web3)
+const { getEventArgument } = require('../../helpers/events')
 
 const ENS = artifacts.require('ENS')
 const ENSFactory = artifacts.require('ENSFactory')

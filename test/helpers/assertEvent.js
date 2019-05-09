@@ -1,9 +1,6 @@
-module.exports = web3 => {
-    const getEvents = ({ logs = [] }, event) => logs.filter(l => l.event === event)
-    const getEventAt = (receipt, event, index = 0) => getEvents(receipt, event)[index]
-    const getEventArgument = (receipt, event, arg, index = 0) => getEventAt(receipt, event, index).args[arg]
-    const getNewProxyAddress = (receipt) => getEventArgument(receipt, 'NewAppProxy', 'proxy')
+const { getEventAt, getEvents } = require('./events')
 
+module.exports = web3 => {
     const assertEvent = (receipt, eventName, expectedArgs = {}, index = 0) => {
         const event = getEventAt(receipt, eventName, index)
         assert(typeof event === 'object', `could not find an emitted ${eventName} event ${index === 0 ? '' : `at index ${index}`}`)
@@ -25,10 +22,6 @@ module.exports = web3 => {
     }
 
     return {
-        getEvents,
-        getEventAt,
-        getEventArgument,
-        getNewProxyAddress,
         assertEvent,
         assertAmountOfEvents
     }

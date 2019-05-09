@@ -1,5 +1,6 @@
+const { assertEvent } = require('../../helpers/assertEvent')(web3)
 const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
-const { assertEvent, getEventArgument, getNewProxyAddress } = require('../../helpers/assertEvent')(web3)
+const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')

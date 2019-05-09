@@ -1,4 +1,4 @@
-const { getEventArgument } = require('../../helpers/assertEvent')(web3)
+const { getEventArgument } = require('../../helpers/events')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')

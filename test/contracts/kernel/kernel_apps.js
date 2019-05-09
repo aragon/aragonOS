@@ -1,7 +1,8 @@
 const { hash } = require('eth-ens-namehash')
 const { onlyIf } = require('../../helpers/onlyIf')
 const { assertRevert } = require('../../helpers/assertThrow')
-const { assertAmountOfEvents, getNewProxyAddress } = require('../../helpers/assertEvent')(web3)
+const { getNewProxyAddress } = require('../../helpers/events')
+const { assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
