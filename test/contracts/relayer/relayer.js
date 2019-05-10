@@ -11,7 +11,7 @@ const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.eve
 contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]) => {
   let daoFactory, dao, acl, app, relayer, relayedTx, nonce = 1
   let kernelBase, aclBase, sampleAppBase, relayerBase
-  let WRITING_ROLE, APP_MANAGER_ROLE, RELAYER_ROLE, OFF_CHAIN_RELAYER_SERVICE_ROLE
+  let WRITING_ROLE, APP_MANAGER_ROLE, RELAYER_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE
 
   before('deploy base implementations', async () => {
     aclBase = await ACL.new()
@@ -25,7 +25,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     WRITING_ROLE = await sampleAppBase.WRITING_ROLE()
     RELAYER_ROLE = await sampleAppBase.RELAYER_ROLE()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-    OFF_CHAIN_RELAYER_SERVICE_ROLE = await relayerBase.OFF_CHAIN_RELAYER_SERVICE_ROLE()
+    ALLOW_OFF_CHAIN_SERVICE_ROLE = await relayerBase.ALLOW_OFF_CHAIN_SERVICE_ROLE()
   })
 
   before('deploy DAO', async () => {
@@ -43,7 +43,8 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
 
     const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
     await relayer.sendTransaction({ from: vault, value: 1e18, gas: SEND_ETH_GAS })
-    await acl.createPermission(offChainRelayerService, relayer.address, OFF_CHAIN_RELAYER_SERVICE_ROLE, root, { from: root })
+    await acl.createPermission(root, relayer.address, ALLOW_OFF_CHAIN_SERVICE_ROLE, root, { from: root })
+    await relayer.allowService(offChainRelayerService, { from: root })
   })
 
   beforeEach('create sample app instance', async () => {
@@ -68,7 +69,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     assert.equal((await app.read()).toString(), 10, 'app value does not match')
   })
 
-  it('overloads a transaction with ~96k of gas', async () => {
+  it('overloads a transaction with ~78k of gas', async () => {
     const { receipt: { cumulativeGasUsed: relayedGasUsed } } = relayedTx
     const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
 
@@ -77,6 +78,6 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     console.log('nonRelayerGasUsed:', nonRelayerGasUsed)
     console.log('gasOverload:', gasOverload)
 
-    assert.isBelow(gasOverload, 96000, 'relayed txs gas overload is higher than 96k')
+    assert.isBelow(gasOverload, 78000, 'relayed txs gas overload is higher than 78k')
   })
 })
