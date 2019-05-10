@@ -1,12 +1,11 @@
 const { sha3, soliditySha3 } = require('web3-utils')
+const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const Relayer = artifacts.require('Relayer')
 const DAOFactory = artifacts.require('DAOFactory')
 const SampleApp = artifacts.require('RelayedAppMock')
-
-const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 
 contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]) => {
   let daoFactory, dao, acl, app, relayer, relayedTx, nonce = 1
@@ -38,7 +37,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
 
   before('create relayer instance', async () => {
     const receipt = await dao.newAppInstance('0x11111', relayerBase.address, '0x', false, { from: root })
-    relayer = Relayer.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    relayer = Relayer.at(getNewProxyAddress(receipt))
     await relayer.initialize()
 
     const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
@@ -49,7 +48,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
 
   beforeEach('create sample app instance', async () => {
     const receipt = await dao.newAppInstance('0x22222', sampleAppBase.address, '0x', false, { from: root })
-    app = SampleApp.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
+    app = SampleApp.at(getNewProxyAddress(receipt))
     await app.initialize()
 
     await acl.createPermission(sender, app.address, WRITING_ROLE, root, { from: root })
