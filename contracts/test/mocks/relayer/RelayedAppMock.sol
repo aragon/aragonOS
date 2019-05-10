@@ -1,15 +1,15 @@
 pragma solidity 0.4.24;
 
-import "../../../relayer/RelayerAragonAppWithVolatileSender.sol";
+import "../../../relayer/RelayedAragonApp.sol";
 
 
-contract RelayerAragonAppWithVolatileSenderMock is RelayerAragonAppWithVolatileSender {
+contract RelayedAppMock is RelayedAragonApp {
     bytes32 public constant WRITING_ROLE = keccak256("WRITING_ROLE");
 
     uint256 private x;
 
     function initialize() public onlyInit {
-        super.initialize();
+        initialized();
         x = 42;
     }
 

@@ -2,9 +2,9 @@ const { sha3, soliditySha3 } = require('web3-utils')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
-const Relayer = artifacts.require('StandAloneRelayer')
+const Relayer = artifacts.require('Relayer')
 const DAOFactory = artifacts.require('DAOFactory')
-const SampleApp = artifacts.require('RelayedAragonAppWithVolatileSenderMock')
+const SampleApp = artifacts.require('RelayedAppMock')
 
 const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 

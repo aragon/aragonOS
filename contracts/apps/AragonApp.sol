@@ -19,7 +19,7 @@ import "../evmscript/EVMScriptRunner.sol";
 // ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
-    string internal constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
+    string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
         require(canPerform(sender(), _role, new uint256[](0)), ERROR_AUTH_FAILED);

@@ -1,11 +1,12 @@
 pragma solidity ^0.4.24;
 
+import "./RelayHelper.sol";
 import "../lib/sig/ECDSA.sol";
 import "../apps/AragonApp.sol";
 import "../common/DepositableStorage.sol";
 
 
-contract BaseRelayer is AragonApp, DepositableStorage {
+contract Relayer is AragonApp, DepositableStorage {
     using ECDSA for bytes32;
 
     bytes32 public constant OFF_CHAIN_RELAYER_SERVICE_ROLE = keccak256("OFF_CHAIN_RELAYER_SERVICE_ROLE");
@@ -18,6 +19,8 @@ contract BaseRelayer is AragonApp, DepositableStorage {
 
     event FundsReceived(address indexed sender, uint256 amount);
     event TransactionRelayed(address indexed from, address indexed to, uint256 nonce, bytes calldata);
+
+    mapping (address => uint256) internal lastUsedNonce;
 
     modifier refundGas() {
         uint256 startGas = gasleft();
@@ -35,7 +38,18 @@ contract BaseRelayer is AragonApp, DepositableStorage {
         setDepositable(true);
     }
 
-    function isNonceUsed(address sender, uint256 nonce) public view returns (bool);
+    function relay(address from, address to, uint256 nonce, bytes calldata, bytes signature) external refundGas auth(OFF_CHAIN_RELAYER_SERVICE_ROLE) {
+        assertValidTransaction(from, nonce, calldata, signature);
+
+        lastUsedNonce[from] = nonce;
+        bool success = to.call(calldata);
+        if (!success) RelayHelper.revertForwardingError();
+        emit TransactionRelayed(from, to, nonce, calldata);
+    }
+
+    function isNonceUsed(address sender, uint256 nonce) public view returns (bool) {
+        return lastUsedNonce[sender] >= nonce;
+    }
 
     function assertValidTransaction(address from, uint256 nonce, bytes calldata, bytes signature) internal view {
         require(!isNonceUsed(from, nonce), ERROR_NONCE_ALREADY_USED);
@@ -49,13 +63,5 @@ contract BaseRelayer is AragonApp, DepositableStorage {
 
     function messageHash(bytes calldata, uint256 nonce) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(keccak256(calldata), nonce));
-    }
-
-    function revertForwardingError() internal {
-        assembly {
-            let ptr := mload(0x40)
-            returndatacopy(ptr, 0, returndatasize)
-            revert(ptr, returndatasize)
-        }
     }
 }
