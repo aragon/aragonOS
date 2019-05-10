@@ -56,12 +56,11 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
   })
 
   beforeEach('relay transaction', async () => {
-    const mainCalldata = app.contract.write.getData(10)
-    const execCalldata = app.contract.exec.getData(sender, mainCalldata)
-    const messageHash = soliditySha3(sha3(execCalldata), nonce)
+    const calldata = app.contract.write.getData(10)
+    const messageHash = soliditySha3(sha3(calldata), nonce)
     const signature = web3.eth.sign(sender, messageHash)
 
-    relayedTx = await relayer.relay(sender, app.address, nonce, execCalldata, signature, { from: offChainRelayerService })
+    relayedTx = await relayer.relay(sender, app.address, nonce, calldata, signature, { from: offChainRelayerService })
     nonce++
   })
 
@@ -69,7 +68,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     assert.equal((await app.read()).toString(), 10, 'app value does not match')
   })
 
-  it('overloads a transaction with ~99k of gas', async () => {
+  it('overloads a transaction with ~96k of gas', async () => {
     const { receipt: { cumulativeGasUsed: relayedGasUsed } } = relayedTx
     const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
 
@@ -78,6 +77,6 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     console.log('nonRelayerGasUsed:', nonRelayerGasUsed)
     console.log('gasOverload:', gasOverload)
 
-    assert.isBelow(gasOverload, 99000, 'relayed txs gas overload is higher than 99k')
+    assert.isBelow(gasOverload, 96000, 'relayed txs gas overload is higher than 96k')
   })
 })

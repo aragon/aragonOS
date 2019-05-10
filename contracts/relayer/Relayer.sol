@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./RelayHelper.sol";
+import "./RelayedAragonApp.sol";
 import "../lib/sig/ECDSA.sol";
 import "../apps/AragonApp.sol";
 import "../common/DepositableStorage.sol";
@@ -24,7 +24,8 @@ contract Relayer is AragonApp, DepositableStorage {
     modifier refundGas() {
         uint256 startGas = gasleft();
         _;
-        uint256 refund = EXTERNAL_TX_COST + startGas - gasleft();
+        uint256 refundGas = EXTERNAL_TX_COST + startGas - gasleft();
+        uint256 refund = refundGas * tx.gasprice;
         require(msg.sender.send(refund), ERROR_GAS_REFUND_FAIL);
     }
 
@@ -42,8 +43,7 @@ contract Relayer is AragonApp, DepositableStorage {
         assertValidTransaction(from, nonce, calldata, signature);
 
         lastUsedNonce[from] = nonce;
-        bool success = to.call(calldata);
-        if (!success) RelayHelper.revertForwardingError();
+        IRelayedAragonApp(to).exec(from, calldata);
         emit TransactionRelayed(from, to, nonce, calldata);
     }
 
