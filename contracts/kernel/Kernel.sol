@@ -5,6 +5,7 @@ import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../relayer/IRelayer.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
@@ -169,6 +170,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
     function KERNEL_APP_ID() external pure returns (bytes32) { return KERNEL_CORE_APP_ID; }
     function DEFAULT_ACL_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_ACL_APP_ID; }
+    function DEFAULT_RELAYER_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_RELAYER_APP_ID; }
     /* solium-enable function-order, mixedcase */
 
     /**
@@ -195,6 +197,14 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function acl() public view returns (IACL) {
         return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
+    }
+
+    /**
+    * @dev Get the installed Relayer app
+    * @return Relayer app
+    */
+    function relayer() public view returns (IRelayer) {
+        return IRelayer(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_RELAYER_APP_ID));
     }
 
     /**

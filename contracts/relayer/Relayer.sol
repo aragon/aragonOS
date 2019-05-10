@@ -1,13 +1,16 @@
 pragma solidity ^0.4.24;
 
+import "./IRelayer.sol";
 import "./RelayedAragonApp.sol";
 import "../lib/sig/ECDSA.sol";
 import "../apps/AragonApp.sol";
+import "../common/MemoryHelpers.sol";
 import "../common/DepositableStorage.sol";
 
 
-contract Relayer is AragonApp, DepositableStorage {
+contract Relayer is IRelayer, AragonApp, DepositableStorage {
     using ECDSA for bytes32;
+    using MemoryHelpers for bytes;
 
     bytes32 public constant ALLOW_OFF_CHAIN_SERVICE_ROLE = keccak256("ALLOW_OFF_CHAIN_SERVICE_ROLE");
     bytes32 public constant DISALLOW_OFF_CHAIN_SERVICE_ROLE = keccak256("DISALLOW_OFF_CHAIN_SERVICE_ROLE");
@@ -21,7 +24,7 @@ contract Relayer is AragonApp, DepositableStorage {
 
     event ServiceAllowed(address indexed service);
     event ServiceDisallowed(address indexed service);
-    event TransactionRelayed(address indexed from, address indexed to, uint256 nonce, bytes calldata);
+    event TransactionRelayed(address from, address to, uint256 nonce, bytes calldata);
 
     mapping (address => bool) internal allowedServices;
     mapping (address => uint256) internal lastUsedNonce;
@@ -48,8 +51,9 @@ contract Relayer is AragonApp, DepositableStorage {
         assertValidTransaction(from, nonce, calldata, signature);
 
         lastUsedNonce[from] = nonce;
-        IRelayedAragonApp(to).exec(from, calldata);
+        relayCall(from, to, calldata);
         emit TransactionRelayed(from, to, nonce, calldata);
+        forwardReturnedData();
     }
 
     function allowService(address service) external authP(ALLOW_OFF_CHAIN_SERVICE_ROLE, arr(service)) {
@@ -83,5 +87,25 @@ contract Relayer is AragonApp, DepositableStorage {
 
     function messageHash(bytes calldata, uint256 nonce) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(keccak256(calldata), nonce));
+    }
+
+    function relayCall(address from, address to, bytes calldata) private {
+        bytes memory encodedSignerCalldata = calldata.append(from);
+        assembly {
+            let success := call(gas, to, 0, add(encodedSignerCalldata, 0x20), mload(encodedSignerCalldata), 0, 0)
+            switch success case 0 {
+                let ptr := mload(0x40)
+                returndatacopy(ptr, 0, returndatasize)
+                revert(ptr, returndatasize)
+            }
+        }
+    }
+
+    function forwardReturnedData() private {
+        assembly {
+            let ptr := mload(0x40)
+            returndatacopy(ptr, 0, returndatasize)
+            return(ptr, returndatasize)
+        }
     }
 }

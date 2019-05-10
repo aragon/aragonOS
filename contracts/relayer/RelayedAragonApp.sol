@@ -1,34 +1,25 @@
 pragma solidity ^0.4.24;
 
-
+import "./IRelayer.sol";
 import "../apps/AragonApp.sol";
 
 
-interface IRelayedAragonApp {
-    function exec(address from, bytes calldata) external;
-}
-
-contract RelayedAragonApp is IRelayedAragonApp, AragonApp {
-    bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
-
-    function exec(address from, bytes calldata) external auth(RELAYER_ROLE) {
-        setVolatileStorageSender(from);
-        bool success = address(this).call(calldata);
-        if (!success) revertForwardingError();
-        setVolatileStorageSender(address(0));
-    }
+contract RelayedAragonApp is AragonApp {
 
     function sender() internal view returns (address) {
-        if (msg.sender != address(this)) return msg.sender;
-        address volatileSender = volatileStorageSender();
-        return volatileSender != address(0) ? volatileSender : address(this);
+        address relayer = address(_relayer());
+        if (msg.sender != relayer) return msg.sender;
+
+        address signer = _decodeSigner();
+        return signer != address(0) ? signer : relayer;
     }
 
-    function revertForwardingError() private {
-        assembly {
-            let ptr := mload(0x40)
-            returndatacopy(ptr, 0, returndatasize)
-            revert(ptr, returndatasize)
-        }
+    function _decodeSigner() internal returns (address signer) {
+        bytes memory calldata = msg.data;
+        assembly { signer := mload(add(calldata, calldatasize)) }
+    }
+
+    function _relayer() internal returns (IRelayer) {
+        return kernel().relayer();
     }
 }

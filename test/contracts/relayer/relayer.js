@@ -1,4 +1,5 @@
 const { sha3, soliditySha3 } = require('web3-utils')
+const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const ACL = artifacts.require('ACL')
@@ -7,10 +8,10 @@ const Relayer = artifacts.require('Relayer')
 const DAOFactory = artifacts.require('DAOFactory')
 const SampleApp = artifacts.require('RelayedAppMock')
 
-contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]) => {
-  let daoFactory, dao, acl, app, relayer, relayedTx, nonce = 1
+contract('RelayedApp', ([_, root, member, anyone, vault, offChainRelayerService]) => {
+  let daoFactory, dao, acl, app, relayer, relayedTx, nonce = 0
   let kernelBase, aclBase, sampleAppBase, relayerBase
-  let WRITING_ROLE, APP_MANAGER_ROLE, RELAYER_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE
+  let WRITING_ROLE, APP_MANAGER_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE, RELAYER_APP_ID
 
   before('deploy base implementations', async () => {
     aclBase = await ACL.new()
@@ -20,9 +21,9 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, '0x0')
   })
 
-  before('load roles', async () => {
+  before('load constants', async () => {
+    RELAYER_APP_ID = await kernelBase.DEFAULT_RELAYER_APP_ID()
     WRITING_ROLE = await sampleAppBase.WRITING_ROLE()
-    RELAYER_ROLE = await sampleAppBase.RELAYER_ROLE()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     ALLOW_OFF_CHAIN_SERVICE_ROLE = await relayerBase.ALLOW_OFF_CHAIN_SERVICE_ROLE()
   })
@@ -36,7 +37,7 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
   })
 
   before('create relayer instance', async () => {
-    const receipt = await dao.newAppInstance('0x11111', relayerBase.address, '0x', false, { from: root })
+    const receipt = await dao.newAppInstance(RELAYER_APP_ID, relayerBase.address, '0x', true, { from: root })
     relayer = Relayer.at(getNewProxyAddress(receipt))
     await relayer.initialize()
 
@@ -51,32 +52,48 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     app = SampleApp.at(getNewProxyAddress(receipt))
     await app.initialize()
 
-    await acl.createPermission(sender, app.address, WRITING_ROLE, root, { from: root })
-    await acl.createPermission(relayer.address, app.address, RELAYER_ROLE, root, { from: root })
+    await acl.createPermission(member, app.address, WRITING_ROLE, root, { from: root })
   })
 
-  beforeEach('relay transaction', async () => {
-    const calldata = app.contract.write.getData(10)
-    const messageHash = soliditySha3(sha3(calldata), nonce)
-    const signature = web3.eth.sign(sender, messageHash)
+  beforeEach('increment nonce', () => nonce++)
 
-    relayedTx = await relayer.relay(sender, app.address, nonce, calldata, signature, { from: offChainRelayerService })
-    nonce++
+  context('when the sender is authorized', () => {
+    const sender = member
+
+    beforeEach('relay transaction', async () => {
+      const calldata = app.contract.write.getData(10)
+      const messageHash = soliditySha3(sha3(calldata), nonce)
+      const signature = web3.eth.sign(sender, messageHash)
+
+      relayedTx = await relayer.relay(sender, app.address, nonce, calldata, signature, { from: offChainRelayerService })
+    })
+
+    it('relays transactions to app', async () => {
+      assert.equal((await app.read()).toString(), 10, 'app value does not match')
+    })
+
+    it('overloads a transaction with ~34k of gas', async () => {
+      const { receipt: { cumulativeGasUsed: relayedGasUsed } } = relayedTx
+      const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
+
+      const gasOverload = relayedGasUsed - nonRelayerGasUsed
+      console.log('relayedGasUsed:', relayedGasUsed)
+      console.log('nonRelayerGasUsed:', nonRelayerGasUsed)
+      console.log('gasOverload:', gasOverload)
+
+      assert.isBelow(gasOverload, 34000, 'relayed txs gas overload is higher than 34k')
+    })
   })
 
-  it('relays transactions to app', async () => {
-    assert.equal((await app.read()).toString(), 10, 'app value does not match')
-  })
+  context('when the sender is not authorized', () => {
+    const sender = anyone
 
-  it('overloads a transaction with ~78k of gas', async () => {
-    const { receipt: { cumulativeGasUsed: relayedGasUsed } } = relayedTx
-    const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
+    it('reverts', async () => {
+      const calldata = app.contract.write.getData(10)
+      const messageHash = soliditySha3(sha3(calldata), nonce)
+      const signature = web3.eth.sign(sender, messageHash)
 
-    const gasOverload = relayedGasUsed - nonRelayerGasUsed
-    console.log('relayedGasUsed:', relayedGasUsed)
-    console.log('nonRelayerGasUsed:', nonRelayerGasUsed)
-    console.log('gasOverload:', gasOverload)
-
-    assert.isBelow(gasOverload, 78000, 'relayed txs gas overload is higher than 78k')
+      await assertRevert(relayer.relay(sender, app.address, nonce, calldata, signature, { from: offChainRelayerService }), 'APP_AUTH_FAILED')
+    })
   })
 })
