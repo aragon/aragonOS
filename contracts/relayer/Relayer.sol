@@ -17,7 +17,6 @@ contract Relayer is AragonApp, DepositableStorage {
     string private constant ERROR_NONCE_ALREADY_USED = "RELAYER_NONCE_ALREADY_USED";
     string private constant ERROR_INVALID_SENDER_SIGNATURE = "RELAYER_INVALID_SENDER_SIGNATURE";
 
-    event FundsReceived(address indexed sender, uint256 amount);
     event TransactionRelayed(address indexed from, address indexed to, uint256 nonce, bytes calldata);
 
     mapping (address => uint256) internal lastUsedNonce;
@@ -29,13 +28,14 @@ contract Relayer is AragonApp, DepositableStorage {
         require(msg.sender.send(refund), ERROR_GAS_REFUND_FAIL);
     }
 
-    function () external payable {
-        emit FundsReceived(msg.sender, msg.value);
-    }
-
     function initialize() public onlyInit {
         initialized();
         setDepositable(true);
+    }
+
+    function allowRecoverability(address token) public view returns (bool) {
+        // does not allow to recover ETH
+        return token != ETH;
     }
 
     function relay(address from, address to, uint256 nonce, bytes calldata, bytes signature) external refundGas auth(OFF_CHAIN_RELAYER_SERVICE_ROLE) {

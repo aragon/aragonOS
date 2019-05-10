@@ -41,7 +41,8 @@ contract('VolatileRelayedApp', ([_, root, sender, vault, offChainRelayerService]
     relayer = Relayer.at(getEventArgument(receipt, 'NewAppProxy', 'proxy'))
     await relayer.initialize()
 
-    await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 10e18 })
+    const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
+    await relayer.sendTransaction({ from: vault, value: 1e18, gas: SEND_ETH_GAS })
     await acl.createPermission(offChainRelayerService, relayer.address, OFF_CHAIN_RELAYER_SERVICE_ROLE, root, { from: root })
   })
 
