@@ -28,7 +28,7 @@ library MemoryHelpers {
     }
 
     // From https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol
-    function memcpy(uint256 dest, uint256 src, uint256 len) private pure {
+    function memcpy(uint256 dest, uint256 src, uint256 len) internal pure {
         // Copy word-length chunks while possible
         for(; len >= 32; len -= 32) {
             assembly {

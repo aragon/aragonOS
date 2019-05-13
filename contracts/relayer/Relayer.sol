@@ -89,7 +89,7 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
         return keccak256(abi.encodePacked(keccak256(calldata), nonce));
     }
 
-    function relayCall(address from, address to, bytes calldata) private {
+    function relayCall(address from, address to, bytes calldata) internal {
         bytes memory encodedSignerCalldata = calldata.append(from);
         assembly {
             let success := call(gas, to, 0, add(encodedSignerCalldata, 0x20), mload(encodedSignerCalldata), 0, 0)

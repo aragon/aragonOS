@@ -15,8 +15,15 @@ contract RelayedAragonApp is AragonApp {
     }
 
     function _decodeSigner() internal returns (address signer) {
-        bytes memory calldata = msg.data;
-        assembly { signer := mload(add(calldata, calldatasize)) }
+        // Note that calldatasize includes one word more than the original calldata array, due to the address of the
+        // signer that is being appended at the end of it. Thus, we are loading the last word of the calldata array to
+        // fetch the actual signed of the relayed call
+        assembly {
+            let ptr := mload(0x40)
+            mstore(0x40, add(ptr, 0x20))
+            calldatacopy(ptr, sub(calldatasize, 0x20), 0x20)
+            signer := mload(ptr)
+        }
     }
 
     function _relayer() internal returns (IRelayer) {
