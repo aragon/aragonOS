@@ -1,3 +1,4 @@
+const { skipCoverage } = require('../../helpers/coverage')
 const { sha3, soliditySha3 } = require('web3-utils')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
@@ -131,14 +132,14 @@ contract('Relayer', ([_, root, member, anyone, vault, offChainRelayerService]) =
                   assert.equal(previousTotalRefunds.toString(), currentTotalRefunds.minus(txRefund).toString(), 'total refunds should have been updated')
                 })
 
-                it.only('emits an event', async () => {
+                it('emits an event', async () => {
                   const receipt = await relayer.relay(sender, app.address, nextNonce, calldata, gasRefund, GAS_PRICE, signature, { from })
 
                   assertAmountOfEvents(receipt, 'TransactionRelayed')
                   assertEvent(receipt, 'TransactionRelayed', { from: sender, to: app.address, nonce: nextNonce, calldata })
                 })
 
-                it.only('overloads a transaction with ~50k of gas', async () => {
+                it('overloads a transaction with ~50k of gas', skipCoverage(async () => {
                   const { receipt: { cumulativeGasUsed: relayedGasUsed } } = await relayer.relay(sender, app.address, nextNonce, calldata, gasRefund, GAS_PRICE, signature, { from })
                   const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: sender })
 
@@ -148,7 +149,7 @@ contract('Relayer', ([_, root, member, anyone, vault, offChainRelayerService]) =
                   console.log('gasOverload:', gasOverload)
 
                   assert.isBelow(gasOverload, 50000, 'relayed txs gas overload is higher than 50k')
-                })
+                }))
               })
             })
 
