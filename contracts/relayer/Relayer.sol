@@ -40,7 +40,7 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
         _;
     }
 
-    function initialize(uint256 _monthlyRefundQuota) public onlyInit {
+    function initialize(uint256 _monthlyRefundQuota) external onlyInit {
         initialized();
         startDate = getTimestamp();
         monthlyRefundQuota = _monthlyRefundQuota;
@@ -62,6 +62,7 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
         relayCall(from, to, data);
         emit TransactionRelayed(from, to, nonce, data);
 
+        /* solium-disable security/no-send */
         require(msg.sender.send(refund), ERROR_GAS_REFUND_FAIL);
     }
 

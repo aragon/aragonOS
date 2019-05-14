@@ -8,7 +8,9 @@ contract RelayedAragonApp is AragonApp {
 
     function sender() internal view returns (address) {
         address relayer = address(_relayer());
-        if (msg.sender != relayer) return msg.sender;
+        if (msg.sender != relayer) {
+            return msg.sender;
+        }
 
         address signer = _decodeSigner();
         return signer != address(0) ? signer : relayer;
