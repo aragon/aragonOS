@@ -44,6 +44,6 @@ contract TestRelayerCalldata is Relayer {
     function testSignerEncodedCalls() public {
         signer = msg.sender;
         bytes memory calldata = abi.encodeWithSelector(appTest.callme.selector, uint8(15), bytes32(0xf00), "relayed");
-        relayCall(signer, address(appTest), calldata);
+        _relayCall(signer, address(appTest), calldata);
     }
 }
