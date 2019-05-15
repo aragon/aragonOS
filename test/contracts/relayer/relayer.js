@@ -17,7 +17,8 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) => {
   let daoFactory, dao, acl, app, relayer
   let kernelBase, aclBase, sampleAppBase, relayerBase
-  let WRITING_ROLE, APP_MANAGER_ROLE, SET_MONTHLY_REFUND_QUOTA_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE, DISALLOW_OFF_CHAIN_SERVICE_ROLE, RELAYER_APP_ID
+  let WRITING_ROLE, APP_MANAGER_ROLE, RELAYER_APP_ID
+  let SET_MONTHLY_REFUND_QUOTA_ROLE, ALLOW_SENDER_ROLE, DISALLOW_SENDER_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE, DISALLOW_OFF_CHAIN_SERVICE_ROLE
 
   const GAS_PRICE = 1e9
   const MONTHLY_REFUND_GAS = 1e6 * 5
@@ -43,6 +44,8 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
     WRITING_ROLE = await sampleAppBase.WRITING_ROLE()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     SET_MONTHLY_REFUND_QUOTA_ROLE = await relayerBase.SET_MONTHLY_REFUND_QUOTA_ROLE()
+    ALLOW_SENDER_ROLE = await relayerBase.ALLOW_SENDER_ROLE()
+    DISALLOW_SENDER_ROLE = await relayerBase.DISALLOW_SENDER_ROLE()
     ALLOW_OFF_CHAIN_SERVICE_ROLE = await relayerBase.ALLOW_OFF_CHAIN_SERVICE_ROLE()
     DISALLOW_OFF_CHAIN_SERVICE_ROLE = await relayerBase.DISALLOW_OFF_CHAIN_SERVICE_ROLE()
   })
@@ -68,6 +71,8 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     await relayer.mockSetTimestamp(NOW)
 
+    await acl.createPermission(root, relayer.address, ALLOW_SENDER_ROLE, root, { from: root })
+    await acl.createPermission(root, relayer.address, DISALLOW_SENDER_ROLE, root, { from: root })
     await acl.createPermission(root, relayer.address, SET_MONTHLY_REFUND_QUOTA_ROLE, root, { from: root })
     await acl.createPermission(root, relayer.address, ALLOW_OFF_CHAIN_SERVICE_ROLE, root, { from: root })
     await acl.createPermission(root, relayer.address, DISALLOW_OFF_CHAIN_SERVICE_ROLE, root, { from: root })
@@ -220,8 +225,9 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
           const gasRefund = 50000
           const signature = signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
 
-          await relayer.allowService(offChainRelayerService, { from: root })
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
+          await relayer.allowService(offChainRelayerService, { from: root })
+          await relayer.allowSender(member, { from: root })
           await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
         })
 
@@ -260,6 +266,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
+          await relayer.allowSender(member, { from: root })
           await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
         })
 
@@ -297,14 +304,14 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
           beforeEach('disallow service', async () => await relayer.disallowService(offChainRelayerService, { from: root }))
 
           it('returns false', async () => {
-            assert.isFalse(await relayer.isServiceAllowed(offChainRelayerService), 'off chain service should be allowed')
+            assert.isFalse(await relayer.isServiceAllowed(offChainRelayerService), 'off chain service should not be allowed')
           })
         })
       })
 
       context('when the given address was never allowed', () => {
         it('returns false', async () => {
-          assert.isFalse(await relayer.isServiceAllowed(offChainRelayerService), 'off chain service should be allowed')
+          assert.isFalse(await relayer.isServiceAllowed(offChainRelayerService), 'off chain service should not be allowed')
         })
       })
     })
@@ -312,6 +319,42 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
     context('when the app is not initialized', () => {
       it('reverts', async () => {
         await assertRevert(relayer.isServiceAllowed(offChainRelayerService), 'INIT_NOT_INITIALIZED')
+      })
+    })
+  })
+
+  describe('isSenderAllowed', () => {
+    context('when the app is initialized', () => {
+      beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+
+      context('when the given address was allowed', () => {
+        beforeEach('allow sender', async () => await relayer.allowSender(someone, { from: root }))
+
+        context('when the given address is still allowed', () => {
+          it('returns true', async () => {
+            assert(await relayer.isSenderAllowed(someone), 'sender should be allowed')
+          })
+        })
+
+        context('when the given address was already disallowed', () => {
+          beforeEach('disallow sender', async () => await relayer.disallowSender(someone, { from: root }))
+
+          it('returns false', async () => {
+            assert.isFalse(await relayer.isSenderAllowed(someone), 'sender should not be allowed')
+          })
+        })
+      })
+
+      context('when the given address was never allowed', () => {
+        it('returns false', async () => {
+          assert.isFalse(await relayer.isSenderAllowed(someone), 'sender should be allowed')
+        })
+      })
+    })
+
+    context('when the app is not initialized', () => {
+      it('reverts', async () => {
+        await assertRevert(relayer.isSenderAllowed(someone), 'INIT_NOT_INITIALIZED')
       })
     })
   })
@@ -348,6 +391,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
+          await relayer.allowSender(member, { from: root })
           await relayer.relay(member, someone, usedNonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
         })
 
@@ -487,6 +531,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
+          await relayer.allowSender(member, { from: root })
           await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
         })
 
@@ -564,151 +609,163 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
         await assertRevert(app.write(10, { from: someone }), 'APP_AUTH_FAILED')
       })
 
-      context('when the sender is an allowed service', () => {
+      context('when the service is not allowed', () => {
         const from = offChainRelayerService
 
         beforeEach('allow service', async () => await relayer.allowService(offChainRelayerService, { from: root }))
 
-        context('when the relayed call does not revert', () => {
-          context('when the signature valid', () => {
-            beforeEach('sign relayed call', () => {
-              calldata = app.contract.write.getData(10)
-              signature = signRelayedTx({ from: member, to: app.address, nonce, calldata, gasRefund })
-            })
+        context('when the sender is allowed', () => {
+          context('when the relayed call does not revert', () => {
+            beforeEach('allow sender', async () => await relayer.allowSender(member, { from: root }))
 
-            context('when the nonce is not used', () => {
-              context('when the sender can refund requested gas amount', () => {
-                context('when the relayer has funds', () => {
-                  beforeEach('fund relayer', async () => {
-                    await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
+            context('when the signature valid', () => {
+              beforeEach('sign relayed call', () => {
+                calldata = app.contract.write.getData(10)
+                signature = signRelayedTx({ from: member, to: app.address, nonce, calldata, gasRefund })
+              })
+
+              context('when the nonce is not used', () => {
+                context('when the sender can refund requested gas amount', () => {
+                  context('when the relayer has funds', () => {
+                    beforeEach('fund relayer', async () => {
+                      await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
+                    })
+
+                    it('relays transactions to app', async () => {
+                      await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                      assert.equal((await app.read()).toString(), 10, 'app value does not match')
+                    })
+
+                    it('refunds the off-chain service', async () => {
+                      const previousRelayerBalance = await web3.eth.getBalance(relayer.address)
+                      const previousServiceBalance = await web3.eth.getBalance(offChainRelayerService)
+
+                      const { tx, receipt: { gasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                      const { gasPrice: gasPriceUsed } = await web3.eth.getTransaction(tx)
+
+                      const txRefund = gasRefund * GAS_PRICE
+                      const realTxCost = gasPriceUsed.mul(gasUsed)
+
+                      const currentRelayerBalance = await web3.eth.getBalance(relayer.address)
+                      const currentServiceBalance = await web3.eth.getBalance(offChainRelayerService)
+
+                      assert.equal(currentRelayerBalance.toString(), previousRelayerBalance.minus(txRefund).toString())
+                      assert.equal(currentServiceBalance.toString(), previousServiceBalance.minus(realTxCost).plus(txRefund).toString())
+                    })
+
+                    it('updates the last nonce used of the sender', async () => {
+                      await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+
+                      assert.equal((await relayer.getLastUsedNonce(member)).toString(), nonce, 'last nonce should match')
+                      assert.isFalse(await relayer.canUseNonce(member, nonce), 'last nonce should have been updated')
+                      assert.isTrue(await relayer.canUseNonce(member, nonce + 1), 'next nonce should not be used')
+                    })
+
+                    it('updates the monthly refunds of the sender', async () => {
+                      const currentMonth = await relayer.getCurrentMonth()
+                      const previousMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
+                      await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+
+                      const txRefund = gasRefund * GAS_PRICE
+                      const currentMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
+                      assert.equal(previousMonthlyRefunds.toString(), currentMonthlyRefunds.minus(txRefund).toString(), 'total refunds should have been updated')
+                    })
+
+                    it('emits an event', async () => {
+                      const receipt = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+
+                      assertAmountOfEvents(receipt, 'TransactionRelayed')
+                      assertEvent(receipt, 'TransactionRelayed', { from: member, to: app.address, nonce, data: calldata })
+                    })
+
+                    it('overloads the first relayed transaction with ~80k and the followings with ~50k of gas', skipCoverage(async () => {
+                      const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: member })
+
+                      const { receipt: { cumulativeGasUsed: firstRelayedGasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+
+                      const secondSignature = signRelayedTx({ from: member, to: app.address, nonce: nonce + 1, calldata, gasRefund })
+                      const { receipt: { cumulativeGasUsed: secondRelayedGasUsed } } = await relayer.relay(member, app.address, nonce + 1, calldata, gasRefund, GAS_PRICE, secondSignature, { from })
+
+                      const firstGasOverload = firstRelayedGasUsed - nonRelayerGasUsed
+                      const secondGasOverload = secondRelayedGasUsed - nonRelayerGasUsed
+
+                      console.log('firstGasOverload:', firstGasOverload)
+                      console.log('secondGasOverload:', secondGasOverload)
+
+                      assert.isBelow(firstGasOverload, 80000, 'first relayed txs gas overload is higher than 80k')
+                      assert.isBelow(secondGasOverload, 50000, 'following relayed txs gas overload is higher than 50k')
+                    }))
                   })
 
-                  it('relays transactions to app', async () => {
-                    await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-                    assert.equal((await app.read()).toString(), 10, 'app value does not match')
+                  context('when the relayer does not have funds', () => {
+                    it('reverts', async () => {
+                      await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_REFUND_FAIL')
+                    })
                   })
-
-                  it('refunds the off-chain service', async () => {
-                    const previousRelayerBalance = await web3.eth.getBalance(relayer.address)
-                    const previousServiceBalance = await web3.eth.getBalance(offChainRelayerService)
-
-                    const { tx, receipt: { gasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-                    const { gasPrice: gasPriceUsed } = await web3.eth.getTransaction(tx)
-
-                    const txRefund = gasRefund * GAS_PRICE
-                    const realTxCost = gasPriceUsed.mul(gasUsed)
-
-                    const currentRelayerBalance = await web3.eth.getBalance(relayer.address)
-                    const currentServiceBalance = await web3.eth.getBalance(offChainRelayerService)
-
-                    assert.equal(currentRelayerBalance.toString(), previousRelayerBalance.minus(txRefund).toString())
-                    assert.equal(currentServiceBalance.toString(), previousServiceBalance.minus(realTxCost).plus(txRefund).toString())
-                  })
-
-                  it('updates the last nonce used of the sender', async () => {
-                    await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-
-                    assert.equal((await relayer.getLastUsedNonce(member)).toString(), nonce, 'last nonce should match')
-                    assert.isFalse(await relayer.canUseNonce(member, nonce), 'last nonce should have been updated')
-                    assert.isTrue(await relayer.canUseNonce(member, nonce + 1), 'next nonce should not be used')
-                  })
-
-                  it('updates the monthly refunds of the sender', async () => {
-                    const currentMonth = await relayer.getCurrentMonth()
-                    const previousMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
-                    await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-
-                    const txRefund = gasRefund * GAS_PRICE
-                    const currentMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
-                    assert.equal(previousMonthlyRefunds.toString(), currentMonthlyRefunds.minus(txRefund).toString(), 'total refunds should have been updated')
-                  })
-
-                  it('emits an event', async () => {
-                    const receipt = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-
-                    assertAmountOfEvents(receipt, 'TransactionRelayed')
-                    assertEvent(receipt, 'TransactionRelayed', { from: member, to: app.address, nonce, data: calldata })
-                  })
-
-                  it('overloads the first relayed transaction with ~80k and the followings with ~50k of gas', skipCoverage(async () => {
-                    const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: member })
-
-                    const { receipt: { cumulativeGasUsed: firstRelayedGasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-
-                    const secondSignature = signRelayedTx({ from: member, to: app.address, nonce: nonce + 1, calldata, gasRefund })
-                    const { receipt: { cumulativeGasUsed: secondRelayedGasUsed } } = await relayer.relay(member, app.address, nonce + 1, calldata, gasRefund, GAS_PRICE, secondSignature, { from })
-
-                    const firstGasOverload = firstRelayedGasUsed - nonRelayerGasUsed
-                    const secondGasOverload = secondRelayedGasUsed - nonRelayerGasUsed
-
-                    console.log('firstGasOverload:', firstGasOverload)
-                    console.log('secondGasOverload:', secondGasOverload)
-
-                    assert.isBelow(firstGasOverload, 80000, 'first relayed txs gas overload is higher than 80k')
-                    assert.isBelow(secondGasOverload, 50000, 'following relayed txs gas overload is higher than 50k')
-                  }))
                 })
 
-                context('when the relayer does not have funds', () => {
+                context('when the sender has reached his monthly gas allowed quota', () => {
+                  beforeEach('reduce allowed gas quota', async () => {
+                    await relayer.setMonthlyRefundQuota(gasRefund * GAS_PRICE - 1, { from: root })
+                  })
+
                   it('reverts', async () => {
-                    await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_REFUND_FAIL')
+                    await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_QUOTA_EXCEEDED')
                   })
                 })
               })
 
-              context('when the sender has reached his monthly gas allowed quota', () => {
-                beforeEach('reduce allowed gas quota', async () => {
-                  await relayer.setMonthlyRefundQuota(gasRefund * GAS_PRICE - 1, { from: root })
+              context('when the nonce is already used', () => {
+                beforeEach('relay tx', async () => {
+                  await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
+                  await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
                 })
 
                 it('reverts', async () => {
-                  await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_QUOTA_EXCEEDED')
+                  await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_NONCE_ALREADY_USED')
                 })
               })
             })
 
-            context('when the nonce is already used', () => {
-              beforeEach('relay tx', async () => {
-                await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
-                await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
-              })
-
+            context('when the signature is not valid', () => {
               it('reverts', async () => {
-                await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_NONCE_ALREADY_USED')
+                const signature = web3.eth.sign(member, 'bla')
+
+                await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
               })
             })
           })
 
-          context('when the signature is not valid', () => {
-            it('reverts', async () => {
-              const signature = web3.eth.sign(member, 'bla')
+          context('when the relayed call reverts', () => {
+            beforeEach('allow sender', async () => await relayer.allowSender(someone, { from: root }))
 
-              await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
+            context('when the signature is valid', () => {
+              it('forwards the revert reason', async () => {
+                calldata = app.contract.write.getData(10)
+                signature = signRelayedTx({ from: someone, to: app.address, calldata, nonce, gasRefund })
+
+                await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'APP_AUTH_FAILED')
+              })
+            })
+
+            context('when the signature is not valid', () => {
+              it('reverts', async () => {
+                const signature = web3.eth.sign(someone, 'bla')
+
+                await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
+              })
             })
           })
         })
 
-        context('when the relayed call reverts', () => {
-          context('when the signature is not valid', () => {
-            it('forwards the revert reason', async () => {
-              calldata = app.contract.write.getData(10)
-              signature = signRelayedTx({ from: someone, to: app.address, calldata, nonce, gasRefund })
-
-              await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'APP_AUTH_FAILED')
-            })
-          })
-
-          context('when the signature is not valid', () => {
-            it('reverts', async () => {
-              const signature = web3.eth.sign(someone, 'bla')
-
-              await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
-            })
+        context('when the sender is not allowed', () => {
+          it('reverts', async () => {
+            await assertRevert(relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_SENDER_NOT_ALLOWED')
           })
         })
       })
 
-      context('when the sender is not an allowed service', () => {
+      context('when the service is not allowed', () => {
         const from = someone
 
         it('reverts', async () => {
@@ -756,7 +813,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     context('when the app is not initialized', () => {
       it('reverts', async () => {
-        await assertRevert(relayer.allowService(offChainRelayerService, { from: root }), 'APP_AUTH_FAILED')
+        await assertRevert(relayer.allowService(someone, { from: root }), 'APP_AUTH_FAILED')
       })
     })
   })
@@ -793,7 +850,81 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     context('when the app is not initialized', () => {
       it('reverts', async () => {
-        await assertRevert(relayer.disallowService(offChainRelayerService, { from: root }), 'APP_AUTH_FAILED')
+        await assertRevert(relayer.disallowService(someone, { from: root }), 'APP_AUTH_FAILED')
+      })
+    })
+  })
+
+  describe('allowSender', () => {
+    context('when the app is initialized', () => {
+      beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+
+      context('when the sender is allowed', () => {
+        const from = root
+
+        it('adds a new allowed sender', async () => {
+          await relayer.allowSender(someone, {from})
+
+          assert(await relayer.isSenderAllowed(someone), 'sender should be allowed')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await relayer.allowSender(someone, {from})
+
+          assertAmountOfEvents(receipt, 'SenderAllowed')
+          assertEvent(receipt, 'SenderAllowed', { sender: someone })
+        })
+      })
+
+      context('when the sender is not allowed', () => {
+        const from = someone
+
+        it('reverts', async () => {
+          await assertRevert(relayer.allowSender(someone, {from}), 'APP_AUTH_FAILED')
+        })
+      })
+    })
+
+    context('when the app is not initialized', () => {
+      it('reverts', async () => {
+        await assertRevert(relayer.allowSender(someone, { from: root }), 'APP_AUTH_FAILED')
+      })
+    })
+  })
+
+  describe('disallowSender', () => {
+    context('when the app is initialized', () => {
+      beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+
+      context('when the sender is allowed', () => {
+        const from = root
+
+        it('adds a new allowed sender', async () => {
+          await relayer.disallowSender(someone, { from })
+
+          assert.isFalse(await relayer.isSenderAllowed(someone), 'sender should not be allowed')
+        })
+
+        it('emits an event', async () => {
+          const receipt = await relayer.disallowSender(someone, { from })
+
+          assertAmountOfEvents(receipt, 'SenderDisallowed')
+          assertEvent(receipt, 'SenderDisallowed', { sender: someone })
+        })
+      })
+
+      context('when the sender is not allowed', () => {
+        const from = someone
+
+        it('reverts', async () => {
+          await assertRevert(relayer.disallowSender(someone, { from }), 'APP_AUTH_FAILED')
+        })
+      })
+    })
+
+    context('when the app is not initialized', () => {
+      it('reverts', async () => {
+        await assertRevert(relayer.disallowSender(someone, { from: root }), 'APP_AUTH_FAILED')
       })
     })
   })

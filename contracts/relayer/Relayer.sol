@@ -18,9 +18,16 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
 
     string private constant ERROR_GAS_REFUND_FAIL = "RELAYER_GAS_REFUND_FAIL";
     string private constant ERROR_GAS_QUOTA_EXCEEDED = "RELAYER_GAS_QUOTA_EXCEEDED";
+    string private constant ERROR_SENDER_NOT_ALLOWED = "RELAYER_SENDER_NOT_ALLOWED";
     string private constant ERROR_NONCE_ALREADY_USED = "RELAYER_NONCE_ALREADY_USED";
     string private constant ERROR_SERVICE_NOT_ALLOWED = "RELAYER_SERVICE_NOT_ALLOWED";
     string private constant ERROR_INVALID_SENDER_SIGNATURE = "RELAYER_INVALID_SENDER_SIGNATURE";
+
+    // ACL role used to validate who is able to add a new senders to use the relay service
+    bytes32 public constant ALLOW_SENDER_ROLE = keccak256("ALLOW_SENDER_ROLE");
+
+    // ACL role used to validate who is able to remove already allowed senders to use the relay service
+    bytes32 public constant DISALLOW_SENDER_ROLE = keccak256("DISALLOW_SENDER_ROLE");
 
     // ACL role used to validate who is able to add a new allowed off-chain services to relay transactions
     bytes32 public constant ALLOW_OFF_CHAIN_SERVICE_ROLE = keccak256("ALLOW_OFF_CHAIN_SERVICE_ROLE");
@@ -42,6 +49,18 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
      * @param service Address of the off-chain service disallowed
      */
     event ServiceDisallowed(address indexed service);
+
+    /**
+     * @dev Event logged when a new address is added to the list of allowed senders to use the relay service
+     * @param sender Address of the sender sallowed to use the relayer service
+     */
+    event SenderAllowed(address indexed sender);
+
+    /**
+     * @dev Event logged when a an address is removed from the list of allowed senders to use the relay service
+     * @param sender Address of the sender disallowed to use the relayer service
+     */
+    event SenderDisallowed(address indexed sender);
 
     /**
      * @dev Event logged when a new transaction is relayed successfully
@@ -66,6 +85,9 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     // Monthly refunds quota in ETH for each member
     uint256 internal monthlyRefundQuota;
 
+    // Mapping that indicates whether a given address is allowed to use the relay service
+    mapping (address => bool) internal allowedSenders;
+
     // Mapping that indicates whether a given address is allowed as off-chain service to relay transactions
     mapping (address => bool) internal allowedServices;
 
@@ -78,6 +100,12 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     // Check whether the msg.sender belongs to the list of allowed services to relay transactions
     modifier onlyAllowedServices() {
         require(_isServiceAllowed(msg.sender), ERROR_SERVICE_NOT_ALLOWED);
+        _;
+    }
+
+    // Check whether a given address belongs to the list of allowed senders that can use the relay service
+    modifier onlyAllowedSender(address sender) {
+        require(_isSenderAllowed(sender), ERROR_SENDER_NOT_ALLOWED);
         _;
     }
 
@@ -105,6 +133,7 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     function relay(address from, address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice, bytes signature)
         external
         onlyAllowedServices
+        onlyAllowedSender(from)
     {
         uint256 currentMonth = _getCurrentMonth();
         uint256 requestedRefund = gasRefund.mul(gasPrice);
@@ -139,6 +168,24 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     function disallowService(address service) external authP(DISALLOW_OFF_CHAIN_SERVICE_ROLE, arr(service)) {
         allowedServices[service] = false;
         emit ServiceDisallowed(service);
+    }
+
+    /**
+     * @notice Add a new sender `sender` to the list of allowed addresses that can use the relay service
+     * @param sender Address of the sender to be allowed
+     */
+    function allowSender(address sender) external authP(ALLOW_SENDER_ROLE, arr(sender)) {
+        allowedSenders[sender] = true;
+        emit SenderAllowed(sender);
+    }
+
+    /**
+     * @notice Remove sender `sender` from the list of allowed addresses that can use the relay service
+     * @param sender Address of the sender to be disallowed
+     */
+    function disallowSender(address sender) external authP(DISALLOW_SENDER_ROLE, arr(sender)) {
+        allowedSenders[sender] = false;
+        emit SenderDisallowed(sender);
     }
 
     /**
@@ -199,6 +246,14 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     }
 
     /**
+     * @notice Tell if a given sender `sender` is allowed to use the relay service.
+     * @return True if the given sender is allowed to use the relay service
+     */
+    function isSenderAllowed(address sender) external view isInitialized returns (bool) {
+        return _isSenderAllowed(sender);
+    }
+
+    /**
      * @notice Tell if a given sender `sender` can use the nonce number `nonce` to relay a new transaction.
      * @return True if the given sender can use the given nonce number to relay a new transaction
      */
@@ -239,6 +294,10 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
 
     function _isServiceAllowed(address service) internal view returns (bool) {
         return allowedServices[service];
+    }
+
+    function _isSenderAllowed(address sender) internal view returns (bool) {
+        return allowedSenders[sender];
     }
 
     function _canUseNonce(address sender, uint256 nonce) internal view returns (bool) {
