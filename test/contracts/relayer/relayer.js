@@ -68,6 +68,13 @@ contract('Relayer', ([_, root, member, anyone, vault, offChainRelayerService]) =
     await relayer.mockIncreaseTime(60 * 60 * 24 * 31)
   })
 
+  it('can call the app without going through the relayer', async () => {
+    await app.write(10, { from: member })
+    assert.equal((await app.read()).toString(), 10, 'app value does not match')
+
+    await assertRevert(app.write(10, { from: anyone }), 'APP_AUTH_FAILED')
+  })
+
   describe('relay', () => {
     let calldata, signature, gasRefund = 50000
 
