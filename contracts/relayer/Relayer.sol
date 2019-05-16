@@ -3,6 +3,7 @@ pragma solidity ^0.4.24;
 import "./IRelayer.sol";
 import "./RelayedAragonApp.sol";
 import "../lib/sig/ECDSA.sol";
+import "../lib/misc/EIP712.sol";
 import "../lib/math/SafeMath.sol";
 import "../apps/AragonApp.sol";
 import "../common/IsContract.sol";
@@ -11,7 +12,7 @@ import "../common/MemoryHelpers.sol";
 import "../common/DepositableStorage.sol";
 
 
-contract Relayer is IRelayer, AragonApp, DepositableStorage {
+contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
     using ECDSA for bytes32;
     using SafeMath for uint256;
     using MemoryHelpers for bytes;
@@ -22,6 +23,14 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
     string private constant ERROR_NONCE_ALREADY_USED = "RELAYER_NONCE_ALREADY_USED";
     string private constant ERROR_SERVICE_NOT_ALLOWED = "RELAYER_SERVICE_NOT_ALLOWED";
     string private constant ERROR_INVALID_SENDER_SIGNATURE = "RELAYER_INVALID_SENDER_SIGNATURE";
+
+    // Constant values used to identify the domain for the current app following EIP 712 spec
+    string private constant EIP_712_DOMAIN_NAME = "Aragon Relayer";
+    string private constant EIP_712_DOMAIN_VERSION = "1";
+    uint256 private constant EIP_712_DOMAIN_CHAIN_ID = 1;
+
+    // Type hash used to validate signatures based on EIP-712
+    bytes32 public constant TRANSACTION_TYPE = keccak256("Transaction(address to,uint256 nonce,bytes data,uint256 gasRefund,uint256 gasPrice)");
 
     // ACL role used to validate who is able to add a new senders to use the relay service
     bytes32 public constant ALLOW_SENDER_ROLE = keccak256("ALLOW_SENDER_ROLE");
@@ -140,7 +149,7 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
 
         require(_canUseNonce(from, nonce), ERROR_NONCE_ALREADY_USED);
         require(_canRefund(from, currentMonth, requestedRefund), ERROR_GAS_QUOTA_EXCEEDED);
-        require(_isValidSignature(from, _messageHash(to, nonce, data, gasRefund, gasPrice), signature), ERROR_INVALID_SENDER_SIGNATURE);
+        require(_isValidSignature(from, to, nonce, data, gasRefund, gasPrice, signature), ERROR_INVALID_SENDER_SIGNATURE);
 
         lastUsedNonce[from] = nonce;
         monthlyRefunds[from][currentMonth] = monthlyRefunds[from][currentMonth].add(requestedRefund);
@@ -309,13 +318,23 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage {
         return monthRefunds.add(amount) <= monthlyRefundQuota;
     }
 
-    function _isValidSignature(address sender, bytes32 hash, bytes signature) internal pure returns (bool) {
-        address signer = hash.toEthSignedMessageHash().recover(signature);
+    function _isValidSignature(address sender, address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice, bytes signature)
+        internal
+        view
+        returns (bool)
+    {
+        bytes32 messageHash = _messageHash(to, nonce, data, gasRefund, gasPrice);
+        address signer = messageHash.recover(signature);
         return sender == signer;
     }
 
-    function _messageHash(address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(to, nonce, keccak256(data), gasRefund, gasPrice));
+    function _messageHash(address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice) internal view returns (bytes32) {
+        bytes32 hash = keccak256(abi.encode(TRANSACTION_TYPE, to, nonce, keccak256(data), gasRefund, gasPrice));
+        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), hash));
+    }
+
+    function _domainSeparator() internal view returns (bytes32) {
+        return _domainSeparator(EIP_712_DOMAIN_NAME, EIP_712_DOMAIN_VERSION, EIP_712_DOMAIN_CHAIN_ID, address(this));
     }
 
     function _relayCall(address from, address to, bytes data) internal {

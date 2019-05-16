@@ -6,7 +6,7 @@ import "../../common/MemoryHelpers.sol";
 
 
 contract RelayedAppTest is RelayedAragonApp {
-    function callme(uint8 x, bytes32 y, string z) public {
+    function callme(uint8, bytes32, string) public {
         bytes memory calldata = msg.data;
         //   4    32      32               32                32            32        32
         // [sig][uint8][bytes32][string starting offset][string size][string word][signer]

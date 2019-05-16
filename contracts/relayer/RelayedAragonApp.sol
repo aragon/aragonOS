@@ -16,7 +16,7 @@ contract RelayedAragonApp is AragonApp {
         return signer != address(0) ? signer : relayer;
     }
 
-    function _decodeSigner() internal returns (address signer) {
+    function _decodeSigner() internal pure returns (address signer) {
         // Note that calldatasize includes one word more than the original calldata array, due to the address of the
         // signer that is being appended at the end of it. Thus, we are loading the last word of the calldata array to
         // fetch the actual signed of the relayed call
@@ -28,7 +28,7 @@ contract RelayedAragonApp is AragonApp {
         }
     }
 
-    function _relayer() internal returns (IRelayer) {
+    function _relayer() internal view returns (IRelayer) {
         return kernel().relayer();
     }
 }

@@ -13,9 +13,9 @@ library ECDSA {
      * @param signature bytes signature, the signature is generated using web3.eth.sign()
      */
     function recover(bytes32 hash, bytes signature)
-    internal
-    pure
-    returns (address)
+        internal
+        pure
+        returns (address)
     {
         bytes32 r;
         bytes32 s;
@@ -56,9 +56,9 @@ library ECDSA {
      * and hash the result
      */
     function toEthSignedMessageHash(bytes32 hash)
-    internal
-    pure
-    returns (bytes32)
+        internal
+        pure
+        returns (bytes32)
     {
         // 32 is the length in bytes of hash,
         // enforced by the type signature above

@@ -1,5 +1,5 @@
+const signTypedData = require('../../../lib/signTypedData')(web3)
 const { skipCoverage } = require('../../helpers/coverage')
-const { sha3, soliditySha3 } = require('web3-utils')
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
@@ -26,9 +26,9 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
   const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-  const signRelayedTx = ({ from, to, nonce, calldata = '0x0', gasRefund, gasPrice = GAS_PRICE }) => {
-    const messageHash = soliditySha3(to, nonce, sha3(calldata), gasRefund, gasPrice)
-    return web3.eth.sign(from, messageHash)
+  const signRelayedTx = async ({ from, to, nonce, calldata, gasRefund, gasPrice = GAS_PRICE }) => {
+    const message = { to, nonce, data: calldata, gasRefund, gasPrice }
+    return signTypedData(relayer, from, message)
   }
 
   before('deploy base implementations', async () => {
@@ -223,7 +223,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
           const nonce = 2
           const calldata = '0x11111111'
           const gasRefund = 50000
-          const signature = signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
+          const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
@@ -262,7 +262,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
         beforeEach('relay a transaction', async () => {
           const nonce = 2
           const calldata = '0x11111111'
-          const signature = signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
+          const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
@@ -387,7 +387,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
         beforeEach('relay a transaction', async () => {
           const calldata = '0x11111111'
           const gasRefund = 50000
-          const signature = signRelayedTx({ from: member, to: someone, nonce: usedNonce, calldata, gasRefund })
+          const signature = await signRelayedTx({ from: member, to: someone, nonce: usedNonce, calldata, gasRefund })
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
@@ -527,7 +527,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
         beforeEach('relay a transaction', async () => {
           const nonce = 1
           const calldata = '0x11111111'
-          const signature = signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
+          const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
 
           await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
           await relayer.allowService(offChainRelayerService, { from: root })
@@ -619,9 +619,9 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             beforeEach('allow sender', async () => await relayer.allowSender(member, { from: root }))
 
             context('when the signature valid', () => {
-              beforeEach('sign relayed call', () => {
+              beforeEach('sign relayed call', async () => {
                 calldata = app.contract.write.getData(10)
-                signature = signRelayedTx({ from: member, to: app.address, nonce, calldata, gasRefund })
+                signature = await signRelayedTx({ from: member, to: app.address, nonce, calldata, gasRefund })
               })
 
               context('when the nonce is not used', () => {
@@ -678,12 +678,12 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       assertEvent(receipt, 'TransactionRelayed', { from: member, to: app.address, nonce, data: calldata })
                     })
 
-                    it('overloads the first relayed transaction with ~80k and the followings with ~50k of gas', skipCoverage(async () => {
+                    it('overloads the first relayed transaction with ~83k and the followings with ~53k of gas', skipCoverage(async () => {
                       const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: member })
 
                       const { receipt: { cumulativeGasUsed: firstRelayedGasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
 
-                      const secondSignature = signRelayedTx({ from: member, to: app.address, nonce: nonce + 1, calldata, gasRefund })
+                      const secondSignature = await signRelayedTx({ from: member, to: app.address, nonce: nonce + 1, calldata, gasRefund })
                       const { receipt: { cumulativeGasUsed: secondRelayedGasUsed } } = await relayer.relay(member, app.address, nonce + 1, calldata, gasRefund, GAS_PRICE, secondSignature, { from })
 
                       const firstGasOverload = firstRelayedGasUsed - nonRelayerGasUsed
@@ -692,8 +692,8 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       console.log('firstGasOverload:', firstGasOverload)
                       console.log('secondGasOverload:', secondGasOverload)
 
-                      assert.isBelow(firstGasOverload, 80000, 'first relayed txs gas overload is higher than 80k')
-                      assert.isBelow(secondGasOverload, 50000, 'following relayed txs gas overload is higher than 50k')
+                      assert.isBelow(firstGasOverload, 83500, 'first relayed txs gas overload is higher than 83k')
+                      assert.isBelow(secondGasOverload, 53500, 'following relayed txs gas overload is higher than 53k')
                     }))
                   })
 
@@ -742,7 +742,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             context('when the signature is valid', () => {
               it('forwards the revert reason', async () => {
                 calldata = app.contract.write.getData(10)
-                signature = signRelayedTx({ from: someone, to: app.address, calldata, nonce, gasRefund })
+                signature = await signRelayedTx({ from: someone, to: app.address, calldata, nonce, gasRefund })
 
                 await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'APP_AUTH_FAILED')
               })
