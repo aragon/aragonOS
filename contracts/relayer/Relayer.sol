@@ -6,8 +6,6 @@ import "../lib/sig/ECDSA.sol";
 import "../lib/misc/EIP712.sol";
 import "../lib/math/SafeMath.sol";
 import "../apps/AragonApp.sol";
-import "../common/IsContract.sol";
-import "../common/TimeHelpers.sol";
 import "../common/MemoryHelpers.sol";
 import "../common/DepositableStorage.sol";
 

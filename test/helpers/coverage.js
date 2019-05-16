@@ -10,5 +10,5 @@ const skipCoverage = test => {
 }
 
 module.exports = {
-  skipCoverage
+  skipCoverage,
 }
