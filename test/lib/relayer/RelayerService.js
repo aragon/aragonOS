@@ -1,3 +1,4 @@
+const { skipCoverage } = require('../../helpers/coverage')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const RelayerService = require('../../../lib/relayer/RelayerService')(web3)
@@ -91,43 +92,43 @@ contract('RelayerService', ([_, root, member, someone, vault, offChainRelayerSer
 
     context('when the relayed call does not revert', () => {
       context('when the given gas amount does cover the transaction cost', () => {
-        it('relays transactions to app', async () => {
+        it('relays transactions to app', skipCoverage(async () => {
           const transaction = await signer.signTransaction({ from: member, to: app.address, data })
           await service.relay(transaction)
 
           assert.equal((await app.read()).toString(), 10, 'app value does not match')
-        })
+        }))
       })
 
       context('when the given gas amount does not cover the transaction cost', () => {
         const gasRefund = 5000
 
-        it('relays transactions to app', async () => {
+        it('relays transactions to app', skipCoverage(async () => {
           const transaction = await signer.signTransaction({ from: member, to: app.address, data, gasRefund })
 
           await assertRejects(service.relay(transaction), /Given gas refund amount \d* does not cover transaction gas cost \d*/)
-        })
+        }))
       })
     })
 
     context('when the relayed call reverts', () => {
       context('when the given gas amount does cover the transaction cost', () => {
-        it('throws an error', async () => {
+        it('throws an error', skipCoverage(async () => {
           const transaction = await signer.signTransaction({ from: member, to: app.address, data })
           transaction.from = someone
 
           await assertRejects(service.relay(transaction), /Will not relay failing transaction.*RELAYER_SENDER_NOT_ALLOWED/)
-        })
+        }))
       })
 
       context('when the given gas amount does not cover the transaction cost', () => {
         const gasRefund = 5000
 
-        it('throws an error', async () => {
+        it('throws an error', skipCoverage(async () => {
           const transaction = await signer.signTransaction({ from: someone, to: app.address, data, gasRefund })
 
           await assertRejects(service.relay(transaction), /Will not relay failing transaction.*RELAYER_SENDER_NOT_ALLOWED/)
-        })
+        }))
       })
     })
   })
