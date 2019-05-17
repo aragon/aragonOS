@@ -34,28 +34,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     }
 
     modifier killSwitchProtected {
-        IKernel _kernel = kernel();
-        bytes4 selector = _kernel.shouldDenyCallingContract.selector;
-        bytes memory callData = abi.encodeWithSelector(selector, appId(), address(this));
-        bool success = address(_kernel).call(callData);
-
-        // if the call to `kernel.shouldDenyCallingApp` reverts (using an old Kernel) we consider that
-        // there is no kill switch and the call should be allowed to continue
-        if (success) {
-            uint256 _outputLength;
-            assembly { _outputLength := returndatasize }
-            // we expect 32 bytes length returned value here
-            require(_outputLength == 32, ERROR_UNEXPECTED_KERNEL_RESPONSE);
-
-            bool _shouldDenyCall;
-            assembly {
-                let ptr := mload(0x40)                  // get next free memory pointer
-                mstore(0x40, add(ptr, 0x20))  // set next free memory pointer
-                returndatacopy(ptr, 0, 0x20)  // copy call return value
-                _shouldDenyCall := mload(ptr)           // read data
-            }
-            require(!_shouldDenyCall, ERROR_CONTRACT_CALL_NOT_ALLOWED);
-        }
+        require(canExecuteCall(), ERROR_CONTRACT_CALL_NOT_ALLOWED);
         _;
     }
 
@@ -83,6 +62,36 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
             _role,
             ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)
         );
+    }
+
+    /**
+    * @dev Check whether a call to the current app can be executed or not based on the kill-switch settings
+    * @return Boolean indicating whether the call could be executed or not
+    */
+    function canExecuteCall() public view returns (bool) {
+        IKernel _kernel = kernel();
+        bytes4 selector = _kernel.shouldDenyCallingContract.selector;
+        bytes memory callData = abi.encodeWithSelector(selector, appId(), address(this));
+        bool success = address(_kernel).call(callData);
+
+        // if the call to `kernel.shouldDenyCallingApp` reverts (using an old Kernel) we consider that
+        // there is no kill switch and the call can be executed be allowed to continue
+        if (!success) return true;
+
+        // if not, first ensure the returned value is 32 bytes length
+        uint256 _outputLength;
+        assembly { _outputLength := returndatasize }
+        require(_outputLength == 32, ERROR_UNEXPECTED_KERNEL_RESPONSE);
+
+        // forward returned value
+        bool _shouldDenyCall;
+        assembly {
+            let ptr := mload(0x40)        // get next free memory pointer
+            mstore(0x40, add(ptr, 0x20))  // set next free memory pointer
+            returndatacopy(ptr, 0, 0x20)  // copy call return value
+            _shouldDenyCall := mload(ptr) // read data
+        }
+        return !_shouldDenyCall;
     }
 
     /**
