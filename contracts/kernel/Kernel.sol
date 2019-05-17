@@ -11,7 +11,6 @@ import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 import "../kill_switch/IKillSwitch.sol";
-import "../kill_switch/IIssuesRegistry.sol";
 import "../lib/misc/ERCProxy.sol";
 
 

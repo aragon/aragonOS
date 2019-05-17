@@ -584,11 +584,11 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         })
       })
 
-      describe('isSeverityIgnored', function () {
+      describe('checkSeverityIssuesFor', function () {
         context('when there is no bug registered', () => {
           context('when there is no highest allowed severity set for the contract being called', () => {
             it('returns true', async () => {
-              assert.isTrue(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+              assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
             })
           })
 
@@ -598,7 +598,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             })
 
             it('returns true', async () => {
-              assert.isTrue(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+              assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
             })
           })
         })
@@ -610,7 +610,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
           context('when there is no highest allowed severity set for the contract being called', () => {
             it('returns false', async () => {
-              assert.isFalse(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+              assert.isFalse(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
             })
           })
 
@@ -621,7 +621,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns false', async () => {
-                assert.isFalse(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+                assert.isFalse(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
               })
             })
 
@@ -631,7 +631,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns true', async () => {
-                assert.isTrue(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+                assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
               })
             })
 
@@ -641,7 +641,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns true', async () => {
-                assert.isTrue(await killSwitch.isSeverityIgnored(SAMPLE_APP_ID, appBase.address))
+                assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
               })
             })
           })

@@ -5,7 +5,6 @@
 pragma solidity ^0.4.24;
 
 import "../acl/IACL.sol";
-import "../kill_switch/IKillSwitch.sol";
 import "../common/IVaultRecoverable.sol";
 
 

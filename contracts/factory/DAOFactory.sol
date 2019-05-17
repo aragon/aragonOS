@@ -33,7 +33,7 @@ contract DAOFactory {
         KillSwitch _baseKillSwitch,
         EVMScriptRegistryFactory _scriptsRegistryFactory
     )
-    public
+        public
     {
         // No need to init as it cannot be killed by devops199
         if (address(_scriptsRegistryFactory) != address(0)) {
@@ -58,7 +58,8 @@ contract DAOFactory {
         }
 
         Kernel dao = _createDAO(address(this));
-        _setupNewDaoPermissions(dao, _root);
+        ACL acl = ACL(dao.acl());
+        _setupEVMScriptRegistry(dao, acl, _root);
         return dao;
     }
 
@@ -72,12 +73,13 @@ contract DAOFactory {
         require(address(baseKillSwitch) != address(0), ERROR_MISSING_BASE_KILL_SWITCH);
 
         Kernel dao = _createDAO(address(this));
-        _createKillSwitch(dao, _issuesRegistry);
+        ACL acl = ACL(dao.acl());
+        _createKillSwitch(dao, acl, _issuesRegistry);
 
         if (address(scriptsRegistryFactory) == address(0)) {
-            _transferCreatePermissionsRole(dao, address(this), _root);
+            _transferCreatePermissionsRole(dao, acl, address(this), _root);
         } else {
-            _setupNewDaoPermissions(dao, _root);
+            _setupEVMScriptRegistry(dao, acl, _root);
         }
 
         return dao;
@@ -90,80 +92,75 @@ contract DAOFactory {
         return dao;
     }
 
-    function _createKillSwitch(Kernel _dao, IssuesRegistry _issuesRegistry) internal {
+    function _createKillSwitch(Kernel _dao, ACL _acl, IssuesRegistry _issuesRegistry) internal {
         // create app manager role for this
-        _createAppManagerRole(_dao, address(this));
+        _createAppManagerRole(_dao, _acl, address(this));
 
         // create kill switch instance and set it as default
         bytes32 killSwitchAppID = _dao.DEFAULT_KILL_SWITCH_APP_ID();
         bytes memory initializeData = abi.encodeWithSelector(baseKillSwitch.initialize.selector, _issuesRegistry);
         _dao.newAppInstance(killSwitchAppID, baseKillSwitch, initializeData, true);
-        _allowKillSwitchCoreInstances(_dao);
+        _allowKillSwitchCoreInstances(_dao, _acl);
 
         // remove app manager role permissions from this
-        _removeAppManagerRole(_dao, address(this));
+        _removeAppManagerRole(_dao, _acl, address(this));
     }
 
-    function _allowKillSwitchCoreInstances(Kernel _dao) internal {
+    function _allowKillSwitchCoreInstances(Kernel _dao, ACL _acl) internal {
         KillSwitch killSwitch = KillSwitch(_dao.killSwitch());
 
         // create allow instances role for this
-        ACL acl = ACL(_dao.acl());
         bytes32 setAllowedInstancesRole = killSwitch.SET_ALLOWED_INSTANCES_ROLE();
-        acl.createPermission(address(this), killSwitch, setAllowedInstancesRole, address(this));
+        _acl.createPermission(address(this), killSwitch, setAllowedInstancesRole, address(this));
 
         // allow calls to core instances: kill switch, acl and kernel
         killSwitch.setAllowedInstance(address(_dao), true);
-        killSwitch.setAllowedInstance(address(acl), true);
+        killSwitch.setAllowedInstance(address(_acl), true);
         killSwitch.setAllowedInstance(address(killSwitch), true);
 
         // remove allow instances role from this
-        acl.revokePermission(address(this), killSwitch, setAllowedInstancesRole);
-        acl.removePermissionManager(killSwitch, setAllowedInstancesRole);
+        _acl.revokePermission(address(this), killSwitch, setAllowedInstancesRole);
+        _acl.removePermissionManager(killSwitch, setAllowedInstancesRole);
     }
 
-    function _setupNewDaoPermissions(Kernel _dao, address _root) internal {
+    function _setupEVMScriptRegistry(Kernel _dao, ACL _acl, address _root) internal {
         // grant permissions to script registry factory
-        _grantCreatePermissionsRole(_dao, scriptsRegistryFactory);
-        _createAppManagerRole(_dao, scriptsRegistryFactory);
+        _grantCreatePermissionsRole(_dao, _acl, scriptsRegistryFactory);
+        _createAppManagerRole(_dao, _acl, scriptsRegistryFactory);
 
         // create evm scripts registry
         EVMScriptRegistry scriptsRegistry = scriptsRegistryFactory.newEVMScriptRegistry(_dao);
         emit DeployEVMScriptRegistry(address(scriptsRegistry));
 
         // remove permissions from scripts registry factory and transfer to root address
-        _removeAppManagerRole(_dao, scriptsRegistryFactory);
-        _transferCreatePermissionsRole(_dao, scriptsRegistryFactory, _root);
+        _removeAppManagerRole(_dao, _acl, scriptsRegistryFactory);
+        _transferCreatePermissionsRole(_dao, _acl, scriptsRegistryFactory, _root);
     }
 
-    function _grantCreatePermissionsRole(Kernel _dao, address _to) internal {
-        ACL acl = ACL(_dao.acl());
-        bytes32 createPermissionsRole = acl.CREATE_PERMISSIONS_ROLE();
-        acl.grantPermission(_to, acl, createPermissionsRole);
+    function _grantCreatePermissionsRole(Kernel _dao, ACL _acl, address _to) internal {
+        bytes32 createPermissionsRole = _acl.CREATE_PERMISSIONS_ROLE();
+        _acl.grantPermission(_to, _acl, createPermissionsRole);
     }
 
-    function _createAppManagerRole(Kernel _dao, address _to) internal {
-        ACL acl = ACL(_dao.acl());
+    function _createAppManagerRole(Kernel _dao, ACL _acl, address _to) internal {
         bytes32 appManagerRole = _dao.APP_MANAGER_ROLE();
-        acl.createPermission(_to, _dao, appManagerRole, address(this));
+        _acl.createPermission(_to, _dao, appManagerRole, address(this));
     }
 
-    function _removeAppManagerRole(Kernel _dao, address _from) internal {
-        ACL acl = ACL(_dao.acl());
+    function _removeAppManagerRole(Kernel _dao, ACL _acl, address _from) internal {
         bytes32 appManagerRole = _dao.APP_MANAGER_ROLE();
-        acl.revokePermission(_from, _dao, appManagerRole);
-        acl.removePermissionManager(_dao, appManagerRole);
+        _acl.revokePermission(_from, _dao, appManagerRole);
+        _acl.removePermissionManager(_dao, appManagerRole);
     }
 
-    function _transferCreatePermissionsRole(Kernel _dao, address _from, address _to) internal {
-        ACL acl = ACL(_dao.acl());
-        bytes32 createPermissionsRole = acl.CREATE_PERMISSIONS_ROLE();
-        acl.revokePermission(_from, acl, createPermissionsRole);
+    function _transferCreatePermissionsRole(Kernel _dao, ACL _acl, address _from, address _to) internal {
+        bytes32 createPermissionsRole = _acl.CREATE_PERMISSIONS_ROLE();
+        _acl.revokePermission(_from, _acl, createPermissionsRole);
         if (_from != address(this)) {
-            acl.revokePermission(address(this), acl, createPermissionsRole);
+            _acl.revokePermission(address(this), _acl, createPermissionsRole);
         }
 
-        acl.grantPermission(_to, acl, createPermissionsRole);
-        acl.setPermissionManager(_to, acl, createPermissionsRole);
+        _acl.grantPermission(_to, _acl, createPermissionsRole);
+        _acl.setPermissionManager(_to, _acl, createPermissionsRole);
     }
 }

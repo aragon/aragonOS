@@ -39,7 +39,8 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         bytes memory callData = abi.encodeWithSelector(selector, appId(), address(this));
         bool success = address(_kernel).call(callData);
 
-        // perform a check only if kernel supports "shouldDenyCallingApp" method
+        // if the call to `kernel.shouldDenyCallingApp` reverts (using an old Kernel) we consider that
+        // there is no kill switch and the call should be allowed to continue
         if (success) {
             uint256 _outputLength;
             assembly { _outputLength := returndatasize }
@@ -49,8 +50,8 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
             bool _shouldDenyCall;
             assembly {
                 let ptr := mload(0x40)                  // get next free memory pointer
-                mstore(0x40, add(ptr, returndatasize))  // set next free memory pointer
-                returndatacopy(ptr, 0, returndatasize)  // copy call return value
+                mstore(0x40, add(ptr, 0x20))  // set next free memory pointer
+                returndatacopy(ptr, 0, 0x20)  // copy call return value
                 _shouldDenyCall := mload(ptr)           // read data
             }
             require(!_shouldDenyCall, ERROR_CONTRACT_CALL_NOT_ALLOWED);

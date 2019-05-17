@@ -15,7 +15,6 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
      * bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
      * bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
      */
-
     bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = 0xec32b556caaf18ff28362d6b89f3f678177fb74ae2c5c78bfbac6b1dedfa6b43;
     bytes32 constant public SET_ALLOWED_INSTANCES_ROLE = 0x98ff612ed29ae4d49b4e102b7554cfaba413a7f9c345ecd1c920f91df1eb22e8;
     bytes32 constant public SET_DENIED_BASE_IMPLS_ROLE = 0x6ec1c2a4f70ec94acd884927a40806e8282a03b3a489ac3c5551aee638767a33;
@@ -34,7 +33,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     mapping (address => bool) internal deniedBaseImplementations;
     mapping (bytes32 => IssuesSettings) internal appsIssuesSettings;
 
-    event DefaultIssuesRegistrySet(address issuesRegistry);
+    event DefaultIssuesRegistrySet(address indexed issuesRegistry);
     event AllowedInstanceSet(address indexed instance, bool allowed);
     event DeniedBaseImplementationSet(address indexed base, bool denied);
     event IssuesRegistrySet(bytes32 indexed appId, address issuesRegistry);
@@ -102,8 +101,9 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
             return true;
         }
 
-        // if the app severity found is ignored, then allow given call
-        if (isSeverityIgnored(_appId, _base)) {
+        // Check if there is a severity issue reported in the corresponding issue registry. If there is actually a
+        // severity issue, check against the kill switch settings if we allow such severity level or not.
+        if (checkSeverityIssuesFor(_appId, _base)) {
             return false;
         }
 
@@ -119,7 +119,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
         return deniedBaseImplementations[_base];
     }
 
-    function isSeverityIgnored(bytes32 _appId, address _base) public view returns (bool) {
+    function checkSeverityIssuesFor(bytes32 _appId, address _base) public view returns (bool) {
         IIssuesRegistry.Severity severityFound = getIssuesRegistry(_appId).getSeverityFor(_base);
         IIssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_appId);
         return highestAllowedSeverity >= severityFound;
