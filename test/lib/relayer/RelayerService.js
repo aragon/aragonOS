@@ -1,7 +1,7 @@
 const { skipCoverage } = require('../../helpers/coverage')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
-const RelayerService = require('../../../lib/relayer/RelayerService')(web3)
+const RelayerService = require('../../../lib/relayer/RelayerService')(artifacts, web3)
 const RelayTransactionSigner = require('../../../lib/relayer/RelayTransactionSigner')(web3)
 
 const ACL = artifacts.require('ACL')
@@ -86,50 +86,84 @@ contract('RelayerService', ([_, root, member, someone, vault, offChainRelayerSer
   describe('relay', () => {
     let data
 
-    beforeEach('build transaction data', async () => {
-      data = app.contract.write.getData(10)
-    })
+    beforeEach('build transaction data', () => data = app.contract.write.getData(10))
 
     context('when the relayed call does not revert', () => {
-      context('when the given gas amount does cover the transaction cost', () => {
-        it('relays transactions to app', skipCoverage(async () => {
-          const transaction = await signer.signTransaction({ from: member, to: app.address, data })
-          await service.relay(transaction)
+      context('when the target address is an aragon app', () => {
+        context('when the target aragon app belongs to the same DAO', () => {
+          context('when the given gas amount does cover the transaction cost', () => {
+            context('when the given gas price is above the average', () => {
+              it('relays transactions to app', skipCoverage(async () => {
+                const transaction = await signer.signTransaction({ from: member, to: app.address, data })
+                await service.relay(transaction)
 
-          assert.equal((await app.read()).toString(), 10, 'app value does not match')
-        }))
+                assert.equal((await app.read()).toString(), 10, 'app value does not match')
+              }))
+            })
+
+            context('when the given gas price is below the average', () => {
+              const gasPrice = 1
+
+              it('throws an error', skipCoverage(async () => {
+                const transaction = await signer.signTransaction({ from: member, to: app.address, data, gasPrice })
+                
+                await assertRejects(service.relay(transaction), /Given gas price is below the average \d*/)
+              }))
+            })
+          })
+
+          context('when the given gas amount does not cover the transaction cost', () => {
+            const gasRefund = 5000
+
+            it('throws an error', skipCoverage(async () => {
+              const transaction = await signer.signTransaction({ from: member, to: app.address, data, gasRefund })
+
+              await assertRejects(service.relay(transaction), /Given gas refund amount \d* does not cover transaction gas cost \d*/)
+            }))
+          })
+        })
+
+        context('when the target aragon app belongs to another DAO', () => {
+          let foreignDAO, foreignApp
+
+          beforeEach('deploy app from another DAO', async () => {
+            const receiptForeignDAO = await daoFactory.newDAO(root)
+            foreignDAO = Kernel.at(getEventArgument(receiptForeignDAO, 'DeployDAO', 'dao'))
+            const foreignACL = ACL.at(await foreignDAO.acl())
+            await foreignACL.createPermission(root, foreignDAO.address, APP_MANAGER_ROLE, root, { from: root })
+
+            const receiptForeignApp = await foreignDAO.newAppInstance('0x22222', sampleAppBase.address, '0x', false, { from: root })
+            foreignApp = SampleApp.at(getNewProxyAddress(receiptForeignApp))
+            foreignApp.initialize()
+            await foreignACL.createPermission(someone, foreignApp.address, WRITING_ROLE, root, { from: root })
+          })
+
+          it('throws an error', skipCoverage(async () => {
+            const transaction = await signer.signTransaction({ from: someone, to: foreignApp.address, data })
+
+            await assertRejects(service.relay(transaction), `The Kernel of the target app ${foreignDAO.address} does not match with the Kernel of the current realyer ${dao.address}`)
+          }))
+        })
       })
 
-      context('when the given gas amount does not cover the transaction cost', () => {
-        const gasRefund = 5000
+      context('when the target address is not an aragon app', () => {
+        it('throws an error', skipCoverage(async () => {
+          const transaction = await signer.signTransaction({ from: member, to: someone, data })
 
-        it('relays transactions to app', skipCoverage(async () => {
-          const transaction = await signer.signTransaction({ from: member, to: app.address, data, gasRefund })
-
-          await assertRejects(service.relay(transaction), /Given gas refund amount \d* does not cover transaction gas cost \d*/)
+          await assertRejects(service.relay(transaction), `The Kernel of the target app 0x does not match with the Kernel of the current realyer ${dao.address}`)
         }))
       })
     })
 
     context('when the relayed call reverts', () => {
-      context('when the given gas amount does cover the transaction cost', () => {
-        it('throws an error', skipCoverage(async () => {
-          const transaction = await signer.signTransaction({ from: member, to: app.address, data })
-          transaction.from = someone
+      it('throws an error', skipCoverage(async () => {
+        const transaction = await signer.signTransaction({ from: member, to: app.address, data })
 
-          await assertRejects(service.relay(transaction), /Will not relay failing transaction.*RELAYER_SENDER_NOT_ALLOWED/)
-        }))
-      })
+        // change the transaction sender
+        transaction.from = someone
 
-      context('when the given gas amount does not cover the transaction cost', () => {
-        const gasRefund = 5000
-
-        it('throws an error', skipCoverage(async () => {
-          const transaction = await signer.signTransaction({ from: someone, to: app.address, data, gasRefund })
-
-          await assertRejects(service.relay(transaction), /Will not relay failing transaction.*RELAYER_SENDER_NOT_ALLOWED/)
-        }))
-      })
+        await assertRejects(service.relay(transaction), /Will not relay failing transaction.*RELAYER_SENDER_NOT_ALLOWED/)
+      }))
     })
   })
 })
