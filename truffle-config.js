@@ -98,6 +98,13 @@ module.exports = {
       gas: 0xffffffffff,
       gasPrice: 0x01
     },
+    development: {
+      host: 'localhost',
+      network_id: '*',
+      port: 7545,
+      gas: 6.9e6,
+      gasPrice: 15000000001
+    },
   },
   build: {},
   mocha,
