@@ -29,11 +29,11 @@ contract KeccakConstants {
     bytes32 public constant EMPTY_PARAM_HASH = keccak256(abi.encodePacked(uint256(0)));
 
     // KillSwitch
-    bytes32 constant public SET_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("SET_DEFAULT_ISSUES_REGISTRY_ROLE");
-    bytes32 constant public SET_ALLOWED_INSTANCES_ROLE = keccak256("SET_ALLOWED_INSTANCES_ROLE");
-    bytes32 constant public SET_DENIED_BASE_IMPLS_ROLE = keccak256("SET_DENIED_BASE_IMPLS_ROLE");
-    bytes32 constant public SET_ISSUES_REGISTRY_ROLE = keccak256("SET_ISSUES_REGISTRY_ROLE");
-    bytes32 constant public SET_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("SET_HIGHEST_ALLOWED_SEVERITY_ROLE");
+    bytes32 constant public CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE = keccak256("CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE");
+    bytes32 constant public CHANGE_WHITELISTED_INSTANCES_ROLE = keccak256("CHANGE_WHITELISTED_INSTANCES_ROLE");
+    bytes32 constant public CHANGE_BLACKLISTED_BASE_IMPLS_ROLE = keccak256("CHANGE_BLACKLISTED_BASE_IMPLS_ROLE");
+    bytes32 constant public CHANGE_ISSUES_REGISTRY_ROLE = keccak256("CHANGE_ISSUES_REGISTRY_ROLE");
+    bytes32 constant public CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE = keccak256("CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE");
 
     // APMRegistry
     bytes32 public constant CREATE_REPO_ROLE = keccak256(abi.encodePacked("CREATE_REPO_ROLE"));

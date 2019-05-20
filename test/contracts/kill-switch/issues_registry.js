@@ -34,8 +34,8 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
     const receipt = await dao.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
     issuesRegistry = IssuesRegistry.at(getNewProxyAddress(receipt))
     await issuesRegistry.initialize()
-    const SET_SEVERITY_ROLE = await issuesRegistryBase.SET_SEVERITY_ROLE()
-    await acl.createPermission(owner, issuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
+    const CHANGE_SEVERITY_ROLE = await issuesRegistryBase.CHANGE_SEVERITY_ROLE()
+    await acl.createPermission(owner, issuesRegistry.address, CHANGE_SEVERITY_ROLE, root, { from: root })
   })
 
   describe('hasSeverity', () => {
@@ -50,14 +50,14 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
         await issuesRegistry.setSeverityFor(implementation, SEVERITY.LOW, { from: owner })
       })
 
-      context('when the issues was not fixed yet', () => {
+      context('when the issue was real', () => {
         it('returns true', async () => {
           assert.isTrue(await issuesRegistry.hasSeverity(implementation), 'did not expect severity for given implementation')
         })
       })
 
-      context('when the issues was already fixed', () => {
-        beforeEach('set medium severity', async () => {
+      context('when the issue was a false positive', () => {
+        beforeEach('roll back severity', async () => {
           await issuesRegistry.setSeverityFor(implementation, SEVERITY.NONE, { from: owner })
         })
 
@@ -93,8 +93,8 @@ contract('IssuesRegistry', ([_, root, implementation, owner, anyone]) => {
       it('emits an event', async () => {
         const receipt = await issuesRegistry.setSeverityFor(implementation, SEVERITY.LOW, { from })
 
-        assertAmountOfEvents(receipt, 'SeveritySet')
-        assertEvent(receipt, 'SeveritySet', { implementation, severity: SEVERITY.LOW, sender: owner })
+        assertAmountOfEvents(receipt, 'ChangeSeverity')
+        assertEvent(receipt, 'ChangeSeverity', { implementation, severity: SEVERITY.LOW, sender: owner })
       })
 
       context('when there was no severity set before', () => {

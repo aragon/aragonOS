@@ -10,7 +10,7 @@ import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
-import "../kill_switch/IKillSwitch.sol";
+import "../kill-switch/IKillSwitch.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
@@ -164,11 +164,13 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     /**
-    * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings
+    * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings.
+    *      Note that we don't need to perform an initialization check since having or not a kill-switch installed
+    *      implicitly means that.
     * @param _appId Identifier for app to be checked
-    * @return True is the given call should be denied, false otherwise
+    * @return True if the given call should be denied, false otherwise
     */
-    function shouldDenyCallingContract(bytes32 _appId, address _instance) public returns (bool) {
+    function isAppDisabled(bytes32 _appId, address _instance) public view returns (bool) {
         IKillSwitch _killSwitch = killSwitch();
         if (address(_killSwitch) == address(0)) {
             return false;
@@ -207,7 +209,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     /**
-    * @dev Get the installed ACL app
+    * @dev Get the default ACL app
     * @return ACL app
     */
     function acl() public view returns (IACL) {
@@ -215,7 +217,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     /**
-    * @dev Get the installed KillSwitch app
+    * @dev Get the default KillSwitch app
     * @return KillSwitch app
     */
     function killSwitch() public view returns (IKillSwitch) {

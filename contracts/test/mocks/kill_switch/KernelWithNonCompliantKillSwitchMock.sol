@@ -10,7 +10,7 @@ import "../../../kernel/Kernel.sol";
 contract KernelWithNonCompliantKillSwitchMock is Kernel {
     constructor() Kernel(true) public {}
 
-    function shouldDenyCallingContract(bytes32 _appId, address _instance) public returns (bool) {
+    function isAppDisabled(bytes32 _appId, address _instance) public view returns (bool) {
         assembly {
             return(0, 0x40) // returning 2 words instead of one
         }

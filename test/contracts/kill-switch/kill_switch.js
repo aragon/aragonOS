@@ -12,17 +12,18 @@ const IssuesRegistry = artifacts.require('IssuesRegistry')
 const KillSwitchedApp = artifacts.require('KillSwitchedAppMock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-const FailingKillSwitchMock = artifacts.require('FailingKillSwitchMock')
+const RevertingKillSwitchMock = artifacts.require('RevertingKillSwitchMock')
 const KernelWithoutKillSwitchMock = artifacts.require('KernelWithoutKillSwitchMock')
 const KernelWithNonCompliantKillSwitchMock = artifacts.require('KernelWithNonCompliantKillSwitchMock')
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const SAMPLE_APP_ID = '0x1236000000000000000000000000000000000000000000000000000000000000'
 
 contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   let dao, acl, app, registryFactory
   let kernelBase, aclBase, appBase, killSwitchBase, issuesRegistryBase, daoFactory
   let kernelWithoutKillSwitchBase, kernelWithNonCompliantKillSwitchBase, failingKillSwitchBase
-  let CORE_NAMESPACE, KERNEL_APP_ID, APP_MANAGER_ROLE, SET_SEVERITY_ROLE, SET_DEFAULT_ISSUES_REGISTRY_ROLE, SET_ISSUES_REGISTRY_ROLE, SET_ALLOWED_INSTANCES_ROLE, SET_DENIED_BASE_IMPLS_ROLE, SET_HIGHEST_ALLOWED_SEVERITY_ROLE
+  let CORE_NAMESPACE, KERNEL_APP_ID, APP_MANAGER_ROLE, CHANGE_SEVERITY_ROLE, CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE, CHANGE_ISSUES_REGISTRY_ROLE, CHANGE_WHITELISTED_INSTANCES_ROLE, CHANGE_BLACKLISTED_BASE_IMPLS_ROLE, CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE, WRITER_ROLE
 
   before('deploy base implementations', async () => {
     // real
@@ -34,21 +35,22 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
     // mocks
     appBase = await KillSwitchedApp.new()
-    failingKillSwitchBase = await FailingKillSwitchMock.new()
+    failingKillSwitchBase = await RevertingKillSwitchMock.new()
     kernelWithoutKillSwitchBase = await KernelWithoutKillSwitchMock.new()
     kernelWithNonCompliantKillSwitchBase = await KernelWithNonCompliantKillSwitchMock.new()
   })
 
   before('load constants and roles', async () => {
+    WRITER_ROLE = await appBase.WRITER_ROLE()
     CORE_NAMESPACE = await kernelBase.CORE_NAMESPACE()
     KERNEL_APP_ID = await kernelBase.KERNEL_APP_ID()
     APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
-    SET_SEVERITY_ROLE = await issuesRegistryBase.SET_SEVERITY_ROLE()
-    SET_DEFAULT_ISSUES_REGISTRY_ROLE = await killSwitchBase.SET_DEFAULT_ISSUES_REGISTRY_ROLE()
-    SET_ISSUES_REGISTRY_ROLE = await killSwitchBase.SET_ISSUES_REGISTRY_ROLE()
-    SET_ALLOWED_INSTANCES_ROLE = await killSwitchBase.SET_ALLOWED_INSTANCES_ROLE()
-    SET_DENIED_BASE_IMPLS_ROLE = await killSwitchBase.SET_DENIED_BASE_IMPLS_ROLE()
-    SET_HIGHEST_ALLOWED_SEVERITY_ROLE = await killSwitchBase.SET_HIGHEST_ALLOWED_SEVERITY_ROLE()
+    CHANGE_SEVERITY_ROLE = await issuesRegistryBase.CHANGE_SEVERITY_ROLE()
+    CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE = await killSwitchBase.CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE()
+    CHANGE_ISSUES_REGISTRY_ROLE = await killSwitchBase.CHANGE_ISSUES_REGISTRY_ROLE()
+    CHANGE_WHITELISTED_INSTANCES_ROLE = await killSwitchBase.CHANGE_WHITELISTED_INSTANCES_ROLE()
+    CHANGE_BLACKLISTED_BASE_IMPLS_ROLE = await killSwitchBase.CHANGE_BLACKLISTED_BASE_IMPLS_ROLE()
+    CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE = await killSwitchBase.CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE()
   })
 
   context('when the kernel version does not support kill-switch logic', async () => {
@@ -62,9 +64,10 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       acl = ACL.at(await dao.acl())
       await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-      const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
+      const appReceipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
       app = KillSwitchedApp.at(getNewProxyAddress(appReceipt))
       await app.initialize(owner)
+      await acl.createPermission(owner, app.address, WRITER_ROLE, root, { from: root })
     })
 
     it('executes the call', async () => {
@@ -74,8 +77,6 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
   })
 
   context('when the kernel version does support kill-switch logic', async () => {
-    const SAMPLE_APP_ID = '0x1236000000000000000000000000000000000000000000000000000000000000'
-
     context('when the kernel was not initialized with a kill-switch', async () => {
       before('create DAO factory using a kernel that supports kill-switch logic', async () => {
         daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
@@ -87,9 +88,10 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         acl = ACL.at(await dao.acl())
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
 
-        const appReceipt = await dao.newAppInstance('0x1236', appBase.address, '0x', false, { from: root })
+        const appReceipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
         app = KillSwitchedApp.at(getNewProxyAddress(appReceipt))
         await app.initialize(owner)
+        await acl.createPermission(owner, app.address, WRITER_ROLE, root, { from: root })
       })
 
       describe('integration', () => {
@@ -110,7 +112,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
     context('when the kernel is initialized with a non-compliant kill-switch implementation', async () => {
       before('create DAO factory', async () => {
-        daoFactory = await DAOFactory.new(kernelWithNonCompliantKillSwitchBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
+        daoFactory = await DAOFactory.new(kernelWithoutKillSwitchBase.address, aclBase.address, killSwitchBase.address, registryFactory.address)
       })
 
       before('deploy DAO with a kill switch and create kill-switched sample app', async () => {
@@ -122,6 +124,10 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
         app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
+        await acl.createPermission(owner, app.address, WRITER_ROLE, root, { from: root })
+
+        // upgrade kernel to non-compliant implementation
+        await dao.setApp(CORE_NAMESPACE, KERNEL_APP_ID, kernelWithNonCompliantKillSwitchBase.address, { from: root })
       })
 
       describe('integration', () => {
@@ -156,7 +162,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
         defaultIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(defaultRegistryReceipt))
         await defaultIssuesRegistry.initialize()
-        await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
+        await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, CHANGE_SEVERITY_ROLE, root, { from: root })
       })
 
       beforeEach('deploy DAO with a kill switch', async () => {
@@ -166,17 +172,18 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         killSwitch = KillSwitch.at(await dao.killSwitch())
 
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_ISSUES_REGISTRY_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_ALLOWED_INSTANCES_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_DENIED_BASE_IMPLS_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_WHITELISTED_INSTANCES_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_BLACKLISTED_BASE_IMPLS_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
       })
 
       beforeEach('create kill switched app', async () => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
         app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
+        await acl.createPermission(owner, app.address, WRITER_ROLE, root, { from: root })
       })
 
       describe('integration', () => {
@@ -193,44 +200,45 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
         context('when the function being called is tagged', () => {
           const itAlwaysExecutesTheCall = () => {
-            context('when the instance being called is allowed', () => {
-              beforeEach('allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+            context('when the instance being called is whitelisted', () => {
+              beforeEach('whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, true, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
+                // Note that whitelisting a single instance has higher precedence than blacklisting a base implementation
                 itExecutesTheCall()
               })
             })
 
-            context('when the instance being called is not marked as allowed', () => {
-              beforeEach('dot not allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+            context('when the instance being called is not marked as whitelisted', () => {
+              beforeEach('do not whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, false, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itExecutesTheCall()
@@ -247,29 +255,29 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
             })
 
-            context('when there is no highest allowed severity set for the contract being called', () => {
+            context('when there is no highest whitelisted severity set for the contract being called', () => {
               itAlwaysExecutesTheCall()
             })
 
-            context('when there is a highest allowed severity set for the contract being called', () => {
-              context('when the highest allowed severity is under the reported bug severity', () => {
-                beforeEach('set highest allowed severity below the one reported', async () => {
+            context('when there is a highest whitelisted severity set for the contract being called', () => {
+              context('when the highest whitelisted severity is under the reported bug severity', () => {
+                beforeEach('set highest whitelisted severity below the one reported', async () => {
                   await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
                 })
 
                 itAlwaysExecutesTheCall()
               })
 
-              context('when the highest allowed severity is equal to the reported bug severity', () => {
-                beforeEach('set highest allowed severity equal to the one reported', async () => {
+              context('when the highest whitelisted severity is equal to the reported bug severity', () => {
+                beforeEach('set highest whitelisted severity equal to the one reported', async () => {
                   await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
                 })
 
                 itAlwaysExecutesTheCall()
               })
 
-              context('when the highest allowed severity is greater than the reported bug severity', () => {
-                beforeEach('set highest allowed severity above the one reported', async () => {
+              context('when the highest whitelisted severity is greater than the reported bug severity', () => {
+                beforeEach('set highest whitelisted severity above the one reported', async () => {
                   await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.CRITICAL, { from: owner })
                 })
 
@@ -298,12 +306,12 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         const defaultRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
         defaultIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(defaultRegistryReceipt))
         await defaultIssuesRegistry.initialize()
-        await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
+        await issuesRegistryACL.createPermission(securityPartner, defaultIssuesRegistry.address, CHANGE_SEVERITY_ROLE, root, { from: root })
 
         const specificRegistryReceipt = await issuesRegistryDAO.newAppInstance('0x1234', issuesRegistryBase.address, '0x', false, { from: root })
         specificIssuesRegistry = IssuesRegistry.at(getNewProxyAddress(specificRegistryReceipt))
         await specificIssuesRegistry.initialize()
-        await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, SET_SEVERITY_ROLE, root, { from: root })
+        await issuesRegistryACL.createPermission(securityPartner, specificIssuesRegistry.address, CHANGE_SEVERITY_ROLE, root, { from: root })
       })
 
       beforeEach('deploy DAO with a kill switch', async () => {
@@ -312,77 +320,78 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         acl = ACL.at(await dao.acl())
         killSwitch = KillSwitch.at(await dao.killSwitch())
         await acl.createPermission(root, dao.address, APP_MANAGER_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_ISSUES_REGISTRY_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_ALLOWED_INSTANCES_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_DENIED_BASE_IMPLS_ROLE, root, { from: root })
-        await acl.createPermission(owner, killSwitch.address, SET_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_ISSUES_REGISTRY_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_WHITELISTED_INSTANCES_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_BLACKLISTED_BASE_IMPLS_ROLE, root, { from: root })
+        await acl.createPermission(owner, killSwitch.address, CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE, root, { from: root })
       })
 
       beforeEach('create kill switched app', async () => {
         const receipt = await dao.newAppInstance(SAMPLE_APP_ID, appBase.address, '0x', false, { from: root })
         app = KillSwitchedApp.at(getNewProxyAddress(receipt))
         await app.initialize(owner)
+        await acl.createPermission(owner, app.address, WRITER_ROLE, root, { from: root })
       })
 
-      describe('isInstanceAllowed', function () {
-        context('when there was no instance allowed value set yet', function () {
+      describe('isInstanceWhitelisted', function () {
+        context('when there was no instance whitelisted value set yet', function () {
           it('returns false', async () => {
-            assert.isFalse(await killSwitch.isInstanceAllowed(app.address))
+            assert.isFalse(await killSwitch.isInstanceWhitelisted(app.address))
           })
         })
 
-        context('when there was an allowed value already set', function () {
-          context('when it is allowed', function () {
-            beforeEach('allow instance', async () => {
-              await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+        context('when there was an whitelisted value already set', function () {
+          context('when it is whitelisted', function () {
+            beforeEach('whitelist instance', async () => {
+              await killSwitch.setWhitelistedInstance(app.address, true, { from: owner })
             })
 
             it('returns true', async () => {
-              assert(await killSwitch.isInstanceAllowed(app.address))
+              assert(await killSwitch.isInstanceWhitelisted(app.address))
             })
           })
 
-          context('when it is not allowed', function () {
-            beforeEach('do not allow instance', async () => {
-              await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+          context('when it is not whitelisted', function () {
+            beforeEach('do not whitelist instance', async () => {
+              await killSwitch.setWhitelistedInstance(app.address, false, { from: owner })
             })
 
             it('returns false', async () => {
-              assert.isFalse(await killSwitch.isInstanceAllowed(app.address))
+              assert.isFalse(await killSwitch.isInstanceWhitelisted(app.address))
             })
           })
         })
       })
 
-      describe('setAllowedInstance', function () {
+      describe('setWhitelistedInstance', function () {
         context('when the sender is authorized', function () {
           const from = owner
 
-          context('when there was no instance allowed yet', function () {
-            it('sets a new allowed value', async () => {
-              await killSwitch.setAllowedInstance(app.address, true, { from })
+          context('when there was no instance whitelisted yet', function () {
+            it('sets a new whitelisted value', async () => {
+              await killSwitch.setWhitelistedInstance(app.address, true, { from })
 
-              assert(await killSwitch.isInstanceAllowed(app.address))
+              assert(await killSwitch.isInstanceWhitelisted(app.address))
             })
 
             it('emits an event', async () => {
-              const receipt = await killSwitch.setAllowedInstance(app.address, true, { from })
+              const receipt = await killSwitch.setWhitelistedInstance(app.address, true, { from })
 
-              assertAmountOfEvents(receipt, 'AllowedInstanceSet')
-              assertEvent(receipt, 'AllowedInstanceSet', { allowed: true, instance: app.address })
+              assertAmountOfEvents(receipt, 'ChangeWhitelistedInstance')
+              assertEvent(receipt, 'ChangeWhitelistedInstance', { whitelisted: true, instance: app.address })
             })
           })
 
-          context('when there was a instance already allowed', function () {
-            beforeEach('allow instance', async () => {
-              await killSwitch.setAllowedInstance(app.address, true, { from })
+          context('when there was a instance already whitelisted', function () {
+            beforeEach('whitelist instance', async () => {
+              await killSwitch.setWhitelistedInstance(app.address, true, { from })
             })
 
-            it('changes the allowed value', async () => {
-              await killSwitch.setAllowedInstance(app.address, false, { from })
+            it('changes the whitelisted value', async () => {
+              await killSwitch.setWhitelistedInstance(app.address, false, { from })
 
-              assert.isFalse(await killSwitch.isInstanceAllowed(app.address))
+              assert.isFalse(await killSwitch.isInstanceWhitelisted(app.address))
             })
           })
         })
@@ -391,69 +400,69 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           const from = anyone
 
           it('reverts', async () => {
-            await assertRevert(killSwitch.setAllowedInstance(app.address, true, { from }))
+            await assertRevert(killSwitch.setWhitelistedInstance(app.address, true, { from }))
           })
         })
       })
 
-      describe('isBaseImplementationDenied', function () {
-        context('when there was no denied value set yet', function () {
+      describe('isBaseImplementationBlacklisted', function () {
+        context('when there was no blacklisted value set yet', function () {
           it('returns false', async () => {
-            assert.isFalse(await killSwitch.isBaseImplementationDenied(appBase.address))
+            assert.isFalse(await killSwitch.isBaseImplementationBlacklisted(appBase.address))
           })
         })
 
-        context('when there was a denied value already set', function () {
-          context('when it is denied', function () {
-            beforeEach('deny base implementation', async () => {
-              await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+        context('when there was a blacklisted value already set', function () {
+          context('when it is blacklisted', function () {
+            beforeEach('blacklist base implementation', async () => {
+              await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
             })
 
             it('returns true', async () => {
-              assert.isTrue(await killSwitch.isBaseImplementationDenied(appBase.address))
+              assert.isTrue(await killSwitch.isBaseImplementationBlacklisted(appBase.address))
             })
           })
 
-          context('when it is not denied', function () {
-            beforeEach('do not deny base implementation', async () => {
-              await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+          context('when it is not blacklisted', function () {
+            beforeEach('do not blacklist base implementation', async () => {
+              await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
             })
 
             it('returns false', async () => {
-              assert.isFalse(await killSwitch.isBaseImplementationDenied(appBase.address))
+              assert.isFalse(await killSwitch.isBaseImplementationBlacklisted(appBase.address))
             })
           })
         })
       })
 
-      describe('setDeniedBaseImplementation', function () {
+      describe('setBlacklistedBaseImplementation', function () {
         context('when the sender is authorized', function () {
           const from = owner
 
-          context('when there was no base implementation denied yet', function () {
-            it('sets a new denied value', async () => {
-              await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from })
+          context('when there was no base implementation blacklisted yet', function () {
+            it('sets a new blacklisted value', async () => {
+              await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from })
 
-              assert(await killSwitch.isBaseImplementationDenied(appBase.address))
+              assert(await killSwitch.isBaseImplementationBlacklisted(appBase.address))
             })
 
             it('emits an event', async () => {
-              const receipt = await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from })
+              const receipt = await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from })
 
-              assertAmountOfEvents(receipt, 'DeniedBaseImplementationSet')
-              assertEvent(receipt, 'DeniedBaseImplementationSet', { base: appBase.address, denied: true })
+              assertAmountOfEvents(receipt, 'ChangeBlacklistedBaseImplementation')
+              assertEvent(receipt, 'ChangeBlacklistedBaseImplementation', { base: appBase.address, blacklisted: true })
             })
           })
 
-          context('when there was a base implementation already denied', function () {
-            beforeEach('deny base implementation', async () => {
-              await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from })
+          context('when there was a base implementation already blacklisted', function () {
+            beforeEach('blacklist base implementation', async () => {
+              await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from })
             })
 
-            it('changes the denied value', async () => {
-              await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from })
+            it('changes the blacklisted value', async () => {
+              await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from })
 
-              assert.isFalse(await killSwitch.isBaseImplementationDenied(appBase.address))
+              assert.isFalse(await killSwitch.isBaseImplementationBlacklisted(appBase.address))
             })
           })
         })
@@ -462,7 +471,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           const from = anyone
 
           it('reverts', async () => {
-            await assertRevert(killSwitch.setDeniedBaseImplementation(appBase.address, true, { from }), 'APP_AUTH_FAILED')
+            await assertRevert(killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from }), 'APP_AUTH_FAILED')
           })
         })
       })
@@ -506,8 +515,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               it('emits an event', async () => {
                 const receipt = await killSwitch.setIssuesRegistry(SAMPLE_APP_ID, specificIssuesRegistry.address, { from })
 
-                assertAmountOfEvents(receipt, 'IssuesRegistrySet')
-                assertEvent(receipt, 'IssuesRegistrySet', { appId: SAMPLE_APP_ID, issuesRegistry: specificIssuesRegistry.address })
+                assertAmountOfEvents(receipt, 'ChangeIssuesRegistry')
+                assertEvent(receipt, 'ChangeIssuesRegistry', { appId: SAMPLE_APP_ID, issuesRegistry: specificIssuesRegistry.address })
               })
             })
 
@@ -555,8 +564,8 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               it('emits an event', async () => {
                 const receipt = await killSwitch.setDefaultIssuesRegistry(specificIssuesRegistry.address, { from })
 
-                assertAmountOfEvents(receipt, 'DefaultIssuesRegistrySet')
-                assertEvent(receipt, 'DefaultIssuesRegistrySet', { issuesRegistry: specificIssuesRegistry.address })
+                assertAmountOfEvents(receipt, 'ChangeDefaultIssuesRegistry')
+                assertEvent(receipt, 'ChangeDefaultIssuesRegistry', { issuesRegistry: specificIssuesRegistry.address })
               })
             })
 
@@ -584,11 +593,11 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
         })
       })
 
-      describe('checkSeverityIssuesFor', function () {
+      describe('hasExceededAllowedSeverity', function () {
         context('when there is no bug registered', () => {
           context('when there is no highest allowed severity set for the contract being called', () => {
             it('returns true', async () => {
-              assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+              assert.isTrue(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
             })
           })
 
@@ -598,7 +607,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             })
 
             it('returns true', async () => {
-              assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+              assert.isTrue(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
             })
           })
         })
@@ -610,7 +619,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
           context('when there is no highest allowed severity set for the contract being called', () => {
             it('returns false', async () => {
-              assert.isFalse(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+              assert.isFalse(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
             })
           })
 
@@ -621,7 +630,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns false', async () => {
-                assert.isFalse(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+                assert.isFalse(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
               })
             })
 
@@ -631,7 +640,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns true', async () => {
-                assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+                assert.isTrue(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
               })
             })
 
@@ -641,7 +650,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               })
 
               it('returns true', async () => {
-                assert.isTrue(await killSwitch.checkSeverityIssuesFor(SAMPLE_APP_ID, appBase.address))
+                assert.isTrue(await killSwitch.hasExceededAllowedSeverity(SAMPLE_APP_ID, appBase.address))
               })
             })
           })
@@ -662,13 +671,13 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             it('emits an event', async () => {
               const receipt = await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.HIGH, { from })
 
-              assertAmountOfEvents(receipt, 'HighestAllowedSeveritySet')
-              assertEvent(receipt, 'HighestAllowedSeveritySet', { appId: SAMPLE_APP_ID, severity: SEVERITY.HIGH })
+              assertAmountOfEvents(receipt, 'ChangeHighestAllowedSeverity')
+              assertEvent(receipt, 'ChangeHighestAllowedSeverity', { appId: SAMPLE_APP_ID, severity: SEVERITY.HIGH })
             })
           })
 
           context('when there was a previous severity set', function () {
-            beforeEach('set highest  allowed severity', async () => {
+            beforeEach('set highest allowed severity', async () => {
               await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from })
               assert.equal(await killSwitch.getHighestAllowedSeverity(SAMPLE_APP_ID), SEVERITY.LOW)
             })
@@ -693,51 +702,51 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       describe('integration', () => {
         context('when the function being called is not tagged', () => {
 
-          const itExecutesTheCallEvenIfDenied = () => {
+          const itExecutesTheCallEvenWhenBaseImplementationIsBlacklisted = () => {
             const itExecutesTheCall = () => {
               it('executes the call', async () => {
                 assert.equal(await app.read(), 42)
               })
             }
 
-            context('when the instance being called is allowed', () => {
-              beforeEach('allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+            context('when the instance being called is whitelisted', () => {
+              beforeEach('whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, true, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
             })
 
-            context('when the instance being called is not marked as allowed', () => {
-              beforeEach('dot not allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+            context('when the instance being called is not marked as whitelisted', () => {
+              beforeEach('dot not whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, false, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itExecutesTheCall()
@@ -746,7 +755,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           }
 
           context('when there is no bug registered', () => {
-            itExecutesTheCallEvenIfDenied()
+            itExecutesTheCallEvenWhenBaseImplementationIsBlacklisted()
           })
 
           context('when there is a bug registered', () => {
@@ -754,7 +763,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
             })
 
-            itExecutesTheCallEvenIfDenied()
+            itExecutesTheCallEvenWhenBaseImplementationIsBlacklisted()
           })
         })
 
@@ -768,49 +777,49 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
 
           const itDoesNotExecuteTheCall = () => {
             it('does not execute the call', async () => {
-              await assertRevert(app.write(10, { from: owner }), 'APP_CONTRACT_CALL_NOT_ALLOWED')
+              await assertRevert(app.write(10, { from: owner }), 'APP_AUTH_FAILED')
             })
           }
 
-          const itExecutesTheCallOnlyWhenAllowed = () => {
-            context('when the instance being called is allowed', () => {
-              beforeEach('allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+          const itExecutesTheCallOnlyWhenWhitelisted = () => {
+            context('when the instance being called is whitelisted', () => {
+              beforeEach('whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, true, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
             })
 
-            context('when the instance being called is not marked as allowed', () => {
-              beforeEach('dot not allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+            context('when the instance being called is not marked as whitelisted', () => {
+              beforeEach('dot not whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, false, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itDoesNotExecuteTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itDoesNotExecuteTheCall()
@@ -818,45 +827,45 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
             })
           }
 
-          const itExecutesTheCallUnlessDisallowedAndDenied = () => {
-            context('when the instance being called is allowed', () => {
-              beforeEach('allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, true, { from: owner })
+          const itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted = () => {
+            context('when the instance being called is whitelisted', () => {
+              beforeEach('whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, true, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
             })
 
-            context('when the instance being called is not marked as allowed', () => {
-              beforeEach('dot not allow instance', async () => {
-                await killSwitch.setAllowedInstance(app.address, false, { from: owner })
+            context('when the instance being called is not marked as whitelisted', () => {
+              beforeEach('dot not whitelist instance', async () => {
+                await killSwitch.setWhitelistedInstance(app.address, false, { from: owner })
               })
 
-              context('when the base implementation is not denied', () => {
-                beforeEach('do not deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, false, { from: owner })
+              context('when the base implementation is not blacklisted', () => {
+                beforeEach('do not blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, false, { from: owner })
                 })
 
                 itExecutesTheCall()
               })
 
-              context('when the base implementation is denied', () => {
-                beforeEach('deny base implementation', async () => {
-                  await killSwitch.setDeniedBaseImplementation(appBase.address, true, { from: owner })
+              context('when the base implementation is blacklisted', () => {
+                beforeEach('blacklist base implementation', async () => {
+                  await killSwitch.setBlacklistedBaseImplementation(appBase.address, true, { from: owner })
                 })
 
                 itDoesNotExecuteTheCall()
@@ -865,7 +874,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
           }
 
           context('when there is no bug registered', () => {
-            itExecutesTheCallUnlessDisallowedAndDenied()
+            itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
           })
 
           context('when there is a bug registered', () => {
@@ -873,9 +882,9 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
               await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.MID, { from: securityPartner })
             })
 
-            context('when the bug was not fixed yet', () => {
+            context('when the bug was real', () => {
               context('when there is no highest allowed severity set for the contract being called', () => {
-                itExecutesTheCallOnlyWhenAllowed()
+                itExecutesTheCallOnlyWhenWhitelisted()
               })
 
               context('when there is a highest allowed severity set for the contract being called', () => {
@@ -884,7 +893,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
                   })
 
-                  itExecutesTheCallOnlyWhenAllowed()
+                  itExecutesTheCallOnlyWhenWhitelisted()
                 })
 
                 context('when the highest allowed severity is equal to the reported bug severity', () => {
@@ -892,7 +901,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
                   })
 
-                  itExecutesTheCallUnlessDisallowedAndDenied()
+                  itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
                 })
 
                 context('when the highest allowed severity is greater than the reported bug severity', () => {
@@ -900,18 +909,18 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.CRITICAL, { from: owner })
                   })
 
-                  itExecutesTheCallUnlessDisallowedAndDenied()
+                  itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
                 })
               })
             })
 
-            context('when the bug was already fixed', () => {
-              beforeEach('fix bug', async () => {
+            context('when the bug was a false positive', () => {
+              beforeEach('roll back reported bug', async () => {
                 await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.NONE, { from: securityPartner })
               })
 
               context('when there is no highest allowed severity set for the contract being called', () => {
-                itExecutesTheCallUnlessDisallowedAndDenied()
+                itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
               })
 
               context('when there is a highest allowed severity set for the contract being called', () => {
@@ -920,7 +929,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.LOW, { from: owner })
                   })
 
-                  itExecutesTheCallUnlessDisallowedAndDenied()
+                  itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
                 })
 
                 context('when the highest allowed severity is equal to the reported bug severity', () => {
@@ -928,7 +937,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
                   })
 
-                  itExecutesTheCallUnlessDisallowedAndDenied()
+                  itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
                 })
 
                 context('when the highest allowed severity is greater than the reported bug severity', () => {
@@ -936,7 +945,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
                     await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.CRITICAL, { from: owner })
                   })
 
-                  itExecutesTheCallUnlessDisallowedAndDenied()
+                  itExecutesTheCallUnlessInstanceNotWhitelistedAndBaseBlacklisted()
                 })
               })
             })
@@ -945,7 +954,7 @@ contract('KillSwitch', ([_, root, owner, securityPartner, anyone]) => {
       })
 
       describe('gas costs', () => {
-        beforeEach('set an allowed severity issue', async () => {
+        beforeEach('set a highest allowed severity', async () => {
           await killSwitch.setHighestAllowedSeverity(SAMPLE_APP_ID, SEVERITY.MID, { from: owner })
           await defaultIssuesRegistry.setSeverityFor(appBase.address, SEVERITY.LOW, { from: securityPartner })
         })

@@ -20,7 +20,6 @@ import "../evmscript/EVMScriptRunner.sol";
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
-    string private constant ERROR_CONTRACT_CALL_NOT_ALLOWED = "APP_CONTRACT_CALL_NOT_ALLOWED";
     string private constant ERROR_UNEXPECTED_KERNEL_RESPONSE = "APP_UNEXPECTED_KERNEL_RESPONSE";
 
     modifier auth(bytes32 _role) {
@@ -33,11 +32,6 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         _;
     }
 
-    modifier killSwitchProtected {
-        require(canExecuteCall(), ERROR_CONTRACT_CALL_NOT_ALLOWED);
-        _;
-    }
-
     /**
     * @dev Check whether an action can be performed by a sender for a particular role on this app
     * @param _sender Sender of the call
@@ -47,7 +41,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     *         Always returns false if the app hasn't been initialized yet.
     */
     function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
-        if (!hasInitialized()) {
+        if (!isCallEnabled()) {
             return false;
         }
 
@@ -68,15 +62,24 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     * @dev Check whether a call to the current app can be executed or not based on the kill-switch settings
     * @return Boolean indicating whether the call could be executed or not
     */
-    function canExecuteCall() public view returns (bool) {
-        IKernel _kernel = kernel();
-        bytes4 selector = _kernel.shouldDenyCallingContract.selector;
-        bytes memory callData = abi.encodeWithSelector(selector, appId(), address(this));
-        bool success = address(_kernel).call(callData);
+    function isCallEnabled() public view returns (bool) {
+        if (!hasInitialized()) {
+            return false;
+        }
 
-        // if the call to `kernel.shouldDenyCallingApp` reverts (using an old Kernel) we consider that
+        IKernel _kernel = kernel();
+        bytes4 selector = _kernel.isAppDisabled.selector;
+        bytes memory isAppDisabledCalldata = abi.encodeWithSelector(selector, appId(), address(this));
+        bool success;
+        assembly {
+            success := staticcall(gas, _kernel, add(isAppDisabledCalldata, 0x20), mload(isAppDisabledCalldata), 0, 0)
+        }
+
+        // If the call to `kernel.isAppDisabled()` reverts (using an old or non-existent Kernel) we consider that
         // there is no kill switch and the call can be executed be allowed to continue
-        if (!success) return true;
+        if (!success) {
+            return true;
+        }
 
         // if not, first ensure the returned value is 32 bytes length
         uint256 _outputLength;

@@ -1,5 +1,6 @@
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument } = require('../../helpers/events')
+const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
 
 const DAOFactory = artifacts.require('DAOFactory')
 
@@ -100,12 +101,19 @@ contract('DAO Factory', ([_, root]) => {
       assert.equal(await dao.getApp(APP_BASES_NAMESPACE, KILL_SWITCH_APP_ID), killSwitchBase.address)
     })
 
-    it('allows the kernel, acl and kill switch instances by default', async () => {
+    it('whitelists the kernel, acl and kill switch instances by default', async () => {
       const killSwitch = KillSwitch.at(await dao.killSwitch())
 
-      assert(await killSwitch.isInstanceAllowed(dao.address), 'Kernel instance should be allowed')
-      assert(await killSwitch.isInstanceAllowed(acl.address), 'ACL instance should be allowed')
-      assert(await killSwitch.isInstanceAllowed(killSwitch.address), 'kill switch instance should be allowed')
+      assert(await killSwitch.isInstanceWhitelisted(dao.address), 'Kernel instance should be whitelisted')
+      assert(await killSwitch.isInstanceWhitelisted(acl.address), 'ACL instance should be whitelisted')
+      assert(await killSwitch.isInstanceWhitelisted(killSwitch.address), 'KillSwitch instance should be whitelisted')
+    })
+
+    it('emits an event', async () => {
+      assertAmountOfEvents(receipt, 'DeployKillSwitch', 1)
+
+      const killSwitch = KillSwitch.at(await dao.killSwitch())
+      assertEvent(receipt, 'DeployKillSwitch', { killSwitch: killSwitch.address })
     })
   }
 
