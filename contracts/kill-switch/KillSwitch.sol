@@ -91,6 +91,11 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
      *      and we have several tests to make sure its usage is working as expected.
      */
     function shouldDenyCallingApp(bytes32 _appId, address _base, address _instance) external view returns (bool) {
+        // if the instance is the kill switch itself, then allow given call
+        if (_instance == address(this)) {
+            return false;
+        }
+
         // if the instance is whitelisted, then allow given call
         if (isInstanceWhitelisted(_instance)) {
             return false;
@@ -102,13 +107,8 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
         }
 
         // Check if there is a severity issue reported in the corresponding issue registry. If there is actually a
-        // severity issue, check against the kill switch settings if we allow such severity level or not.
-        if (hasExceededAllowedSeverity(_appId, _base)) {
-            return false;
-        }
-
-        // if none of the conditions above were met, then deny given call
-        return true;
+        // severity issue, check if it has exceeded the highest allowed severity level or not.
+        return hasExceededAllowedSeverity(_appId, _base);
     }
 
     function isInstanceWhitelisted(address _instance) public view returns (bool) {
@@ -122,7 +122,7 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
     function hasExceededAllowedSeverity(bytes32 _appId, address _base) public view returns (bool) {
         IIssuesRegistry.Severity severityFound = getIssuesRegistry(_appId).getSeverityFor(_base);
         IIssuesRegistry.Severity highestAllowedSeverity = getHighestAllowedSeverity(_appId);
-        return highestAllowedSeverity >= severityFound;
+        return highestAllowedSeverity < severityFound;
     }
 
     function getIssuesRegistry(bytes32 _appId) public view returns (IIssuesRegistry) {

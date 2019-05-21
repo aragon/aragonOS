@@ -20,7 +20,6 @@ import "../evmscript/EVMScriptRunner.sol";
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
-    string private constant ERROR_UNEXPECTED_KERNEL_RESPONSE = "APP_UNEXPECTED_KERNEL_RESPONSE";
 
     modifier auth(bytes32 _role) {
         require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
@@ -41,12 +40,8 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     *         Always returns false if the app hasn't been initialized yet.
     */
     function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
-        if (!isCallEnabled()) {
-            return false;
-        }
-
         IKernel linkedKernel = kernel();
-        if (address(linkedKernel) == address(0)) {
+        if (address(linkedKernel) == address(0) || !isCallEnabled()) {
             return false;
         }
 
@@ -81,10 +76,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
             return true;
         }
 
-        // if not, first ensure the returned value is 32 bytes length
+        // if not, check returned value is 32 bytes length, otherwise return false
         uint256 _outputLength;
         assembly { _outputLength := returndatasize }
-        require(_outputLength == 32, ERROR_UNEXPECTED_KERNEL_RESPONSE);
+        if (_outputLength != 32) {
+            return false;
+        }
 
         // forward returned value
         bool _shouldDenyCall;

@@ -100,7 +100,7 @@ contract DAOFactory {
 
         // grant app manager permissions to this and deploy kill switch
         acl.createPermission(address(this), dao, appManagerRole, address(this));
-        _createKillSwitch(dao, acl, _issuesRegistry, appManagerRole);
+        _createKillSwitch(dao, acl, _issuesRegistry);
 
         // deploy EVM scripts registry if required
         if (address(regFactory) != address(0)) {
@@ -135,7 +135,7 @@ contract DAOFactory {
         _acl.revokePermission(regFactory, _acl, _createPermissionsRole);
     }
 
-    function _createKillSwitch(Kernel _dao, ACL _acl, IssuesRegistry _issuesRegistry, bytes32 _appManagerRole) internal {
+    function _createKillSwitch(Kernel _dao, ACL _acl, IssuesRegistry _issuesRegistry) internal {
         bytes32 killSwitchAppID = _dao.DEFAULT_KILL_SWITCH_APP_ID();
         bytes memory initializeData = abi.encodeWithSelector(baseKillSwitch.initialize.selector, _issuesRegistry);
         KillSwitch killSwitch = KillSwitch(_dao.newAppInstance(killSwitchAppID, baseKillSwitch, initializeData, true));

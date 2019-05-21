@@ -165,8 +165,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
 
     /**
     * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings.
-    *      Note that we don't need to perform an initialization check since having or not a kill-switch installed
-    *      implicitly means that.
+    *      Initialization check is implicitly provided by the KillSwitch's existence, as apps can only be installed after initialization.
     * @param _appId Identifier for app to be checked
     * @return True if the given call should be denied, false otherwise
     */
