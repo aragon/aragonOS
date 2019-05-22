@@ -216,51 +216,18 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
       })
     })
 
-    describe('getLastUsedNonce', () => {
+    describe('getSender', () => {
       context('when the app is initialized', () => {
         beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
 
         context('when the given sender did not send transactions yet', () => {
-          it('returns zero', async () => {
-            assert.equal((await relayer.getLastUsedNonce(member)).toString(), 0, 'last nonce does not match')
-          })
-        })
+          it('returns empty data', async () => {
+            const [allowed, lastUsedNonce, lastActiveMonth, lastActiveMonthRefunds] = await relayer.getSender(member)
 
-        context('when the given sender has already sent some transactions', () => {
-          beforeEach('relay a transaction', async () => {
-            const nonce = 2
-            const calldata = '0x11111111'
-            const gasRefund = 50000
-            const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
-
-            await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
-            await relayer.allowService(offChainRelayerService, { from: root })
-            await relayer.allowSender(member, { from: root })
-            await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
-          })
-
-          it('returns the last nonce', async () => {
-            assert.equal((await relayer.getLastUsedNonce(member)).toString(), 2, 'last nonce does not match')
-          })
-        })
-      })
-
-      context('when the app is not initialized', () => {
-        it('reverts', async () => {
-          await assertRevert(relayer.getLastUsedNonce(member), 'INIT_NOT_INITIALIZED')
-        })
-      })
-    })
-
-    describe('getMonthlyRefunds', () => {
-      const month = 0
-
-      context('when the app is initialized', () => {
-        beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
-
-        context('when the given sender did not send transactions yet', () => {
-          it('returns zero', async () => {
-            assert.equal((await relayer.getMonthlyRefunds(member, month)).toString(), 0, 'monthly refunds do not match')
+            assert.equal(allowed, false, 'sender should be allowed')
+            assert.equal(lastUsedNonce.toString(), 0, 'last nonce does not match')
+            assert.equal(lastActiveMonth.toString(), 0, 'last active month does not match')
+            assert.equal(lastActiveMonthRefunds.toString(), 0, 'last active month refunds does not match')
           })
         })
 
@@ -278,19 +245,20 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
           })
 
-          it('returns the last nonce', async () => {
-            assert.equal((await relayer.getMonthlyRefunds(member, month)).toString(), gasRefund * GAS_PRICE, 'monthly refunds do not match')
-          })
+          it('returns the corresponding information', async () => {
+            const [allowed, lastUsedNonce, lastActiveMonth, lastActiveMonthRefunds] = await relayer.getSender(member)
 
-          it('returns zero for the next month', async () => {
-            assert.equal((await relayer.getMonthlyRefunds(member, month + 1)).toString(), 0, 'monthly refunds do not match')
+            assert.equal(allowed, true, 'sender should be allowed')
+            assert.equal(lastUsedNonce.toString(), 2, 'last nonce does not match')
+            assert.equal(lastActiveMonth.toString(), 0, 'last active month does not match')
+            assert.equal(lastActiveMonthRefunds.toString(), gasRefund * GAS_PRICE, 'last active month refunds does not match')
           })
         })
       })
 
       context('when the app is not initialized', () => {
         it('reverts', async () => {
-          await assertRevert(relayer.getMonthlyRefunds(member, month), 'INIT_NOT_INITIALIZED')
+          await assertRevert(relayer.getSender(member), 'INIT_NOT_INITIALIZED')
         })
       })
     })
@@ -494,11 +462,8 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     describe('canRefund', () => {
       context('when the app is initialized', () => {
-        let currentMonth
-
         beforeEach('initialize relayer app', async () => {
           await relayer.initialize(MONTHLY_REFUND_QUOTA)
-          currentMonth = await relayer.getCurrentMonth()
         })
 
         context('when the given sender did not send transactions yet', () => {
@@ -506,7 +471,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             const amount = MONTHLY_REFUND_QUOTA - 1
 
             it('returns true', async () => {
-              assert(await relayer.canRefund(member, currentMonth, amount), 'should be allowed to spend given amount')
+              assert(await relayer.canRefund(member, amount), 'should be allowed to spend given amount')
             })
           })
 
@@ -514,7 +479,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             const amount = MONTHLY_REFUND_QUOTA
 
             it('returns true', async () => {
-              assert(await relayer.canRefund(member, currentMonth, amount), 'should be allowed to spend given amount')
+              assert(await relayer.canRefund(member, amount), 'should be allowed to spend given amount')
             })
           })
 
@@ -522,7 +487,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             const amount = MONTHLY_REFUND_QUOTA + 1
 
             it('returns false', async () => {
-              assert.isFalse(await relayer.canRefund(member, currentMonth, amount), 'should not be allowed to spend given amount')
+              assert.isFalse(await relayer.canRefund(member, amount), 'should not be allowed to spend given amount')
             })
           })
         })
@@ -543,55 +508,27 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
             await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
           })
 
-          context('when the asking for the current month', () => {
-            context('when the requested amount does not exceed the remaining monthly quota', () => {
-              const amount = remainingQuota - 1
+          context('when the requested amount does not exceed the remaining monthly quota', () => {
+            const amount = remainingQuota - 1
 
-              it('returns true', async () => {
-                assert.isTrue(await relayer.canRefund(member, currentMonth, amount), 'should be allowed to spend amount')
-              })
-            })
-
-            context('when the requested amount is equal to the remaining monthly quota', () => {
-              const amount = remainingQuota
-
-              it('returns true', async () => {
-                assert.isTrue(await relayer.canRefund(member, currentMonth, amount), 'should be allowed to spend amount')
-              })
-            })
-
-            context('when the requested amount is greater than the remaining monthly quota', () => {
-              const amount = remainingQuota + 1
-
-              it('returns false', async () => {
-                assert.isFalse(await relayer.canRefund(member, currentMonth, amount), 'should not be allowed to spend amount')
-              })
+            it('returns true', async () => {
+              assert.isTrue(await relayer.canRefund(member, amount), 'should be allowed to spend amount')
             })
           })
 
-          context('when the asking for the next month', () => {
-            context('when the requested amount does not exceed the remaining monthly quota', () => {
-              const amount = remainingQuota - 1
+          context('when the requested amount is equal to the remaining monthly quota', () => {
+            const amount = remainingQuota
 
-              it('returns true', async () => {
-                assert.isTrue(await relayer.canRefund(member, currentMonth + 1, amount), 'should be allowed to spend amount')
-              })
+            it('returns true', async () => {
+              assert.isTrue(await relayer.canRefund(member, amount), 'should be allowed to spend amount')
             })
+          })
 
-            context('when the requested amount is equal to the remaining monthly quota', () => {
-              const amount = remainingQuota
+          context('when the requested amount is greater than the remaining monthly quota', () => {
+            const amount = remainingQuota + 1
 
-              it('returns true', async () => {
-                assert.isTrue(await relayer.canRefund(member, currentMonth + 1, amount), 'should be allowed to spend amount')
-              })
-            })
-
-            context('when the requested amount is greater than the remaining monthly quota', () => {
-              const amount = remainingQuota + 1
-
-              it('returns true', async () => {
-                assert.isTrue(await relayer.canRefund(member, currentMonth + 1, amount), 'should be allowed to spend amount')
-              })
+            it('returns false', async () => {
+              assert.isFalse(await relayer.canRefund(member, amount), 'should not be allowed to spend amount')
             })
           })
         })
@@ -599,7 +536,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
       context('when the app is not initialized', () => {
         it('reverts', async () => {
-          await assertRevert(relayer.canRefund(member, 0, MONTHLY_REFUND_QUOTA), 'INIT_NOT_INITIALIZED')
+          await assertRevert(relayer.canRefund(member, MONTHLY_REFUND_QUOTA), 'INIT_NOT_INITIALIZED')
         })
       })
     })
@@ -657,18 +594,19 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       it('updates the last nonce used of the sender', async () => {
                         await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
 
-                        assert.equal((await relayer.getLastUsedNonce(member)).toString(), nonce, 'last nonce should match')
+                        const [_, lastUsedNonce] = await relayer.getSender(member)
+
+                        assert.equal(lastUsedNonce.toString(), nonce, 'last nonce should match')
                         assert.isFalse(await relayer.canUseNonce(member, nonce), 'last nonce should have been updated')
                         assert.isTrue(await relayer.canUseNonce(member, nonce + 1), 'next nonce should not be used')
                       })
 
                       it('updates the monthly refunds of the sender', async () => {
-                        const currentMonth = await relayer.getCurrentMonth()
-                        const previousMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
+                        const previousMonthlyRefunds = (await relayer.getSender(member))[3]
                         await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
 
                         const txRefund = gasRefund * GAS_PRICE
-                        const currentMonthlyRefunds = await relayer.getMonthlyRefunds(member, currentMonth)
+                        const currentMonthlyRefunds = (await relayer.getSender(member))[3]
                         assert.equal(previousMonthlyRefunds.toString(), currentMonthlyRefunds.minus(txRefund).toString(), 'total refunds should have been updated')
                       })
 

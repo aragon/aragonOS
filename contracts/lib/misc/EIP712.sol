@@ -12,12 +12,12 @@ contract EIP712 {
         address verifyingContract;
     }
 
-    function _domainSeparator(string name, string version, uint256 chainId, address verifyingContract) internal pure returns (bytes32) {
+    function _domainSeparator() internal view returns (bytes32) {
         return _hash(Domain({
-            name: name,
-            version: version,
-            chainId: chainId,
-            verifyingContract: verifyingContract
+            name: _domainName(),
+            version: _domainVersion(),
+            chainId: _domainChainId(),
+            verifyingContract: address(this)
         }));
     }
 
@@ -30,4 +30,8 @@ contract EIP712 {
             domain.verifyingContract
         ));
     }
+
+    function _domainName() internal view returns (string);
+    function _domainVersion() internal view returns (string);
+    function _domainChainId() internal view returns (uint256);
 }

@@ -81,28 +81,30 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
     /**
      * @dev Event logged when the monthly refunds quota is changed
      * @param who Address of the account that change the monthly refunds quota
-     * @param previousQuota Previous monthly refunds quota in ETH for each allowed member
-     * @param newQuota New monthly refunds quota in ETH for each allowed member
+     * @param previousQuota Previous monthly refunds quota in ETH for each allowed sender
+     * @param newQuota New monthly refunds quota in ETH for each allowed sender
      */
     event MonthlyRefundQuotaSet(address indexed who, uint256 previousQuota, uint256 newQuota);
 
-    // Timestamp to start counting monthly refunds quotas for each member
+    // Sender information carrying allowance, last nonce number used, and last active month related data
+    struct Sender {
+        bool allowed;
+        uint256 lastUsedNonce;
+        uint256 lastActiveMonth;
+        uint256 lastActiveMonthRefunds;
+    }
+
+    // Timestamp to start counting monthly refunds quotas for each sender
     uint256 internal startDate;
 
-    // Monthly refunds quota in ETH for each member
+    // Monthly refunds quota in ETH for each sender
     uint256 internal monthlyRefundQuota;
-
-    // Mapping that indicates whether a given address is allowed to use the relay service
-    mapping (address => bool) internal allowedSenders;
 
     // Mapping that indicates whether a given address is allowed as off-chain service to relay transactions
     mapping (address => bool) internal allowedServices;
 
-    // Mapping from members to nonce numbers that indicates the last nonce used by each member
-    mapping (address => uint256) internal lastUsedNonce;
-
-    // Mapping from members to monthly refunds that indicates the refunds requested per member per month
-    mapping (address => mapping (uint256 => uint256)) internal monthlyRefunds;
+    // Mapping from senders to their related information
+    mapping (address => Sender) internal senders;
 
     // Check whether the msg.sender belongs to the list of allowed services to relay transactions
     modifier onlyAllowedServices() {
@@ -110,15 +112,9 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
         _;
     }
 
-    // Check whether a given address belongs to the list of allowed senders that can use the relay service
-    modifier onlyAllowedSender(address sender) {
-        require(_isSenderAllowed(sender), ERROR_SENDER_NOT_ALLOWED);
-        _;
-    }
-
     /**
      * @notice Initialize Relayer app setting a monthly refunds quota per address of `@tokenAmount(_monthlyRefundQuota, 0x00)`.
-     * @param _monthlyRefundQuota Monthly refunds quota in ETH for each allowed member
+     * @param _monthlyRefundQuota Monthly refunds quota in ETH for each allowed sender
      */
     function initialize(uint256 _monthlyRefundQuota) external onlyInit {
         initialized();
@@ -140,18 +136,17 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
     function relay(address from, address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice, bytes signature)
         external
         onlyAllowedServices
-        onlyAllowedSender(from)
     {
+        Sender storage sender = senders[from];
         uint256 currentMonth = _getCurrentMonth();
         uint256 requestedRefund = gasRefund.mul(gasPrice);
 
-        require(_canUseNonce(from, nonce), ERROR_NONCE_ALREADY_USED);
-        require(_canRefund(from, currentMonth, requestedRefund), ERROR_GAS_QUOTA_EXCEEDED);
+        require(_isSenderAllowed(sender), ERROR_SENDER_NOT_ALLOWED);
+        require(_canUseNonce(sender, nonce), ERROR_NONCE_ALREADY_USED);
+        require(_canRefund(sender, currentMonth, requestedRefund), ERROR_GAS_QUOTA_EXCEEDED);
         require(_isValidSignature(from, to, nonce, data, gasRefund, gasPrice, signature), ERROR_INVALID_SENDER_SIGNATURE);
 
-        lastUsedNonce[from] = nonce;
-        monthlyRefunds[from][currentMonth] = monthlyRefunds[from][currentMonth].add(requestedRefund);
-
+        _updateSenderInfo(sender, nonce, currentMonth, requestedRefund);
         _relayCall(from, to, data);
         emit TransactionRelayed(from, to, nonce, data);
 
@@ -179,25 +174,25 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
 
     /**
      * @notice Add a new sender `sender` to the list of allowed addresses that can use the relay service
-     * @param sender Address of the sender to be allowed
+     * @param senderAddress Address of the sender to be allowed
      */
-    function allowSender(address sender) external authP(ALLOW_SENDER_ROLE, arr(sender)) {
-        allowedSenders[sender] = true;
-        emit SenderAllowed(sender);
+    function allowSender(address senderAddress) external authP(ALLOW_SENDER_ROLE, arr(senderAddress)) {
+        senders[senderAddress].allowed = true;
+        emit SenderAllowed(senderAddress);
     }
 
     /**
      * @notice Remove sender `sender` from the list of allowed addresses that can use the relay service
-     * @param sender Address of the sender to be disallowed
+     * @param senderAddress Address of the sender to be disallowed
      */
-    function disallowSender(address sender) external authP(DISALLOW_SENDER_ROLE, arr(sender)) {
-        allowedSenders[sender] = false;
-        emit SenderDisallowed(sender);
+    function disallowSender(address senderAddress) external authP(DISALLOW_SENDER_ROLE, arr(senderAddress)) {
+        senders[senderAddress].allowed = false;
+        emit SenderDisallowed(senderAddress);
     }
 
     /**
      * @notice Set new monthly refunds quota per address of `@tokenAmount(newQuota, 0x00)`.
-     * @param newQuota New monthly refunds quota in ETH for each allowed member
+     * @param newQuota New monthly refunds quota in ETH for each allowed sender
      */
     function setMonthlyRefundQuota(uint256 newQuota) external authP(SET_MONTHLY_REFUND_QUOTA_ROLE, arr(newQuota)) {
         emit MonthlyRefundQuotaSet(msg.sender, monthlyRefundQuota, newQuota);
@@ -205,16 +200,30 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
     }
 
     /**
-     * @notice Return the start date timestamp used to count the monthly refunds quotas for each member.
-     * @return The start date timestamp used to count the monthly refunds quotas for each member
+     * @notice Return the information related to a given sender `sender`.
+     * @return The information for the requested sender
+     */
+    function getSender(address senderAddress) external view isInitialized
+        returns (bool allowed, uint256 lastUsedNonce, uint256 lastActiveMonth, uint256 lastActiveMonthRefunds)
+    {
+        Sender storage sender = senders[senderAddress];
+        allowed = sender.allowed;
+        lastUsedNonce = sender.lastUsedNonce;
+        lastActiveMonth = sender.lastActiveMonth;
+        lastActiveMonthRefunds = sender.lastActiveMonthRefunds;
+    }
+
+    /**
+     * @notice Return the start date timestamp used to count the monthly refunds quotas for each sender.
+     * @return The start date timestamp used to count the monthly refunds quotas for each sender
      */
     function getStartDate() external view isInitialized returns (uint256) {
         return startDate;
     }
 
     /**
-     * @notice Return the monthly refunds quotas for each member.
-     * @return The monthly refunds quotas for each member
+     * @notice Return the monthly refunds quotas for each sender.
+     * @return The monthly refunds quotas for each sender
      */
     function getMonthlyRefundQuota() external view isInitialized returns (uint256) {
         return monthlyRefundQuota;
@@ -229,22 +238,6 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
     }
 
     /**
-     * @notice Return the last used nonce for a given sender `sender`.
-     * @return The last used nonce for a given sender
-     */
-    function getLastUsedNonce(address sender) external view isInitialized returns (uint256) {
-        return _getLastUsedNonce(sender);
-    }
-
-    /**
-     * @notice Return the amount of refunds for a given sender `sender` corresponding to month `month`.
-     * @return The amount of refunds for a given sender in a certain month
-     */
-    function getMonthlyRefunds(address sender, uint256 month) external view isInitialized returns (uint256) {
-        return _getMonthlyRefunds(sender, month);
-    }
-
-    /**
      * @notice Tell if a given service `service` is allowed to relay transactions through the Relayer app.
      * @return True if the given service is allowed to relay transactions through the app
      */
@@ -256,24 +249,25 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
      * @notice Tell if a given sender `sender` is allowed to use the relay service.
      * @return True if the given sender is allowed to use the relay service
      */
-    function isSenderAllowed(address sender) external view isInitialized returns (bool) {
-        return _isSenderAllowed(sender);
+    function isSenderAllowed(address senderAddress) external view isInitialized returns (bool) {
+        return _isSenderAllowed(senders[senderAddress]);
     }
 
     /**
      * @notice Tell if a given sender `sender` can use the nonce number `nonce` to relay a new transaction.
      * @return True if the given sender can use the given nonce number to relay a new transaction
      */
-    function canUseNonce(address sender, uint256 nonce) external view isInitialized returns (bool) {
-        return _canUseNonce(sender, nonce);
+    function canUseNonce(address senderAddress, uint256 nonce) external view isInitialized returns (bool) {
+        return _canUseNonce(senders[senderAddress], nonce);
     }
 
     /**
      * @notice Tell if a given sender `sender` can relay a new transaction spending `@tokenAmount(newQuota, 0x00)` in month `month`.
      * @return True if the given sender can relay a new transaction spending the given amount for the given month
      */
-    function canRefund(address sender, uint256 month, uint256 amount) external view isInitialized returns (bool) {
-        return _canRefund(sender, month, amount);
+    function canRefund(address senderAddress, uint256 amount) external view isInitialized returns (bool) {
+        uint256 currentMonth = _getCurrentMonth();
+        return _canRefund(senders[senderAddress], currentMonth, amount);
     }
 
     /**
@@ -291,29 +285,23 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
         return passedSeconds / 30 days;
     }
 
-    function _getLastUsedNonce(address sender) internal view returns (uint256) {
-        return lastUsedNonce[sender];
-    }
-
-    function _getMonthlyRefunds(address sender, uint256 month) internal view returns (uint256) {
-        return monthlyRefunds[sender][month];
-    }
-
     function _isServiceAllowed(address service) internal view returns (bool) {
         return allowedServices[service];
     }
 
-    function _isSenderAllowed(address sender) internal view returns (bool) {
-        return allowedSenders[sender];
+    function _isSenderAllowed(Sender storage sender) internal view returns (bool) {
+        return sender.allowed;
     }
 
-    function _canUseNonce(address sender, uint256 nonce) internal view returns (bool) {
-        return _getLastUsedNonce(sender) < nonce;
+    function _canUseNonce(Sender storage sender, uint256 nonce) internal view returns (bool) {
+        return sender.lastUsedNonce < nonce;
     }
 
-    function _canRefund(address sender, uint256 month, uint256 amount) internal view returns (bool) {
-        uint256 monthRefunds = _getMonthlyRefunds(sender, month);
-        return monthRefunds.add(amount) <= monthlyRefundQuota;
+    function _canRefund(Sender storage sender, uint256 currentMonth, uint256 amount) internal view returns (bool) {
+        if (currentMonth == sender.lastActiveMonth) {
+            return sender.lastActiveMonthRefunds.add(amount) <= monthlyRefundQuota;
+        }
+        return currentMonth > sender.lastActiveMonth;
     }
 
     function _isValidSignature(address sender, address to, uint256 nonce, bytes data, uint256 gasRefund, uint256 gasPrice, bytes signature)
@@ -331,10 +319,6 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), hash));
     }
 
-    function _domainSeparator() internal view returns (bytes32) {
-        return _domainSeparator(EIP_712_DOMAIN_NAME, EIP_712_DOMAIN_VERSION, EIP_712_DOMAIN_CHAIN_ID, address(this));
-    }
-
     function _relayCall(address from, address to, bytes data) internal {
         bytes memory encodedSignerData = data.append(from);
         assembly {
@@ -345,5 +329,27 @@ contract Relayer is IRelayer, AragonApp, DepositableStorage, EIP712 {
                 revert(ptr, returndatasize)
             }
         }
+    }
+
+    function _updateSenderInfo(Sender storage sender, uint256 nonce, uint256 month, uint256 refund) internal {
+        sender.lastUsedNonce = nonce;
+        if (sender.lastActiveMonth != month) {
+            sender.lastActiveMonth = month;
+            sender.lastActiveMonthRefunds = refund;
+        } else {
+            sender.lastActiveMonthRefunds = sender.lastActiveMonthRefunds.add(refund);
+        }
+    }
+
+    function _domainName() internal view returns (string) {
+        return EIP_712_DOMAIN_NAME;
+    }
+
+    function _domainVersion() internal view returns (string) {
+        return EIP_712_DOMAIN_VERSION;
+    }
+
+    function _domainChainId() internal view returns (uint256) {
+        return EIP_712_DOMAIN_CHAIN_ID;
     }
 }
