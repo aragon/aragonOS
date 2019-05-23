@@ -1,4 +1,5 @@
-const signTypedData = require('../../../lib/signTypedData')(web3)
+const RelayTransactionSigner = require('../../../lib/relayer/RelayTransactionSigner')(web3)
+
 const { assertRevert } = require('../../helpers/assertThrow')
 const { skipCoverage } = require('../../helpers/coverage')
 const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
@@ -15,7 +16,7 @@ const ONE_MONTH = 60 * 60 * 24 * 30
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) => {
-  let daoFactory, dao, acl, app, relayer
+  let daoFactory, dao, acl, app, relayer, signer
   let kernelBase, aclBase, sampleAppBase, relayerBase
   let WRITING_ROLE, APP_MANAGER_ROLE, RELAYER_APP_ID
   let SET_MONTHLY_REFUND_QUOTA_ROLE, ALLOW_SENDER_ROLE, DISALLOW_SENDER_ROLE, ALLOW_OFF_CHAIN_SERVICE_ROLE, DISALLOW_OFF_CHAIN_SERVICE_ROLE
@@ -25,11 +26,6 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
   const MONTHLY_REFUND_QUOTA = MONTHLY_REFUND_GAS * GAS_PRICE
 
   const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
-
-  const signRelayedTx = async ({ from, to, nonce, calldata, gasRefund, gasPrice = GAS_PRICE }) => {
-    const message = { to, nonce, data: calldata, gasRefund, gasPrice }
-    return signTypedData(relayer, from, message)
-  }
 
   before('deploy base implementations', async () => {
     aclBase = await ACL.new()
@@ -68,6 +64,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
   beforeEach('create relayer instance', async () => {
     const receipt = await dao.newAppInstance(RELAYER_APP_ID, relayerBase.address, '0x', true, { from: root })
     relayer = Relayer.at(getNewProxyAddress(receipt))
+    signer = new RelayTransactionSigner(relayer)
 
     await relayer.mockSetTimestamp(NOW)
 
@@ -218,7 +215,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     describe('getSender', () => {
       context('when the app is initialized', () => {
-        beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+        beforeEach('initialize relayer app', async () => await relayer.initializeWithChainId(MONTHLY_REFUND_QUOTA, Relayer.network_id))
 
         context('when the given sender did not send transactions yet', () => {
           it('returns empty data', async () => {
@@ -236,13 +233,13 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           beforeEach('relay a transaction', async () => {
             const nonce = 2
-            const calldata = '0x11111111'
-            const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
+            const data = '0x11111111'
+            const signature = await signer.signMessage({ from: member, to: someone, nonce, data, gasRefund, gasPrice: GAS_PRICE })
 
             await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
             await relayer.allowService(offChainRelayerService, { from: root })
             await relayer.allowSender(member, { from: root })
-            await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
+            await relayer.relay(member, someone, nonce, data, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
           })
 
           it('returns the corresponding information', async () => {
@@ -337,7 +334,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     describe('canUseNonce', () => {
       context('when the app is initialized', () => {
-        beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+        beforeEach('initialize relayer app', async () => await relayer.initializeWithChainId(MONTHLY_REFUND_QUOTA, Relayer.network_id))
 
         context('when the given sender did not send transactions yet', () => {
           context('when the requested nonce is zero', () => {
@@ -361,14 +358,14 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
           const usedNonce = 2
 
           beforeEach('relay a transaction', async () => {
-            const calldata = '0x11111111'
+            const data = '0x11111111'
             const gasRefund = 50000
-            const signature = await signRelayedTx({ from: member, to: someone, nonce: usedNonce, calldata, gasRefund })
+            const signature = await signer.signMessage({ from: member, to: someone, nonce: usedNonce, data, gasRefund, gasPrice: GAS_PRICE })
 
             await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
             await relayer.allowService(offChainRelayerService, { from: root })
             await relayer.allowSender(member, { from: root })
-            await relayer.relay(member, someone, usedNonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
+            await relayer.relay(member, someone, usedNonce, data, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
           })
 
           context('when the requested nonce is zero', () => {
@@ -463,7 +460,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
     describe('canRefund', () => {
       context('when the app is initialized', () => {
         beforeEach('initialize relayer app', async () => {
-          await relayer.initialize(MONTHLY_REFUND_QUOTA)
+          await relayer.initializeWithChainId(MONTHLY_REFUND_QUOTA, Relayer.network_id)
         })
 
         context('when the given sender did not send transactions yet', () => {
@@ -499,13 +496,13 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           beforeEach('relay a transaction', async () => {
             const nonce = 1
-            const calldata = '0x11111111'
-            const signature = await signRelayedTx({ from: member, to: someone, nonce, calldata, gasRefund })
+            const data = '0x11111111'
+            const signature = await signer.signMessage({ from: member, to: someone, nonce, data, gasRefund, gasPrice: GAS_PRICE })
 
             await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
             await relayer.allowService(offChainRelayerService, { from: root })
             await relayer.allowSender(member, { from: root })
-            await relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
+            await relayer.relay(member, someone, nonce, data, gasRefund, GAS_PRICE, signature, { from: offChainRelayerService })
           })
 
           context('when the requested amount does not exceed the remaining monthly quota', () => {
@@ -543,9 +540,9 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
     describe('relay', () => {
       context('when the app is initialized', () => {
-        let signature, calldata, gasRefund = 50000, nonce = 10
+        let signature, data, gasRefund = 50000, nonce = 10
 
-        beforeEach('initialize relayer app', async () => await relayer.initialize(MONTHLY_REFUND_QUOTA))
+        beforeEach('initialize relayer app', async () => await relayer.initializeWithChainId(MONTHLY_REFUND_QUOTA, Relayer.network_id))
 
         context('when the service is allowed', () => {
           const from = offChainRelayerService
@@ -558,8 +555,8 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
               context('when the signature valid', () => {
                 beforeEach('sign relayed call', async () => {
-                  calldata = app.contract.write.getData(10)
-                  signature = await signRelayedTx({ from: member, to: app.address, nonce, calldata, gasRefund })
+                  data = app.contract.write.getData(10)
+                  signature = await signer.signMessage({ from: member, to: app.address, nonce, data, gasRefund, gasPrice: GAS_PRICE })
                 })
 
                 context('when the nonce is not used', () => {
@@ -570,7 +567,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       })
 
                       it('relays transactions to app', async () => {
-                        await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
                         assert.equal((await app.read()).toString(), 10, 'app value does not match')
                       })
 
@@ -578,7 +575,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                         const previousRelayerBalance = await web3.eth.getBalance(relayer.address)
                         const previousServiceBalance = await web3.eth.getBalance(offChainRelayerService)
 
-                        const { tx, receipt: { gasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        const { tx, receipt: { gasUsed } } = await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
                         const { gasPrice: gasPriceUsed } = await web3.eth.getTransaction(tx)
 
                         const txRefund = gasRefund * GAS_PRICE
@@ -592,7 +589,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       })
 
                       it('updates the last nonce used of the sender', async () => {
-                        await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
 
                         const [_, lastUsedNonce] = await relayer.getSender(member)
 
@@ -603,7 +600,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
                       it('updates the monthly refunds of the sender', async () => {
                         const previousMonthlyRefunds = (await relayer.getSender(member))[3]
-                        await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
 
                         const txRefund = gasRefund * GAS_PRICE
                         const currentMonthlyRefunds = (await relayer.getSender(member))[3]
@@ -611,19 +608,19 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                       })
 
                       it('emits an event', async () => {
-                        const receipt = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        const receipt = await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
 
                         assertAmountOfEvents(receipt, 'TransactionRelayed')
-                        assertEvent(receipt, 'TransactionRelayed', { from: member, to: app.address, nonce, data: calldata })
+                        assertEvent(receipt, 'TransactionRelayed', { from: member, to: app.address, nonce, data })
                       })
 
                       it('overloads the first relayed transaction with ~83k and the followings with ~53k of gas', skipCoverage(async () => {
                         const { receipt: { cumulativeGasUsed: nonRelayerGasUsed } } = await app.write(10, { from: member })
 
-                        const { receipt: { cumulativeGasUsed: firstRelayedGasUsed } } = await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                        const { receipt: { cumulativeGasUsed: firstRelayedGasUsed } } = await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
 
-                        const secondSignature = await signRelayedTx({ from: member, to: app.address, nonce: nonce + 1, calldata, gasRefund })
-                        const { receipt: { cumulativeGasUsed: secondRelayedGasUsed } } = await relayer.relay(member, app.address, nonce + 1, calldata, gasRefund, GAS_PRICE, secondSignature, { from })
+                        const secondSignature = await signer.signMessage({ from: member, to: app.address, nonce: nonce + 1, data, gasRefund, gasPrice: GAS_PRICE })
+                        const { receipt: { cumulativeGasUsed: secondRelayedGasUsed } } = await relayer.relay(member, app.address, nonce + 1, data, gasRefund, GAS_PRICE, secondSignature, { from })
 
                         const firstGasOverload = firstRelayedGasUsed - nonRelayerGasUsed
                         const secondGasOverload = secondRelayedGasUsed - nonRelayerGasUsed
@@ -638,7 +635,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
                     context('when the relayer does not have funds', () => {
                       it('reverts', async () => {
-                        await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_REFUND_FAIL')
+                        await assertRevert(relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_REFUND_FAIL')
                       })
                     })
                   })
@@ -649,7 +646,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                     })
 
                     it('reverts', async () => {
-                      await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_QUOTA_EXCEEDED')
+                      await assertRevert(relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_GAS_QUOTA_EXCEEDED')
                     })
                   })
                 })
@@ -657,11 +654,11 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                 context('when the nonce is already used', () => {
                   beforeEach('relay tx', async () => {
                     await web3.eth.sendTransaction({ from: vault, to: relayer.address, value: 1e18, gas: SEND_ETH_GAS })
-                    await relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from })
+                    await relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from })
                   })
 
                   it('reverts', async () => {
-                    await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_NONCE_ALREADY_USED')
+                    await assertRevert(relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_NONCE_ALREADY_USED')
                   })
                 })
               })
@@ -670,7 +667,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                 it('reverts', async () => {
                   const signature = web3.eth.sign(member, 'bla')
 
-                  await assertRevert(relayer.relay(member, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
+                  await assertRevert(relayer.relay(member, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
                 })
               })
             })
@@ -680,10 +677,10 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
               context('when the signature is valid', () => {
                 it('forwards the revert reason', async () => {
-                  calldata = app.contract.write.getData(10)
-                  signature = await signRelayedTx({ from: someone, to: app.address, calldata, nonce, gasRefund })
+                  data = app.contract.write.getData(10)
+                  signature = await signer.signMessage({ from: someone, to: app.address, nonce, data, gasRefund, gasPrice: GAS_PRICE })
 
-                  await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'APP_AUTH_FAILED')
+                  await assertRevert(relayer.relay(someone, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'APP_AUTH_FAILED')
                 })
               })
 
@@ -691,7 +688,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
                 it('reverts', async () => {
                   const signature = web3.eth.sign(someone, 'bla')
 
-                  await assertRevert(relayer.relay(someone, app.address, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
+                  await assertRevert(relayer.relay(someone, app.address, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_INVALID_SENDER_SIGNATURE')
                 })
               })
             })
@@ -699,7 +696,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
 
           context('when the sender is not allowed', () => {
             it('reverts', async () => {
-              await assertRevert(relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_SENDER_NOT_ALLOWED')
+              await assertRevert(relayer.relay(member, someone, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_SENDER_NOT_ALLOWED')
             })
           })
         })
@@ -708,7 +705,7 @@ contract('Relayer', ([_, root, member, someone, vault, offChainRelayerService]) 
           const from = someone
 
           it('reverts', async () => {
-            await assertRevert(relayer.relay(member, someone, nonce, calldata, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_SERVICE_NOT_ALLOWED')
+            await assertRevert(relayer.relay(member, someone, nonce, data, gasRefund, GAS_PRICE, signature, { from }), 'RELAYER_SERVICE_NOT_ALLOWED')
           })
         })
       })
