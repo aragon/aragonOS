@@ -71,19 +71,19 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         }
 
         // If the call to `kernel.isAppDisabled()` reverts (using an old or non-existent Kernel) we consider that
-        // there is no kill switch and the call can be executed be allowed to continue
+        // there is no kill switch. Therefore, the the call can be executed.
         if (!success) {
             return true;
         }
 
-        // if not, check returned value is 32 bytes length, otherwise return false
+        // If it does not revert, check if the returned value is 32-bytes length, otherwise return false
         uint256 _outputLength;
         assembly { _outputLength := returndatasize }
         if (_outputLength != 32) {
             return false;
         }
 
-        // forward returned value
+        // Forward returned value
         bool _shouldDenyCall;
         assembly {
             let ptr := mload(0x40)        // get next free memory pointer
