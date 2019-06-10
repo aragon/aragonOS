@@ -18,12 +18,16 @@ import "../lib/misc/ERCProxy.sol";
 contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
     /* Hardcoded constants to save gas
     bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
+    bytes32 public constant APP_MANAGER_EMERGENCY_ROLE = keccak256("APP_MANAGER_EMERGENCY_ROLE");
     */
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
+    bytes32 public constant APP_MANAGER_EMERGENCY_ROLE = 0xabe3d63c29e614f79a410086a986fb228d44252d5fd75e80688f4621afcf212a;
 
     string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
+    string private constant ERROR_MISSING_KILL_SWITCH = "KERNEL_MISSING_KILL_SWITCH";
+    string private constant ERROR_BAD_EMERGENCY_UPDATE = "KERNEL_BAD_EMERGENCY_UPDATE";
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -153,6 +157,33 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     /**
+    * @notice Set the resolving address of `_appId` in namespace `_namespace` to `_newBaseApp`
+    * @dev Set the resolving address of a base implementation on emergency. This is entry point works as a particular
+    *      case of `setApp(bytes32,bytes32,address)` that is meant to be used only when the base app to be updated is
+    *      compromised based on the kill switch of the current kernel. This function will perform the proposed update
+    *      only when the current base app address is disabled by the kill-switch and the new proposed one is not.
+    *      Note that this function is not expected to be used for the app addresses namespace, since the kill switch is
+    *      supposed to work with a whitelist of app instances but a blacklist of base implementations.
+    * @param _namespace App namespace to use
+    * @param _appId Identifier for app
+    * @param _newBaseApp Address of the new proposed base app implementation
+    */
+    function setAppOnEmergency(bytes32 _namespace, bytes32 _appId, address _newBaseApp)
+        public
+        auth(APP_MANAGER_EMERGENCY_ROLE, arr(_namespace, _appId))
+    {
+        IKillSwitch _killSwitch = killSwitch();
+        require(address(_killSwitch) != address(0), ERROR_MISSING_KILL_SWITCH);
+
+        address _currentBaseApp = _getApp(_namespace, _appId);
+        bool _isCurrentBaseAppEnabled = _killSwitch.shouldDenyCallingBaseApp(_appId, _currentBaseApp);
+        bool _isNewBaseAppEnabled = _killSwitch.shouldDenyCallingBaseApp(_appId, _newBaseApp);
+        require(_isCurrentBaseAppEnabled && !_isNewBaseAppEnabled, ERROR_BAD_EMERGENCY_UPDATE);
+
+        _setApp(_namespace, _appId, _newBaseApp);
+    }
+
+    /**
     * @dev Set the default vault id for the escape hatch mechanism
     * @param _recoveryVaultAppId Identifier of the recovery vault app
     */
@@ -167,6 +198,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings.
     *      Initialization check is implicitly provided by the KillSwitch's existence, as apps can only be installed after initialization.
     * @param _appId Identifier for app to be checked
+    * @param _instance Address of the app instance to be checked
     * @return True if the given call should be denied, false otherwise
     */
     function isAppDisabled(bytes32 _appId, address _instance) public view returns (bool) {
@@ -196,7 +228,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @return Address of the app
     */
     function getApp(bytes32 _namespace, bytes32 _appId) public view returns (address) {
-        return apps[_namespace][_appId];
+        return _getApp(_namespace, _appId);
     }
 
     /**
@@ -204,23 +236,23 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @return Address of the Vault
     */
     function getRecoveryVault() public view returns (address) {
-        return apps[KERNEL_APP_ADDR_NAMESPACE][recoveryVaultAppId];
+        return _getInstalledApp(recoveryVaultAppId);
     }
 
     /**
-    * @dev Get the default ACL app
+    * @dev Get the default installed ACL app
     * @return ACL app
     */
     function acl() public view returns (IACL) {
-        return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
+        return IACL(_getInstalledApp(KERNEL_DEFAULT_ACL_APP_ID));
     }
 
     /**
-    * @dev Get the default KillSwitch app
+    * @dev Get the default installed KillSwitch app
     * @return KillSwitch app
     */
     function killSwitch() public view returns (IKillSwitch) {
-        return IKillSwitch(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
+        return IKillSwitch(_getInstalledApp(KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
     }
 
     /**
@@ -236,6 +268,18 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         IACL defaultAcl = acl();
         return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
             defaultAcl.hasPermission(_who, _where, _what, _how);
+    }
+
+    function _getBaseApp(bytes32 _appId) internal view returns (address) {
+        return _getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
+    }
+
+    function _getInstalledApp(bytes32 _appId) internal view returns (address) {
+        return _getApp(KERNEL_APP_ADDR_NAMESPACE, _appId);
+    }
+
+    function _getApp(bytes32 _namespace, bytes32 _appId) internal view returns (address) {
+        return apps[_namespace][_appId];
     }
 
     function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {

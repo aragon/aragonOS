@@ -34,6 +34,7 @@ contract('Constants', () => {
 
     const kernel = await getContract('Kernel').new(false)
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
+    assert.equal(await kernel.APP_MANAGER_EMERGENCY_ROLE(), await keccakConstants.APP_MANAGER_EMERGENCY_ROLE(), "app manager emergency role doesn't match")
     assert.equal(await kernel.KERNEL_APP_ID(), await keccakConstants.KERNEL_APP_ID(), "app id doesn't match")
     assert.equal(await kernel.DEFAULT_ACL_APP_ID(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default acl id doesn't match")
     assert.equal(await kernel.DEFAULT_KILL_SWITCH_APP_ID(), await keccakConstants.DEFAULT_KILL_SWITCH_APP_ID(), "default kill switch id doesn't match")

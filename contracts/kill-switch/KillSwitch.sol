@@ -91,17 +91,22 @@ contract KillSwitch is IKillSwitch, IsContract, AragonApp {
      *      and we have several tests to make sure its usage is working as expected.
      */
     function shouldDenyCallingApp(bytes32 _appId, address _base, address _instance) external view returns (bool) {
-        // if the instance is the kill switch itself, then allow given call
+        // If the instance is the kill switch itself, then allow given call
         if (_instance == address(this)) {
             return false;
         }
 
-        // if the instance is whitelisted, then allow given call
+        // If the instance is whitelisted, then allow given call
         if (isInstanceWhitelisted(_instance)) {
             return false;
         }
 
-        // if the base implementation is blacklisted, then deny given call
+        // Check if the base implementation is allowed
+        return shouldDenyCallingBaseApp(_appId, _base);
+    }
+
+    function shouldDenyCallingBaseApp(bytes32 _appId, address _base) public view returns (bool) {
+        // If the base implementation is blacklisted, then deny given call
         if (isBaseImplementationBlacklisted(_base)) {
             return true;
         }
