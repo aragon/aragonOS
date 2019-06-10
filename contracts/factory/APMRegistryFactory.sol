@@ -54,9 +54,10 @@ contract APMRegistryFactory is APMInternalAppNames {
     * @param _tld The parent node of the controlled subdomain
     * @param _label The subdomain label
     * @param _root Manager for the new aragonPM DAO
+    * @param _initAPM Wheter to initialize the APMRegistry or not
     * @return The new aragonPM's APMRegistry app
     */
-    function newAPM(bytes32 _tld, bytes32 _label, address _root) public returns (APMRegistry) {
+    function newAPM(bytes32 _tld, bytes32 _label, address _root, bool _initAPM) public returns (APMRegistry) {
         bytes32 node = keccak256(abi.encodePacked(_tld, _label));
 
         // Assume it is the test ENS
@@ -108,18 +109,22 @@ contract APMRegistryFactory is APMInternalAppNames {
         // Initialize
         ens.setOwner(node, ensSub);
         ensSub.initialize(ens, node);
-        apm.initialize(ensSub);
 
-        uint16[3] memory firstVersion;
-        firstVersion[0] = 1;
+        if (_initAPM) {
+            // initialize without ruler by default
+            apm.initialize(ensSub);
 
-        acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
+            uint16[3] memory firstVersion;
+            firstVersion[0] = 1;
 
-        apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, b("ipfs:apm"));
-        apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, b("ipfs:enssub"));
-        apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, b("ipfs:repo"));
+            acl.createPermission(this, apm, apm.CREATE_REPO_ROLE(), this);
 
-        configureAPMPermissions(acl, apm, _root);
+            apm.newRepoWithVersion(APM_APP_NAME, _root, firstVersion, registryBase, b("ipfs:apm"));
+            apm.newRepoWithVersion(ENS_SUB_APP_NAME, _root, firstVersion, ensSubdomainRegistrarBase, b("ipfs:enssub"));
+            apm.newRepoWithVersion(REPO_APP_NAME, _root, firstVersion, repoBase, b("ipfs:repo"));
+
+            configureAPMPermissions(acl, apm, _root);
+        }
 
         // Permission transition to _root
         acl.setPermissionManager(_root, dao, dao.APP_MANAGER_ROLE());

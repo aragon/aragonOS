@@ -14,6 +14,7 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const defaultOwner = process.env.OWNER
 const defaultDaoFactoryAddress = process.env.DAO_FACTORY
 const defaultENSAddress = process.env.ENS
+const defaultInitAPM = process.env.INIT_APM
 
 module.exports = async (
   truffleExecCallback,
@@ -23,11 +24,14 @@ module.exports = async (
     ensAddress = defaultENSAddress,
     owner = defaultOwner,
     daoFactoryAddress = defaultDaoFactoryAddress,
-    verbose = true
+    initAPM = true && defaultInitAPM !== 'false',
+    verbose = true,
   } = {}
 ) => {
   const log = (...args) => {
-    if (verbose) { console.log(...args) }
+    if (verbose) {
+      console.log(...args)
+    }
   }
 
   const APMRegistry = artifacts.require('APMRegistry')
@@ -41,7 +45,7 @@ module.exports = async (
   const tldName = 'eth'
   const labelName = 'aragonpm'
   const tldHash = namehash(tldName)
-  const labelHash = '0x'+keccak256(labelName)
+  const labelHash = '0x' + keccak256(labelName)
   const apmNode = namehash(`${labelName}.${tldName}`)
 
   let ens
@@ -51,7 +55,9 @@ module.exports = async (
   const accounts = await getAccounts(web3)
   if (!owner) {
     owner = accounts[0]
-    log('OWNER env variable not found, setting APM owner to the provider\'s first account')
+    log(
+      "OWNER env variable not found, setting APM owner to the provider's first account"
+    )
   }
   log('Owner:', owner)
 
@@ -81,12 +87,21 @@ module.exports = async (
   let daoFactory
   if (daoFactoryAddress) {
     daoFactory = DAOFactory.at(daoFactoryAddress)
-    const hasEVMScripts = await daoFactory.regFactory() !== ZERO_ADDR
+    const hasEVMScripts = (await daoFactory.regFactory()) !== ZERO_ADDR
 
-    log(`Using provided DAOFactory (with${hasEVMScripts ? '' : 'out' } EVMScripts):`, daoFactoryAddress)
+    log(
+      `Using provided DAOFactory (with${
+        hasEVMScripts ? '' : 'out'
+      } EVMScripts):`,
+      daoFactoryAddress
+    )
   } else {
     log('Deploying DAOFactory with EVMScripts...')
-    daoFactory = (await deployDaoFactory(null, { artifacts, withEvmScriptRegistryFactory: true, verbose: false })).daoFactory
+    daoFactory = (await deployDaoFactory(null, {
+      artifacts,
+      withEvmScriptRegistryFactory: true,
+      verbose: false,
+    })).daoFactory
   }
 
   log('Deploying APMRegistryFactory...')
@@ -102,7 +117,7 @@ module.exports = async (
 
   log(`Assigning ENS name (${labelName}.${tldName}) to factory...`)
 
-  if (await ens.owner(apmNode) === accounts[0]) {
+  if ((await ens.owner(apmNode)) === accounts[0]) {
     log('Transferring name ownership from deployer to APMRegistryFactory')
     await ens.setOwner(apmNode, apmFactory.address)
   } else {
@@ -119,11 +134,12 @@ module.exports = async (
   }
 
   log('Deploying APM...')
-  const receipt = await apmFactory.newAPM(tldHash, labelHash, owner)
+  const receipt = await apmFactory.newAPM(tldHash, labelHash, owner, initAPM)
 
   log('=========')
   const apmAddr = receipt.logs.filter(l => l.event == 'DeployAPM')[0].args.apm
   log('# APM:')
+  log('DAO:', await APMRegistry.at(apmAddr).kernel())
   log('Address:', apmAddr)
   log('Transaction hash:', receipt.tx)
   log('=========')

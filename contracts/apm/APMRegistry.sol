@@ -24,6 +24,7 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
     string private constant ERROR_INIT_PERMISSIONS = "APMREG_INIT_PERMISSIONS";
     string private constant ERROR_EMPTY_NAME = "APMREG_EMPTY_NAME";
 
+    address public entityRuler;
     AbstractENS public ens;
     ENSSubdomainRegistrar public registrar;
 
@@ -50,12 +51,35 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
     }
 
     /**
+    * NEEDS CREATE_NAME_ROLE and POINT_ROOTNODE_ROLE permissions on registrar
+    * @dev InitializeRuled can only be called once. It saves the block number in which it was initialized
+    * @notice Initialize this APMRegistry instance, set `_registrar` as the ENS subdomain registrar and `_entityRuler` as the ruler address
+    * @param _registrar ENSSubdomainRegistrar instance that holds registry root node ownership
+    * @param _entityRuler Address of the ruler entity for all the Repo instances
+    */
+    function initializeRuled(ENSSubdomainRegistrar _registrar, address _entityRuler) public onlyInit {
+        initialized();
+
+        entityRuler = _entityRuler;
+
+        registrar = _registrar;
+        ens = registrar.ens();
+
+        registrar.pointRootNode(this);
+
+        // Check APM has all permissions it needss
+        ACL acl = ACL(kernel().acl());
+        require(acl.hasPermission(this, registrar, registrar.CREATE_NAME_ROLE()), ERROR_INIT_PERMISSIONS);
+        require(acl.hasPermission(this, acl, acl.CREATE_PERMISSIONS_ROLE()), ERROR_INIT_PERMISSIONS);
+    }
+
+    /**
     * @notice Create new repo in registry with `_name`
     * @param _name Repo name, must be ununsed
     * @param _dev Address that will be given permission to create versions
     */
     function newRepo(string _name, address _dev) public auth(CREATE_REPO_ROLE) returns (Repo) {
-        return _newRepo(_name, _dev);
+        return entityRuler == address(0) ? _newRepo(_name, _dev) : _newRepo(_name, entityRuler);
     }
 
     /**
@@ -77,11 +101,19 @@ contract APMRegistry is AragonApp, AppProxyFactory, APMInternalAppNames {
         Repo repo = _newRepo(_name, this); // need to have permissions to create version
         repo.newVersion(_initialSemanticVersion, _contractAddress, _contentURI);
 
-        // Give permissions to _dev
         ACL acl = ACL(kernel().acl());
         acl.revokePermission(this, repo, repo.CREATE_VERSION_ROLE());
-        acl.grantPermission(_dev, repo, repo.CREATE_VERSION_ROLE());
-        acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
+
+        if (entityRuler == address(0)) {
+            // Give permissions to _dev
+            acl.grantPermission(_dev, repo, repo.CREATE_VERSION_ROLE());
+            acl.setPermissionManager(_dev, repo, repo.CREATE_VERSION_ROLE());
+        } else {
+            // Give permissions to entityRuler
+            acl.grantPermission(entityRuler, repo, repo.CREATE_VERSION_ROLE());
+            acl.setPermissionManager(entityRuler, repo, repo.CREATE_VERSION_ROLE());
+        }
+
         return repo;
     }
 
