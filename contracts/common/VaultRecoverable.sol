@@ -6,13 +6,14 @@ pragma solidity ^0.4.24;
 
 import "../lib/token/ERC20.sol";
 import "./EtherTokenConstant.sol";
-import "./IsContract.sol";
+import "./AddressUtils.sol";
 import "./IVaultRecoverable.sol";
 import "./SafeERC20.sol";
 
 
-contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
+contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant {
     using SafeERC20 for ERC20;
+    using AddressUtils for address;
 
     string private constant ERROR_DISALLOWED = "RECOVER_DISALLOWED";
     string private constant ERROR_VAULT_NOT_CONTRACT = "RECOVER_VAULT_NOT_CONTRACT";
@@ -26,7 +27,7 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
     function transferToVault(address _token) external {
         require(allowRecoverability(_token), ERROR_DISALLOWED);
         address vault = getRecoveryVault();
-        require(isContract(vault), ERROR_VAULT_NOT_CONTRACT);
+        require(vault.isContract(), ERROR_VAULT_NOT_CONTRACT);
 
         uint256 balance;
         if (_token == ETH) {

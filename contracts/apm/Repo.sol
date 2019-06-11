@@ -1,11 +1,14 @@
 pragma solidity 0.4.24;
 
 import "../apps/AragonApp.sol";
+import "../common/AddressUtils.sol";
 
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract Repo is AragonApp {
+    using AddressUtils for address;
+
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_VERSION_ROLE = keccak256("CREATE_VERSION_ROLE");
     */
@@ -43,12 +46,7 @@ contract Repo is AragonApp {
     * @param _contractAddress address for smart contract logic for version (if set to 0, it uses last versions' contractAddress)
     * @param _contentURI External URI for fetching new version's content
     */
-    function newVersion(
-        uint16[3] _newSemanticVersion,
-        address _contractAddress,
-        bytes _contentURI
-    ) public auth(CREATE_VERSION_ROLE)
-    {
+    function newVersion(uint16[3] _newSemanticVersion, address _contractAddress, bytes _contentURI) public auth(CREATE_VERSION_ROLE) {
         address contractAddress = _contractAddress;
         uint256 lastVersionIndex = versionsNextIndex - 1;
 
@@ -58,7 +56,7 @@ contract Repo is AragonApp {
             Version storage lastVersion = versions[lastVersionIndex];
             lastSematicVersion = lastVersion.semanticVersion;
 
-            if (contractAddress == address(0)) {
+            if (contractAddress.isZero()) {
                 contractAddress = lastVersion.contractAddress;
             }
             // Only allows smart contract change on major version bumps

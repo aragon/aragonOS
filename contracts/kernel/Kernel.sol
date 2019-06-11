@@ -6,7 +6,7 @@ import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../common/ConversionHelpers.sol";
-import "../common/IsContract.sol";
+import "../common/AddressUtils.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
@@ -14,7 +14,9 @@ import "../lib/misc/ERCProxy.sol";
 
 
 // solium-disable-next-line max-len
-contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
+    using AddressUtils for address;
+
     /* Hardcoded constants to save gas
     bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     */
@@ -208,19 +210,19 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
         IACL defaultAcl = acl();
-        return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
+        return address(defaultAcl).isNotZero() && // Poor man's initialization check (saves gas)
             defaultAcl.hasPermission(_who, _where, _what, _how);
     }
 
     function _setApp(bytes32 _namespace, bytes32 _appId, address _app) internal {
-        require(isContract(_app), ERROR_APP_NOT_CONTRACT);
+        require(_app.isContract(), ERROR_APP_NOT_CONTRACT);
         apps[_namespace][_appId] = _app;
         emit SetApp(_namespace, _appId, _app);
     }
 
     function _setAppIfNew(bytes32 _namespace, bytes32 _appId, address _app) internal {
         address app = getApp(_namespace, _appId);
-        if (app != address(0)) {
+        if (app.isNotZero()) {
             // The only way to set an app is if it passes the isContract check, so no need to check it again
             require(app == _app, ERROR_INVALID_APP_CHANGE);
         } else {

@@ -4,8 +4,12 @@
 
 pragma solidity 0.4.24;
 
+import "../../../../common/AddressUtils.sol";
+
 
 contract TokenReturnFalseMock {
+    using AddressUtils for address;
+
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
     uint256 private totalSupply_;
@@ -56,7 +60,7 @@ contract TokenReturnFalseMock {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        if (!allowTransfer_ || _to == address(0) || _value > balances[msg.sender]) {
+        if (!allowTransfer_ || _to.isZero() || _value > balances[msg.sender]) {
             return false;
         }
 
@@ -94,7 +98,7 @@ contract TokenReturnFalseMock {
     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         if (!allowTransfer_ ||
-            _to == address(0) ||
+            _to.isZero() ||
             _value > balances[_from] ||
             _value > allowed[_from][msg.sender]
         ) {

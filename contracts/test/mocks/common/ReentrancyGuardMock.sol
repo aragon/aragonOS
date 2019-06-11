@@ -1,5 +1,6 @@
 pragma solidity 0.4.24;
 
+import "../../../common/AddressUtils.sol";
 import "../../../common/ReentrancyGuard.sol";
 import "../../../common/UnstructuredStorage.sol";
 
@@ -25,20 +26,21 @@ contract ReentrantActor {
 
 
 contract ReentrancyGuardMock is ReentrancyGuard {
+    using AddressUtils for address;
     using UnstructuredStorage for bytes32;
 
     uint256 public callCounter;
 
     function nonReentrantCall(ReentrantActor _target) public nonReentrant {
         callCounter++;
-        if (_target != address(0)) {
+        if (address(_target).isNotZero()) {
             _target.reenter(this);
         }
     }
 
     function reentrantCall(ReentrantActor _target) public {
         callCounter++;
-        if (_target != address(0)) {
+        if (address(_target).isNotZero()) {
             _target.reenter(this);
         }
     }

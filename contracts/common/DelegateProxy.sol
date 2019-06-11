@@ -1,10 +1,12 @@
 pragma solidity 0.4.24;
 
-import "../common/IsContract.sol";
+import "../common/AddressUtils.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
-contract DelegateProxy is ERCProxy, IsContract {
+contract DelegateProxy is ERCProxy {
+    using AddressUtils for address;
+
     uint256 internal constant FWD_GAS_LIMIT = 10000;
 
     /**
@@ -13,7 +15,7 @@ contract DelegateProxy is ERCProxy, IsContract {
     * @param _calldata Calldata for the delegatecall
     */
     function delegatedFwd(address _dst, bytes _calldata) internal {
-        require(isContract(_dst));
+        require(_dst.isContract());
         uint256 fwdGasLimit = FWD_GAS_LIMIT;
 
         assembly {

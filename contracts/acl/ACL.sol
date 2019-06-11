@@ -1,16 +1,19 @@
 pragma solidity 0.4.24;
 
-import "../apps/AragonApp.sol";
-import "../common/ConversionHelpers.sol";
-import "../common/TimeHelpers.sol";
-import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
+import "./ACLSyntaxSugar.sol";
+import "../apps/AragonApp.sol";
+import "../common/TimeHelpers.sol";
+import "../common/AddressUtils.sol";
+import "../common/ConversionHelpers.sol";
 
 
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
+    using AddressUtils for address;
+
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
     */
@@ -66,7 +69,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
     modifier noPermissionManager(address _app, bytes32 _role) {
         // only allow permission creation (or re-creation) when there is no manager
-        require(getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
+        require(getPermissionManager(_app, _role).isZero(), ERROR_EXISTENT_MANAGER);
         _;
     }
 

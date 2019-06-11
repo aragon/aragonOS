@@ -9,10 +9,13 @@ import "./IEVMScriptRegistry.sol";
 
 import "../apps/AppStorage.sol";
 import "../kernel/KernelConstants.sol";
+import "../common/AddressUtils.sol";
 import "../common/Initializable.sol";
 
 
 contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstants, KernelNamespaceConstants {
+    using AddressUtils for address;
+
     string private constant ERROR_EXECUTOR_UNAVAILABLE = "EVMRUN_EXECUTOR_UNAVAILABLE";
     string private constant ERROR_PROTECTED_STATE_MODIFIED = "EVMRUN_PROTECTED_STATE_MODIFIED";
 
@@ -38,7 +41,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         returns (bytes)
     {
         IEVMScriptExecutor executor = getEVMScriptExecutor(_script);
-        require(address(executor) != address(0), ERROR_EXECUTOR_UNAVAILABLE);
+        require(address(executor).isNotZero(), ERROR_EXECUTOR_UNAVAILABLE);
 
         bytes4 sig = executor.execScript.selector;
         bytes memory data = abi.encodeWithSelector(sig, _script, _input, _blacklist);

@@ -5,7 +5,17 @@
 pragma solidity ^0.4.24;
 
 
-contract IsContract {
+library AddressUtils {
+    address internal constant ZERO_ADDRESS = address(0);
+
+    function isZero(address _target) internal pure returns (bool) {
+        return _target == ZERO_ADDRESS;
+    }
+
+    function isNotZero(address _target) internal pure returns (bool) {
+        return _target != ZERO_ADDRESS;
+    }
+
     /*
     * NOTE: this should NEVER be used for authentication
     * (see pitfalls: https://github.com/fergarrui/ethereum-security/tree/master/contracts/extcodesize).
@@ -14,7 +24,7 @@ contract IsContract {
     * RATHER THAN an address not being a contract.
     */
     function isContract(address _target) internal view returns (bool) {
-        if (_target == address(0)) {
+        if (isZero(_target)) {
             return false;
         }
 

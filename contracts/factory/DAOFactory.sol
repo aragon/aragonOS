@@ -3,6 +3,7 @@ pragma solidity 0.4.24;
 import "../kernel/IKernel.sol";
 import "../kernel/Kernel.sol";
 import "../kernel/KernelProxy.sol";
+import "../common/AddressUtils.sol";
 
 import "../acl/IACL.sol";
 import "../acl/ACL.sol";
@@ -11,6 +12,8 @@ import "./EVMScriptRegistryFactory.sol";
 
 
 contract DAOFactory {
+    using AddressUtils for address;
+
     IKernel public baseKernel;
     IACL public baseACL;
     EVMScriptRegistryFactory public regFactory;
@@ -26,7 +29,7 @@ contract DAOFactory {
     */
     constructor(IKernel _baseKernel, IACL _baseACL, EVMScriptRegistryFactory _regFactory) public {
         // No need to init as it cannot be killed by devops199
-        if (address(_regFactory) != address(0)) {
+        if (address(_regFactory).isNotZero()) {
             regFactory = _regFactory;
         }
 
@@ -42,7 +45,7 @@ contract DAOFactory {
     function newDAO(address _root) public returns (Kernel) {
         Kernel dao = Kernel(new KernelProxy(baseKernel));
 
-        if (address(regFactory) == address(0)) {
+        if (address(regFactory).isZero()) {
             dao.initialize(baseACL, _root);
         } else {
             dao.initialize(baseACL, this);

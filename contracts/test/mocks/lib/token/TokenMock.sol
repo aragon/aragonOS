@@ -3,10 +3,13 @@
 pragma solidity 0.4.24;
 
 import "../../../../lib/math/SafeMath.sol";
+import "../../../../common/AddressUtils.sol";
 
 
 contract TokenMock {
     using SafeMath for uint256;
+    using AddressUtils for address;
+
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
     uint256 private totalSupply_;
@@ -59,7 +62,7 @@ contract TokenMock {
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(allowTransfer_);
         require(_value <= balances[msg.sender]);
-        require(_to != address(0));
+        require(_to.isNotZero());
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -95,7 +98,7 @@ contract TokenMock {
         require(allowTransfer_);
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
-        require(_to != address(0));
+        require(_to.isNotZero());
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);

@@ -1,11 +1,12 @@
 pragma solidity 0.4.24;
 
 import "../common/UnstructuredStorage.sol";
-import "../common/IsContract.sol";
+import "../common/AddressUtils.sol";
 import "./AppProxyBase.sol";
 
 
-contract AppProxyPinned is IsContract, AppProxyBase {
+contract AppProxyPinned is AppProxyBase {
+    using AddressUtils for address;
     using UnstructuredStorage for bytes32;
 
     // keccak256("aragonOS.appStorage.pinnedCode")
@@ -22,7 +23,7 @@ contract AppProxyPinned is IsContract, AppProxyBase {
         public // solium-disable-line visibility-first
     {
         setPinnedCode(getAppBase(_appId));
-        require(isContract(pinnedCode()));
+        require(pinnedCode().isContract());
     }
 
     /**

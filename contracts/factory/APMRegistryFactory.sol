@@ -4,6 +4,7 @@ pragma solidity 0.4.24;
 import "../apm/APMRegistry.sol";
 import "../apm/Repo.sol";
 import "../ens/ENSSubdomainRegistrar.sol";
+import "../common/AddressUtils.sol";
 
 import "./DAOFactory.sol";
 import "./ENSFactory.sol";
@@ -11,6 +12,8 @@ import "./AppProxyFactory.sol";
 
 
 contract APMRegistryFactory is APMInternalAppNames {
+    using AddressUtils for address;
+
     DAOFactory public daoFactory;
     APMRegistry public registryBase;
     Repo public repoBase;
@@ -46,7 +49,7 @@ contract APMRegistryFactory is APMInternalAppNames {
         // Either the ENS address provided is used, if any.
         // Or we use the ENSFactory to generate a test instance of ENS
         // If not the ENS address nor factory address are provided, this will revert
-        ens = _ens != address(0) ? _ens : _ensFactory.newENS(this);
+        ens = address(_ens).isNotZero() ? _ens : _ensFactory.newENS(this);
     }
 
     /**

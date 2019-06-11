@@ -3,6 +3,7 @@ pragma solidity 0.4.24;
 import "../helpers/Assert.sol";
 import "../helpers/ThrowProxy.sol";
 
+import "../../common/AddressUtils.sol";
 import "../../common/DelegateProxy.sol";
 import "../../evmscript/ScriptHelpers.sol";
 
@@ -16,6 +17,7 @@ contract Target {
 
 contract TestDelegateProxy is DelegateProxy {
     using ScriptHelpers for *;
+    using AddressUtils for address;
 
     Target target;
     ThrowProxy throwProxy;
@@ -57,13 +59,13 @@ contract TestDelegateProxy is DelegateProxy {
     }
 
     function testIsContractZero() public {
-        bool result = isContract(address(0));
+        bool result = address(0).isContract();
         Assert.isFalse(result, "should return false");
     }
 
     function testIsContractAddress() public {
         address nonContract = 0x1234;
-        bool result = isContract(nonContract);
+        bool result = nonContract.isContract();
         Assert.isFalse(result, "should return false");
     }
 

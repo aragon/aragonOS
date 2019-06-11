@@ -6,6 +6,7 @@ pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../common/AddressUtils.sol";
 import "../common/Autopetrified.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/ReentrancyGuard.sol";
@@ -19,6 +20,8 @@ import "../evmscript/EVMScriptRunner.sol";
 // ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
+    using AddressUtils for address;
+
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
@@ -45,7 +48,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         }
 
         IKernel linkedKernel = kernel();
-        if (address(linkedKernel) == address(0)) {
+        if (address(linkedKernel).isZero()) {
             return false;
         }
 

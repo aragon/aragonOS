@@ -12,6 +12,6 @@ contract AppStubConditionalRecovery is AragonApp, DepositableStorage {
 
     function allowRecoverability(address token) public view returns (bool) {
         // Doesn't allow to recover ether
-        return token != address(0);
+        return token.isNotZero();
     }
 }
