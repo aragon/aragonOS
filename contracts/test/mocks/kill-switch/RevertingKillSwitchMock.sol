@@ -9,4 +9,8 @@ contract RevertingKillSwitchMock is KillSwitch {
     function shouldDenyCallingApp(bytes32 _appId, address _base, address _instance) external view returns (bool) {
         revert(ERROR_MESSAGE);
     }
+
+    function shouldDenyCallingBaseApp(bytes32 _appId, address _base) public view returns (bool) {
+        revert(ERROR_MESSAGE);
+    }
 }

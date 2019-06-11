@@ -18,6 +18,7 @@ contract KeccakConstants {
     bytes32 public constant KERNEL_APP_ADDR_NAMESPACE = keccak256(abi.encodePacked("app"));
 
     bytes32 public constant APP_MANAGER_ROLE = keccak256(abi.encodePacked("APP_MANAGER_ROLE"));
+    bytes32 public constant APP_MANAGER_EMERGENCY_ROLE = keccak256(abi.encodePacked("APP_MANAGER_EMERGENCY_ROLE"));
 
     bytes32 public constant KERNEL_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("kernel")));
     bytes32 public constant DEFAULT_ACL_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("acl")));
