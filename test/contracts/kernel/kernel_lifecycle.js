@@ -23,7 +23,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
     assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     await assertRevert(kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
-    await assertRevert(kernel.newPinnedAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false))
+    await assertRevert(kernel.newPinnedAppInstance(APP_ID, appBase.address))
     await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address))
     await assertRevert(kernel.setRecoveryVaultAppId(VAULT_ID))
   }
