@@ -27,6 +27,7 @@ contract('Constants', () => {
     assert.equal(await kernelConstants.getKernelAppId(), await keccakConstants.KERNEL_APP_ID(), "kernel app id doesn't match")
     assert.equal(await kernelConstants.getDefaultACLAppId(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default ACL id doesn't match")
     assert.equal(await kernelConstants.getDefaultVaultAppId(), await keccakConstants.DEFAULT_VAULT_APP_ID(), "default vault id doesn't match")
+    assert.equal(await kernelConstants.getDefaultRelayerAppId(), await keccakConstants.DEFAULT_RELAYER_APP_ID(), "default relayer id doesn't match")
     assert.equal(await kernelConstants.getKernelCoreNamespace(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppBasesNamespace(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppAddrNamespace(), await keccakConstants.KERNEL_APP_ADDR_NAMESPACE(), "app namespace doesn't match")

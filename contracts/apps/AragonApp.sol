@@ -22,12 +22,12 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
-        require(canPerform(msg.sender, _role, new uint256[](0)), ERROR_AUTH_FAILED);
+        require(canPerform(sender(), _role, new uint256[](0)), ERROR_AUTH_FAILED);
         _;
     }
 
     modifier authP(bytes32 _role, uint256[] _params) {
-        require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
+        require(canPerform(sender(), _role, _params), ERROR_AUTH_FAILED);
         _;
     }
 
@@ -64,5 +64,9 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         return kernel().getRecoveryVault(); // if kernel is not set, it will revert
+    }
+
+    function sender() internal view returns (address) {
+        return msg.sender;
     }
 }
