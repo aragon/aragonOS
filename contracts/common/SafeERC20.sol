@@ -75,7 +75,16 @@ library SafeERC20 {
             )
 
             if gt(success, 0) {
-                ret := mload(ptr)
+                switch returndatasize
+
+                // 32 bytes returned; is valid return
+                case 0x20 {
+                    ret := mload(ptr)
+                }
+                // Else, mark call as failed
+                default {
+                    success := 0
+                }
             }
         }
         return (success, ret);

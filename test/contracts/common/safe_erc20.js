@@ -1,10 +1,13 @@
+const { assertRevert } = require('../../helpers/assertThrow')
 const { getEventArgument } = require('../../helpers/events')
+const reverts = require('../../helpers/revertStrings')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')
 const TokenMock = artifacts.require('TokenMock')
 const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
 const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
+const TokenBalanceOfAllowanceReturnMissingMock = artifacts.require('TokenBalanceOfAllowanceReturnMissingMock')
 
 const assertMockResult = (receipt, result) => assert.equal(getEventArgument(receipt, 'Result', 'result'), result, `result does not match`)
 
@@ -122,4 +125,20 @@ contract('SafeERC20', ([owner, receiver]) => {
       })
     })
   }
+
+  context(`> Non-standards compliant, missing allowance and balance of return token`, () => {
+    let tokenMock
+
+    beforeEach(async () => {
+      tokenMock = await TokenBalanceOfAllowanceReturnMissingMock.new(owner, initialBalance)
+    })
+
+    it('fails on static allowance', async () => {
+      await assertRevert(safeERC20Mock.allowance(tokenMock.address, owner, safeERC20Mock.address), reverts.SAFE_ERC_20_ALLOWANCE_REVERTED)
+    })
+
+    it('fails on static balanceOf', async () => {
+      await assertRevert(safeERC20Mock.balanceOf(tokenMock.address, owner), reverts.SAFE_ERC_20_BALANCE_REVERTED)
+    })
+  })
 })
