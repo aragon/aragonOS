@@ -1,7 +1,8 @@
 const { hash } = require('eth-ens-namehash')
 const { onlyIf } = require('../../helpers/onlyIf')
-const { getBalance } = require('../../helpers/web3')
 const { assertRevert } = require('../../helpers/assertThrow')
+const { skipCoverage } = require('../../helpers/coverage')
+const { getBalance } = require('../../helpers/web3')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -48,6 +49,15 @@ contract('App funds', ([permissionsRoot]) => {
       // Test the app itself and when it's behind the proxies to make sure their behaviours are the same
       const appProxyTypes = ['AppProxyUpgradeable', 'AppProxyPinned']
       for (const appType of ['App', ...appProxyTypes]) {
+        const skipCoverageIfProxy = test => {
+          // The AppStubs aren't instrumented during coverage, but the AppProxys are, and so
+          // attempting to use the fallback fails when we're testing with the proxy.
+          // Native transfers (either .send() or .transfer()) fail under coverage because they're
+          // limited to 2.3k gas, and the injected instrumentation from coverage makes these
+          // operations cost more than that limit.
+          return appType === 'App' ? test : skipCoverage(test)
+        }
+
         context(`> ${appType}`, () => {
           let appBase, app
 
@@ -85,11 +95,11 @@ contract('App funds', ([permissionsRoot]) => {
             await app.initialize()
           })
 
-          it('cannot receive ETH', async () => {
+          it('cannot receive ETH', skipCoverageIfProxy(async () => {
             assert.isTrue(await app.hasInitialized(), 'should have been initialized')
 
             await assertRevert(app.sendTransaction({ value: 1, gas: SEND_ETH_GAS }))
-          })
+          }))
 
           onlyAppStubDepositable(() => {
             it('does not have depositing enabled by default', async () => {
@@ -97,7 +107,7 @@ contract('App funds', ([permissionsRoot]) => {
               assert.isFalse(await app.isDepositable(), 'should not be depositable')
             })
 
-            it('can receive ETH after being set to depositable', async () => {
+            it('can receive ETH after being set to depositable', skipCoverageIfProxy(async () => {
               const amount = 1
               const initialBalance = await getBalance(app.address)
 
@@ -106,7 +116,7 @@ contract('App funds', ([permissionsRoot]) => {
 
               await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
               assert.equal((await getBalance(app.address)).valueOf(), initialBalance.plus(amount))
-            })
+            }))
           })
         })
       }

@@ -1,6 +1,7 @@
+const { assertRevert } = require('../../helpers/assertThrow')
+const { skipCoverage } = require('../../helpers/coverage')
 const { onlyIf } = require('../../helpers/onlyIf')
 const { getBalance } = require('../../helpers/web3')
-const { assertRevert } = require('../../helpers/assertThrow')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -12,6 +13,12 @@ const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
 contract('Kernel funds', ([permissionsRoot]) => {
+  // Any of these tests involving an ETH transfer are skipped in coverage because the
+  // target is a Kernel or KernelProxy, which gets instrumented by solidity-coverage.
+  // Native transfers (either .send() or .transfer()) fail under coverage because they're
+  // limited to 2.3k gas, and the injected instrumentation makes these operations cost
+  // more than that limit.
+
   let aclBase
 
   // Initial setup
@@ -43,7 +50,7 @@ contract('Kernel funds', ([permissionsRoot]) => {
             }
           })
 
-          it('cannot receive ETH', async () => {
+          it('cannot receive ETH', skipCoverage(async () => {
             // Before initialization
             assert.isFalse(await kernel.hasInitialized(), 'should not have been initialized')
 
@@ -54,7 +61,7 @@ contract('Kernel funds', ([permissionsRoot]) => {
             assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
 
             await assertRevert(kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS }))
-          })
+          }))
 
           onlyKernelDepositable(() => {
             it('does not have depositing enabled by default', async () => {
@@ -68,7 +75,7 @@ contract('Kernel funds', ([permissionsRoot]) => {
               assert.isFalse(await kernel.isDepositable(), 'should not be depositable')
             })
 
-            it('can receive ETH after being enabled', async () => {
+            it('can receive ETH after being enabled', skipCoverage(async () => {
               const amount = 1
               const initialBalance = await getBalance(kernel.address)
 
@@ -79,7 +86,7 @@ contract('Kernel funds', ([permissionsRoot]) => {
 
               await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
               assert.equal((await getBalance(kernel.address)).valueOf(), initialBalance.plus(amount))
-            })
+            }))
           })
         })
       }
