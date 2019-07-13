@@ -19,6 +19,7 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptExecutorMock = artifacts.require('EVMScriptExecutorMock')
 const EVMScriptExecutorNoReturnMock = artifacts.require('EVMScriptExecutorNoReturnMock')
 const EVMScriptExecutorRevertMock = artifacts.require('EVMScriptExecutorRevertMock')
+const EVMScriptExecutorMalicious = artifacts.require('EVMScriptExecutorMalicious')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
@@ -356,6 +357,39 @@ contract('EVM Script', ([_, boss]) => {
 
         // Should revert and forward the script executor's revert message
         await assertRevert(scriptRunnerApp.runScript(inputScript), ERROR_MOCK_REVERT)
+      })
+    })
+
+    context('> State changing script', () => {
+      beforeEach(async () => {
+        // Deploy malicious executor
+        const scriptExecutorMalicious = await EVMScriptExecutorMalicious.new()
+
+        // Install mock reverting executor onto registry
+        await acl.createPermission(boss, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE, boss, { from: boss })
+        const receipt = await evmScriptReg.addScriptExecutor(scriptExecutorMalicious.address, { from: boss })
+
+        // Sanity check it's at spec ID 1
+        const executorSpecId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
+        const [, executorEnabled] = await evmScriptReg.executors(executorSpecId)
+        assert.equal(executorSpecId, 1, 'EVMScriptExecutorMalicious should be installed as spec ID 1')
+        assert.isTrue(executorEnabled, "malicious executor should be enabled")
+      })
+
+      it('fails if the kernel address changes', async () => {
+        // EVMScriptExecutorMalicious will call setKernel() 
+        // if the address is zero
+        const action = { to: ZERO_ADDR, calldata: "0x0" }
+        const script = encodeCallScript([action])
+        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_PROTECTED_STATE_MODIFIED)        
+      })
+
+      it('fails if appId changes', async () => {
+        // EVMScriptExecutorMalicious will call setAppId()
+        // if the address is NOT zero
+        const action = { to: "0x"+"ff".repeat(20), calldata: "0x0" }
+        const script = encodeCallScript([action])
+        await assertRevert(scriptRunnerApp.runScript(script), reverts.EVMRUN_PROTECTED_STATE_MODIFIED)        
       })
     })
 
