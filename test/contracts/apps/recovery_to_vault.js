@@ -1,7 +1,6 @@
 const { hash } = require('eth-ens-namehash')
 const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
 const { assertRevert } = require('../../helpers/assertThrow')
-const { skipCoverage } = require('../../helpers/coverage')
 const { getNewProxyAddress } = require('../../helpers/events')
 const { getBalance } = require('../../helpers/web3')
 
@@ -181,9 +180,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
             await kernel.setRecoveryVaultAppId(vaultId)
           })
 
-          it('kernel cannot receive ETH', skipCoverage(async () =>
+          it('kernel cannot receive ETH', async () =>
             await assertRevert(kernel.sendTransaction({ value: 1, gas: 31000 }))
-          ))
+          )
 
           for (const { title, tokenContract } of tokenTestGroups) {
             it(`kernel recovers ${title}`, async () => {
@@ -209,9 +208,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               await target.enableDeposits()
             })
 
-            it('does not recover ETH', skipCoverage(async () =>
+            it('does not recover ETH', async () =>
               await recoverEth({ target, vault, shouldFail: true })
-            ))
+            )
 
             it('does not recover tokens', async () =>
               await recoverTokens({
@@ -224,12 +223,6 @@ contract('Recovery to vault', ([permissionsRoot]) => {
           })
 
           context('> Proxied app with kernel', () => {
-            // Any of these tests involving an ETH transfer are skipped in coverage because the
-            // target is an AppProxy, which gets instrumented by solidity-coverage.
-            // Native transfers (either .send() or .transfer()) fail under coverage because they're
-            // limited to 2.3k gas, and the injected instrumentation makes these operations cost
-            // more than that limit.
-
             beforeEach(async () => {
               // Setup app
               const receipt = await kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false)
@@ -240,17 +233,17 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               target = app
             })
 
-            it('cannot send 0 ETH to proxy', skipCoverage(async () => {
+            it('cannot send 0 ETH to proxy', async () => {
               await assertRevert(target.sendTransaction({ value: 0, gas: SEND_ETH_GAS }))
-            }))
+            })
 
-            it('cannot send ETH with data to proxy', skipCoverage(async () => {
+            it('cannot send ETH with data to proxy', async () => {
               await assertRevert(target.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS }))
-            }))
+            })
 
-            it('recovers ETH', skipCoverage(async () =>
+            it('recovers ETH', async () =>
               await recoverEth({ target, vault })
-            ))
+            )
 
             for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
@@ -270,9 +263,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               })
             }
 
-            it('fails if vault is not contract', skipCoverage(async () => {
+            it('fails if vault is not contract', async () => {
               await failWithoutVault(target, kernel)
-            }))
+            })
           })
 
           context('> Conditional fund recovery', () => {
@@ -286,10 +279,10 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               target = app
             })
 
-            it('does not allow recovering ETH', skipCoverage(async () =>
+            it('does not allow recovering ETH', async () =>
               // Conditional stub doesnt allow eth recoveries
               await recoverEth({ target, vault, shouldFail: true })
-            ))
+            )
 
             for (const { title, tokenContract } of tokenTestGroups) {
               it(`allows recovers ${title}`, async () => {
@@ -341,8 +334,8 @@ contract('Recovery to vault', ([permissionsRoot]) => {
       await kernel.setRecoveryVaultAppId(vaultId)
     })
 
-    it('recovers ETH from the kernel', skipCoverage(async () => {
+    it('recovers ETH from the kernel', async () => {
       await recoverEth({ target: kernel, vault })
-    }))
+    })
   })
 })
