@@ -31,7 +31,7 @@ module.exports = {
       error.reason = error.message.replace(errorPrefix, '').trim()
     }
 
-    if (process.env.SOLIDITY_COVERAGE !== 'true' && reason) {
+    if (reason) {
       assert.equal(error.reason, reason, `Expected revert reason "${reason}" but failed with "${error.reason || 'no reason'}" instead.`)
     }
   },
