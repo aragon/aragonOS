@@ -33,4 +33,8 @@ contract SafeERC20Mock {
     function balanceOf(ERC20 token, address owner) external view returns (uint256) {
         return token.staticBalanceOf(owner);
     }
+
+    function totalSupply(ERC20 token) external view returns (uint256) {
+        return token.staticTotalSupply();
+    }
 }
