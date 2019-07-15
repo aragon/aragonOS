@@ -1,9 +1,8 @@
 const { hash } = require('eth-ens-namehash')
-const { getBalance } = require('../../helpers/web3')
-const { skipCoverage } = require('../../helpers/coverage')
+const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
 const { assertRevert } = require('../../helpers/assertThrow')
 const { getNewProxyAddress } = require('../../helpers/events')
-const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
+const { getBalance } = require('../../helpers/web3')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -160,15 +159,6 @@ contract('Recovery to vault', ([permissionsRoot]) => {
 
       // Test both the Vault itself and when it's behind a proxy to make sure their recovery behaviours are the same
       for (const vaultType of ['Vault', 'VaultProxy']) {
-        const skipCoverageIfVaultProxy = test => {
-          // The VaultMock isn't instrumented during coverage, but the AppProxy is, and so
-          // transferring to the fallback fails when we're testing with the proxy.
-          // Native transfers (either .send() or .transfer()) fail under coverage because they're
-          // limited to 2.3k gas, and the injected instrumentation from coverage makes these
-          // operations cost more than that limit.
-          return vaultType === 'VaultProxy' ? skipCoverage(test) : test
-        }
-
         context(`> ${vaultType}`, () => {
           let target, vault
 
@@ -218,9 +208,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               await target.enableDeposits()
             })
 
-            it('does not recover ETH', skipCoverageIfVaultProxy(async () =>
+            it('does not recover ETH', async () =>
               await recoverEth({ target, vault, shouldFail: true })
-            ))
+            )
 
             it('does not recover tokens', async () =>
               await recoverTokens({
@@ -251,9 +241,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               await assertRevert(target.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS }))
             })
 
-            it('recovers ETH', skipCoverageIfVaultProxy(async () =>
+            it('recovers ETH', async () =>
               await recoverEth({ target, vault })
-            ))
+            )
 
             for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
@@ -289,10 +279,10 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               target = app
             })
 
-            it('does not allow recovering ETH', skipCoverageIfVaultProxy(async () =>
+            it('does not allow recovering ETH', async () =>
               // Conditional stub doesnt allow eth recoveries
               await recoverEth({ target, vault, shouldFail: true })
-            ))
+            )
 
             for (const { title, tokenContract } of tokenTestGroups) {
               it(`allows recovers ${title}`, async () => {
@@ -344,8 +334,8 @@ contract('Recovery to vault', ([permissionsRoot]) => {
       await kernel.setRecoveryVaultAppId(vaultId)
     })
 
-    it('recovers ETH from the kernel', skipCoverage(async () => {
+    it('recovers ETH from the kernel', async () => {
       await recoverEth({ target: kernel, vault })
-    }))
+    })
   })
 })

@@ -123,6 +123,12 @@ contract('SafeERC20', ([owner, receiver]) => {
         assert.equal(balance, initialBalance, 'Mock should return correct balance')
         assert.equal((await tokenMock.balanceOf(owner)).valueOf(), balance, "Mock should match token contract's balance")
       })
+
+      it('gives correct value with static totalSupply', async () => {
+        const totalSupply = (await safeERC20Mock.totalSupply(tokenMock.address)).valueOf()
+        assert.equal(totalSupply, initialBalance, 'Mock should return correct total supply')
+        assert.equal((await tokenMock.totalSupply()).valueOf(), totalSupply, "Mock should match token contract's total supply")
+      })
     })
   }
 

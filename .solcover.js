@@ -3,7 +3,6 @@ const skipFiles = [
   'test',
   'acl/ACLSyntaxSugar.sol',
   'common/DepositableStorage.sol', // Used in tests that send ETH
-  'common/SafeERC20.sol', // solidity-coverage fails on assembly if (https://github.com/sc-forks/solidity-coverage/issues/287)
   'common/UnstructuredStorage.sol' // Used in tests that send ETH
 ]
 
