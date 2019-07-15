@@ -153,4 +153,17 @@ library SafeERC20 {
 
         return allowance;
     }
+
+    /**
+    * @dev Static call into ERC20.totalSupply().
+    * Reverts if the call fails for some reason (should never fail).
+    */
+    function staticTotalSupply(ERC20 _token) internal view returns (uint256) {
+        bytes memory totalSupplyCallData = abi.encodeWithSelector(_token.totalSupply.selector);
+
+        (bool success, uint256 totalSupply) = staticInvoke(_token, totalSupplyCallData);
+        require(success, ERROR_TOKEN_ALLOWANCE_REVERTED);
+
+        return totalSupply;
+    }
 }
