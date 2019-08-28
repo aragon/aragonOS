@@ -14,7 +14,7 @@ contract DepositableDelegateProxy is DepositableStorage, DelegateProxy {
         // Optimized assembly implementation to prevent EIP-1884 from breaking deposits, reference code in Solidity:
         // https://github.com/aragon/aragonOS/blob/v4.2.1/contracts/common/DepositableDelegateProxy.sol#L10-L20
         assembly {
-            // If the gas left is lower than the threshold for forwarding to the implementation code,
+            // Continue only if the gas left is lower than the threshold for forwarding to the implementation code,
             // otherwise continue outside of the assembly block.
             if lt(gas, forwardGasThreshold) {
                 // If the proxy accepts deposits, msg.data.length == 0 and msg.value > 0,
