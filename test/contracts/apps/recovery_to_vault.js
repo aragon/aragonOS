@@ -1,15 +1,12 @@
 const { hash } = require('eth-ens-namehash')
-const { toChecksumAddress } = require('web3-utils')
 const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
-const { assertRevert, assertOutOfGas } = require('../../helpers/assertThrow')
+const { assertRevert } = require('../../helpers/assertThrow')
 const { getNewProxyAddress } = require('../../helpers/events')
 const { getBalance } = require('../../helpers/web3')
-const { decodeEventsOfType } = require('../../helpers/decodeEvent')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-const DepositableDelegateProxy = artifacts.require('DepositableDelegateProxy')
 
 // Mocks
 const AppStubDepositable = artifacts.require('AppStubDepositable')
@@ -20,53 +17,22 @@ const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
 const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
 const VaultMock = artifacts.require('VaultMock')
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
-const EthSender = artifacts.require('EthSender')
 
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
-const TX_BASE_GAS = 21000
-const SEND_ETH_GAS = TX_BASE_GAS + 10000 // 10k limit on depositable proxies
-const SOLIDITY_TRANSFER_GAS = 2300
-const ISTANBUL_SLOAD_GAS_INCREASE = 600
+const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
 
-contract('Recovery to vault', ([ permissionsRoot ]) => {
-  let aclBase, appBase, appConditionalRecoveryBase, ethSender
+contract('Recovery to vault', ([permissionsRoot]) => {
+  let aclBase, appBase, appConditionalRecoveryBase
   let APP_ADDR_NAMESPACE, ETH
 
   // Helpers
-  const sendEth = async ({ target, value, gas = SOLIDITY_TRANSFER_GAS, shouldOOG }) => {
-    const initialBalance = await getBalance(target.address)
-
-    const useSenderContract = gas === SOLIDITY_TRANSFER_GAS
-    const sender = useSenderContract ? ethSender.address : permissionsRoot
-
-    const sendAction = () => useSenderContract
-      ? ethSender.sendEth(target.address, { value })
-      : target.sendTransaction({ gas: gas + TX_BASE_GAS, value })
-
-    if (shouldOOG) {
-      await assertOutOfGas(sendAction)
-      assert.equal((await getBalance(target.address)).valueOf(), initialBalance, 'Target balance should be the same as before')
-    } else {
-      const { tx } = await sendAction()
-      const receipt = await web3.eth.getTransactionReceipt(tx)
-
-      assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(value), 'Target balance should be correct')
-
-      const logs = decodeEventsOfType(receipt, DepositableDelegateProxy.abi, 'ProxyDeposit')
-      assertAmountOfEvents({ logs }, 'ProxyDeposit')
-      assertEvent({ logs }, 'ProxyDeposit', { sender: toChecksumAddress(sender), value })
-
-      return receipt
-    }
-  }
-
   const recoverEth = async ({ shouldFail, target, vault }) => {
     const amount = 1
     const initialBalance = await getBalance(target.address)
     const initialVaultBalance = await getBalance(vault.address)
-
-    await sendEth({ target, value: amount })
+    await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
+    assert.equal((await getBalance(target.address)).valueOf(), initialBalance.plus(amount), 'Target initial balance should be correct')
 
     const recoverAction = () => target.transferToVault(ETH)
 
@@ -157,7 +123,6 @@ contract('Recovery to vault', ([ permissionsRoot ]) => {
     aclBase = await ACL.new()
     appBase = await AppStubDepositable.new()
     appConditionalRecoveryBase = await AppStubConditionalRecovery.new()
-    ethSender = await EthSender.new()
 
     // Setup constants
     const kernel = await Kernel.new(true)
@@ -276,20 +241,6 @@ contract('Recovery to vault', ([ permissionsRoot ]) => {
               await assertRevert(target.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS }))
             })
 
-            it('can receive ETH (Constantinople)', async () => {
-              await sendEth({ target, value: 1 })
-            })
-
-            // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
-            it('can receive ETH (Istanbul, EIP-1884)', async () => {
-              const { gasUsed } = await sendEth({ target, value: 1, gas: SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE })
-              console.log('Used gas:', gasUsed - TX_BASE_GAS)
-            })
-
-            it('OOGs if sending ETH with too little gas', async () => {
-              await sendEth({ target, value: 1, gas: SOLIDITY_TRANSFER_GAS - 850, shouldOOG: true })
-            })
-
             it('recovers ETH', async () =>
               await recoverEth({ target, vault })
             )
@@ -381,20 +332,6 @@ contract('Recovery to vault', ([ permissionsRoot ]) => {
       await vault.initialize()
 
       await kernel.setRecoveryVaultAppId(vaultId)
-    })
-
-    it('can receive ETH (Constantinople)', async () => {
-      await sendEth({ target: kernel, value: 1 })
-    })
-
-    // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
-    it('can receive ETH (Istanbul, EIP-1884)', async () => {
-      const { gasUsed } = await sendEth({ target: kernel, value: 1, gas: SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE })
-      console.log('Used gas:', gasUsed - TX_BASE_GAS)
-    })
-
-    it('OOGs if sending ETH with too little gas', async () => {
-      await sendEth({ target: kernel, value: 1, gas: SOLIDITY_TRANSFER_GAS - 850, shouldOOG: true })
     })
 
     it('recovers ETH from the kernel', async () => {
