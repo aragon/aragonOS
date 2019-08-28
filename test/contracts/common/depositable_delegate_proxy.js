@@ -12,11 +12,11 @@ const ProxyTargetWithFallback = artifacts.require('ProxyTargetWithFallback')
 
 const TX_BASE_GAS = 21000
 const SEND_ETH_GAS = TX_BASE_GAS + 9999 // 10k gas is the threshold for depositing
-const FALLBACK_SETUP_GAS = 300 // rough estimation of how much gas it spends before executing the fallback code (increased for coverage)
+const FALLBACK_SETUP_GAS = process.env.SOLIDITY_COVERAGE ? 5000 : 100 // rough estimation of how much gas it spends before executing the fallback code
 const SOLIDITY_TRANSFER_GAS = 2300
 const ISTANBUL_SLOAD_GAS_INCREASE = 600
 
-contract.only('DepositableDelegateProxy', ([ sender ]) => {
+contract('DepositableDelegateProxy', ([ sender ]) => {
   let ethSender, proxy, target, proxyTargetWithoutFallbackBase, proxyTargetWithFallbackBase
 
   // Initial setup
@@ -133,8 +133,10 @@ contract.only('DepositableDelegateProxy', ([ sender ]) => {
 
       // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
       it('cannot receive ETH if sent with a small amount of gas', async () => {
+        // solidity-coverage seems to be increasing the gas amount to prevent failures
+        const oogDecrease = process.env.SOLIDITY_COVERAGE ? 600 : 250
         // deposit cannot be done with this amount of gas
-        const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE - 250
+        const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE - oogDecrease
         await assertSendEthToProxy({ shouldOOG: true, value, gas })
       })
 
