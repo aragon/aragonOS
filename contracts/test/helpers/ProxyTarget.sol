@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-contract ProxyTarget {
+contract ProxyTargetWithoutFallback {
     event Pong();
 
     function ping() external {
@@ -8,7 +8,7 @@ contract ProxyTarget {
     }
 }
 
-contract ProxyTargetWithFallback is ProxyTarget {
+contract ProxyTargetWithFallback is ProxyTargetWithoutFallback {
     event ReceivedEth();
 
     function () external payable {

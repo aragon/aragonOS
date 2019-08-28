@@ -7,36 +7,31 @@ const { getBalance } = require('../../helpers/web3')
 // Mocks
 const DepositableDelegateProxyMock = artifacts.require('DepositableDelegateProxyMock')
 const EthSender = artifacts.require('EthSender')
-const ProxyTarget = artifacts.require('ProxyTarget')
+const ProxyTargetWithoutFallback = artifacts.require('ProxyTargetWithoutFallback')
 const ProxyTargetWithFallback = artifacts.require('ProxyTargetWithFallback')
 
 const TX_BASE_GAS = 21000
 const SEND_ETH_GAS = TX_BASE_GAS + 9999 // 10k gas is the threshold for depositing
-const FALLBACK_SETUP_GAS = 100 // rough estimation of how much gas it spends before executing the fallback code
+const FALLBACK_SETUP_GAS = 300 // rough estimation of how much gas it spends before executing the fallback code (increased for coverage)
 const SOLIDITY_TRANSFER_GAS = 2300
 const ISTANBUL_SLOAD_GAS_INCREASE = 600
 
-contract('DepositableDelegateProxy', ([ sender ]) => {
-  let ethSender, proxy, proxyTargetBase, proxyTargetWithFallbackBase
+contract.only('DepositableDelegateProxy', ([ sender ]) => {
+  let ethSender, proxy, target, proxyTargetWithoutFallbackBase, proxyTargetWithFallbackBase
 
   // Initial setup
   before(async () => {
     ethSender = await EthSender.new()
-    proxyTargetBase = await ProxyTarget.new()
+    proxyTargetWithoutFallbackBase = await ProxyTargetWithoutFallback.new()
     proxyTargetWithFallbackBase = await ProxyTargetWithFallback.new()
   })
 
   beforeEach(async () => {
     proxy = await DepositableDelegateProxyMock.new()
+    target = ProxyTargetWithFallback.at(proxy.address)
   })
 
   const itForwardsToImplementationIfGasIsOverThreshold = () => {
-    let target
-    
-    beforeEach(() => {
-      target = ProxyTargetWithFallback.at(proxy.address)
-    })
-
     context('when implementation address is set', () => {
       const itSuccessfullyForwardsCall = () => {
         it('forwards call with data', async () => {
@@ -60,7 +55,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
 
       context('when implementation doesn\'t have a fallback', () => {
         beforeEach(async () => {
-          await proxy.setImplementationOnMock(proxyTargetBase.address)
+          await proxy.setImplementationOnMock(proxyTargetWithoutFallbackBase.address)
         })
 
         itSuccessfullyForwardsCall()
@@ -84,7 +79,9 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
 
   const itRevertsOnInvalidDeposits = () => {
     it('reverts when call has data', async () => {
-      await assertRevert(proxy.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS }))
+      await proxy.setImplementationOnMock(proxyTargetWithoutFallbackBase.address)
+
+      await assertRevert(target.ping({ gas: SEND_ETH_GAS }))
     })
 
     it('reverts when call sends 0 value', async () => {
@@ -100,7 +97,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
     context('when call gas is below the forwarding threshold', () => {
       const value = 100
 
-      const sendEthToProxy = async ({ value, gas, shouldOOG }) => {
+      const assertSendEthToProxy = async ({ value, gas, shouldOOG }) => {
         const initialBalance = await getBalance(proxy.address)
 
         const sendEthAction = () => proxy.sendTransaction({ from: sender, gas, value })
@@ -120,14 +117,14 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       }
 
       it('can receive ETH (Constantinople)', async () => {
-        const { gasUsed } = await sendEthToProxy({ value, gas: SEND_ETH_GAS })
+        const { gasUsed } = await assertSendEthToProxy({ value, gas: SEND_ETH_GAS })
         console.log('Used gas:', gasUsed - TX_BASE_GAS)
       })
 
       // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
       it('can receive ETH (Istanbul, EIP-1884)', async () => {
         const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE
-        const { gasUsed } = await sendEthToProxy({ value, gas })
+        const { gasUsed } = await assertSendEthToProxy({ value, gas })
         const gasUsedIstanbul = gasUsed - TX_BASE_GAS + ISTANBUL_SLOAD_GAS_INCREASE
         console.log('Used gas (Istanbul):', gasUsedIstanbul)
 
@@ -138,7 +135,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       it('cannot receive ETH if sent with a small amount of gas', async () => {
         // deposit cannot be done with this amount of gas
         const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE - 250
-        await sendEthToProxy({ shouldOOG: true, value, gas })
+        await assertSendEthToProxy({ shouldOOG: true, value, gas })
       })
 
       it('can receive ETH from contract', async () => {
