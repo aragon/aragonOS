@@ -17,8 +17,8 @@ contract DepositableDelegateProxy is DepositableStorage, DelegateProxy {
             // Continue only if the gas left is lower than the threshold for forwarding to the implementation code,
             // otherwise continue outside of the assembly block.
             if lt(gas, forwardGasThreshold) {
-                // If the proxy accepts deposits, msg.data.length == 0 and msg.value > 0,
-                // accept the deposit and emit an event
+                // Only accept the deposit and emit an event if all of the following are true:
+                // the proxy accepts deposits (isDepositable), msg.data.length == 0, and msg.value > 0
                 if and(and(sload(isDepositablePosition), iszero(calldatasize)), gt(callvalue, 0)) {
                     let logData := mload(0x40) // free memory pointer
                     mstore(logData, caller) // add 'msg.sender' to the log data (first event param)

@@ -283,7 +283,7 @@ contract('Recovery to vault', ([ permissionsRoot ]) => {
             // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
             it('can receive ETH (Istanbul, EIP-1884)', async () => {
               const { gasUsed } = await sendEth({ target, value: 1, gas: SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE })
-              console.log('Used gas:', gasUsed)
+              console.log('Used gas:', gasUsed - TX_BASE_GAS)
             })
 
             it('OOGs if sending ETH with too little gas', async () => {
@@ -390,7 +390,7 @@ contract('Recovery to vault', ([ permissionsRoot ]) => {
     // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
     it('can receive ETH (Istanbul, EIP-1884)', async () => {
       const { gasUsed } = await sendEth({ target: kernel, value: 1, gas: SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE })
-      console.log('Used gas:', gasUsed)
+      console.log('Used gas:', gasUsed - TX_BASE_GAS)
     })
 
     it('OOGs if sending ETH with too little gas', async () => {
