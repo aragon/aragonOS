@@ -11,7 +11,8 @@ const ProxyTargetWithoutFallback = artifacts.require('ProxyTargetWithoutFallback
 const ProxyTargetWithFallback = artifacts.require('ProxyTargetWithFallback')
 
 const TX_BASE_GAS = 21000
-const SEND_ETH_GAS = TX_BASE_GAS + 9999 // 10k gas is the threshold for depositing
+const SEND_ETH_GAS = TX_BASE_GAS + 9999 // <10k gas is the threshold for depositing
+const PROXY_FORWARD_GAS = TX_BASE_GAS + 2e6 // high gas amount to ensure that the proxy forwards the call
 const FALLBACK_SETUP_GAS = process.env.SOLIDITY_COVERAGE ? 5000 : 100 // rough estimation of how much gas it spends before executing the fallback code
 const SOLIDITY_TRANSFER_GAS = 2300
 const ISTANBUL_SLOAD_GAS_INCREASE = 600
@@ -35,7 +36,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
     context('when implementation address is set', () => {
       const itSuccessfullyForwardsCall = () => {
         it('forwards call with data', async () => {
-          const receipt = await target.ping()
+          const receipt = await target.ping({ gas: PROXY_FORWARD_GAS })
           assertAmountOfEvents(receipt, 'Pong')
         })
       }
@@ -61,18 +62,18 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
         itSuccessfullyForwardsCall()
 
         it('reverts when sending ETH', async () => {
-          await assertRevert(target.sendTransaction({ value: 1 }))
+          await assertRevert(target.sendTransaction({ value: 1, gas: PROXY_FORWARD_GAS }))
         })
       })
     })
 
     context('when implementation address is not set', () => {
       it('reverts when a function is called', async () => {
-        await assertRevert(target.ping())
+        await assertRevert(target.ping({ gas: PROXY_FORWARD_GAS }))
       })
 
       it('reverts when sending ETH', async () => {
-        await assertRevert(target.sendTransaction({ value: 1 }))
+        await assertRevert(target.sendTransaction({ value: 1, gas: PROXY_FORWARD_GAS }))
       })
     })
   }

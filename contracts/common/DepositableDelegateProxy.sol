@@ -20,6 +20,9 @@ contract DepositableDelegateProxy is DepositableStorage, DelegateProxy {
                 // Only accept the deposit and emit an event if all of the following are true:
                 // the proxy accepts deposits (isDepositable), msg.data.length == 0, and msg.value > 0
                 if and(and(sload(isDepositablePosition), iszero(calldatasize)), gt(callvalue, 0)) {
+                    // Equivalent Solidity code for emitting the event:
+                    // emit ProxyDeposit(msg.sender, msg.value);
+
                     let logData := mload(0x40) // free memory pointer
                     mstore(logData, caller) // add 'msg.sender' to the log data (first event param)
                     mstore(add(logData, 0x20), callvalue) // add 'msg.value' to the log data (second event param)
