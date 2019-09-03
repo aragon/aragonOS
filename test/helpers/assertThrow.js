@@ -24,6 +24,10 @@ module.exports = {
     return assertThrows(blockOrPromise, 'invalid opcode')
   },
 
+  async assertOutOfGas(blockOrPromise) {
+    return assertThrows(blockOrPromise, 'out of gas')
+  },
+
   async assertRevert(blockOrPromise, reason) {
     const error = await assertThrows(blockOrPromise, 'revert', reason)
     const errorPrefix = `${THROW_ERROR_PREFIX} revert`
