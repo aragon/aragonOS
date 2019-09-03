@@ -9,7 +9,8 @@ const KernelProxy = artifacts.require('KernelProxy')
 // Mocks
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
-const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
+const TX_BASE_GAS = 21000
+const SEND_ETH_GAS = TX_BASE_GAS + 9999 // <10k gas is the threshold for depositing
 
 contract('Kernel funds', ([permissionsRoot]) => {
   let aclBase
