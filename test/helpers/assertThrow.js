@@ -1,26 +1,42 @@
-function assertError(error, s, message) {
-    assert.isAbove(error.message.search(s), -1, `${message}\n\t(error: ${error})`);
+const THROW_ERROR_PREFIX = 'VM Exception while processing transaction:'
+
+function assertError(error, expectedErrorCode) {
+  assert(error.message.search(expectedErrorCode) > -1, `Expected error code "${expectedErrorCode}" but failed with "${error}" instead.`)
 }
 
-async function assertThrows(codeBlock, message, errorCode) {
-    try {
-        await codeBlock()
-    } catch (e) {
-        return assertError(e, errorCode, message)
-    }
-    assert.fail('should have thrown before')
+async function assertThrows(blockOrPromise, expectedErrorCode, expectedReason) {
+  try {
+    (typeof blockOrPromise === 'function') ? await blockOrPromise() : await blockOrPromise
+  } catch (error) {
+    assertError(error, expectedErrorCode)
+    return error
+  }
+  // assert.fail() for some reason does not have its error string printed 🤷
+  assert(0, `Expected "${expectedErrorCode}"${expectedReason ? ` (with reason: "${expectedReason}")` : ''} but it did not fail`)
 }
 
 module.exports = {
-    async assertJump(codeBlock, message = 'should have failed with invalid JUMP') {
-        return assertThrows(codeBlock, message, 'invalid JUMP')
-    },
+  async assertJump(blockOrPromise) {
+    return assertThrows(blockOrPromise, 'invalid JUMP')
+  },
 
-    async assertInvalidOpcode(codeBlock, message = 'should have failed with invalid opcode') {
-        return assertThrows(codeBlock, message, 'invalid opcode')
-    },
+  async assertInvalidOpcode(blockOrPromise) {
+    return assertThrows(blockOrPromise, 'invalid opcode')
+  },
 
-    async assertRevert(codeBlock, message = 'should have failed by reverting') {
-        return assertThrows(codeBlock, message, 'revert')
-    },
+  async assertOutOfGas(blockOrPromise) {
+    return assertThrows(blockOrPromise, 'out of gas')
+  },
+
+  async assertRevert(blockOrPromise, reason) {
+    const error = await assertThrows(blockOrPromise, 'revert', reason)
+    const errorPrefix = `${THROW_ERROR_PREFIX} revert`
+    if (error.message.includes(errorPrefix)) {
+      error.reason = error.message.replace(errorPrefix, '').trim()
+    }
+
+    if (reason) {
+      assert.equal(error.reason, reason, `Expected revert reason "${reason}" but failed with "${error.reason || 'no reason'}" instead.`)
+    }
+  },
 }

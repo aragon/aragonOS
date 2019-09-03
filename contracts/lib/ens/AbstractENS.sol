@@ -1,3 +1,5 @@
+// See https://github.com/ensdomains/ens/blob/7e377df83f/contracts/AbstractENS.sol
+
 pragma solidity ^0.4.15;
 
 

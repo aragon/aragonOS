@@ -1,7 +1,9 @@
 const { assertRevert } = require('./helpers/assertThrow')
 
-
 const Repo = artifacts.require('UnsafeRepo')
+
+const EMPTY_BYTES = '0x'
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('Repo', accounts => {
     let repo
@@ -31,7 +33,7 @@ contract('Repo', accounts => {
     // valid version as being a correct bump from 0.0.0
     it('cannot create invalid first version', async () => {
         return assertRevert(async () => {
-            await repo.newVersion([1, 1, 0], '0x00', '0x00')
+            await repo.newVersion([1, 1, 0], ZERO_ADDR, EMPTY_BYTES)
         })
     })
 
@@ -71,7 +73,7 @@ contract('Repo', accounts => {
         })
 
         it('setting contract address to 0 reuses last version address', async () => {
-            await repo.newVersion([1, 1, 0], '0x00', initialContent)
+            await repo.newVersion([1, 1, 0], ZERO_ADDR, initialContent)
             assertVersion(await repo.getByVersionId(2), [1, 1, 0], initialCode, initialContent)
         })
 

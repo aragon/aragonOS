@@ -35,6 +35,14 @@ contract('Lifecycle', accounts => {
     it('has correct initialization block', async () => {
       assert.equal(await lifecycle.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
     })
+
+    it('cannot be re-initialized', async () => {
+      assertRevert(lifecycle.initializeMock())
+    })
+
+    it('cannot be petrified', async () => {
+      assertRevert(lifecycle.petrifyMock())
+    })
   })
 
   context('> Petrified', () => {
@@ -48,6 +56,10 @@ contract('Lifecycle', accounts => {
 
     it('is petrified', async () => {
       assert.isTrue(await lifecycle.isPetrified(), 'should be petrified')
+    })
+
+    it('cannot be petrified again', async () => {
+      assertRevert(lifecycle.petrifyMock())
     })
 
     it('has initialization block in the future', async () => {

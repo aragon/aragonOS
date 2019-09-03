@@ -17,7 +17,8 @@ const UnsafeAppStubDepositable = artifacts.require('UnsafeAppStubDepositable')
 
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
-const SEND_ETH_GAS = 31000 // 21k base tx cost + 10k limit on depositable proxies
+const TX_BASE_GAS = 21000
+const SEND_ETH_GAS = TX_BASE_GAS + 9999 // <10k gas is the threshold for depositing
 
 contract('App funds', accounts => {
   let aclBase, kernelBase

@@ -1,7 +1,9 @@
+// See https://github.com/ensdomains/ens/blob/7e377df83f/contracts/ENS.sol
+
 pragma solidity ^0.4.0;
 
 
-import './AbstractENS.sol';
+import "./AbstractENS.sol";
 
 /**
  * The ENS registry contract.
