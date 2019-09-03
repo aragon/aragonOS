@@ -75,7 +75,16 @@ library SafeERC20 {
             )
 
             if gt(success, 0) {
-                ret := mload(ptr)
+                switch returndatasize
+
+                // 32 bytes returned; is valid return
+                case 0x20 {
+                    ret := mload(ptr)
+                }
+                // Else, mark call as failed
+                default {
+                    success := 0
+                }
             }
         }
         return (success, ret);
@@ -123,7 +132,7 @@ library SafeERC20 {
 
     /**
     * @dev Static call into ERC20.balanceOf().
-    * Reverts if the call fails for some reason (should never fail).
+    * Reverts if the call fails for some reason (should never fail for correctly implemented ERC20s).
     */
     function staticBalanceOf(ERC20 _token, address _owner) internal view returns (uint256) {
         bytes memory balanceOfCallData = abi.encodeWithSelector(
@@ -139,7 +148,7 @@ library SafeERC20 {
 
     /**
     * @dev Static call into ERC20.allowance().
-    * Reverts if the call fails for some reason (should never fail).
+    * Reverts if the call fails for some reason (should never fail for correctly implemented ERC20s).
     */
     function staticAllowance(ERC20 _token, address _owner, address _spender) internal view returns (uint256) {
         bytes memory allowanceCallData = abi.encodeWithSelector(
@@ -156,7 +165,7 @@ library SafeERC20 {
 
     /**
     * @dev Static call into ERC20.totalSupply().
-    * Reverts if the call fails for some reason (should never fail).
+    * Reverts if the call fails for some reason (should never fail for correctly implemented ERC20s).
     */
     function staticTotalSupply(ERC20 _token) internal view returns (uint256) {
         bytes memory totalSupplyCallData = abi.encodeWithSelector(_token.totalSupply.selector);
