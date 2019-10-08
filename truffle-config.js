@@ -7,7 +7,7 @@ const HDWalletProviderPrivkey = require('truffle-hdwallet-provider-privkey')
 const DEFAULT_MNEMONIC = 'stumble story behind hurt patient ball whisper art swift tongue ice alien'
 
 const defaultRPC = (network) =>
-  `https://${network}.infura.io`
+  `https://${network}.eth.aragon.network`
 
 const configFilePath = (filename) =>
   path.join(homedir(), `.aragon/${filename}`)
