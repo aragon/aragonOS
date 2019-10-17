@@ -1,10 +1,6 @@
 # Dependencies
 node_modules/
 
-# Lock files
-package-lock.json
-yarn.lock
-
 # coverage
 coverage/
 coverageEnv/
