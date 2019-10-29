@@ -34,6 +34,7 @@
   "repository": "https://github.com/aragon/aragonOS",
   "license": "(GPL-3.0-or-later OR MIT)",
   "devDependencies": {
+    "@aragon/truffle-config-v4": "^1.0.0",
     "@codechecks/client": "^0.1.5",
     "coveralls": "^2.13.3",
     "eth-ens-namehash": "^2.0.8",
@@ -52,8 +53,6 @@
   "dependencies": {
     "mkdirp": "^0.5.1",
     "truffle-flattener": "^1.2.9",
-    "homedir": "^0.6.0",
-    "truffle-hdwallet-provider": "0.0.3",
-    "truffle-hdwallet-provider-privkey": "0.3.0"
+    "homedir": "^0.6.0"
   }
 }
