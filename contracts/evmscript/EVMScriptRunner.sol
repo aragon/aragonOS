@@ -2,7 +2,7 @@
  * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 import "./IEVMScriptExecutor.sol";
 import "./IEVMScriptRegistry.sol";
@@ -22,7 +22,7 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
 
     event ScriptResult(address indexed executor, bytes script, bytes input, bytes returnData);
 
-    function getEVMScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
+    function getEVMScriptExecutor(bytes memory _script) public view returns (IEVMScriptExecutor) {
         return IEVMScriptExecutor(getEVMScriptRegistry().getScriptExecutor(_script));
     }
 
@@ -31,11 +31,11 @@ contract EVMScriptRunner is AppStorage, Initializable, EVMScriptRegistryConstant
         return IEVMScriptRegistry(registryAddr);
     }
 
-    function runScript(bytes _script, bytes _input, address[] _blacklist)
+    function runScript(bytes memory _script, bytes memory _input, address[] memory _blacklist)
         internal
         isInitialized
         protectState
-        returns (bytes)
+        returns (bytes memory)
     {
         IEVMScriptExecutor executor = getEVMScriptExecutor(_script);
         require(address(executor) != address(0), ERROR_EXECUTOR_UNAVAILABLE);

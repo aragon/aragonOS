@@ -1,7 +1,7 @@
 // Inspired by AdEx (https://github.com/AdExNetwork/adex-protocol-eth/blob/b9df617829661a7518ee10f4cb6c4108659dd6d5/contracts/libs/SafeERC20.sol)
 // and 0x (https://github.com/0xProject/0x-monorepo/blob/737d1dc54d72872e24abce5a1dbe1b66d35fa21a/contracts/protocol/contracts/protocol/AssetProxy/ERC20Proxy.sol#L143)
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 import "../lib/token/ERC20.sol";
 
@@ -91,7 +91,7 @@ library SafeERC20 {
             _to,
             _amount
         );
-        return invokeAndCheckSuccess(_token, transferCallData);
+        return invokeAndCheckSuccess(address(_token), transferCallData);
     }
 
     /**
@@ -105,7 +105,7 @@ library SafeERC20 {
             _to,
             _amount
         );
-        return invokeAndCheckSuccess(_token, transferFromCallData);
+        return invokeAndCheckSuccess(address(_token), transferFromCallData);
     }
 
     /**
@@ -118,7 +118,7 @@ library SafeERC20 {
             _spender,
             _amount
         );
-        return invokeAndCheckSuccess(_token, approveCallData);
+        return invokeAndCheckSuccess(address(_token), approveCallData);
     }
 
     /**
@@ -131,7 +131,7 @@ library SafeERC20 {
             _owner
         );
 
-        (bool success, uint256 tokenBalance) = staticInvoke(_token, balanceOfCallData);
+        (bool success, uint256 tokenBalance) = staticInvoke(address(_token), balanceOfCallData);
         require(success, ERROR_TOKEN_BALANCE_REVERTED);
 
         return tokenBalance;
@@ -148,7 +148,7 @@ library SafeERC20 {
             _spender
         );
 
-        (bool success, uint256 allowance) = staticInvoke(_token, allowanceCallData);
+        (bool success, uint256 allowance) = staticInvoke(address(_token), allowanceCallData);
         require(success, ERROR_TOKEN_ALLOWANCE_REVERTED);
 
         return allowance;
@@ -161,7 +161,7 @@ library SafeERC20 {
     function staticTotalSupply(ERC20 _token) internal view returns (uint256) {
         bytes memory totalSupplyCallData = abi.encodeWithSelector(_token.totalSupply.selector);
 
-        (bool success, uint256 totalSupply) = staticInvoke(_token, totalSupplyCallData);
+        (bool success, uint256 totalSupply) = staticInvoke(address(_token), totalSupplyCallData);
         require(success, ERROR_TOKEN_ALLOWANCE_REVERTED);
 
         return totalSupply;

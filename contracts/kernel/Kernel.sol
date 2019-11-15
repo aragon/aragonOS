@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "./IKernel.sol";
 import "./KernelConstants.sol";
@@ -44,12 +44,12 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         initialized();
 
         // Set ACL base
-        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, _baseAcl);
+        _setApp(KERNEL_APP_BASES_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, address(_baseAcl));
 
         // Create ACL instance and attach it as the default ACL app
-        IACL acl = IACL(newAppProxy(this, KERNEL_DEFAULT_ACL_APP_ID));
+        IACL acl = IACL(address(newAppProxy(this, KERNEL_DEFAULT_ACL_APP_ID)));
         acl.initialize(_permissionsCreator);
-        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, acl);
+        _setApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID, address(acl));
 
         recoveryVaultAppId = KERNEL_DEFAULT_VAULT_APP_ID;
     }
@@ -81,7 +81,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
+    function newAppInstance(bytes32 _appId, address _appBase, bytes memory _initializePayload, bool _setDefault)
         public
         auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
@@ -91,7 +91,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, appProxy);
+            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, address(appProxy));
         }
     }
 
@@ -122,7 +122,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     *        like Vault for escape hatch mechanism.
     * @return AppProxy instance
     */
-    function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
+    function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes memory _initializePayload, bool _setDefault)
         public
         auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
         returns (ERCProxy appProxy)
@@ -132,7 +132,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         // By calling setApp directly and not the internal functions, we make sure the params are checked
         // and it will only succeed if sender has permissions to set something to the namespace.
         if (_setDefault) {
-            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, appProxy);
+            setApp(KERNEL_APP_ADDR_NAMESPACE, _appId, address(appProxy));
         }
     }
 
@@ -206,7 +206,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     * @return Boolean indicating whether the ACL allows the role or not.
     *         Always returns false if the kernel hasn't been initialized yet.
     */
-    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) public view returns (bool) {
+    function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
         IACL defaultAcl = acl();
         return address(defaultAcl) != address(0) && // Poor man's initialization check (saves gas)
             defaultAcl.hasPermission(_who, _where, _what, _how);

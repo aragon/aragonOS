@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "./IKernel.sol";
 import "./KernelConstants.sol";
@@ -15,13 +15,13 @@ contract KernelProxy is IKernelEvents, KernelStorage, KernelAppIds, KernelNamesp
     */
     constructor(IKernel _kernelImpl) public {
         require(isContract(address(_kernelImpl)));
-        apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID] = _kernelImpl;
+        apps[KERNEL_CORE_NAMESPACE][KERNEL_CORE_APP_ID] = address(_kernelImpl);
 
         // Note that emitting this event is important for verifying that a KernelProxy instance
         // was never upgraded to a malicious Kernel logic contract over its lifespan.
         // This starts the "chain of trust", that can be followed through later SetApp() events
         // emitted during kernel upgrades.
-        emit SetApp(KERNEL_CORE_NAMESPACE, KERNEL_CORE_APP_ID, _kernelImpl);
+        emit SetApp(KERNEL_CORE_NAMESPACE, KERNEL_CORE_APP_ID, address(_kernelImpl));
     }
 
     /**

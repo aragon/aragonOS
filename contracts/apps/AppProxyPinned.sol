@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "../common/UnstructuredStorage.sol";
 import "../common/IsContract.sol";
@@ -17,7 +17,7 @@ contract AppProxyPinned is IsContract, AppProxyBase {
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload)
+    constructor(IKernel _kernel, bytes32 _appId, bytes memory _initializePayload)
         AppProxyBase(_kernel, _appId, _initializePayload)
         public // solium-disable-line visibility-first
     {

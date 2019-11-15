@@ -2,7 +2,7 @@
  * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 
 // aragonOS and aragon-apps rely on address(0) to denote native ETH, in

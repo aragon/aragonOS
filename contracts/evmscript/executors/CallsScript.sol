@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 // Inspired by https://github.com/reverendus/tx-manager
 
@@ -30,7 +30,7 @@ contract CallsScript is BaseEVMScriptExecutor {
     * @param _blacklist Addresses the script cannot call to, or will revert.
     * @return Always returns empty byte array
     */
-    function execScript(bytes _script, bytes, address[] _blacklist) external isInitialized returns (bytes) {
+    function execScript(bytes calldata _script, bytes calldata, address[] calldata _blacklist) external isInitialized returns (bytes memory) {
         uint256 location = SCRIPT_START_LOCATION; // first 32 bits are spec id
         while (location < _script.length) {
             // Check there's at least address + calldataLength available

@@ -2,7 +2,7 @@
  * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 import "../lib/token/ERC20.sol";
 import "./EtherTokenConstant.sol";
@@ -31,10 +31,11 @@ contract VaultRecoverable is IVaultRecoverable, EtherTokenConstant, IsContract {
         uint256 balance;
         if (_token == ETH) {
             balance = address(this).balance;
-            vault.transfer(balance);
+            address payable vaultAddr = address(uint160(address(vault)));
+            vaultAddr.transfer(balance);
         } else {
             ERC20 token = ERC20(_token);
-            balance = token.staticBalanceOf(this);
+            balance = token.staticBalanceOf(address(this));
             require(token.safeTransfer(vault, balance), ERROR_TOKEN_TRANSFER_FAILED);
         }
 

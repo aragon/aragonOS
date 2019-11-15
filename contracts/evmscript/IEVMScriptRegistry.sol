@@ -2,7 +2,7 @@
  * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 import "./IEVMScriptExecutor.sol";
 
@@ -21,5 +21,5 @@ interface IEVMScriptRegistry {
 
     // TODO: this should be external
     // See https://github.com/ethereum/solidity/issues/4832
-    function getScriptExecutor(bytes script) public view returns (IEVMScriptExecutor);
+    function getScriptExecutor(bytes calldata script) external view returns (IEVMScriptExecutor);
 }

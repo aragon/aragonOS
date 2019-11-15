@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "../common/IsContract.sol";
 import "../lib/misc/ERCProxy.sol";
@@ -12,7 +12,7 @@ contract DelegateProxy is ERCProxy, IsContract {
     * @param _dst Destination address to perform the delegatecall
     * @param _calldata Calldata for the delegatecall
     */
-    function delegatedFwd(address _dst, bytes _calldata) internal {
+    function delegatedFwd(address _dst, bytes memory _calldata) internal {
         require(isContract(_dst));
         uint256 fwdGasLimit = FWD_GAS_LIMIT;
 

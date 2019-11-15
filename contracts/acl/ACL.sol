@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "../apps/AragonApp.sol";
 import "../common/ConversionHelpers.sol";
@@ -79,7 +79,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         initialized();
         require(msg.sender == address(kernel()), ERROR_AUTH_INIT_KERNEL);
 
-        _createPermission(_permissionsCreator, this, CREATE_PERMISSIONS_ROLE, _permissionsCreator);
+        _createPermission(_permissionsCreator, address(this), CREATE_PERMISSIONS_ROLE, _permissionsCreator);
     }
 
     /**
@@ -124,7 +124,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
-    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
+    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] memory _params)
         public
         onlyPermissionManager(_app, _role)
     {
@@ -270,7 +270,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         address _who,
         address _where,
         bytes32 _what,
-        uint256[] _how
+        uint256[] memory _how
     ) public view returns (bool)
     {
         if (_paramsHash == EMPTY_PARAM_HASH) {
@@ -302,7 +302,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         }
     }
 
-    function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
+    function _saveParams(uint256[] memory _encodedParams) internal returns (bytes32) {
         bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
         Param[] storage params = permissionParams[paramHash];
 
@@ -323,7 +323,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         address _who,
         address _where,
         bytes32 _what,
-        uint256[] _how
+        uint256[] memory _how
     ) internal view returns (bool)
     {
         if (_paramId >= permissionParams[_paramsHash].length) {
@@ -363,7 +363,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return compare(value, Op(param.op), comparedTo);
     }
 
-    function _evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalLogic(Param memory _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] memory _how)
         internal
         view
         returns (bool)
@@ -416,7 +416,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return false;
     }
 
-    function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+    function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] memory _how) internal view returns (bool) {
         bytes4 sig = _oracleAddr.canPerform.selector;
 
         // a raw call is required so we can return false if the call reverts, rather than reverting

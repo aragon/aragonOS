@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "./AppStorage.sol";
 import "../common/DepositableDelegateProxy.sol";
@@ -13,7 +13,7 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelNamespaceCo
     * @param _appId Identifier for app
     * @param _initializePayload Payload for call to be made after setup to initialize
     */
-    constructor(IKernel _kernel, bytes32 _appId, bytes _initializePayload) public {
+    constructor(IKernel _kernel, bytes32 _appId, bytes memory _initializePayload) public {
         setKernel(_kernel);
         setAppId(_appId);
 
@@ -28,7 +28,8 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelNamespaceCo
             require(isContract(appCode));
             // Cannot make delegatecall as a delegateproxy.delegatedFwd as it
             // returns ending execution context and halts contract deployment
-            require(appCode.delegatecall(_initializePayload));
+            (bool res, bytes memory data) = appCode.delegatecall(_initializePayload);
+            require(res);
         }
     }
 

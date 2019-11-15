@@ -2,7 +2,7 @@
  * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.1;
 
 import "./AppStorage.sol";
 import "../acl/ACLSyntaxSugar.sol";
@@ -26,7 +26,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
         _;
     }
 
-    modifier authP(bytes32 _role, uint256[] _params) {
+    modifier authP(bytes32 _role, uint256[] memory _params) {
         require(canPerform(msg.sender, _role, _params), ERROR_AUTH_FAILED);
         _;
     }
@@ -39,7 +39,7 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     * @return Boolean indicating whether the sender has the permissions to perform the action.
     *         Always returns false if the app hasn't been initialized yet.
     */
-    function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
+    function canPerform(address _sender, bytes32 _role, uint256[] memory _params) public view returns (bool) {
         if (!hasInitialized()) {
             return false;
         }

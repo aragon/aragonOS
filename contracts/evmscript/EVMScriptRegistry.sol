@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "../apps/AragonApp.sol";
 import "./ScriptHelpers.sol";
@@ -59,7 +59,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
     function addScriptExecutor(IEVMScriptExecutor _executor) external auth(REGISTRY_ADD_EXECUTOR_ROLE) returns (uint256 id) {
         uint256 executorId = executorsNextIndex++;
         executors[executorId] = ExecutorEntry(_executor, true);
-        emit EnableExecutor(executorId, _executor);
+        emit EnableExecutor(executorId, address(_executor));
         return executorId;
     }
 
@@ -76,7 +76,7 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(executorEntry.enabled, ERROR_EXECUTOR_DISABLED);
         executorEntry.enabled = false;
-        emit DisableExecutor(_executorId, executorEntry.executor);
+        emit DisableExecutor(_executorId, address(executorEntry.executor));
     }
 
     /**
@@ -91,14 +91,14 @@ contract EVMScriptRegistry is IEVMScriptRegistry, EVMScriptRegistryConstants, Ar
         ExecutorEntry storage executorEntry = executors[_executorId];
         require(!executorEntry.enabled, ERROR_EXECUTOR_ENABLED);
         executorEntry.enabled = true;
-        emit EnableExecutor(_executorId, executorEntry.executor);
+        emit EnableExecutor(_executorId, address(executorEntry.executor));
     }
 
     /**
     * @dev Get the script executor that can execute a particular script based on its first 4 bytes
     * @param _script EVMScript being inspected
     */
-    function getScriptExecutor(bytes _script) public view returns (IEVMScriptExecutor) {
+    function getScriptExecutor(bytes memory _script) public view returns (IEVMScriptExecutor) {
         require(_script.length >= SCRIPT_START_LOCATION, ERROR_SCRIPT_LENGTH_TOO_SHORT);
         uint256 id = _script.getSpecId();
 

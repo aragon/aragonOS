@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.5.1;
 
 import "../evmscript/IEVMScriptExecutor.sol";
 import "../evmscript/EVMScriptRegistry.sol";
@@ -28,7 +28,7 @@ contract EVMScriptRegistryFactory is EVMScriptRegistryConstants {
     */
     function newEVMScriptRegistry(Kernel _dao) public returns (EVMScriptRegistry reg) {
         bytes memory initPayload = abi.encodeWithSelector(reg.initialize.selector);
-        reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, baseReg, initPayload, true));
+        reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, address(baseReg), initPayload, true));
 
         ACL acl = ACL(_dao.acl());
 
