@@ -40,34 +40,36 @@ contract DAOFactory {
     * @return Newly created DAO
     */
     function newDAO(address _root) public returns (Kernel) {
-        Kernel dao = Kernel(new KernelProxy(baseKernel));
+        address kernelProxy = address(new KernelProxy(baseKernel));
+        Kernel dao = Kernel(kernelProxy);
 
         if (address(regFactory) == address(0)) {
             dao.initialize(baseACL, _root);
         } else {
-            dao.initialize(baseACL, this);
+            dao.initialize(baseACL, address(this));
 
-            ACL acl = ACL(dao.acl());
+            address aclAddr = address(dao.acl());
+            ACL acl = ACL(aclAddr);
             bytes32 permRole = acl.CREATE_PERMISSIONS_ROLE();
             bytes32 appManagerRole = dao.APP_MANAGER_ROLE();
 
-            acl.grantPermission(regFactory, acl, permRole);
+            acl.grantPermission(address(regFactory), address(acl), permRole);
 
-            acl.createPermission(regFactory, dao, appManagerRole, this);
+            acl.createPermission(address(regFactory), address(dao), appManagerRole, address(this));
 
             EVMScriptRegistry reg = regFactory.newEVMScriptRegistry(dao);
             emit DeployEVMScriptRegistry(address(reg));
 
             // Clean up permissions
             // First, completely reset the APP_MANAGER_ROLE
-            acl.revokePermission(regFactory, dao, appManagerRole);
-            acl.removePermissionManager(dao, appManagerRole);
+            acl.revokePermission(address(regFactory), address(dao), appManagerRole);
+            acl.removePermissionManager(address(dao), appManagerRole);
 
             // Then, make root the only holder and manager of CREATE_PERMISSIONS_ROLE
-            acl.revokePermission(regFactory, acl, permRole);
-            acl.revokePermission(this, acl, permRole);
-            acl.grantPermission(_root, acl, permRole);
-            acl.setPermissionManager(_root, acl, permRole);
+            acl.revokePermission(address(regFactory), address(acl), permRole);
+            acl.revokePermission(address(this), address(acl), permRole);
+            acl.grantPermission(address(_root), address(acl), permRole);
+            acl.setPermissionManager(address(_root), address(acl), permRole);
         }
 
         emit DeployDAO(address(dao));

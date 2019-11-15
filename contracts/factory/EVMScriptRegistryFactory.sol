@@ -28,17 +28,17 @@ contract EVMScriptRegistryFactory is EVMScriptRegistryConstants {
     */
     function newEVMScriptRegistry(Kernel _dao) public returns (EVMScriptRegistry reg) {
         bytes memory initPayload = abi.encodeWithSelector(reg.initialize.selector);
-        reg = EVMScriptRegistry(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, address(baseReg), initPayload, true));
+        reg = EVMScriptRegistry(address(_dao.newPinnedAppInstance(EVMSCRIPT_REGISTRY_APP_ID, address(baseReg), initPayload, true)));
 
-        ACL acl = ACL(_dao.acl());
+        ACL acl = ACL(address(_dao.acl()));
 
-        acl.createPermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE(), this);
+        acl.createPermission(address(this), address(reg), reg.REGISTRY_ADD_EXECUTOR_ROLE(), address(this));
 
         reg.addScriptExecutor(baseCallScript);     // spec 1 = CallsScript
 
         // Clean up the permissions
-        acl.revokePermission(this, reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
-        acl.removePermissionManager(reg, reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        acl.revokePermission(address(this), address(reg), reg.REGISTRY_ADD_EXECUTOR_ROLE());
+        acl.removePermissionManager(address(reg), reg.REGISTRY_ADD_EXECUTOR_ROLE());
 
         return reg;
     }
