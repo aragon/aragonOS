@@ -59,11 +59,11 @@ contract ConditionalOracle is IACLOracle {
 }
 
 contract OverGasLimitOracle is IACLOracle {
-    uint256 storageVariable;
+    uint256 outOfGasIterations = 99999; // Actual limit is ~7500, set very high in case of gas cost updates
 
     function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
-        for (uint256 i = 0; i < 99999; i++) {
-            uint256 localVariable = storageVariable;
+        for (uint256 i = 0; i < outOfGasIterations; i++) {
+            uint256 localVariable = outOfGasIterations;
         }
         return true;
     }
