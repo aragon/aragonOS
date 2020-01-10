@@ -80,10 +80,6 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RejectOracle()), false);
         assertEval(arr(), ORACLE_PARAM_ID, Op.NEQ, uint256(new RejectOracle()), true);
 
-        // doesn't revert even if oracle reverts
-        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false);
-        // the staticcall will error as the oracle tries to modify state, so a no is returned
-        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
         // if returned data size is not correct, returns false
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new EmptyDataReturnOracle()), false);
 
@@ -92,6 +88,21 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
         assertEval(arr(uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), true);
         assertEval(arr(uint256(0), uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), false);
+    }
+
+    function testRevertOracle() public {
+        // doesn't revert even if oracle reverts
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false);
+    }
+
+    function testStateModifyingOracle() public {
+        // the staticcall will error as the oracle tries to modify state, so a no is returned
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
+    }
+
+    function testOverGasLimitOracle() public {
+        // the transaction should not revert even if the oracle uses all of the provided gas
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new OverGasLimitOracle()), false);
     }
 
     function testReturn() public {

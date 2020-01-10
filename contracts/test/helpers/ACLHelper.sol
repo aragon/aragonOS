@@ -57,3 +57,14 @@ contract ConditionalOracle is IACLOracle {
         return how[0] > 0;
     }
 }
+
+contract OverGasLimitOracle is IACLOracle {
+    uint256 storageVariable;
+
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
+        for (uint256 i = 0; i < 99999; i++) {
+            uint256 localVariable = storageVariable;
+        }
+        return true;
+    }
+}

@@ -42,7 +42,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     address public constant ANY_ENTITY = address(-1);
     address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
 
-    uint256 internal constant ORACLE_CHECK_GAS = 30000;
+    uint256 internal constant ERROR_GAS_ALLOWANCE = 100000;
 
     string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
@@ -421,7 +421,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
         bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
-        uint256 oracleCheckGas = ORACLE_CHECK_GAS;
+        uint256 oracleCheckGas = gasleft() - ERROR_GAS_ALLOWANCE;
 
         bool ok;
         assembly {
