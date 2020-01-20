@@ -45,7 +45,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     address public constant ANY_ENTITY = address(-1);
     address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
 
-    uint256 internal constant ERROR_GAS_ALLOWANCE = 100000;
+    uint256 internal constant ERROR_GAS_ALLOWANCE = 50000;
 
     string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
