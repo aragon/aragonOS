@@ -23,7 +23,7 @@ contract('ACL', ([permissionsRoot, mockAppAddress]) => {
     overGasLimitOracle = await OverGasLimitOracle.new()
   })
 
-  context('> ACLOracle Permissions', () => {
+  context('> ACLOracle Permission', () => {
 
     it('fails when oracle canPerform goes OOG', async () => {
       // Set role such that the Oracle canPerform() function is used to determine the permission
