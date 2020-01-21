@@ -50,6 +50,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
     string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
+    string private constant ERROR_ORACLE_OOG = "ACL_ORACLE_OOG";
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -424,14 +425,18 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         // a raw call is required so we can return false if the call reverts, rather than reverting
         bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
-        uint256 oracleCheckGas = gasleft().sub(ERROR_GAS_ALLOWANCE);
 
         bool ok;
-        assembly {
-            ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+
+        if (gasleft() > ERROR_GAS_ALLOWANCE) {
+            uint256 oracleCheckGas = gasleft().sub(ERROR_GAS_ALLOWANCE);
+            assembly {
+                ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+            }
         }
 
         if (!ok) {
+            require(gasleft() > ERROR_GAS_ALLOWANCE, ERROR_ORACLE_OOG);
             return false;
         }
 

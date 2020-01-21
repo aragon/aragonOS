@@ -60,8 +60,7 @@ contract ConditionalOracle is IACLOracle {
 
 contract OverGasLimitOracle is IACLOracle {
     function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
-        while (true) {
-        }
+        while (true) {}
         return true;
     }
 }
