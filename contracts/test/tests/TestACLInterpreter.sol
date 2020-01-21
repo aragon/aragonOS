@@ -100,11 +100,6 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
     }
 
-    function testOverGasLimitOracle() public {
-        // the transaction should not revert even if the oracle uses all of the provided gas
-        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new OverGasLimitOracle()), false);
-    }
-
     function testReturn() public {
         assertEval(arr(), PARAM_VALUE_PARAM_ID, Op.RET, uint256(1), true);
         assertEval(arr(), PARAM_VALUE_PARAM_ID, Op.RET, uint256(0), false);

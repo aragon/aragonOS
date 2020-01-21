@@ -3,7 +3,6 @@ pragma solidity 0.4.24;
 import "../apps/AragonApp.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/TimeHelpers.sol";
-import "../lib/math/SafeMath.sol";
 import "./ACLSyntaxSugar.sol";
 import "./IACL.sol";
 import "./IACLOracle.sol";
@@ -12,7 +11,6 @@ import "./IACLOracle.sol";
 /* solium-disable function-order */
 // Allow public initialize() to be first
 contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
-    using SafeMath for uint256;
 
     /* Hardcoded constants to save gas
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256("CREATE_PERMISSIONS_ROLE");
@@ -429,7 +427,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         bool ok;
 
         if (gasleft() > ERROR_GAS_ALLOWANCE) {
-            uint256 oracleCheckGas = gasleft().sub(ERROR_GAS_ALLOWANCE);
+            uint256 oracleCheckGas = gasleft() - ERROR_GAS_ALLOWANCE;
             assembly {
                 ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
             }
