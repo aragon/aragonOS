@@ -418,22 +418,21 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
-        bytes4 sig = _oracleAddr.canPerform.selector;
-
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
+        bytes memory checkCalldata = abi.encodeWithSelector(_oracleAddr.canPerform.selector, _who, _where, _what, _how);
 
         bool ok;
+        uint256 gasLeftBeforeCall = gasleft();
 
-        if (gasleft() > ERROR_GAS_ALLOWANCE) {
-            uint256 oracleCheckGas = gasleft() - ERROR_GAS_ALLOWANCE;
+        if (gasLeftBeforeCall > ERROR_GAS_ALLOWANCE) {
+            uint256 oracleCanPerformGas = gasLeftBeforeCall - ERROR_GAS_ALLOWANCE;
             assembly {
-                ok := staticcall(oracleCheckGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
+                ok := staticcall(oracleCanPerformGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
             }
         }
 
         if (!ok) {
-            require(gasleft() > ERROR_GAS_ALLOWANCE, ERROR_ORACLE_OOG);
+            require(gasleft() > max(gasLeftBeforeCall / 64, ERROR_GAS_ALLOWANCE), ERROR_ORACLE_OOG);
             return false;
         }
 
@@ -452,6 +451,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         }
 
         return result;
+    }
+
+    function max(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        return _a > _b ? _a : _b;
     }
 
     /**
