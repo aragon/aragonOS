@@ -1,4 +1,5 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const { paramForOracle } = require('../../helpers/permissionParams')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -7,14 +8,6 @@ const OverGasLimitOracle = artifacts.require('OverGasLimitOracle')
 const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-
-const paramForOracle = (oracleAddress) => {
-  // Set role such that the Oracle canPerform() function is used to determine the permission
-  const argId = '0xCB' // arg 203 - Oracle ID
-  const op = '01'      // equal
-  const value = `00000000000000000000${oracleAddress.slice(2)}`
-  return new web3.BigNumber(`${argId}${op}${value}`)
-}
 
 contract('ACL', ([permissionsRoot, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
@@ -46,7 +39,7 @@ contract('ACL', ([permissionsRoot, mockAppAddress]) => {
       await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
     })
 
-    // In this situation `evalParams()` is only called once
+    // Note `evalParams()` is only called once when calling `hasPermission` for a specific address
     it('fails when oracle canPerform goes OOG with specified permission owner', async () => {
       await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
       await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
