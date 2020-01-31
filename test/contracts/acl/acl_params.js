@@ -10,7 +10,7 @@ const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
 
-contract('ACL', ([permissionsRoot, mockAppAddress]) => {
+contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
   const MOCK_APP_ROLE = "0xAB"
 
@@ -26,38 +26,76 @@ contract('ACL', ([permissionsRoot, mockAppAddress]) => {
     await acl.createPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, permissionsRoot)
   })
 
-  it('ACLOracle succeeds when oracle canPerform returns true', async () => {
-    const acceptOracle = await AcceptOracle.new()
-    const param = paramForOracle(acceptOracle.address)
-    await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-    assert.isTrue(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
-  })
+  context('> ACL Oracle', () => {
+    describe('when the oracle accepts', () => {
+      let acceptOracle, param
 
-  it('ACLOracle fails when oracle canPerform modifies state', async () => {
-    const stateModifyingOracle = await StateModifyingOracle.new()
-    const param = paramForOracle(stateModifyingOracle.address)
-    await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-    await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
-  })
+      before(async () => {
+        acceptOracle = await AcceptOracle.new()
+        param = paramForOracle(acceptOracle.address)
+      })
 
-  context('> ACLOracle OverGasLimitOracle', () => {
-    let overGasLimitOracle, param
+      describe('when permission is set for ANY_ADDR', () => {
+        it('ACL allows actions', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          assert.isTrue(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+        })
+      })
 
-    beforeEach(async () => {
-      overGasLimitOracle = await OverGasLimitOracle.new()
-      param = paramForOracle(overGasLimitOracle.address)
+      describe('when permission is set for specific address', async () => {
+        it('ACL allows actions when permisison is set for a specific address', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          assert.isTrue(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE))
+        })
+      })
     })
 
-    // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`
-    it('fails when oracle canPerform goes OOG', async () => {
-      await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-      await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+    describe('when the oracle modifies state', () => {
+      let stateModifyingOracle, param
+
+      before(async () => {
+        stateModifyingOracle = await StateModifyingOracle.new()
+        param = paramForOracle(stateModifyingOracle.address)
+      })
+
+      describe('when permission is set for ANY_ADDR', () => {
+        it('ACL disallows actions', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+        })
+      })
+
+      describe('when permission is set for specific address', async () => {
+        it('ACL disallows actions', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+        })
+      })
     })
 
-    // Note `evalParams()` is only called once when calling `hasPermission` for a specific address
-    it('fails when oracle canPerform goes OOG with specified permission owner', async () => {
-      await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
-      await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+    describe('when the oracle goes out of gas', () => {
+      let overGasLimitOracle, param
+
+      before(async () => {
+        overGasLimitOracle = await OverGasLimitOracle.new()
+        param = paramForOracle(overGasLimitOracle.address)
+      })
+
+      describe('when permission is set for ANY_ADDR', () => {
+        // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`
+        it('ACL disallows actions', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+        })
+      })
+
+      describe('when permission is set for specific address', async () => {
+        // Note `evalParams()` is only called once when calling `hasPermission` for a specific address
+        it('ACL disallows actions', async () => {
+          await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+        })
+      })
     })
   })
 })
