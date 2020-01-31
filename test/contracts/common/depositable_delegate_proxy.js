@@ -1,5 +1,6 @@
 const { toChecksumAddress } = require('web3-utils')
 const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
+const { skipCoverage } = require('../../helpers/coverage')
 const { decodeEventsOfType } = require('../../helpers/decodeEvent')
 const { assertRevert, assertOutOfGas } = require('../../helpers/assertThrow')
 const { getBalance } = require('../../helpers/web3')
@@ -15,7 +16,6 @@ const SEND_ETH_GAS = TX_BASE_GAS + 9999 // <10k gas is the threshold for deposit
 const PROXY_FORWARD_GAS = TX_BASE_GAS + 2e6 // high gas amount to ensure that the proxy forwards the call
 const FALLBACK_SETUP_GAS = process.env.SOLIDITY_COVERAGE ? 5000 : 100 // rough estimation of how much gas it spends before executing the fallback code
 const SOLIDITY_TRANSFER_GAS = 2300
-const ISTANBUL_SLOAD_GAS_INCREASE = 600
 
 contract('DepositableDelegateProxy', ([ sender ]) => {
   let ethSender, proxy, target, proxyTargetWithoutFallbackBase, proxyTargetWithFallbackBase
@@ -117,29 +117,21 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
         }
       }
 
-      it('can receive ETH (Constantinople)', async () => {
+      it('can receive ETH', async () => {
         const { gasUsed } = await assertSendEthToProxy({ value, gas: SEND_ETH_GAS })
-        console.log('Used gas:', gasUsed - TX_BASE_GAS)
       })
 
-      // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
-      it('can receive ETH (Istanbul, EIP-1884)', async () => {
-        const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE
-        const { gasUsed } = await assertSendEthToProxy({ value, gas })
-        const gasUsedIstanbul = gasUsed - TX_BASE_GAS + ISTANBUL_SLOAD_GAS_INCREASE
-        console.log('Used gas (Istanbul):', gasUsedIstanbul)
-
-        assert.isBelow(gasUsedIstanbul, 2300, 'Gas cost under Istanbul cannot be above 2300 gas')
-      })
-
-      // TODO: Remove when the targetted EVM has been upgraded to Istanbul (EIP-1884)
-      it('cannot receive ETH if sent with a small amount of gas', async () => {
-        // solidity-coverage seems to be increasing the gas amount to prevent failures
-        const oogDecrease = process.env.SOLIDITY_COVERAGE ? 600 : 250
-        // deposit cannot be done with this amount of gas
-        const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - ISTANBUL_SLOAD_GAS_INCREASE - oogDecrease
-        await assertSendEthToProxy({ shouldOOG: true, value, gas })
-      })
+      it(
+        'cannot receive ETH if sent with a small amount of gas',
+        // Our version of solidity-coverage is not on an istanbul context yet
+        // TODO: update solidity-coverage
+        skipCoverage(async () => {
+          const oogDecrease = 250
+          // deposit cannot be done with this amount of gas
+          const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - oogDecrease
+          await assertSendEthToProxy({ shouldOOG: true, value, gas })
+        })
+      )
 
       it('can receive ETH from contract', async () => {
         const { tx } = await ethSender.sendEth(proxy.address, { value })
