@@ -42,12 +42,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     address public constant ANY_ENTITY = address(-1);
     address public constant BURN_ENTITY = address(1); // address(0) is already used as "no permission manager"
 
-    uint256 internal constant ERROR_GAS_ALLOWANCE = 50000;
-
     string private constant ERROR_AUTH_INIT_KERNEL = "ACL_AUTH_INIT_KERNEL";
     string private constant ERROR_AUTH_NO_MANAGER = "ACL_AUTH_NO_MANAGER";
     string private constant ERROR_EXISTENT_MANAGER = "ACL_EXISTENT_MANAGER";
-    string private constant ERROR_ORACLE_OOG = "ACL_ORACLE_OOG";
 
     // Whether someone has a permission
     mapping (bytes32 => bytes32) internal permissions; // permissions hash => params hash
@@ -418,21 +415,17 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
+        bytes4 sig = _oracleAddr.canPerform.selector;
+
         // a raw call is required so we can return false if the call reverts, rather than reverting
-        bytes memory checkCalldata = abi.encodeWithSelector(_oracleAddr.canPerform.selector, _who, _where, _what, _how);
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
 
         bool ok;
-        uint256 gasLeftBeforeCall = gasleft();
-
-        if (gasLeftBeforeCall > ERROR_GAS_ALLOWANCE) {
-            uint256 oracleCanPerformGas = gasLeftBeforeCall - ERROR_GAS_ALLOWANCE;
-            assembly {
-                ok := staticcall(oracleCanPerformGas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
-            }
+        assembly {
+            ok := staticcall(gas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
         }
 
         if (!ok) {
-            require(gasleft() > max(gasLeftBeforeCall / 64, ERROR_GAS_ALLOWANCE), ERROR_ORACLE_OOG);
             return false;
         }
 
@@ -451,10 +444,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         }
 
         return result;
-    }
-
-    function max(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        return _a > _b ? _a : _b;
     }
 
     /**

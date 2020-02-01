@@ -61,19 +61,19 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
       describe('when permission is set for ANY_ADDR', () => {
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
         })
       })
 
       describe('when permission is set for specific address', async () => {
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
         })
       })
     })
 
-    describe('when the oracle goes out of gas', () => {
+    describe('when the oracle uses all available gas', () => {
       let overGasLimitOracle, param
 
       before(async () => {
@@ -85,7 +85,7 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
         })
       })
 
@@ -93,7 +93,7 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         // Note `evalParams()` is only called once when calling `hasPermission` for a specific address
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
-          await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE), "ACL_ORACLE_OOG")
+          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE))
         })
       })
     })

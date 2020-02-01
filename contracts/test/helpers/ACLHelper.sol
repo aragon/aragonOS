@@ -59,11 +59,11 @@ contract ConditionalOracle is IACLOracle {
 }
 
 contract OverGasLimitOracle is IACLOracle {
-    uint256 storageVar;
-
     function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         while (true) {
-            uint256 memoryVar = storageVar;
+            // Do an SLOAD increase the per-loop gas costs
+            uint256 loadFromStorage;
+            assembly { loadFromStorage := sload(0) }
         }
         return true;
     }
