@@ -422,6 +422,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         bool ok;
         assembly {
+            // send all available gas; if the oracle eats up all the gas, we will eventually revert
+            // note that we are currently guaranteed to still have some gas after the call from
+            // EIP-150's 63/64 gas forward rule
             ok := staticcall(gas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
         }
 
