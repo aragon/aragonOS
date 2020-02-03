@@ -9,6 +9,7 @@ const OverGasLimitOracle = artifacts.require('OverGasLimitOracle')
 const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const disableForCoverage = (process.env.SOLIDITY_COVERAGE === 'true' ? describe.skip : describe)
 
 contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
@@ -39,6 +40,11 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         it('ACL allows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
           assert.isTrue(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+        })
+
+        it('ACL allows actions with low gas', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          assert.isTrue(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: 100000 }))
         })
       })
 
@@ -73,7 +79,7 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
       })
     })
 
-    describe('when the oracle uses all available gas', () => {
+    disableForCoverage('when the oracle uses all available gas', () => {
       let overGasLimitOracle, param
 
       before(async () => {
@@ -87,6 +93,17 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
           assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
         })
+
+        it('ACL disallows actions with medium gas', async () => {
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: 3000000 }))
+        })
+
+        it('ACL fails with low gas', async () => {
+          // Note gas amount is high due to `evalParams()`, and therefore the Oracle `canPerform()`, function being called twice.
+          await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: 2900000 }))
+        })
       })
 
       describe('when permission is set for specific address', async () => {
@@ -94,6 +111,16 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
           assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE))
+        })
+
+        it('ACL disallows actions with low gas', async () => {
+          await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
+          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: 190000}))
+        })
+
+        it('ACL fails with low gas', async () => {
+          await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
+          await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: 180000}))
         })
       })
     })
