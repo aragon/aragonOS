@@ -165,6 +165,11 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
 
           describe('when permission is set for specific address', async () => {
             const MEDIUM_GAS = 190000
+            // Note that these gas values are still quite high for causing reverts in "low gas"
+            // situations, as we incur some overhead with delegating into proxies and other checks.
+            // Assuming we incur 40-60k gas overhead for this, we only have ~140,000 gas left.
+            // After the oracle call, we only have 140,000 / 64 ~= 2000 gas left, which begins to
+            // quick run out with SLOADs.
             const LOW_GAS = 180000
 
             beforeEach(async () => {
