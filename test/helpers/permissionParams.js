@@ -1,4 +1,4 @@
-const paramForOracle = (oracleAddress) => {
+const permissionParamEqOracle = (oracleAddress) => {
   // Set role such that the Oracle canPerform() function is used to determine the permission
   const argId = '0xCB' // arg 203 - Oracle ID
   const op = '01'      // equal
@@ -7,5 +7,5 @@ const paramForOracle = (oracleAddress) => {
 }
 
 module.exports = {
-  paramForOracle
+  permissionParamEqOracle
 }

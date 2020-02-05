@@ -34,6 +34,12 @@ contract RevertOracle is IACLOracle {
     }
 }
 
+contract AssertOracle is IACLOracle {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
+        assert(false);
+    }
+}
+
 // Can't implement from IACLOracle as its canPerform() is marked as view-only
 contract StateModifyingOracle /* is IACLOracle */ {
     bool modifyState;
@@ -60,7 +66,11 @@ contract ConditionalOracle is IACLOracle {
 
 contract OverGasLimitOracle is IACLOracle {
     function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
-        assert(false);
+        while (true) {
+            // Do an SLOAD to increase the per-loop gas costs
+            uint256 loadFromStorage;
+            assembly { loadFromStorage := sload(0) }
+        }
         return true;
     }
 }
