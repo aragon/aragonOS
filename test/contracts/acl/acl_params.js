@@ -1,4 +1,5 @@
 const { assertRevert } = require('../../helpers/assertThrow')
+const { skipCoverage } = require('../../helpers/coverage')
 const { paramForOracle } = require('../../helpers/permissionParams')
 
 const ACL = artifacts.require('ACL')
@@ -9,7 +10,6 @@ const OverGasLimitOracle = artifacts.require('OverGasLimitOracle')
 const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-const disableForCoverage = (process.env.SOLIDITY_COVERAGE === 'true' ? describe.skip : describe)
 
 contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
@@ -79,7 +79,7 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
       })
     })
 
-    disableForCoverage('when the oracle uses all available gas', () => {
+    describe('when the oracle uses all available gas', skipCoverage(() => {
       let overGasLimitOracle, param
 
       before(async () => {
@@ -123,6 +123,6 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
           await assertRevert(acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: 180000}))
         })
       })
-    })
+    }))
   })
 })
