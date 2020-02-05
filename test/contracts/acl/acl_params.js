@@ -10,6 +10,8 @@ const OverGasLimitOracle = artifacts.require('OverGasLimitOracle')
 const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
+const MAX_GAS_AVAILABLE = 6900000
+const EXPECTED_GAS_USAGE = MAX_GAS_AVAILABLE * 63 / 64
 
 contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
@@ -67,14 +69,22 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
       describe('when permission is set for ANY_ADDR', () => {
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, EXPECTED_GAS_USAGE, 1000)
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE }))
         })
       })
 
       describe('when permission is set for specific address', async () => {
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, EXPECTED_GAS_USAGE, 1000)
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE }))
         })
       })
     })
@@ -91,12 +101,22 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, EXPECTED_GAS_USAGE, 1000)
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE}))
         })
 
         it('ACL disallows actions with medium gas', async () => {
+          const gasAvailable = 3000000
+          const expectedGasUsage = gasAvailable * 63 / 64
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: 3000000 }))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: gasAvailable })
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, expectedGasUsage, 1000)
+          assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: gasAvailable }))
         })
 
         it('ACL fails with low gas', async () => {
@@ -110,12 +130,22 @@ contract('ACL params', ([permissionsRoot, mockAppAddress]) => {
         // Note `evalParams()` is only called once when calling `hasPermission` for a specific address
         it('ACL disallows actions', async () => {
           await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, EXPECTED_GAS_USAGE, 105000)
+          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE), { gas: MAX_GAS_AVAILABLE })
         })
 
         it('ACL disallows actions with low gas', async () => {
+          const gasAvailable = 190000
+          const expectedGasUsage = gasAvailable * 63 / 64
           await acl.grantPermissionP(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, [param])
-          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: 190000}))
+
+          const hasPermissionTxHash = await acl.hasPermission.sendTransaction(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: gasAvailable})
+          const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+          assert.closeTo(hasPermissionGasConsumed, expectedGasUsage, 10000)
+          assert.isFalse(await acl.hasPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, { gas: gasAvailable}))
         })
 
         it('ACL fails with low gas', async () => {
