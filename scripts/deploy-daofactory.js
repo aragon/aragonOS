@@ -6,6 +6,7 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const defaultKernelBase = process.env.KERNEL_BASE
 const defaultAclBaseAddress = process.env.ACL_BASE
+const defaultEvmScriptRegistryFactoryAddress = process.env.EVM_REG_FACTORY
 
 module.exports = async (
   truffleExecCallback,
@@ -13,6 +14,7 @@ module.exports = async (
     artifacts = globalArtifacts,
     kernelBaseAddress = defaultKernelBase,
     aclBaseAddress = defaultAclBaseAddress,
+    evmScriptRegistryFactoryAddress = defaultEvmScriptRegistryFactoryAddress,
     withEvmScriptRegistryFactory = true,
     verbose = true
   } = {}
@@ -47,8 +49,14 @@ module.exports = async (
   let evmScriptRegistryFactory
   if (withEvmScriptRegistryFactory) {
     const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
-    evmScriptRegistryFactory = await EVMScriptRegistryFactory.new()
-    await logDeploy(evmScriptRegistryFactory, { verbose })
+
+    if (evmScriptRegistryFactoryAddress) {
+      evmScriptRegistryFactory = EVMScriptRegistryFactory.at(evmScriptRegistryFactoryAddress)
+      log(`Skipping deploying new EVMScriptRegistryFactory, using provided address: ${evmScriptRegistryFactoryAddress}`)
+    } else {
+      evmScriptRegistryFactory = await EVMScriptRegistryFactory.new()
+      await logDeploy(evmScriptRegistryFactory, { verbose })
+    }
   }
   const daoFactory = await DAOFactory.new(
     kernelBase.address,
