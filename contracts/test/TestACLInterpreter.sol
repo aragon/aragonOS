@@ -82,8 +82,6 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
         // doesn't revert even if oracle reverts
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new RevertOracle()), false);
-        // the staticcall will error as the oracle tries to modify state, so a no is returned
-        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new StateModifyingOracle()), false);
         // if returned data size is not correct, returns false
         assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(new EmptyDataReturnOracle()), false);
 

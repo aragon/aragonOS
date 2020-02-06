@@ -9,6 +9,12 @@ const skipCoverage = test => {
     }
 }
 
+// For some reason, adding skipCoverage() to `before()`s were not working
+const skipSuiteCoverage = suite => {
+  return process.env.SOLIDITY_COVERAGE === 'true' ? suite.skip : suite
+}
+
 module.exports = {
-  skipCoverage
+  skipCoverage,
+  skipSuiteCoverage,
 }
