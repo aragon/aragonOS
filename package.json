@@ -34,7 +34,6 @@
   "repository": "https://github.com/aragon/aragonOS",
   "license": "(GPL-3.0-or-later OR MIT)",
   "devDependencies": {
-    "@aragon/truffle-config-v4": "^1.0.1",
     "@codechecks/client": "^0.1.5",
     "coveralls": "^3.0.9",
     "eth-ens-namehash": "^2.0.8",
@@ -51,6 +50,7 @@
     "web3-utils": "1.2.5"
   },
   "dependencies": {
+    "@aragon/truffle-config-v4": "^1.0.1",
     "mkdirp": "^0.5.1",
     "truffle-flattener": "^1.2.9",
     "homedir": "^0.6.0"
