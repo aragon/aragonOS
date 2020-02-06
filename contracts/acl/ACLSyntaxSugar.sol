@@ -18,12 +18,40 @@ contract ACLSyntaxSugar {
         return arr(uint256(_a), uint256(_b));
     }
 
+    function arr(bytes32 _a, address _b) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), uint256(_b));
+    }
+
+    function arr(bytes32 _a, address _b, address _c) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), uint256(_b), uint256(_c));
+    }
+
+    function arr(bytes32 _a, uint256 _b) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _b);
+    }
+
+    function arr(bytes32 _a, uint256 _b, uint256 _c) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _b, _c);
+    }
+
     function arr(address _a) internal pure returns (uint256[] r) {
         return arr(uint256(_a));
     }
 
+    function arr(address _a, bool _b) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _toUint(_b));
+    }
+
+    function arr(address _a, bool _b, bool _c) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _toUint(_b), _toUint(_c));
+    }
+
     function arr(address _a, address _b) internal pure returns (uint256[] r) {
         return arr(uint256(_a), uint256(_b));
+    }
+
+    function arr(address _a, uint256 _b) internal pure returns (uint256[] r) {
+        return arr(uint256(_a), _b);
     }
 
     function arr(address _a, uint256 _b, uint256 _c) internal pure returns (uint256[] r) {
@@ -32,10 +60,6 @@ contract ACLSyntaxSugar {
 
     function arr(address _a, uint256 _b, uint256 _c, uint256 _d) internal pure returns (uint256[] r) {
         return arr(uint256(_a), _b, _c, _d);
-    }
-
-    function arr(address _a, uint256 _b) internal pure returns (uint256[] r) {
-        return arr(uint256(_a), uint256(_b));
     }
 
     function arr(address _a, address _b, uint256 _c, uint256 _d, uint256 _e) internal pure returns (uint256[] r) {
@@ -83,6 +107,10 @@ contract ACLSyntaxSugar {
         r[2] = _c;
         r[3] = _d;
         r[4] = _e;
+    }
+
+    function _toUint(bool _a) private pure returns (uint256) {
+        return _a ? uint256(1) : uint256(0);
     }
 }
 

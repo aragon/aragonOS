@@ -20,4 +20,5 @@ contract IKernel is IKernelEvents, IVaultRecoverable {
 
     function setApp(bytes32 namespace, bytes32 appId, address app) public;
     function getApp(bytes32 namespace, bytes32 appId) public view returns (address);
+    function isAppDisabled(bytes32 appId, address _instance) public view returns (bool);
 }

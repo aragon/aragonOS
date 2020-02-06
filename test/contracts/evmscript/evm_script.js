@@ -191,7 +191,7 @@ contract('EVM Script', ([_, boss]) => {
   })
 
   context('> ScriptRunner', () => {
-    let scriptRunnerApp
+    let scriptRunnerAppBase, scriptRunnerApp
 
     before(async () => {
       scriptRunnerAppBase = await AppStubScriptRunner.new()

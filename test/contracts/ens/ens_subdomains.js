@@ -9,6 +9,7 @@ const ENSFactory = artifacts.require('ENSFactory')
 const Repo = artifacts.require('Repo')
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
+const KillSwitch = artifacts.require('KillSwitch')
 const DAOFactory = artifacts.require('DAOFactory')
 const APMRegistry = artifacts.require('APMRegistry')
 const APMRegistryFactory = artifacts.require('APMRegistryFactory')
@@ -34,7 +35,8 @@ contract('ENSSubdomainRegistrar', ([_, apmOwner, notOwner]) => {
 
         const kernelBase = await Kernel.new(true) // petrify immediately
         const aclBase = await ACL.new()
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDR)
+        const killSwitchBase = await KillSwitch.new()
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, ZERO_ADDR)
 
         APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
     })

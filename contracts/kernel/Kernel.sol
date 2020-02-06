@@ -10,6 +10,7 @@ import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
+import "../kill-switch/IKillSwitch.sol";
 import "../lib/misc/ERCProxy.sol";
 
 
@@ -20,9 +21,9 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     */
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
 
+    string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
-    string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -162,6 +163,22 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         recoveryVaultAppId = _recoveryVaultAppId;
     }
 
+    /**
+    * @dev Tells whether a call to an instance of an app should be denied or not based on the kill-switch settings.
+    *      Initialization check is implicitly provided by the KillSwitch's existence, as apps can only be installed after initialization.
+    * @param _appId Identifier for app to be checked
+    * @return True if the given call should be denied, false otherwise
+    */
+    function isAppDisabled(bytes32 _appId, address _instance) public view returns (bool) {
+        IKillSwitch _killSwitch = killSwitch();
+        if (address(_killSwitch) == address(0)) {
+            return false;
+        }
+
+        address _baseApp = getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
+        return _killSwitch.shouldDenyCallingApp(_appId, _baseApp, _instance);
+    }
+
     // External access to default app id and namespace constants to mimic default getters for constants
     /* solium-disable function-order, mixedcase */
     function CORE_NAMESPACE() external pure returns (bytes32) { return KERNEL_CORE_NAMESPACE; }
@@ -169,6 +186,7 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     function APP_ADDR_NAMESPACE() external pure returns (bytes32) { return KERNEL_APP_ADDR_NAMESPACE; }
     function KERNEL_APP_ID() external pure returns (bytes32) { return KERNEL_CORE_APP_ID; }
     function DEFAULT_ACL_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_ACL_APP_ID; }
+    function DEFAULT_KILL_SWITCH_APP_ID() external pure returns (bytes32) { return KERNEL_DEFAULT_KILL_SWITCH_APP_ID; }
     /* solium-enable function-order, mixedcase */
 
     /**
@@ -190,11 +208,19 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
     }
 
     /**
-    * @dev Get the installed ACL app
+    * @dev Get the default ACL app
     * @return ACL app
     */
     function acl() public view returns (IACL) {
         return IACL(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_ACL_APP_ID));
+    }
+
+    /**
+    * @dev Get the default KillSwitch app
+    * @return KillSwitch app
+    */
+    function killSwitch() public view returns (IKillSwitch) {
+        return IKillSwitch(getApp(KERNEL_APP_ADDR_NAMESPACE, KERNEL_DEFAULT_KILL_SWITCH_APP_ID));
     }
 
     /**

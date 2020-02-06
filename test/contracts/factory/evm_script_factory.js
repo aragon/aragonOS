@@ -4,6 +4,7 @@ const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
+const KillSwitch = artifacts.require('KillSwitch')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const DAOFactory = artifacts.require('DAOFactory')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
@@ -27,9 +28,10 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
   before(async () => {
     const kernelBase = await Kernel.new(true) // petrify immediately
     const aclBase = await ACL.new()
+    const killSwitchBase = await KillSwitch.new()
 
     regFact = await EVMScriptRegistryFactory.new()
-    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
+    daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, killSwitchBase.address, regFact.address)
     callsScriptBase = await regFact.baseCallScript()
     evmScriptRegBase = EVMScriptRegistry.at(await regFact.baseReg())
     const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
@@ -47,7 +49,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
   beforeEach(async () => {
     const receipt = await daoFact.newDAO(permissionsRoot)
     dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-    evmScriptReg = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
+    evmScriptReg = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'registry'))
 
     acl = ACL.at(await dao.acl())
   })

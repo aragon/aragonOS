@@ -27,6 +27,7 @@ contract('Constants', () => {
     assert.equal(await kernelConstants.getKernelAppId(), await keccakConstants.KERNEL_APP_ID(), "kernel app id doesn't match")
     assert.equal(await kernelConstants.getDefaultACLAppId(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default ACL id doesn't match")
     assert.equal(await kernelConstants.getDefaultVaultAppId(), await keccakConstants.DEFAULT_VAULT_APP_ID(), "default vault id doesn't match")
+    assert.equal(await kernelConstants.getDefaultKillSwitchAppId(), await keccakConstants.DEFAULT_KILL_SWITCH_APP_ID(), "default kill switch id doesn't match")
     assert.equal(await kernelConstants.getKernelCoreNamespace(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppBasesNamespace(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernelConstants.getKernelAppAddrNamespace(), await keccakConstants.KERNEL_APP_ADDR_NAMESPACE(), "app namespace doesn't match")
@@ -35,6 +36,7 @@ contract('Constants', () => {
     assert.equal(await kernel.APP_MANAGER_ROLE(), await keccakConstants.APP_MANAGER_ROLE(), "app manager role doesn't match")
     assert.equal(await kernel.KERNEL_APP_ID(), await keccakConstants.KERNEL_APP_ID(), "app id doesn't match")
     assert.equal(await kernel.DEFAULT_ACL_APP_ID(), await keccakConstants.DEFAULT_ACL_APP_ID(), "default acl id doesn't match")
+    assert.equal(await kernel.DEFAULT_KILL_SWITCH_APP_ID(), await keccakConstants.DEFAULT_KILL_SWITCH_APP_ID(), "default kill switch id doesn't match")
     assert.equal(await kernel.CORE_NAMESPACE(), await keccakConstants.KERNEL_CORE_NAMESPACE(), "core namespace doesn't match")
     assert.equal(await kernel.APP_BASES_NAMESPACE(), await keccakConstants.KERNEL_APP_BASES_NAMESPACE(), "base namespace doesn't match")
     assert.equal(await kernel.APP_ADDR_NAMESPACE(), await keccakConstants.KERNEL_APP_ADDR_NAMESPACE(), "app namespace doesn't match")
@@ -120,5 +122,15 @@ contract('Constants', () => {
     // This test therefore also relies on the ReentrancyGuard's own tests to make sure we've
     // redefined the storage position correctly in the mock.
     assert.equal(await reentrancyGuardMock.getReentrancyMutexPosition(), await keccakConstants.reentrancyGuardPosition(), "reentrancyGuardPosition doesn't match")
+  })
+
+  it('checks KillSwitch constants', async () => {
+    const killSwitch = await getContract('KillSwitch').new()
+
+    assert.equal(await killSwitch.CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE(), await keccakConstants.CHANGE_DEFAULT_ISSUES_REGISTRY_ROLE())
+    assert.equal(await killSwitch.CHANGE_WHITELISTED_INSTANCES_ROLE(), await keccakConstants.CHANGE_WHITELISTED_INSTANCES_ROLE())
+    assert.equal(await killSwitch.CHANGE_BLACKLISTED_BASE_IMPLS_ROLE(), await keccakConstants.CHANGE_BLACKLISTED_BASE_IMPLS_ROLE())
+    assert.equal(await killSwitch.CHANGE_ISSUES_REGISTRY_ROLE(), await keccakConstants.CHANGE_ISSUES_REGISTRY_ROLE())
+    assert.equal(await killSwitch.CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE(), await keccakConstants.CHANGE_HIGHEST_ALLOWED_SEVERITY_ROLE())
   })
 })

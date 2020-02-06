@@ -6,6 +6,7 @@ const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const defaultKernelBase = process.env.KERNEL_BASE
 const defaultAclBaseAddress = process.env.ACL_BASE
+const defaultKillSwitchBaseAddress = process.env.KILL_SWITCH_BASE
 
 module.exports = async (
   truffleExecCallback,
@@ -23,7 +24,7 @@ module.exports = async (
 
   const ACL = artifacts.require('ACL')
   const Kernel = artifacts.require('Kernel')
-
+  const KillSwitch = artifacts.require('KillSwitch')
   const DAOFactory = artifacts.require('DAOFactory')
 
   let kernelBase
@@ -44,6 +45,15 @@ module.exports = async (
     await logDeploy(aclBase, { verbose })
   }
 
+  let killSwitchBase
+  if (defaultKillSwitchBaseAddress) {
+    killSwitchBase = KillSwitch.at(defaultKillSwitchBaseAddress)
+    log(`Skipping deploying new KillSwitch base, using provided address: ${defaultKillSwitchBaseAddress}`)
+  } else {
+    killSwitchBase = await KillSwitch.new()
+    await logDeploy(killSwitchBase, { verbose })
+  }
+
   let evmScriptRegistryFactory
   if (withEvmScriptRegistryFactory) {
     const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
@@ -53,6 +63,7 @@ module.exports = async (
   const daoFactory = await DAOFactory.new(
     kernelBase.address,
     aclBase.address,
+    killSwitchBase.address,
     evmScriptRegistryFactory ? evmScriptRegistryFactory.address : ZERO_ADDR
   )
 
@@ -64,6 +75,7 @@ module.exports = async (
   } else {
     return {
       aclBase,
+      killSwitchBase,
       daoFactory,
       evmScriptRegistryFactory,
       kernelBase,

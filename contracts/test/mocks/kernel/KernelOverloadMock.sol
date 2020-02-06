@@ -11,40 +11,26 @@ import "../../../lib/misc/ERCProxy.sol";
  * NOTE: awkwardly, by default we have access to the full version of `newAppInstance()` but only the
  * minimized version for `newPinnedAppInstance()`
  */
-contract KernelOverloadMock {
-    Kernel public kernel;
+contract KernelOverloadMock is Kernel {
+    constructor(bool _shouldPetrify) Kernel(_shouldPetrify) public {}
 
-    event NewAppProxy(address proxy);
-
-    constructor(Kernel _kernel) public {
-        kernel = _kernel;
+    // Overriding function to bypass Truffle's overloading issues
+    function newAppInstanceWithoutPayload(bytes32 _appId, address _appBase) public returns (ERCProxy) {
+        return super.newAppInstance(_appId, _appBase);
     }
 
-    /*
-    function newAppInstance(bytes32 _appId, address _appBase)
-        public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
-        returns (ERCProxy appProxy)
-    */
-    function newAppInstance(bytes32 _appId, address _appBase)
-        public
-        returns (ERCProxy appProxy)
-    {
-        appProxy = kernel.newAppInstance(_appId, _appBase);
-        emit NewAppProxy(appProxy);
+    // Overriding function to bypass Truffle's overloading issues
+    function newAppInstanceWithPayload(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault) public returns (ERCProxy) {
+        return super.newAppInstance(_appId, _appBase, _initializePayload, _setDefault);
     }
 
-    /*
-    function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
-        public
-        auth(APP_MANAGER_ROLE, arr(KERNEL_APP_BASES_NAMESPACE, _appId))
-        returns (ERCProxy appProxy)
-    */
-    function newPinnedAppInstance(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault)
-        public
-        returns (ERCProxy appProxy)
-    {
-        appProxy = kernel.newPinnedAppInstance(_appId, _appBase, _initializePayload, _setDefault);
-        emit NewAppProxy(appProxy);
+    // Overriding function to bypass Truffle's overloading issues
+    function newPinnedAppInstanceWithoutPayload(bytes32 _appId, address _appBase) public returns (ERCProxy) {
+        return super.newPinnedAppInstance(_appId, _appBase);
+    }
+
+    // Overriding function to bypass Truffle's overloading issues
+    function newPinnedAppInstanceWithPayload(bytes32 _appId, address _appBase, bytes _initializePayload, bool _setDefault) public returns (ERCProxy) {
+        return super.newPinnedAppInstance(_appId, _appBase, _initializePayload, _setDefault);
     }
 }

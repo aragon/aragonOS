@@ -40,12 +40,8 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
     *         Always returns false if the app hasn't been initialized yet.
     */
     function canPerform(address _sender, bytes32 _role, uint256[] _params) public view returns (bool) {
-        if (!hasInitialized()) {
-            return false;
-        }
-
         IKernel linkedKernel = kernel();
-        if (address(linkedKernel) == address(0)) {
+        if (address(linkedKernel) == address(0) || !isCallEnabled()) {
             return false;
         }
 
@@ -55,6 +51,47 @@ contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGua
             _role,
             ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)
         );
+    }
+
+    /**
+    * @dev Check whether a call to the current app can be executed or not based on the kill-switch settings
+    * @return Boolean indicating whether the call could be executed or not
+    */
+    function isCallEnabled() public view returns (bool) {
+        if (!hasInitialized()) {
+            return false;
+        }
+
+        IKernel _kernel = kernel();
+        bytes4 selector = _kernel.isAppDisabled.selector;
+        bytes memory isAppDisabledCalldata = abi.encodeWithSelector(selector, appId(), address(this));
+        bool success;
+        assembly {
+            success := staticcall(gas, _kernel, add(isAppDisabledCalldata, 0x20), mload(isAppDisabledCalldata), 0, 0)
+        }
+
+        // If the call to `kernel.isAppDisabled()` reverts (using an old or non-existent Kernel) we consider that
+        // there is no kill switch. Therefore, the the call can be executed.
+        if (!success) {
+            return true;
+        }
+
+        // If it does not revert, check if the returned value is 32-bytes length, otherwise return false
+        uint256 _outputLength;
+        assembly { _outputLength := returndatasize }
+        if (_outputLength != 32) {
+            return false;
+        }
+
+        // Forward returned value
+        bool _shouldDenyCall;
+        assembly {
+            let ptr := mload(0x40)        // get next free memory pointer
+            mstore(0x40, add(ptr, 0x20))  // set next free memory pointer
+            returndatacopy(ptr, 0, 0x20)  // copy call return value
+            _shouldDenyCall := mload(ptr) // read data
+        }
+        return !_shouldDenyCall;
     }
 
     /**
