@@ -42,7 +42,7 @@ If the answer to either of those two questions are "yes", then you're probably d
 ## Fixing issues
 
 1. [Find an issue](https://github.com/aragon/aragonOS/issues) that you are interested in.
-    - You may want to ask on the issue or on Aragon Chat's [#dev channel](https://aragon.chat/channel/dev) if anyone has already started working on the issue.
+    - You may want to ask on the issue or in the [aragonOS Spectrum channel](https://spectrum.chat/aragon/aragonos) if anyone has already started working on the issue.
 1. Fork and clone a local copy of the repository.
 1. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
 	  - Make sure to add tests!
@@ -69,4 +69,4 @@ aragonOS is generally meant to be used as a library by developers but includes c
 
 ## Community
 
-If you need help, please reach out to Aragon core contributors and community members in the Aragon Chat [#dev](https://aragon.chat/channel/dev) [#dev-help](https://aragon.chat/channel/dev-help) channels.  We'd love to hear from you and know what you're working on!
+If you need help, please reach out to Aragon core contributors and community members in the [aragonOS Spectrum channel](https://spectrum.chat/aragon/aragonos).  We'd love to hear from you and know what you're working on!
