@@ -43,3 +43,7 @@ Check the [Aragon Developer Portal](https://hack.aragon.org) for detailed docume
 ## Contributing
 
 For more details about contributing to aragonOS, please check the [contributing guide](./CONTRIBUTING.md).
+
+## Help
+
+For help and support, feel free to contact us at any time on the [aragonOS Spectrum channel](https://spectrum.chat/aragon/aragonos).
