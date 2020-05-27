@@ -32,7 +32,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     uint8 internal constant ORACLE_PARAM_ID       = 203;
     uint8 internal constant LOGIC_OP_PARAM_ID     = 204;
     uint8 internal constant PARAM_VALUE_PARAM_ID  = 205;
-    // TODO: Add execution times param type?
 
     /* Hardcoded constant to save gas
     bytes32 public constant EMPTY_PARAM_HASH = keccak256(uint256(0));
@@ -269,7 +268,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         address _where,
         bytes32 _what,
         uint256[] _how
-    ) public view returns (bool)
+    )
+        public
+        view
+        returns (bool)
     {
         if (_paramsHash == EMPTY_PARAM_HASH) {
             return true;
@@ -322,7 +324,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         address _where,
         bytes32 _what,
         uint256[] _how
-    ) internal view returns (bool)
+    )
+        internal
+        view
+        returns (bool)
     {
         if (_paramId >= permissionParams[_paramsHash].length) {
             return false; // out of bounds
