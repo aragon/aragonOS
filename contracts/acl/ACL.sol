@@ -233,10 +233,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Function called by apps to check ACL on kernel or to check permission statu
+    * @dev Function called by apps to check ACL on kernel or to check permission status
     * @param _who Sender of the original call
     * @param _where Address of the app
-    * @param _where Identifier for a group of actions in app
+    * @param _what Identifier for a group of actions in app (role)
     * @param _how Permission parameters
     * @return boolean indicating whether the ACL allows the role or not
     */
