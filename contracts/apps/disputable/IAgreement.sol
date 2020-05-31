@@ -29,7 +29,8 @@ contract IAgreement is IArbitrable, IACLOracle {
         uint256 _actionAmount,
         uint256 _challengeAmount,
         uint64 _challengeDuration
-    ) external;
+    )
+        external;
 
     function unregister(IDisputable _disputable) external;
 
