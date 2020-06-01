@@ -4,7 +4,6 @@
 
 pragma solidity ^0.4.24;
 
-import "./IDisputable.sol";
 import "./IArbitrable.sol";
 import "../../acl/IACLOracle.sol";
 import "../../lib/token/ERC20.sol";
@@ -24,7 +23,7 @@ contract IAgreement is IArbitrable, IACLOracle {
     function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 
     function register(
-        IDisputable _disputable,
+        address _disputable,
         ERC20 _collateralToken,
         uint256 _actionAmount,
         uint256 _challengeAmount,
@@ -32,7 +31,7 @@ contract IAgreement is IArbitrable, IACLOracle {
     )
         external;
 
-    function unregister(IDisputable _disputable) external;
+    function unregister(address _disputable) external;
 
     function canProceed(uint256 _actionId) external view returns (bool);
 }
