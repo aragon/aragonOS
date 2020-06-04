@@ -5,12 +5,11 @@
 pragma solidity ^0.4.24;
 
 import "./IAgreement.sol";
-import "../../common/IForwarder.sol";
 import "../../lib/token/ERC20.sol";
 import "../../lib/standards/ERC165.sol";
 
 
-contract IDisputable is IForwarder, ERC165 {
+contract IDisputable is ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
     bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xef113021);
 

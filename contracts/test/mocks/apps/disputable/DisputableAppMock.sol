@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
+import "../../../../common/IForwarder.sol";
 import "../../../../apps/disputable/DisputableAragonApp.sol";
 
 
-contract DisputableAppMock is DisputableAragonApp {
+contract DisputableAppMock is DisputableAragonApp, IForwarder {
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
     bytes4 public constant DISPUTABLE_INTERFACE = DISPUTABLE_INTERFACE_ID;
 
@@ -21,7 +22,7 @@ contract DisputableAppMock is DisputableAragonApp {
     /**
     * @notice Compute Disputable interface ID
     */
-    function interfaceId() external pure returns (bytes4) {
+    function interfaceID() external pure returns (bytes4) {
         IDisputable iDisputable;
         return iDisputable.setAgreement.selector ^
         iDisputable.onDisputableActionChallenged.selector ^
@@ -29,6 +30,14 @@ contract DisputableAppMock is DisputableAragonApp {
         iDisputable.onDisputableActionRejected.selector ^
         iDisputable.onDisputableActionVoided.selector ^
         iDisputable.getAgreement.selector;
+    }
+
+    /**
+    * @notice Compute ERC165 interface ID
+    */
+    function erc165interfaceID() external pure returns (bytes4) {
+        ERC165 erc165;
+        return erc165.supportsInterface.selector;
     }
 
     /**
@@ -48,9 +57,18 @@ contract DisputableAppMock is DisputableAragonApp {
     /**
     * @dev Close action
     */
-    function closeAction(uint256 _id) public {
+    function closeAction(uint256 _id) external {
         _closeAgreementAction(actionsByEntryId[_id]);
         emit DisputableClosed(_id);
+    }
+
+    /**
+    * @notice Tells whether the Agreement app is a forwarder or not
+    * @dev IForwarder interface conformance
+    * @return Always true
+    */
+    function isForwarder() external pure returns (bool) {
+        return true;
     }
 
     /**
@@ -58,7 +76,7 @@ contract DisputableAppMock is DisputableAragonApp {
     */
     function forward(bytes memory _data) public {
         uint256 id = entriesLength++;
-        actionsByEntryId[id] = _newAgreementAction(id, entryLifetime, msg.sender, _data);
+        actionsByEntryId[id] = _newAgreementAction(id, _data, msg.sender, entryLifetime);
         emit DisputableSubmitted(id);
     }
 

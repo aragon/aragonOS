@@ -2,9 +2,9 @@
  * SPDX-License-Identitifer:    MIT
  */
 
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
-import "../token/ERC20.sol";
+import "../../lib/token/ERC20.sol";
 
 
 interface IArbitrator {

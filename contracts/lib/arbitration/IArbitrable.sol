@@ -2,10 +2,10 @@
  * SPDX-License-Identitifer:    MIT
  */
 
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 import "./IArbitrator.sol";
-import "../standards/ERC165.sol";
+import "../../lib/standards/ERC165.sol";
 
 
 contract IArbitrable is ERC165 {
