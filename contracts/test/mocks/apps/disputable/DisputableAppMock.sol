@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "../../../../apps/disputable/DisputableApp.sol";
+import "../../../../apps/disputable/DisputableAragonApp.sol";
 
 
-contract DisputableAppMock is DisputableApp {
+contract DisputableAppMock is DisputableAragonApp {
     bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
     bytes4 public constant DISPUTABLE_INTERFACE = DISPUTABLE_INTERFACE_ID;
 

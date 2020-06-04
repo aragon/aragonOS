@@ -11,7 +11,7 @@ import "../../lib/token/ERC20.sol";
 import "../../lib/math/SafeMath64.sol";
 
 
-contract DisputableApp is IDisputable, AragonApp {
+contract DisputableAragonApp is IDisputable, AragonApp {
     /* Validation errors */
     string internal constant ERROR_AGREEMENT_NOT_SET = "DISPUTABLE_AGREEMENT_NOT_SET";
     string internal constant ERROR_AGREEMENT_ALREADY_SET = "DISPUTABLE_AGREEMENT_ALREADY_SET";
