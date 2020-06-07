@@ -1,5 +1,5 @@
 /*
- * SPDX-License-Identitifer:    MIT
+ * SPDX-License-Identifier:    MIT
  */
 
 pragma solidity ^0.4.24;
@@ -24,6 +24,10 @@ contract IDisputable is ERC165 {
     function onDisputableActionVoided(uint256 _disputableActionId) external;
 
     function getAgreement() external view returns (IAgreement);
+
+    function getDisputableAction(uint256 _disputableActionId) external view returns (uint64 endDate, bool challenged, bool closed);
+
+    function canChallenge(uint256 _disputableActionId) external view returns (bool);
 
     /**
     * @dev Query if a contract implements a certain interface

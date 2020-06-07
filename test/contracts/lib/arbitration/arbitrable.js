@@ -23,7 +23,7 @@ contract('Arbitrable', () => {
     })
 
     it('does not support 0xffffffff', async () => {
-      assert.isFalse(await arbitrable.supportsInterface('0xffffffff'), 'does support 0xffffffff')
+      assert.isFalse(await arbitrable.supportsInterface('0xffffffff'), 'should not support 0xffffffff')
     })
   })
 })

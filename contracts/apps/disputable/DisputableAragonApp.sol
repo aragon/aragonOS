@@ -1,8 +1,8 @@
 /*
- * SPDX-License-Identitifer:    MIT
+ * SPDX-License-Identifier:    MIT
  */
 
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 import "./IAgreement.sol";
 import "./IDisputable.sol";
@@ -13,9 +13,8 @@ import "../../lib/math/SafeMath64.sol";
 
 contract DisputableAragonApp is IDisputable, AragonApp {
     /* Validation errors */
-    string internal constant ERROR_AGREEMENT_NOT_SET = "DISPUTABLE_AGREEMENT_NOT_SET";
-    string internal constant ERROR_AGREEMENT_ALREADY_SET = "DISPUTABLE_AGREEMENT_ALREADY_SET";
     string internal constant ERROR_SENDER_NOT_AGREEMENT = "DISPUTABLE_SENDER_NOT_AGREEMENT";
+    string internal constant ERROR_AGREEMENT_STATE_INVALID = "DISPUTABLE_AGREEMENT_STATE_INVAL";
 
     // This role is used to protect who can challenge actions in derived Disputable apps. However, it is not required
     // to be validated in the app itself as the connected Agreement is responsible for performing the check on a challenge.
@@ -37,6 +36,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Challenge disputable action #`_disputableActionId`
+    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
+    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
+    *      internal abstract implementation of the hook that must be implemented by the developer.
     * @param _disputableActionId Identification number of the disputable action to be challenged
     * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
@@ -47,6 +49,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Allow disputable action #`_disputableActionId`
+    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
+    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
+    *      internal abstract implementation of the hook that must be implemented by the developer.
     * @param _disputableActionId Identification number of the disputable action to be allowed
     */
     function onDisputableActionAllowed(uint256 _disputableActionId) external onlyAgreement {
@@ -55,6 +60,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Reject disputable action #`_disputableActionId`
+    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
+    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
+    *      internal abstract implementation of the hook that must be implemented by the developer.
     * @param _disputableActionId Identification number of the disputable action to be rejected
     */
     function onDisputableActionRejected(uint256 _disputableActionId) external onlyAgreement {
@@ -63,6 +71,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Void disputable action #`_disputableActionId`
+    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
+    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
+    *      internal abstract implementation of the hook that must be implemented by the developer.
     * @param _disputableActionId Identification number of the disputable action to be voided
     */
     function onDisputableActionVoided(uint256 _disputableActionId) external onlyAgreement {
@@ -70,12 +81,13 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @notice Set Agreement to `_agreement`
-    * @param _agreement Agreement instance to be linked
+    * @notice `_agreement != 0 ? 'Set Agreement to ' + _agreement : 'Unset Agreement'`
+    * @param _agreement Agreement instance to be set
     */
     function setAgreement(IAgreement _agreement) external auth(SET_AGREEMENT_ROLE) {
         IAgreement agreement = _getAgreement();
-        require(agreement == IAgreement(0) || _agreement == IAgreement(0), ERROR_AGREEMENT_ALREADY_SET);
+        bool isAgreementUnset = agreement == IAgreement(0);
+        require(isAgreementUnset || (!isAgreementUnset && _agreement == IAgreement(0)), ERROR_AGREEMENT_STATE_INVALID);
 
         AGREEMENT_POSITION.setStorageAddress(address(_agreement));
         emit AgreementSet(_agreement);
@@ -90,7 +102,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Challenge disputable action
+    * @dev Internal implementation of the `onDisputableActionChallenged` hook
     * @param _disputableActionId Identification number of the disputable action to be challenged
     * @param _challengeId Identification number of the challenge in the context of the Agreement
     * @param _challenger Address challenging the disputable
@@ -98,45 +110,33 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     function _onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) internal;
 
     /**
-    * @dev Reject disputable action
+    * @dev Internal implementation of the `onDisputableActionRejected` hook
     * @param _disputableActionId Identification number of the disputable action to be rejected
     */
     function _onDisputableActionRejected(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Allow disputable action
+    * @dev Internal implementation of the `onDisputableActionAllowed` hook
     * @param _disputableActionId Identification number of the disputable action to be allowed
     */
     function _onDisputableActionAllowed(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Void disputable action
+    * @dev Internal implementation of the `onDisputableActionVoided` hook
     * @param _disputableActionId Identification number of the disputable action to be voided
     */
     function _onDisputableActionVoided(uint256 _disputableActionId) internal;
-
-    /**
-    * @dev Create a new action in the agreement without lifetime set
-    * @param _disputableActionId Identification number of the disputable action in the context of the disputable
-    * @param _submitter Address of the user that has submitted the action
-    * @param _context Link to a human-readable text giving context for the given action
-    * @return Unique identification number for the created action in the context of the agreement
-    */
-    function _newAgreementAction(uint256 _disputableActionId, bytes _context, address _submitter) internal returns (uint256) {
-        return _newAgreementAction(_disputableActionId, _context, _submitter, 0);
-    }
 
     /**
     * @dev Create a new action in the agreement
     * @param _disputableActionId Identification number of the disputable action in the context of the disputable
     * @param _context Link to a human-readable text giving context for the given action
     * @param _submitter Address of the user that has submitted the action
-    * @param _lifetime Lifetime duration in seconds of the disputable action, it can be set to zero to specify infinite
     * @return Unique identification number for the created action in the context of the agreement
     */
-    function _newAgreementAction(uint256 _disputableActionId,  bytes _context, address _submitter, uint64 _lifetime) internal returns (uint256) {
+    function _newAgreementAction(uint256 _disputableActionId,  bytes _context, address _submitter) internal returns (uint256) {
         IAgreement agreement = _ensureAgreement();
-        return agreement.newAction(_disputableActionId, _context, _submitter, _lifetime);
+        return agreement.newAction(_disputableActionId, _context, _submitter);
     }
 
     /**
@@ -146,16 +146,6 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     function _closeAgreementAction(uint256 _actionId) internal {
         IAgreement agreement = _ensureAgreement();
         agreement.closeAction(_actionId);
-    }
-
-    /**
-    * @dev Tell whether an action can proceed or not, i.e. if its not being challenged or disputed
-    * @param _actionId Identification number of the action being queried in the context of the Agreement app
-    * @return True if the action can proceed, false otherwise
-    */
-    function _canProceedAgreementAction(uint256 _actionId) internal view returns (bool) {
-        IAgreement agreement = _ensureAgreement();
-        return agreement.canProceed(_actionId);
     }
 
     /**
@@ -172,7 +162,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     */
     function _ensureAgreement() internal view returns (IAgreement) {
         IAgreement agreement = _getAgreement();
-        require(agreement != IAgreement(0), ERROR_AGREEMENT_NOT_SET);
+        require(agreement != IAgreement(0), ERROR_AGREEMENT_STATE_INVALID);
         return agreement;
     }
 }

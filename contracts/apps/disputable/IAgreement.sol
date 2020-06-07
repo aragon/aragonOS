@@ -1,5 +1,5 @@
 /*
- * SPDX-License-Identitifer:    MIT
+ * SPDX-License-Identifier:    MIT
  */
 
 pragma solidity ^0.4.24;
@@ -12,7 +12,7 @@ import "../../lib/arbitration/IArbitrable.sol";
 contract IAgreement is IArbitrable, IACLOracle {
     function sign() external;
 
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter, uint64 _lifetime) external returns (uint256);
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256);
 
     function closeAction(uint256 _actionId) external;
 
@@ -32,6 +32,4 @@ contract IAgreement is IArbitrable, IACLOracle {
         external;
 
     function unregister(address _disputable) external;
-
-    function canProceed(uint256 _actionId) external view returns (bool);
 }

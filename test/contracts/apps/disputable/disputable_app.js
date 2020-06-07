@@ -54,7 +54,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     })
 
     it('does not support 0xffffffff', async () => {
-      assert.isFalse(await disputable.supportsInterface('0xffffffff'), 'does support 0xffffffff')
+      assert.isFalse(await disputable.supportsInterface('0xffffffff'), 'should not support 0xffffffff')
     })
   })
 
@@ -95,13 +95,13 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
         context('when trying to re-set the agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_AGREEMENT_ALREADY_SET')
+            await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
 
         context('when trying to set a new agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(anotherAgreement, { from }), 'DISPUTABLE_AGREEMENT_ALREADY_SET')
+            await assertRevert(disputable.setAgreement(anotherAgreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
 
