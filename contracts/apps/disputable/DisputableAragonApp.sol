@@ -81,13 +81,12 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @notice `_agreement != 0 ? 'Set Agreement to ' + _agreement : 'Unset Agreement'`
+    * @notice Set Agreement to `_agreement`
     * @param _agreement Agreement instance to be set
     */
     function setAgreement(IAgreement _agreement) external auth(SET_AGREEMENT_ROLE) {
         IAgreement agreement = _getAgreement();
-        bool isAgreementUnset = agreement == IAgreement(0);
-        require(isAgreementUnset || (!isAgreementUnset && _agreement == IAgreement(0)), ERROR_AGREEMENT_STATE_INVALID);
+        require(agreement == IAgreement(0) && _agreement != IAgreement(0), ERROR_AGREEMENT_STATE_INVALID);
 
         AGREEMENT_POSITION.setStorageAddress(address(_agreement));
         emit AgreementSet(_agreement);

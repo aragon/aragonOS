@@ -78,13 +78,15 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
         })
       }
 
-      context('when the agreement was unset', () => {
+      context('when the agreement was not set', () => {
         context('when trying to set a new the agreement', () => {
           itSetsTheAgreementAddress(agreement)
         })
 
         context('when trying to unset the agreement', () => {
-          itSetsTheAgreementAddress(ZERO_ADDRESS)
+          it('reverts', async () => {
+            await assertRevert(disputable.setAgreement(ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+          })
         })
       })
 
@@ -106,7 +108,9 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
         })
 
         context('when trying to unset the agreement', () => {
-          itSetsTheAgreementAddress(ZERO_ADDRESS)
+          it('reverts', async () => {
+            await assertRevert(disputable.setAgreement(ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+          })
         })
       })
     })
