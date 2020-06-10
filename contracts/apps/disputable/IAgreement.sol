@@ -62,6 +62,7 @@ contract IAgreement is IArbitrable, IACLOracle {
             address disputable,
             uint256 disputableActionId,
             uint256 collateralId,
+            uint256 settingId,
             address submitter,
             bool closed,
             bytes context,
