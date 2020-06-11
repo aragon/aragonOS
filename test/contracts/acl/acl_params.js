@@ -85,7 +85,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
       testOraclePermissions({ shouldHavePermission: true })
     })
 
-    for (let [description, FailingOracle] of [
+    for (const [description, FailingOracle] of [
       ['rejects', RejectOracle],
       ['reverts', RevertOracle],
     ]) {
@@ -114,7 +114,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
 
     // Both the assert and oog gas cases should be similar, since assert should eat all the
     // available gas
-    for (let [description, FailingOutOfGasOracle] of [
+    for (const [description, FailingOutOfGasOracle] of [
       ['asserts', AssertOracle],
       ['uses all available gas', OverGasLimitOracle],
     ]) {
@@ -132,7 +132,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           describe('when permission is set for ANY_ADDR', () => {
             // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`, so
             // gas costs are much, much higher to compensate for the 63/64th rule on the second call
-            const MEDIUM_GAS = 3000000
+            const MEDIUM_GAS = 3500000
             const LOW_GAS = 2900000
 
             beforeEach(async () => {
@@ -164,7 +164,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           })
 
           describe('when permission is set for specific address', async () => {
-            const MEDIUM_GAS = 190000
+            const MEDIUM_GAS = 200000
             // Note that these gas values are still quite high for causing reverts in "low gas"
             // situations, as we incur some overhead with delegating into proxies and other checks.
             // Assuming we incur 40-60k gas overhead for this, we only have ~140,000 gas left.

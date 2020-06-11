@@ -87,9 +87,13 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
         // conditional oracle returns true if first param > 0
         ConditionalOracle conditionalOracle = new ConditionalOracle();
-
         assertEval(arr(uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), true);
         assertEval(arr(uint256(0), uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), false);
+
+        // only owner oracle returns true if sender is the defined owner
+        OnlyOwnerOracle onlyOwnerOracle = new OnlyOwnerOracle(msg.sender);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(onlyOwnerOracle), msg.sender, ANY_ENTITY, true);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(onlyOwnerOracle), address(this), ANY_ENTITY, false);
     }
 
     function testReturn() public {
@@ -233,26 +237,33 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, false);
     }
 
-
-    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, bool expected) internal {
+    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, address user, address who, bool expected) internal {
         Param[] memory params = new Param[](1);
         params[0] = Param(argId, uint8(op), uint240(value));
-        assertEval(params, args, expected);
+        assertEval(params, args, user, who, expected);
+    }
+
+    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, bool expected) internal {
+        assertEval(args, argId, op, value, address(0), address(0), expected);
     }
 
     function assertEval(Param[] memory params, bool expected) internal {
-        assertEval(params, new uint256[](0), expected);
+        assertEval(params, new uint256[](0), address(0), address(0), expected);
     }
 
     function assertEval(Param[] memory params, uint256[] memory args, bool expected) internal {
-        bytes32 paramHash = encodeAndSaveParams(params);
-        bool allow = _evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
+        assertEval(params, args, address(0), address(0), expected);
+    }
+
+    function assertEval(Param[] memory params, uint256[] memory args, address user, address who, bool expected) internal {
+        bytes32 paramHash = _encodeAndSaveParams(params);
+        bool allow = _evalParam(paramHash, 0, user, who, address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
     }
 
     event LogParam(bytes32 param);
-    function encodeAndSaveParams(Param[] memory params) internal returns (bytes32) {
+    function _encodeAndSaveParams(Param[] memory params) internal returns (bytes32) {
         uint256[] memory encodedParams = new uint256[](params.length);
 
         for (uint256 i = 0; i < params.length; i++) {
