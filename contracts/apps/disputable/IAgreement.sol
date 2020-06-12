@@ -16,12 +16,14 @@ contract IAgreement is IArbitrable, IACLOracle {
     event ActionClosed(uint256 indexed actionId);
     event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionSettled(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId);
+    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId, uint256 indexed disputeId);
     event ActionAccepted(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionVoided(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionRejected(uint256 indexed actionId, uint256 indexed challengeId);
-    event DisputableAppRegistered(address indexed disputable);
-    event DisputableAppUnregistered(address indexed disputable);
+    event DisputableAppActivated(address indexed disputable);
+    event DisputableAppDeactivated(address indexed disputable);
+    event SettingChanged(uint256 settingId);
+    event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
 
     enum ChallengeState {
         Waiting,
@@ -44,24 +46,38 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 
-    function register(
+    function activate(
         address _disputable,
         ERC20 _collateralToken,
+        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount,
-        uint64 _challengeDuration
+        uint256 _challengeAmount
     )
         external;
 
-    function unregister(address _disputable) external;
+    function deactivate(address _disputable) external;
 
     function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign);
+
+    function getCurrentSettingId() external view returns (uint256);
+
+    function getSetting(uint256 _settingId) external view returns (IArbitrator arbitrator, string title, bytes content);
+
+    function getDisputableInfo(address _disputable) external view returns (bool registered, uint256 currentCollateralRequirementId);
+
+    function getCollateralRequirement(address _disputable, uint256 _collateralId) external view
+        returns (
+            ERC20 collateralToken,
+            uint256 actionAmount,
+            uint256 challengeAmount,
+            uint64 challengeDuration
+        );
 
     function getAction(uint256 _actionId) external view
         returns (
             address disputable,
             uint256 disputableActionId,
-            uint256 collateralId,
+            uint256 collateralRequirementId,
             uint256 settingId,
             address submitter,
             bool closed,
@@ -83,19 +99,5 @@ contract IAgreement is IArbitrable, IACLOracle {
             bool challengerFinishedEvidence,
             uint256 disputeId,
             uint256 ruling
-        );
-
-    function getCurrentSettingId() external view returns (uint256);
-
-    function getSetting(uint256 _settingId) external view returns (string title, bytes content, IArbitrator arbitrator);
-
-    function getDisputableInfo(address _disputable) external view returns (bool registered, uint256 currentCollateralRequirementId);
-
-    function getCollateralRequirement(address _disputable, uint256 _collateralId) external view
-        returns (
-            ERC20 collateralToken,
-            uint256 actionAmount,
-            uint256 challengeAmount,
-            uint64 challengeDuration
         );
 }
