@@ -4,8 +4,6 @@
 
 pragma solidity ^0.4.24;
 
-import "./IForwarder.sol";
-
 
 interface IForwarderPayable {
     function isForwarder() external pure returns (bool);
