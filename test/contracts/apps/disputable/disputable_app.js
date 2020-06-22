@@ -14,6 +14,8 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
   let disputable, disputableBase, dao, acl
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+  const DISPUTABLE_INTERFACE = '0xce1f6de9'
+  const ERC165_INTERFACE = '0x01ffc9a7'
 
   before('deploy DAO', async () => {
     const kernelBase = await Kernel.new(true)
@@ -41,16 +43,16 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
   describe('supportsInterface', () => {
     it('supports ERC165', async () => {
-      assert.isTrue(await disputable.supportsInterface('0x01ffc9a7'), 'does not support ERC165')
+      assert.isTrue(await disputable.supportsInterface(ERC165_INTERFACE), 'does not support ERC165')
 
-      assert.equal(await disputable.ERC165_INTERFACE(), '0x01ffc9a7', 'ERC165 interface ID does not match')
+      assert.equal(await disputable.ERC165_INTERFACE(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
       assert.equal(await disputable.erc165interfaceID(), await disputable.ERC165_INTERFACE(), 'ERC165 interface ID does not match')
     })
 
     it('supports IDisputable', async () => {
-      assert.isTrue(await disputable.supportsInterface('0xef113021'), 'does not support IDisputable')
+      assert.isTrue(await disputable.supportsInterface(DISPUTABLE_INTERFACE), 'does not support IDisputable')
 
-      assert.equal(await disputable.interfaceID(), '0xef113021')
+      assert.equal(await disputable.interfaceID(), DISPUTABLE_INTERFACE)
       assert.equal(await disputable.DISPUTABLE_INTERFACE(), await disputable.interfaceID(), 'IDisputable interface ID does not match')
     })
 

@@ -49,4 +49,11 @@ interface IArbitrator {
     * @return feeAmount Total amount of fees that must be allowed to the recipient
     */
     function getSubscriptionFees(address _subscriber) external view returns (address recipient, ERC20 feeToken, uint256 feeAmount);
+
+    /**
+    * @dev Tell address of a module based on a given ID
+    * @param _id ID of the module being queried
+    * @return Address of the requested module
+    */
+    function getModule(bytes32 _id) external view returns (address);
 }
