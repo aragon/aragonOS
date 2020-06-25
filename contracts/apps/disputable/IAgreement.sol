@@ -12,6 +12,10 @@ import "../../lib/arbitration/IArbitrable.sol";
 contract IAgreement is IArbitrable, IACLOracle {
 
     event Signed(address indexed signer, uint256 settingId);
+    event SettingChanged(uint256 settingId);
+    event DisputableAppActivated(address indexed disputable);
+    event DisputableAppDeactivated(address indexed disputable);
+    event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
     event ActionSubmitted(uint256 indexed actionId);
     event ActionClosed(uint256 indexed actionId);
     event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
@@ -20,10 +24,6 @@ contract IAgreement is IArbitrable, IACLOracle {
     event ActionAccepted(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionVoided(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionRejected(uint256 indexed actionId, uint256 indexed challengeId);
-    event DisputableAppActivated(address indexed disputable);
-    event DisputableAppDeactivated(address indexed disputable);
-    event SettingChanged(uint256 settingId);
-    event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
 
     enum ChallengeState {
         Waiting,
@@ -36,16 +36,6 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function sign() external;
 
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256);
-
-    function closeAction(uint256 _actionId) external;
-
-    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external;
-
-    function settle(uint256 _actionId) external;
-
-    function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
-
     function activate(
         address _disputable,
         ERC20 _collateralToken,
@@ -56,6 +46,16 @@ contract IAgreement is IArbitrable, IACLOracle {
         external;
 
     function deactivate(address _disputable) external;
+
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256);
+
+    function closeAction(uint256 _actionId) external;
+
+    function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external;
+
+    function settle(uint256 _actionId) external;
+
+    function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 
     function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign);
 
