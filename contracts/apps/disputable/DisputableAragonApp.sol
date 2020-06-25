@@ -27,8 +27,6 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     // bytes32 internal constant AGREEMENT_POSITION = keccak256("aragonOS.appStorage.agreement");
     bytes32 internal constant AGREEMENT_POSITION = 0x6dbe80ccdeafbf5f3fff5738b224414f85e9370da36f61bf21c65159df7409e9;
 
-    event AgreementSet(IAgreement indexed agreement);
-
     modifier onlyAgreement() {
         require(address(_getAgreement()) == msg.sender, ERROR_SENDER_NOT_AGREEMENT);
         _;

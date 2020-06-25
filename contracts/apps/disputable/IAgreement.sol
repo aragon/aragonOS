@@ -16,11 +16,11 @@ contract IAgreement is IArbitrable, IACLOracle {
     event DisputableAppActivated(address indexed disputable);
     event DisputableAppDeactivated(address indexed disputable);
     event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
-    event ActionSubmitted(uint256 indexed actionId);
+    event ActionSubmitted(uint256 indexed actionId, address indexed disputable);
     event ActionClosed(uint256 indexed actionId);
     event ActionChallenged(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionSettled(uint256 indexed actionId, uint256 indexed challengeId);
-    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId, uint256 indexed disputeId);
+    event ActionDisputed(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionAccepted(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionVoided(uint256 indexed actionId, uint256 indexed challengeId);
     event ActionRejected(uint256 indexed actionId, uint256 indexed challengeId);
@@ -39,9 +39,9 @@ contract IAgreement is IArbitrable, IACLOracle {
     function activate(
         address _disputable,
         ERC20 _collateralToken,
-        uint64 _challengeDuration,
         uint256 _actionAmount,
-        uint256 _challengeAmount
+        uint256 _challengeAmount,
+        uint64 _challengeDuration
     )
         external;
 
@@ -53,7 +53,7 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function challengeAction(uint256 _actionId, uint256 _settlementOffer, bool _finishedSubmittingEvidence, bytes _context) external;
 
-    function settle(uint256 _actionId) external;
+    function settleAction(uint256 _actionId) external;
 
     function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 

@@ -13,6 +13,8 @@ contract IDisputable is ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
     bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xef113021);
 
+    event AgreementSet(IAgreement indexed agreement);
+
     function setAgreement(IAgreement _agreement) external;
 
     function onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) external;
@@ -24,8 +26,6 @@ contract IDisputable is ERC165 {
     function onDisputableActionVoided(uint256 _disputableActionId) external;
 
     function getAgreement() external view returns (IAgreement);
-
-    function getDisputableAction(uint256 _disputableActionId) external view returns (uint64 endDate, bool challenged, bool finished);
 
     function canChallenge(uint256 _disputableActionId) external view returns (bool);
 

@@ -6,7 +6,12 @@ pragma solidity ^0.4.24;
 
 import "../../lib/token/ERC20.sol";
 
-
+/**
+* @title Arbitrator interface
+* @dev This interface is the one used by `IAgreement` as the dispute resolution protocol.
+*      This interface was manually-copied from https://github.com/aragon/aragon-court/blob/v1.1.3/contracts/arbitration/IArbitrator.sol
+*      since we are using different solidity versions.
+*/
 interface IArbitrator {
     /**
     * @dev Create a dispute over the Arbitrable sender with a number of possible rulings

@@ -8,6 +8,12 @@ import "./IArbitrator.sol";
 import "../../lib/standards/ERC165.sol";
 
 
+/**
+* @title Arbitrable interface
+* @dev This interface is the one extended by `IAgreement` so it can be used by `IArbitrator`, its dispute resolution protocol.
+*      This interface was manually-copied from https://github.com/aragon/aragon-court/blob/v1.1.3/contracts/arbitration/IArbitrable.sol
+*      since we are using different solidity versions.
+*/
 contract IArbitrable is ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
     bytes4 internal constant ARBITRABLE_INTERFACE_ID = bytes4(0x88f3ee69);
