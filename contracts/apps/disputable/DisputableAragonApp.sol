@@ -36,12 +36,11 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Challenge disputable action #`_disputableActionId`
-    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
-    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
-    *      internal abstract implementation of the hook that must be implemented by the developer.
-    * @param _disputableActionId Identification number of the disputable action to be challenged
-    * @param _challengeId Identification number of the challenge in the context of the Agreement
-    * @param _challenger Address challenging the disputable
+    * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
+    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    * @param _disputableActionId Identifier of the action to be challenged
+    * @param _challengeId Identifier of the challenge in the context of the Agreement
+    * @param _challenger Address that submitted the challenge
     */
     function onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) external onlyAgreement {
         _onDisputableActionChallenged(_disputableActionId, _challengeId, _challenger);
@@ -49,10 +48,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Allow disputable action #`_disputableActionId`
-    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
-    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
-    *      internal abstract implementation of the hook that must be implemented by the developer.
-    * @param _disputableActionId Identification number of the disputable action to be allowed
+    * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
+    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    * @param _disputableActionId Identifier of the action to be allowed
     */
     function onDisputableActionAllowed(uint256 _disputableActionId) external onlyAgreement {
         _onDisputableActionAllowed(_disputableActionId);
@@ -60,10 +58,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Reject disputable action #`_disputableActionId`
-    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
-    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
-    *      internal abstract implementation of the hook that must be implemented by the developer.
-    * @param _disputableActionId Identification number of the disputable action to be rejected
+    * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
+    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    * @param _disputableActionId Identifier of the action to be rejected
     */
     function onDisputableActionRejected(uint256 _disputableActionId) external onlyAgreement {
         _onDisputableActionRejected(_disputableActionId);
@@ -71,10 +68,9 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @notice Void disputable action #`_disputableActionId`
-    * @dev This hook must be implemented by Disputable apps. However, we are already providing a base method to make sure it is safely
-    *      override by the developer. As you can see, this base implementation simply adds the `onlyAgreement` modifier and calls an
-    *      internal abstract implementation of the hook that must be implemented by the developer.
-    * @param _disputableActionId Identification number of the disputable action to be voided
+    * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
+    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    * @param _disputableActionId Identifier of the action to be voided
     */
     function onDisputableActionVoided(uint256 _disputableActionId) external onlyAgreement {
         _onDisputableActionVoided(_disputableActionId);
@@ -93,8 +89,8 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Tell the agreement linked to the disputable instance
-    * @return Agreement linked to the disputable instance
+    * @dev Tell the linked Agreement
+    * @return Agreement
     */
     function getAgreement() external view returns (IAgreement) {
         return _getAgreement();
@@ -102,36 +98,36 @@ contract DisputableAragonApp is IDisputable, AragonApp {
 
     /**
     * @dev Internal implementation of the `onDisputableActionChallenged` hook
-    * @param _disputableActionId Identification number of the disputable action to be challenged
-    * @param _challengeId Identification number of the challenge in the context of the Agreement
-    * @param _challenger Address challenging the disputable
+    * @param _disputableActionId Identifier of the action to be challenged
+    * @param _challengeId Identifier of the challenge in the context of the Agreement
+    * @param _challenger Address that submitted the challenge
     */
     function _onDisputableActionChallenged(uint256 _disputableActionId, uint256 _challengeId, address _challenger) internal;
 
     /**
     * @dev Internal implementation of the `onDisputableActionRejected` hook
-    * @param _disputableActionId Identification number of the disputable action to be rejected
+    * @param _disputableActionId Identifier of the action to be rejected
     */
     function _onDisputableActionRejected(uint256 _disputableActionId) internal;
 
     /**
     * @dev Internal implementation of the `onDisputableActionAllowed` hook
-    * @param _disputableActionId Identification number of the disputable action to be allowed
+    * @param _disputableActionId Identifier of the action to be allowed
     */
     function _onDisputableActionAllowed(uint256 _disputableActionId) internal;
 
     /**
     * @dev Internal implementation of the `onDisputableActionVoided` hook
-    * @param _disputableActionId Identification number of the disputable action to be voided
+    * @param _disputableActionId Identifier of the action to be voided
     */
     function _onDisputableActionVoided(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Create a new action in the agreement
-    * @param _disputableActionId Identification number of the disputable action in the context of the disputable
-    * @param _context Link to a human-readable text giving context for the given action
-    * @param _submitter Address of the user that has submitted the action
-    * @return Unique identification number for the created action in the context of the agreement
+    * @dev Create a new action in the Agreement
+    * @param _disputableActionId Identifier of the action in the context of the Disputable
+    * @param _context Link to human-readable context for the given action
+    * @param _submitter Address that submitted the action
+    * @return Unique identifier for the created action in the context of the Agreement
     */
     function _newAgreementAction(uint256 _disputableActionId,  bytes _context, address _submitter) internal returns (uint256) {
         IAgreement agreement = _ensureAgreement();
@@ -139,8 +135,8 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Close action in the agreement
-    * @param _actionId Identification number of the disputable action in the context of the agreement
+    * @dev Close action in the Agreement
+    * @param _actionId Identifier of the action in the context of the Agreement
     */
     function _closeAgreementAction(uint256 _actionId) internal {
         IAgreement agreement = _ensureAgreement();
@@ -148,16 +144,16 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Tell the agreement linked to the disputable instance
-    * @return Agreement linked to the disputable instance
+    * @dev Tell the linked Agreement
+    * @return Agreement
     */
     function _getAgreement() internal view returns (IAgreement) {
         return IAgreement(AGREEMENT_POSITION.getStorageAddress());
     }
 
     /**
-    * @dev Tell the agreement linked to the disputable instance
-    * @return Agreement linked to the disputable instance
+    * @dev Tell the linked Agreement or revert if it has not been set
+    * @return Agreement
     */
     function _ensureAgreement() internal view returns (IAgreement) {
         IAgreement agreement = _getAgreement();
