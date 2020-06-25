@@ -6,6 +6,7 @@ const { assertEvent, assertAmountOfEvents } = require('../../../helpers/assertEv
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
+const AgreementMock = artifacts.require('AgreementMock')
 const DisputableApp = artifacts.require('DisputableAppMock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
@@ -120,6 +121,44 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
       it('reverts', async () => {
         await assertRevert(disputable.setAgreement(agreement, { from }), 'APP_AUTH_FAILED')
+      })
+    })
+  })
+
+  describe('newAction', () => {
+    context('when the agreement is not set', () => {
+      it('reverts', async () => {
+        await assertRevert(disputable.newAction(0, '0x00', owner), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+      })
+    })
+
+    context('when the agreement is set', () => {
+      beforeEach('set agreement', async () => {
+        const agreement = await AgreementMock.new()
+        await disputable.setAgreement(agreement.address, { from: owner })
+      })
+
+      it('does not revert', async () => {
+        await disputable.newAction(0, '0x00', owner)
+      })
+    })
+  })
+
+  describe('closeAction', () => {
+    context('when the agreement is not set', () => {
+      it('reverts', async () => {
+        await assertRevert(disputable.closeAction(0), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+      })
+    })
+
+    context('when the agreement is set', () => {
+      beforeEach('set agreement', async () => {
+        const agreement = await AgreementMock.new()
+        await disputable.setAgreement(agreement.address, { from: owner })
+      })
+
+      it('does not revert', async () => {
+        await disputable.closeAction(0)
       })
     })
   })

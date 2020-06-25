@@ -17,6 +17,14 @@ contract DisputableAppMock is DisputableAragonApp {
         initialized();
     }
 
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external {
+        _newAgreementAction(_disputableActionId, _context, _submitter);
+    }
+
+    function closeAction(uint256 _actionId) external {
+        _closeAgreementAction(_actionId);
+    }
+
     function canChallenge(uint256 /*_disputableActionId*/) external view returns (bool) {
         return true;
     }
