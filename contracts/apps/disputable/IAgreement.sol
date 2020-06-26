@@ -7,6 +7,7 @@ pragma solidity ^0.4.24;
 import "../../acl/IACLOracle.sol";
 import "../../lib/token/ERC20.sol";
 import "../../lib/arbitration/IArbitrable.sol";
+import "../../lib/arbitration/IAragonCourtArbitrator.sol";
 
 
 contract IAgreement is IArbitrable, IACLOracle {
@@ -61,7 +62,7 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function getCurrentSettingId() external view returns (uint256);
 
-    function getSetting(uint256 _settingId) external view returns (IArbitrator arbitrator, string title, bytes content);
+    function getSetting(uint256 _settingId) external view returns (IAragonCourtArbitrator arbitrator, string title, bytes content);
 
     function getDisputableInfo(address _disputable) external view returns (bool registered, uint256 currentCollateralRequirementId);
 
