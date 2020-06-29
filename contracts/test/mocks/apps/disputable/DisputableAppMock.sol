@@ -41,7 +41,6 @@ contract DisputableAppMock is DisputableAragonApp {
             iDisputable.onDisputableActionRejected.selector ^
             iDisputable.onDisputableActionVoided.selector ^
             iDisputable.getAgreement.selector ^
-            iDisputable.getDisputableAction.selector ^
             iDisputable.canChallenge.selector ^
             iDisputable.canClose.selector ^
             iDisputable.appId.selector;

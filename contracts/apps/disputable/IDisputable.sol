@@ -11,7 +11,7 @@ import "../../lib/standards/ERC165.sol";
 
 contract IDisputable is ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
-    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xce1f6de9);
+    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0x737c65f9);
 
     event AgreementSet(IAgreement indexed agreement);
 

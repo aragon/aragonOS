@@ -14,7 +14,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
   let disputable, disputableBase, dao, acl
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-  const DISPUTABLE_INTERFACE = '0xce1f6de9'
+  const DISPUTABLE_INTERFACE = '0x737c65f9'
   const ERC165_INTERFACE = '0x01ffc9a7'
 
   before('deploy DAO', async () => {
