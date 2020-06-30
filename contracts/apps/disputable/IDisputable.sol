@@ -11,7 +11,7 @@ import "../../lib/standards/ERC165.sol";
 
 contract IDisputable is ERC165 {
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
-    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xef113021);
+    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0x737c65f9);
 
     event AgreementSet(IAgreement indexed agreement);
 
@@ -39,4 +39,6 @@ contract IDisputable is ERC165 {
     function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
         return _interfaceId == DISPUTABLE_INTERFACE_ID || _interfaceId == ERC165_INTERFACE_ID;
     }
+
+    function appId() public view returns (bytes32);
 }
