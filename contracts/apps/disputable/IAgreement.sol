@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../../acl/IACLOracle.sol";
 import "../../lib/token/ERC20.sol";
 import "../../lib/arbitration/IArbitrable.sol";
-import "../../lib/arbitration/ITransactionFeesOracle.sol";
+import "../../lib/arbitration/IAragonAppFeesCashier.sol";
 
 
 contract IAgreement is IArbitrable, IACLOracle {
@@ -65,7 +65,7 @@ contract IAgreement is IArbitrable, IACLOracle {
     function getSetting(uint256 _settingId) external view
         returns (
             IArbitrator arbitrator,
-            ITransactionFeesOracle transactionFeesOracle,
+            IAragonAppFeesCashier aragonAppFeesCashier,
             string title,
             bytes content
         );
