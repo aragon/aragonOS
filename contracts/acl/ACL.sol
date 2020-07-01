@@ -107,7 +107,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     */
-    function grantPermission(address _entity, address _app, bytes32 _role) external {
+    function grantPermission(address _entity, address _app, bytes32 _role) external onlyPermissionManager(_app, _role) {
         _grantPermissionP(_entity, _app, _role, new uint256[](0));
     }
 
@@ -119,7 +119,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
-    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) external {
+    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) external onlyPermissionManager(_app, _role) {
         _grantPermissionP(_entity, _app, _role, _params);
     }
 
@@ -290,7 +290,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Internal function to grant a permission with parameters
     */
-    function _grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) internal onlyPermissionManager(_app, _role) {
+    function _grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) internal {
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
         _setPermission(_entity, _app, _role, paramsHash);
     }
