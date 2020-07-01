@@ -39,7 +39,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(msg.sender), 0, Op.NEQ, uint256(this), true);
     }
 
-    function testGreatherThan() public {
+    function testGreaterThan() public {
         assertEval(arr(uint256(10), 11), 0, Op.GT, 9, true);
         assertEval(arr(uint256(10), 11), 0, Op.GT, 10, false);
         assertEval(arr(uint256(10), 11), 1, Op.GT, 10, true);
@@ -51,7 +51,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(uint256(10), 11), 1, Op.LT, 10, false);
     }
 
-    function testGreatherThanOrEqual() public {
+    function testGreaterThanOrEqual() public {
         assertEval(arr(uint256(10), 11), 0, Op.GTE, 9, true);
         assertEval(arr(uint256(10), 11), 0, Op.GTE, 10, true);
         assertEval(arr(uint256(10), 11), 1, Op.GTE, 12, false);
@@ -131,10 +131,25 @@ contract TestACLInterpreter is ACL, ACLHelper {
         params[5] = Param(0, uint8(Op.LT), uint240(10));
         params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
 
+        // must return true for arg = 10
         assertEval(params, arr(uint256(10)), true);
 
+        // if (oracle and block number > block number - 1) then arg 0 < 10 and oracle else false
         params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
         assertEval(params, arr(uint256(10)), false);
+        assertEval(params, arr(uint256(9)), true);
+
+        // with only owner oracle
+        OnlyOwnerOracle onlyOwnerOracle = new OnlyOwnerOracle(msg.sender);
+        params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(onlyOwnerOracle));
+        assertEval(params, arr(uint256(10)), address(this), ANY_ENTITY, false);
+        assertEval(params, arr(uint256(10)), msg.sender, ANY_ENTITY, false);
+        assertEval(params, arr(uint256(9)), address(this), ANY_ENTITY, false);
+        assertEval(params, arr(uint256(9)), msg.sender, ANY_ENTITY, true);
+        assertEval(params, arr(uint256(10)), address(this), address(0), false);
+        assertEval(params, arr(uint256(10)), msg.sender, address(0), false);
+        assertEval(params, arr(uint256(9)), address(this), address(0), false);
+        assertEval(params, arr(uint256(9)), msg.sender, address(0), true);
     }
 
     function testParamOutOfBoundsFail() public {
