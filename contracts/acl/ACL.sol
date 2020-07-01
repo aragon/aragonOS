@@ -265,7 +265,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @dev Function called by apps to evaluate ACL params
     * @param _paramsHash Params hash identifier
     * @param _user Sender of the original call
-    * @param _who Sender of the original call
+    * @param _who Grantee of the role
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app (role)
     * @param _how Permission parameters
@@ -288,7 +288,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function to grants a permission with parameters
+    * @dev Internal function to grant a permission with parameters
     */
     function _grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) internal onlyPermissionManager(_app, _role) {
         bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
@@ -310,7 +310,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function that sets management
+    * @dev Internal function that sets management of a role
     */
     function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
         permissionManager[_roleHash(_app, _role)] = _newManager;
@@ -371,11 +371,12 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             return true;
         }
 
+        // `_evalParam()` will internally traverse all the parameters, starting from the first parameter (0)
         return _evalParam(_paramsHash, 0, _user, _who, _where, _what, _how);
     }
 
     /**
-    * @dev Internal function to perform an ACL check
+    * @dev Internal function to perform an ACL check on a single permission parameter
     */
     function _evalParam(bytes32 _paramsHash, uint32 _paramId, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
