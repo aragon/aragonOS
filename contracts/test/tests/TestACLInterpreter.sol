@@ -39,7 +39,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(msg.sender), 0, Op.NEQ, uint256(this), true);
     }
 
-    function testGreatherThan() public {
+    function testGreaterThan() public {
         assertEval(arr(uint256(10), 11), 0, Op.GT, 9, true);
         assertEval(arr(uint256(10), 11), 0, Op.GT, 10, false);
         assertEval(arr(uint256(10), 11), 1, Op.GT, 10, true);
@@ -51,7 +51,7 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(arr(uint256(10), 11), 1, Op.LT, 10, false);
     }
 
-    function testGreatherThanOrEqual() public {
+    function testGreaterThanOrEqual() public {
         assertEval(arr(uint256(10), 11), 0, Op.GTE, 9, true);
         assertEval(arr(uint256(10), 11), 0, Op.GTE, 10, true);
         assertEval(arr(uint256(10), 11), 1, Op.GTE, 12, false);
@@ -87,9 +87,13 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
         // conditional oracle returns true if first param > 0
         ConditionalOracle conditionalOracle = new ConditionalOracle();
-
         assertEval(arr(uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), true);
         assertEval(arr(uint256(0), uint256(1)), ORACLE_PARAM_ID, Op.EQ, uint256(conditionalOracle), false);
+
+        // only owner oracle returns true if sender is the defined owner
+        OnlyOwnerOracle onlyOwnerOracle = new OnlyOwnerOracle(msg.sender);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(onlyOwnerOracle), msg.sender, ANY_ENTITY, true);
+        assertEval(arr(), ORACLE_PARAM_ID, Op.EQ, uint256(onlyOwnerOracle), address(this), ANY_ENTITY, false);
     }
 
     function testReturn() public {
@@ -127,10 +131,51 @@ contract TestACLInterpreter is ACL, ACLHelper {
         params[5] = Param(0, uint8(Op.LT), uint240(10));
         params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
 
+        // must return true for arg = 10
         assertEval(params, arr(uint256(10)), true);
+    }
 
+    function testAnotherComplexCombination() public {
+        // if (oracle and block number > block number - 1) then arg 0 < 10 and oracle else false
+        Param[] memory params = new Param[](7);
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));
+        params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(new AcceptOracle()));
+        params[3] = Param(BLOCK_NUMBER_PARAM_ID, uint8(Op.GT), uint240(block.number - 1));
         params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
+        params[5] = Param(0, uint8(Op.LT), uint240(10));
+        params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
+
+        // Requires 0 < 10 AND oracle, so 10 should fail and 9 should pass
         assertEval(params, arr(uint256(10)), false);
+        assertEval(params, arr(uint256(9)), true);
+    }
+
+    function testComplexCombinationWithOnlyOwnerOracle () public {
+        // Oracle only returns true for msg.sender
+        OnlyOwnerOracle onlyOwnerOracle = new OnlyOwnerOracle(msg.sender);
+
+        // if (oracle and block number > block number - 1) then arg 0 < 10 and oracle else false
+        Param[] memory params = new Param[](7);
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));
+        params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(onlyOwnerOracle));
+        params[3] = Param(BLOCK_NUMBER_PARAM_ID, uint8(Op.GT), uint240(block.number - 1));
+        params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
+        params[5] = Param(0, uint8(Op.LT), uint240(10));
+        params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
+
+        // Requires 0 < 10 AND oracle, so 10 should always fail
+        assertEval(params, arr(uint256(10)), address(this), ANY_ENTITY, false);
+        assertEval(params, arr(uint256(10)), msg.sender, ANY_ENTITY, false);
+        assertEval(params, arr(uint256(10)), address(this), address(0), false);
+        assertEval(params, arr(uint256(10)), msg.sender, address(0), false);
+
+        // 9 only passes if the caller is msg.sender
+        assertEval(params, arr(uint256(9)), address(this), ANY_ENTITY, false);
+        assertEval(params, arr(uint256(9)), msg.sender, ANY_ENTITY, true);
+        assertEval(params, arr(uint256(9)), address(this), address(0), false);
+        assertEval(params, arr(uint256(9)), msg.sender, address(0), true);
     }
 
     function testParamOutOfBoundsFail() public {
@@ -233,26 +278,33 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, false);
     }
 
-
-    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, bool expected) internal {
+    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, address user, address who, bool expected) internal {
         Param[] memory params = new Param[](1);
         params[0] = Param(argId, uint8(op), uint240(value));
-        assertEval(params, args, expected);
+        assertEval(params, args, user, who, expected);
+    }
+
+    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, bool expected) internal {
+        assertEval(args, argId, op, value, address(0), address(0), expected);
     }
 
     function assertEval(Param[] memory params, bool expected) internal {
-        assertEval(params, new uint256[](0), expected);
+        assertEval(params, new uint256[](0), address(0), address(0), expected);
     }
 
     function assertEval(Param[] memory params, uint256[] memory args, bool expected) internal {
-        bytes32 paramHash = encodeAndSaveParams(params);
-        bool allow = _evalParam(paramHash, 0, address(0), address(0), bytes32(0), args);
+        assertEval(params, args, address(0), address(0), expected);
+    }
+
+    function assertEval(Param[] memory params, uint256[] memory args, address user, address who, bool expected) internal {
+        bytes32 paramHash = _encodeAndSaveParams(params);
+        bool allow = _evalParam(paramHash, 0, user, who, address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
     }
 
     event LogParam(bytes32 param);
-    function encodeAndSaveParams(Param[] memory params) internal returns (bytes32) {
+    function _encodeAndSaveParams(Param[] memory params) internal returns (bytes32) {
         uint256[] memory encodedParams = new uint256[](params.length);
 
         for (uint256 i = 0; i < params.length; i++) {

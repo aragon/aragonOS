@@ -10,6 +10,7 @@ const AcceptOracle = artifacts.require('AcceptOracle')
 const RejectOracle = artifacts.require('RejectOracle')
 const RevertOracle = artifacts.require('RevertOracle')
 const AssertOracle = artifacts.require('AssertOracle')
+const OnlyOwnerOracle = artifacts.require('OnlyOwnerOracle')
 const OverGasLimitOracle = artifacts.require('OverGasLimitOracle')
 const StateModifyingOracle = artifacts.require('StateModifyingOracle')
 
@@ -20,7 +21,7 @@ const getExpectedGas = gas => gas * 63 / 64
 
 contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppAddress]) => {
   let aclBase, kernelBase, acl, kernel
-  const MOCK_APP_ROLE = "0xAB"
+  const MOCK_APP_ROLE = '0xAB'
 
   before(async () => {
     kernelBase = await Kernel.new(true) // petrify immediately
@@ -38,22 +39,25 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
   context('> ACL Oracle', () => {
     let aclParams
 
-    const testOraclePermissions = ({ shouldHavePermission }) => {
-      const allowText = shouldHavePermission ? 'allows' : 'disallows'
-
+    const testOraclePermissions = ({ allowsAnyAddress, allowsSpecificAddress }) => {
       describe('when permission is set for ANY_ADDR', () => {
         beforeEach(async () => {
           await acl.grantPermissionP(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, [aclParams])
         })
 
-        it(`ACL ${allowText} actions for ANY_ADDR`, async () => {
-          assertion = shouldHavePermission ? assert.isTrue : assert.isFalse
+        it(`ACL ${allowsAnyAddress ? 'allows' : 'disallows'} actions for ANY_ADDR`, async () => {
+          const assertion = allowsAnyAddress ? assert.isTrue : assert.isFalse
           assertion(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
         })
 
-        it(`ACL ${allowText} actions for specific address`, async () => {
-          assertion = shouldHavePermission ? assert.isTrue : assert.isFalse
+        it(`ACL ${allowsSpecificAddress ? 'allows' : 'disallows'} actions for specific address`, async () => {
+          const assertion = allowsSpecificAddress ? assert.isTrue : assert.isFalse
           assertion(await acl.hasPermission(specificEntity, mockAppAddress, MOCK_APP_ROLE))
+        })
+
+        it(`ACL ${allowsAnyAddress ? 'allows' : 'disallows'} actions other address`, async () => {
+          const assertion = allowsAnyAddress ? assert.isTrue : assert.isFalse
+          assertion(await acl.hasPermission(noPermission, mockAppAddress, MOCK_APP_ROLE))
         })
       })
 
@@ -62,30 +66,40 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           await acl.grantPermissionP(specificEntity, mockAppAddress, MOCK_APP_ROLE, [aclParams])
         })
 
-        it(`ACL ${allowText} actions for specific address`, async () => {
-          assertion = shouldHavePermission ? assert.isTrue : assert.isFalse
+        it(`ACL ${allowsSpecificAddress ? 'allows' : 'disallows'} actions for specific address`, async () => {
+          const assertion = allowsSpecificAddress ? assert.isTrue : assert.isFalse
           assertion(await acl.hasPermission(specificEntity, mockAppAddress, MOCK_APP_ROLE))
         })
 
-        it('ACL disallows actions for other addresses', async () => {
-          assert.isFalse(await acl.hasPermission(noPermission, mockAppAddress, MOCK_APP_ROLE))
+        it('ACL disallows actions for ANY_ADDR', async () => {
           assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE))
+        })
+
+        it('ACL disallows other address', async () => {
+          assert.isFalse(await acl.hasPermission(noPermission, mockAppAddress, MOCK_APP_ROLE))
         })
       })
     }
 
-    describe('when the oracle accepts', () => {
-      let acceptOracle
-
+    describe('when the oracle accepts always', () => {
       before(async () => {
-        acceptOracle = await AcceptOracle.new()
+        const acceptOracle = await AcceptOracle.new()
         aclParams = permissionParamEqOracle(acceptOracle.address)
       })
 
-      testOraclePermissions({ shouldHavePermission: true })
+      testOraclePermissions({ allowsAnyAddress: true, allowsSpecificAddress: true })
     })
 
-    for (let [description, FailingOracle] of [
+    describe('when the oracle accepts specific addresses', () => {
+      before(async () => {
+        const onlyOwnerOracle = await OnlyOwnerOracle.new(specificEntity)
+        aclParams = permissionParamEqOracle(onlyOwnerOracle.address)
+      })
+
+      testOraclePermissions({ allowsAnyAddress: false, allowsSpecificAddress: true })
+    })
+
+    for (const [description, FailingOracle] of [
       ['rejects', RejectOracle],
       ['reverts', RevertOracle],
     ]) {
@@ -97,7 +111,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           aclParams = permissionParamEqOracle(failingOracle.address)
         })
 
-        testOraclePermissions({ shouldHavePermission: false })
+        testOraclePermissions({ allowsAnyAddress: false, allowsSpecificAddress: false })
       })
     }
 
@@ -109,12 +123,11 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
         aclParams = permissionParamEqOracle(stateModifyingOracle.address)
       })
 
-      testOraclePermissions({ shouldHavePermission: false })
+      testOraclePermissions({ allowsAnyAddress: false, allowsSpecificAddress: false })
     })
 
-    // Both the assert and oog gas cases should be similar, since assert should eat all the
-    // available gas
-    for (let [description, FailingOutOfGasOracle] of [
+    // Both the assert and oog gas cases should be similar, since assert should eat all the available gas
+    for (const [description, FailingOutOfGasOracle] of [
       ['asserts', AssertOracle],
       ['uses all available gas', OverGasLimitOracle],
     ]) {
@@ -126,13 +139,13 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           aclParams = permissionParamEqOracle(overGasLimitOracle.address)
         })
 
-        testOraclePermissions({ shouldHavePermission: false })
+        testOraclePermissions({ allowsAnyAddress: false, allowsSpecificAddress: false })
 
         describe('gas', () => {
           describe('when permission is set for ANY_ADDR', () => {
             // Note `evalParams()` is called twice when calling `hasPermission` for `ANY_ADDR`, so
             // gas costs are much, much higher to compensate for the 63/64th rule on the second call
-            const MEDIUM_GAS = 3000000
+            const MEDIUM_GAS = 3500000
             const LOW_GAS = 2900000
 
             beforeEach(async () => {
@@ -164,7 +177,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
           })
 
           describe('when permission is set for specific address', async () => {
-            const MEDIUM_GAS = 190000
+            const MEDIUM_GAS = 200000
             // Note that these gas values are still quite high for causing reverts in "low gas"
             // situations, as we incur some overhead with delegating into proxies and other checks.
             // Assuming we incur 40-60k gas overhead for this, we only have ~140,000 gas left.
