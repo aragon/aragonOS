@@ -133,21 +133,47 @@ contract TestACLInterpreter is ACL, ACLHelper {
 
         // must return true for arg = 10
         assertEval(params, arr(uint256(10)), true);
+    }
 
+    function testAnotherComplexCombination() public {
         // if (oracle and block number > block number - 1) then arg 0 < 10 and oracle else false
+        Param[] memory params = new Param[](7);
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));
+        params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(new AcceptOracle()));
+        params[3] = Param(BLOCK_NUMBER_PARAM_ID, uint8(Op.GT), uint240(block.number - 1));
         params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
+        params[5] = Param(0, uint8(Op.LT), uint240(10));
+        params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
+
+        // Requires 0 < 10 AND oracle, so 10 should fail and 9 should pass
         assertEval(params, arr(uint256(10)), false);
         assertEval(params, arr(uint256(9)), true);
+    }
 
-        // with only owner oracle
+    function testComplexCombinationWithOnlyOwnerOracle () public {
+        // Oracle only returns true for msg.sender
         OnlyOwnerOracle onlyOwnerOracle = new OnlyOwnerOracle(msg.sender);
+
+        // if (oracle and block number > block number - 1) then arg 0 < 10 and oracle else false
+        Param[] memory params = new Param[](7);
+        params[0] = Param(LOGIC_OP_PARAM_ID, uint8(Op.IF_ELSE), encodeIfElse(1, 4, 6));
+        params[1] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(2, 3));
         params[2] = Param(ORACLE_PARAM_ID, uint8(Op.EQ), uint240(onlyOwnerOracle));
+        params[3] = Param(BLOCK_NUMBER_PARAM_ID, uint8(Op.GT), uint240(block.number - 1));
+        params[4] = Param(LOGIC_OP_PARAM_ID, uint8(Op.AND), encodeOperator(5, 2));
+        params[5] = Param(0, uint8(Op.LT), uint240(10));
+        params[6] = Param(PARAM_VALUE_PARAM_ID, uint8(Op.RET), 0);
+
+        // Requires 0 < 10 AND oracle, so 10 should always fail
         assertEval(params, arr(uint256(10)), address(this), ANY_ENTITY, false);
         assertEval(params, arr(uint256(10)), msg.sender, ANY_ENTITY, false);
-        assertEval(params, arr(uint256(9)), address(this), ANY_ENTITY, false);
-        assertEval(params, arr(uint256(9)), msg.sender, ANY_ENTITY, true);
         assertEval(params, arr(uint256(10)), address(this), address(0), false);
         assertEval(params, arr(uint256(10)), msg.sender, address(0), false);
+
+        // 9 only passes if the caller is msg.sender
+        assertEval(params, arr(uint256(9)), address(this), ANY_ENTITY, false);
+        assertEval(params, arr(uint256(9)), msg.sender, ANY_ENTITY, true);
         assertEval(params, arr(uint256(9)), address(this), address(0), false);
         assertEval(params, arr(uint256(9)), msg.sender, address(0), true);
     }
