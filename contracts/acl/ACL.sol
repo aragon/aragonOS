@@ -391,8 +391,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         if (param.id == LOGIC_OP_PARAM_ID) {
             return (Op(param.op) == Op.IF_ELSE)
-                ? _evalIfElseOp(param, _paramsHash, _user, _who, _where, _what, _how)
-                : _evalNonIfElseOp(param, _paramsHash, _user, _who, _where, _what, _how);
+                ? _evalIfElseLogicOp(param, _paramsHash, _user, _who, _where, _what, _how)
+                : _evalNonIfElseLogicOp(param, _paramsHash, _user, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -423,9 +423,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function to eval an IF-ELSE operator
+    * @dev Internal function to eval an IF-ELSE logic operator
     */
-    function _evalIfElseOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalIfElseLogicOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
@@ -441,9 +441,9 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function to eval an IF-ELSE operator
+    * @dev Internal function to eval a non-IF-ELSE logic operator
     */
-    function _evalNonIfElseOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalNonIfElseLogicOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
