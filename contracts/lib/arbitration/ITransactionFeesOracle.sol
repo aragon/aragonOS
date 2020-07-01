@@ -13,5 +13,5 @@ interface ITransactionFeesOracle {
     function unsetTransactionFee(bytes32 _appId) external;
     function unsetTransactionFees(bytes32[] _appIds) external;
     function payTransactionFees(bytes32 _appId, uint256 _actionId) external;
-    function getTransactionFee(bytes32 _appId) external view returns (ERC20, uint256, address);
+    function getTransactionFee(bytes32 _appId) external view returns (ERC20, uint256);
 }
