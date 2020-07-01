@@ -480,23 +480,16 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         view
         returns (bool)
     {
-        bytes4 sig = _oracleAddr.canPerform.selector;
-
         // a raw call is required so we can return false if the call reverts, rather than reverting
+        bytes4 sig = _oracleAddr.canPerform.selector;
         bytes memory checkCalldata = abi.encodeWithSelector(sig, _user, _who, _where, _what, _how);
-        return _checkOracle(_oracleAddr, checkCalldata);
-    }
 
-    /**
-    * @dev Internal function to perform an ACL oracle check
-    */
-    function _checkOracle(IACLOracle _oracleAddr, bytes memory _callData) internal view returns (bool) {
         bool ok;
         assembly {
             // send all available gas; if the oracle eats up all the gas, we will eventually revert
             // note that we are currently guaranteed to still have some gas after the call from
             // EIP-150's 63/64 gas forward rule
-            ok := staticcall(gas, _oracleAddr, add(_callData, 0x20), mload(_callData), 0, 0)
+            ok := staticcall(gas, _oracleAddr, add(checkCalldata, 0x20), mload(checkCalldata), 0, 0)
         }
 
         if (!ok) {
