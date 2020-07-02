@@ -443,7 +443,15 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Internal function to eval a non-IF-ELSE logic operator
     */
-    function _evalNonIfElseLogicOp(Param _param, bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
+    function _evalNonIfElseLogicOp(
+        Param _param,
+        bytes32 _paramsHash,
+        address _who,
+        address _grantee,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    )
         internal
         view
         returns (bool)
