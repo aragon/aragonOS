@@ -7,11 +7,11 @@ import "../../common/ConversionHelpers.sol";
 
 
 contract InvalidBytesLengthConversionThrows {
-    function tryConvertLength(uint256 _badLength) public {
+    function tryConvertLength(uint256 _badLength) public pure {
         bytes memory arr = new bytes(_badLength);
 
         // Do failing conversion
-        uint256[] memory arrUint = ConversionHelpers.dangerouslyCastBytesToUintArray(arr);
+        ConversionHelpers.dangerouslyCastBytesToUintArray(arr);
     }
 }
 

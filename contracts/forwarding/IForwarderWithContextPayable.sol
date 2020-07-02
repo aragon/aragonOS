@@ -4,28 +4,27 @@
 
 pragma solidity ^0.4.24;
 
-import "./IForwarder.sol";
+import "./IAbstractForwarder.sol";
+import "./IForwarderFee.sol";
 
 
 /**
-* @title Payable Forwarder interface requiring context information
-* @dev This forwarder interface enforces an additional piece of information attached to the action being forwarded
-*      with the purpose of allowing the sender to provide a detailed context for the forwarded action.
-*      Unlike `IForwarderWithContext`, this forwarder interface allows receiving ETH on the forward entry point.
+* @title Payable forwarder interface requiring context information
+* @dev This forwarder interface allows for additional context to be attached to the action by the sender.
+*      Unlike `IForwarderWithContext`, this interface allows `forward()` to receive ETH and thereby includes the IForwarderFee interface.
+*      It is **RECOMMENDED** that only apps requiring a payable `forward()` use this interface.
 */
-contract IForwarderWithContextPayable is IForwarder {
-    uint256 internal constant FORWARDER_TYPE = 4;
-
+contract IForwarderWithContextPayable is IAbstractForwarder, IForwarderFee {
     /**
-    * @dev Forward an EVM script with an attached context information
+    * @dev Forward an EVM script with an attached context
     */
     function forward(bytes evmScript, bytes context) external payable;
 
     /**
-    * @dev Tell the type identification number of the current forwarder
-    * @return Always 4 - Forwarder type ID for the payable forwarder with context
+    * @dev Tell the forwarder type
+    * @return Always 2 (ForwarderType.WITH_CONTEXT)
     */
-    function forwarderType() external pure returns (uint256) {
-        return FORWARDER_TYPE;
+    function forwarderType() external pure returns (ForwarderType) {
+        return ForwarderType.WITH_CONTEXT;
     }
 }
