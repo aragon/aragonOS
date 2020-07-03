@@ -264,19 +264,19 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Function called by apps to evaluate ACL params
     * @param _paramsHash Params hash identifier
-    * @param _user Sender of the original call
-    * @param _who Grantee of the role
+    * @param _who Sender of the original call
+    * @param _grantee Grantee of the role
     * @param _where Address of the app
     * @param _what Identifier for a group of actions in app (role)
     * @param _how Permission parameters
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function evalParams(bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function evalParams(bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
         external
         view
         returns (bool)
     {
-        return _evalParams(_paramsHash, _user, _who, _where, _what, _how);
+        return _evalParams(_paramsHash, _who, _grantee, _where, _what, _how);
     }
 
     /**
@@ -362,7 +362,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Internal function to perform an ACL check
     */
-    function _evalParams(bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalParams(bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
@@ -372,13 +372,13 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         }
 
         // `_evalParam()` will internally traverse all the parameters, starting from the first parameter (0)
-        return _evalParam(_paramsHash, 0, _user, _who, _where, _what, _how);
+        return _evalParam(_paramsHash, 0, _who, _grantee, _where, _what, _how);
     }
 
     /**
     * @dev Internal function to perform an ACL check on a single permission parameter
     */
-    function _evalParam(bytes32 _paramsHash, uint32 _paramId, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalParam(bytes32 _paramsHash, uint32 _paramId, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
@@ -391,8 +391,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         if (param.id == LOGIC_OP_PARAM_ID) {
             return (Op(param.op) == Op.IF_ELSE)
-                ? _evalIfElseLogicOp(param, _paramsHash, _user, _who, _where, _what, _how)
-                : _evalNonIfElseLogicOp(param, _paramsHash, _user, _who, _where, _what, _how);
+                ? _evalIfElseLogicOp(param, _paramsHash, _who, _grantee, _where, _what, _how)
+                : _evalNonIfElseLogicOp(param, _paramsHash, _who, _grantee, _where, _what, _how);
         }
 
         uint256 value;
@@ -400,7 +400,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = _checkOracle(IACLOracle(param.value), _user, _who, _where, _what, _how) ? 1 : 0;
+            value = _checkOracle(IACLOracle(param.value), _who, _grantee, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = getBlockNumber();
@@ -425,7 +425,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Internal function to eval an IF-ELSE logic operator
     */
-    function _evalIfElseLogicOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalIfElseLogicOp(Param _param, bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
@@ -435,21 +435,29 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         uint32 failureParam;
 
         (conditionParam, successParam, failureParam) = decodeParamsList(uint256(_param.value));
-        bool result = _evalParam(_paramsHash, conditionParam, _user, _who, _where, _what, _how);
+        bool result = _evalParam(_paramsHash, conditionParam, _who, _grantee, _where, _what, _how);
 
-        return _evalParam(_paramsHash, result ? successParam : failureParam, _user, _who, _where, _what, _how);
+        return _evalParam(_paramsHash, result ? successParam : failureParam, _who, _grantee, _where, _what, _how);
     }
 
     /**
     * @dev Internal function to eval a non-IF-ELSE logic operator
     */
-    function _evalNonIfElseLogicOp(Param _param, bytes32 _paramsHash, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _evalNonIfElseLogicOp(
+        Param _param,
+        bytes32 _paramsHash,
+        address _who,
+        address _grantee,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    )
         internal
         view
         returns (bool)
     {
         (uint32 param1, uint32 param2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = _evalParam(_paramsHash, param1, _user, _who, _where, _what, _how);
+        bool r1 = _evalParam(_paramsHash, param1, _who, _grantee, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -463,7 +471,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             return false;
         }
 
-        bool r2 = _evalParam(_paramsHash, param2, _user, _who, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, param2, _who, _grantee, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
             return r1 != r2;
@@ -475,14 +483,14 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     /**
     * @dev Internal function to perform an ACL oracle check
     */
-    function _checkOracle(IACLOracle _oracleAddr, address _user, address _who, address _where, bytes32 _what, uint256[] _how)
+    function _checkOracle(IACLOracle _oracleAddr, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
     {
         // a raw call is required so we can return false if the call reverts, rather than reverting
         bytes4 sig = _oracleAddr.canPerform.selector;
-        bytes memory checkCalldata = abi.encodeWithSelector(sig, _user, _who, _where, _what, _how);
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _grantee, _where, _what, _how);
 
         bool ok;
         assembly {

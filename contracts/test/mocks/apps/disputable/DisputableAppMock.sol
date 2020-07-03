@@ -1,6 +1,5 @@
 pragma solidity 0.4.24;
 
-import "../../../../common/IForwarder.sol";
 import "../../../../apps/disputable/DisputableAragonApp.sol";
 
 
