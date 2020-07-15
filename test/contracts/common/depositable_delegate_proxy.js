@@ -1,4 +1,3 @@
-const { toChecksumAddress } = require('web3-utils')
 const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
 const { skipCoverage } = require('../../helpers/coverage')
 const { decodeEventsOfType } = require('../../helpers/decodeEvent')
@@ -138,7 +137,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
         const receipt = await web3.eth.getTransactionReceipt(tx)
         const logs = decodeEventsOfType(receipt, DepositableDelegateProxyMock.abi, 'ProxyDeposit')
         assertAmountOfEvents({ logs }, 'ProxyDeposit')
-        assertEvent({ logs }, 'ProxyDeposit', { sender: toChecksumAddress(ethSender.address), value })
+        assertEvent({ logs }, 'ProxyDeposit', { sender: ethSender.address, value })
       })
 
       itRevertsOnInvalidDeposits()

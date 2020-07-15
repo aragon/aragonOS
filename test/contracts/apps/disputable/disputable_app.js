@@ -1,6 +1,7 @@
 const { assertRevert } = require('../../../helpers/assertThrow')
 const { getEventArgument } = require('../../../helpers/events')
 const { getNewProxyAddress } = require('../../../helpers/events')
+const { decodeEventsOfType } = require('../../../helpers/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../../../helpers/assertEvent')(web3)
 
 const ACL = artifacts.require('ACL')
@@ -142,8 +143,12 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
         await disputable.setAgreement(agreement.address, { from: owner })
       })
 
-      it('does not revert', async () => {
-        await disputable.newAction(0, '0x00', owner)
+      it('submits a new action', async () => {
+        const { receipt } = await disputable.newAction(0, '0x00', owner)
+
+        const logs = decodeEventsOfType(receipt, AgreementMock.abi, 'NewAction')
+        assertAmountOfEvents({ logs }, 'NewAction')
+        assertEvent({ logs }, 'NewAction', { disputableActionId: 0, context: '0x00', submitter: owner })
       })
 
       it('receives ETH when sent', async () => {
@@ -165,13 +170,35 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     })
 
     context('when the agreement is set', () => {
+      let agreement
+
       beforeEach('set agreement', async () => {
-        const agreement = await AgreementMock.new()
+        agreement = await AgreementMock.new()
         await disputable.setAgreement(agreement.address, { from: owner })
+        await disputable.newAction(0, '0x00', owner)
       })
 
-      it('does not revert', async () => {
-        await disputable.closeAction(0)
+      context('when the action was not closed', () => {
+        it('closes the action', async () => {
+          const { receipt } = await disputable.closeAction(0)
+
+          const logs = decodeEventsOfType(receipt, AgreementMock.abi, 'CloseAction')
+          assertAmountOfEvents({ logs }, 'CloseAction')
+          assertEvent({ logs }, 'CloseAction', { actionId: 0 })
+        })
+      })
+
+      context('when the action was already closed', () => {
+        beforeEach('close action', async () => {
+          await agreement.closeAction(0)
+        })
+
+        it('does not close the action', async () => {
+          const { receipt } = await disputable.closeAction(0)
+
+          const logs = decodeEventsOfType(receipt, AgreementMock.abi, 'CloseAction')
+          assertAmountOfEvents({ logs }, 'CloseAction', 0)
+        })
       })
     })
   })

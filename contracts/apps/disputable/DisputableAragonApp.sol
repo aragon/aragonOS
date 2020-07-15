@@ -138,7 +138,11 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     */
     function _closeAgreementAction(uint256 _actionId) internal {
         IAgreement agreement = _ensureAgreement();
-        agreement.closeAction(_actionId);
+        (,,,,, bool closed,,) = agreement.getAction(_actionId);
+
+        if (!closed) {
+            agreement.closeAction(_actionId);
+        }
     }
 
     /**

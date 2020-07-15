@@ -1,3 +1,4 @@
+const { isAddress } = require('web3-utils')
 const { getEventAt, getEvents } = require('./events')
 
 module.exports = web3 => {
@@ -8,9 +9,11 @@ module.exports = web3 => {
         for (const arg of Object.keys(expectedArgs)) {
             let foundArg = event.args[arg]
             if (foundArg instanceof web3.BigNumber) foundArg = foundArg.toString()
+            else if (isAddress(foundArg)) foundArg = foundArg.toLowerCase()
 
             let expectedArg = expectedArgs[arg]
             if (expectedArg instanceof web3.BigNumber) expectedArg = expectedArg.toString()
+            else if (isAddress(expectedArg)) expectedArg = expectedArg.toLowerCase()
 
             assert.equal(foundArg, expectedArg, `${eventName} event ${arg} value does not match`)
         }
