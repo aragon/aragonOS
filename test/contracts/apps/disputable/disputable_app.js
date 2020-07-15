@@ -146,7 +146,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
         await disputable.newAction(0, '0x00', owner)
       })
 
-      it('transfer funds when sent', async () => {
+      it('receives ETH when sent', async () => {
         const previousBalance = await web3.eth.getBalance(agreement.address)
 
         await disputable.newAction(0, '0x00', owner, { value: 1e18 })
