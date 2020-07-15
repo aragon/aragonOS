@@ -135,13 +135,24 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     })
 
     context('when the agreement is set', () => {
+      let agreement
+
       beforeEach('set agreement', async () => {
-        const agreement = await AgreementMock.new()
+        agreement = await AgreementMock.new()
         await disputable.setAgreement(agreement.address, { from: owner })
       })
 
       it('does not revert', async () => {
         await disputable.newAction(0, '0x00', owner)
+      })
+
+      it('transfer funds when sent', async () => {
+        const previousBalance = await web3.eth.getBalance(agreement.address)
+
+        await disputable.newAction(0, '0x00', owner, { value: 1e18 })
+
+        const currentBalance = await web3.eth.getBalance(agreement.address)
+        assert.equal(currentBalance.sub(previousBalance).toString(), 1e18, 'agreement balance does not match')
       })
     })
   })
