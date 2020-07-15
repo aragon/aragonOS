@@ -48,7 +48,7 @@ contract IAgreement is IArbitrable, IACLOracle {
 
     function deactivate(address _disputable) external;
 
-    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external returns (uint256);
+    function newAction(uint256 _disputableActionId, bytes _context, address _submitter) external payable returns (uint256);
 
     function closeAction(uint256 _actionId) external;
 
