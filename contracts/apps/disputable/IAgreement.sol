@@ -70,7 +70,7 @@ contract IAgreement is IArbitrable, IACLOracle {
             bytes content
         );
 
-    function getDisputableInfo(address _disputable) external view returns (bool registered, uint256 currentCollateralRequirementId);
+    function getDisputableInfo(address _disputable) external view returns (bool activated, uint256 currentCollateralRequirementId);
 
     function getCollateralRequirement(address _disputable, uint256 _collateralId) external view
         returns (
