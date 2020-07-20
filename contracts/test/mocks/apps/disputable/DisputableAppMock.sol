@@ -33,16 +33,16 @@ contract DisputableAppMock is DisputableAragonApp {
     }
 
     function interfaceID() external pure returns (bytes4) {
-        IDisputable iDisputable;
-        return iDisputable.setAgreement.selector ^
-            iDisputable.onDisputableActionChallenged.selector ^
-            iDisputable.onDisputableActionAllowed.selector ^
-            iDisputable.onDisputableActionRejected.selector ^
-            iDisputable.onDisputableActionVoided.selector ^
-            iDisputable.getAgreement.selector ^
-            iDisputable.canChallenge.selector ^
-            iDisputable.canClose.selector ^
-            iDisputable.appId.selector;
+        DisputableAragonApp disputableAragonApp;
+        return disputableAragonApp.setAgreement.selector ^
+            disputableAragonApp.onDisputableActionChallenged.selector ^
+            disputableAragonApp.onDisputableActionAllowed.selector ^
+            disputableAragonApp.onDisputableActionRejected.selector ^
+            disputableAragonApp.onDisputableActionVoided.selector ^
+            disputableAragonApp.getAgreement.selector ^
+            disputableAragonApp.canChallenge.selector ^
+            disputableAragonApp.canClose.selector ^
+            disputableAragonApp.appId.selector;
     }
 
     function erc165interfaceID() external pure returns (bytes4) {

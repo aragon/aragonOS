@@ -6,9 +6,10 @@ pragma solidity ^0.4.24;
 
 import "../common/UnstructuredStorage.sol";
 import "../kernel/IKernel.sol";
+import "./IAragonApp.sol";
 
 
-contract AppStorage {
+contract AppStorage is IAragonApp {
     using UnstructuredStorage for bytes32;
 
     /* Hardcoded constants to save gas

@@ -39,6 +39,4 @@ contract IDisputable is ERC165 {
     function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
         return _interfaceId == DISPUTABLE_INTERFACE_ID || _interfaceId == ERC165_INTERFACE_ID;
     }
-
-    function appId() public view returns (bytes32);
 }
