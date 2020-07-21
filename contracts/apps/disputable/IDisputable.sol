@@ -10,8 +10,7 @@ import "../../lib/standards/ERC165.sol";
 
 
 contract IDisputable is ERC165 {
-    bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
-    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0x737c65f9);
+    bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xf3d3bb51);
 
     event AgreementSet(IAgreement indexed agreement);
 
@@ -36,7 +35,7 @@ contract IDisputable is ERC165 {
     * @param _interfaceId The interface identifier being queried, as specified in ERC-165
     * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
     */
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
-        return _interfaceId == DISPUTABLE_INTERFACE_ID || _interfaceId == ERC165_INTERFACE_ID;
+    function supportsInterface(bytes4 _interfaceId) public view returns (bool) {
+        return super.supportsInterface(_interfaceId) || _interfaceId == DISPUTABLE_INTERFACE_ID;
     }
 }
