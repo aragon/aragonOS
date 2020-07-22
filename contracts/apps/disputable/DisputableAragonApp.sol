@@ -13,6 +13,7 @@ import "../../lib/math/SafeMath64.sol";
 
 contract DisputableAragonApp is IDisputable, AragonApp {
     /* Validation errors */
+    string internal constant ERROR_SENDER_NOT_KERNEL = "DISPUTABLE_SENDER_NOT_KERNEL";
     string internal constant ERROR_SENDER_NOT_AGREEMENT = "DISPUTABLE_SENDER_NOT_AGREEMENT";
     string internal constant ERROR_AGREEMENT_STATE_INVALID = "DISPUTABLE_AGREEMENT_STATE_INVAL";
 
@@ -20,9 +21,6 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     // to be validated in the app itself as the connected Agreement is responsible for performing the check on a challenge.
     // bytes32 public constant CHALLENGE_ROLE = keccak256("CHALLENGE_ROLE");
     bytes32 public constant CHALLENGE_ROLE = 0xef025787d7cd1a96d9014b8dc7b44899b8c1350859fb9e1e05f5a546dd65158d;
-
-    // bytes32 public constant SET_AGREEMENT_ROLE = keccak256("SET_AGREEMENT_ROLE");
-    bytes32 public constant SET_AGREEMENT_ROLE = 0x8dad640ab1b088990c972676ada708447affc660890ec9fc9a5483241c49f036;
 
     // bytes32 internal constant AGREEMENT_POSITION = keccak256("aragonOS.appStorage.agreement");
     bytes32 internal constant AGREEMENT_POSITION = 0x6dbe80ccdeafbf5f3fff5738b224414f85e9370da36f61bf21c65159df7409e9;
@@ -78,9 +76,11 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     * @notice Set Agreement to `_agreement`
     * @param _agreement Agreement instance to be set
     */
-    function setAgreement(IAgreement _agreement) external auth(SET_AGREEMENT_ROLE) {
-        IAgreement agreement = _getAgreement();
-        require(agreement == IAgreement(0) && _agreement != IAgreement(0), ERROR_AGREEMENT_STATE_INVALID);
+    function setAgreement(IAgreement _agreement) external {
+        require(IKernel(msg.sender) == kernel(), ERROR_SENDER_NOT_KERNEL);
+
+        IAgreement currentAgreement = _getAgreement();
+        require(currentAgreement == IAgreement(0) && _agreement != IAgreement(0), ERROR_AGREEMENT_STATE_INVALID);
 
         AGREEMENT_POSITION.setStorageAddress(address(_agreement));
         emit AgreementSet(_agreement);
