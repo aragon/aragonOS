@@ -12,6 +12,6 @@ interface IAragonAppFeesCashier {
     function setAppFees(bytes32[] _appIds, ERC20[] _tokens, uint256[] _amounts) external;
     function unsetAppFee(bytes32 _appId) external;
     function unsetAppFees(bytes32[] _appIds) external;
-    function payAppFees(bytes32 _appId, bytes _data) external payable;
+    function payAppFees(bytes32 _appId, bytes _data) external;
     function getAppFee(bytes32 _appId) external view returns (ERC20, uint256);
 }

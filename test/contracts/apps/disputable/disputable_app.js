@@ -145,15 +145,6 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       it('does not revert', async () => {
         await disputable.newAction(0, '0x00', owner)
       })
-
-      it('receives ETH when sent', async () => {
-        const previousBalance = await web3.eth.getBalance(agreement.address)
-
-        await disputable.newAction(0, '0x00', owner, { value: 1e18 })
-
-        const currentBalance = await web3.eth.getBalance(agreement.address)
-        assert.equal(currentBalance.sub(previousBalance).toString(), 1e18, 'agreement balance does not match')
-      })
     })
   })
 
