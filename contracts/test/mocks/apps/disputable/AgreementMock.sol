@@ -7,7 +7,7 @@ contract AgreementMock {
         return 0;
     }
 
-    function closeAction(uint256 /* _actionId */) external {
+    function closeAction(uint256 /* _actionId */) external pure {
         // do nothing
     }
 }
