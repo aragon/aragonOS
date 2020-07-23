@@ -32,18 +32,6 @@ contract AppProxyBase is AppStorage, DepositableDelegateProxy, KernelNamespaceCo
         }
     }
 
-    /**
-    * @dev Query if a contract implements a certain interface
-    *      We implement it here to break the bridge to IAragonApp (through AppStorage)
-    *      in the inheritance graph.
-    * @param _interfaceId The interface identifier being queried, as specified in ERC-165
-    * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
-    */
-    function supportsInterface(bytes4 _interfaceId) public view returns (bool) {
-        address target = implementation();
-        return IAragonApp(target).supportsInterface(_interfaceId);
-    }
-
     function getAppBase(bytes32 _appId) internal view returns (address) {
         return kernel().getApp(KERNEL_APP_BASES_NAMESPACE, _appId);
     }

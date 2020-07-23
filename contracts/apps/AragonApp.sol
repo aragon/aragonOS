@@ -5,6 +5,7 @@
 pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
+import "./IAragonApp.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../common/Autopetrified.sol";
 import "../common/ConversionHelpers.sol";
@@ -18,7 +19,7 @@ import "../evmscript/EVMScriptRunner.sol";
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
 // ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
 // are included so that they are automatically usable by subclassing contracts
-contract AragonApp is AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
+contract AragonApp is IAragonApp, AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {

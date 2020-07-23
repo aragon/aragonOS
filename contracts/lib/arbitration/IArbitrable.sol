@@ -56,7 +56,7 @@ contract IArbitrable is ERC165 {
     * @param _interfaceId The interface identifier being queried, as specified in ERC-165
     * @return True if this contract supports the given interface, false otherwise
     */
-    function supportsInterface(bytes4 _interfaceId) public view returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
         return _interfaceId == ARBITRABLE_INTERFACE_ID || _interfaceId == ERC165_INTERFACE_ID;
     }
 }

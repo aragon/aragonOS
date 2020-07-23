@@ -19,7 +19,7 @@ contract IAragonApp is ERC165 {
     * @param _interfaceId The interface identifier being queried, as specified in ERC-165
     * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
     */
-    function supportsInterface(bytes4 _interfaceId) public view returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
         return super.supportsInterface(_interfaceId) || _interfaceId == ARAGON_APP_INTERFACE_ID;
     }
 }
