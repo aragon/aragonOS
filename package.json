@@ -14,6 +14,7 @@
     "/contracts"
   ],
   "scripts": {
+    "compile": "truffle compile",
     "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
     "test:gas": "GAS_REPORTER=true npm test",
     "test:gas:ci": "npm run test:gas && npx codechecks",
