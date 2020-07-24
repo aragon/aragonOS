@@ -125,12 +125,16 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     context('when the sender does not have permissions', () => {
       const from = someone
 
-      it('reverts', async () => {
-        await assertRevert(dao.setAgreement(disputable.address, agreement, { from }), 'KERNEL_AUTH_FAILED')
+      context('when going through the kernel', () => {
+        it('reverts', async () => {
+          await assertRevert(dao.setAgreement(disputable.address, agreement, { from }), 'KERNEL_AUTH_FAILED')
+        })
       })
 
-      it('reverts', async () => {
-        await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_SENDER_NOT_KERNEL')
+      context('when going through the disputable', () => {
+        it('reverts', async () => {
+          await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_SENDER_NOT_KERNEL')
+        })
       })
     })
   })

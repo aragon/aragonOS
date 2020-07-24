@@ -5,14 +5,14 @@ import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../apps/disputable/IAgreement.sol";
+import "../apps/disputable/IDisputable.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
 import "../common/VaultRecoverable.sol";
 import "../factory/AppProxyFactory.sol";
 import "../lib/misc/ERCProxy.sol";
-import "../apps/disputable/IAgreement.sol";
-import "../apps/disputable/IDisputable.sol";
 
 
 // solium-disable-next-line max-len
