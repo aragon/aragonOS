@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "../../../apps/IAragonApp.sol";
+import "../../../apps/AragonApp.sol";
 
 
-contract AragonAppMock is IAragonApp {
+contract AragonAppMock is AragonApp {
     bytes4 public constant ARAGON_APP_INTERFACE = ARAGON_APP_INTERFACE_ID;
 
     function interfaceID() external pure returns (bytes4) {
@@ -11,7 +11,4 @@ contract AragonAppMock is IAragonApp {
         return iAragonApp.kernel.selector ^
             iAragonApp.appId.selector;
     }
-
-    function kernel() public view returns (IKernel) {}
-    function appId() public view returns (bytes32) {}
 }

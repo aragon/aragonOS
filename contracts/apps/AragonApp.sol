@@ -5,13 +5,13 @@
 pragma solidity ^0.4.24;
 
 import "./AppStorage.sol";
-import "./IAragonApp.sol";
 import "../acl/ACLSyntaxSugar.sol";
 import "../common/Autopetrified.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/ReentrancyGuard.sol";
 import "../common/VaultRecoverable.sol";
 import "../evmscript/EVMScriptRunner.sol";
+import "../lib/standards/ERC165.sol";
 
 
 // Contracts inheriting from AragonApp are, by default, immediately petrified upon deployment so
@@ -19,7 +19,10 @@ import "../evmscript/EVMScriptRunner.sol";
 // Unless overriden, this behaviour enforces those contracts to be usable only behind an AppProxy.
 // ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
 // are included so that they are automatically usable by subclassing contracts
-contract AragonApp is IAragonApp, AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
+contract AragonApp is ERC165, AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
+    // Includes appId and kernel methods:
+    bytes4 internal constant ARAGON_APP_INTERFACE_ID = bytes4(0x54053e6c);
+
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
@@ -65,5 +68,14 @@ contract AragonApp is IAragonApp, AppStorage, Autopetrified, VaultRecoverable, R
     function getRecoveryVault() public view returns (address) {
         // Funds recovery via a vault is only available when used with a kernel
         return kernel().getRecoveryVault(); // if kernel is not set, it will revert
+    }
+
+    /**
+    * @dev Query if a contract implements a certain interface
+    * @param _interfaceId The interface identifier being queried, as specified in ERC-165
+    * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
+    */
+    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
+        return super.supportsInterface(_interfaceId) || _interfaceId == ARAGON_APP_INTERFACE_ID;
     }
 }
