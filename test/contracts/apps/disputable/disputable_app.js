@@ -8,6 +8,8 @@ const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
 const AgreementMock = artifacts.require('AgreementMock')
 const DisputableApp = artifacts.require('DisputableAppMock')
+const AragonApp = artifacts.require('AragonAppMock')
+const ERC165 = artifacts.require('ERC165Mock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
 contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => {
@@ -44,17 +46,19 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
   describe('supportsInterface', () => {
     it('supports ERC165', async () => {
+      const erc165 = await ERC165.new()
       assert.isTrue(await disputable.supportsInterface(ERC165_INTERFACE), 'does not support ERC165')
 
-      assert.equal(await disputable.ERC165_INTERFACE(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
-      assert.equal(await disputable.erc165interfaceID(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
+      assert.equal(await erc165.interfaceID(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
+      assert.equal(await erc165.ERC165_INTERFACE(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
     })
 
     it('supports Aragon App interface', async () => {
+      const aragonApp = await AragonApp.new()
       assert.isTrue(await disputable.supportsInterface(ARAGON_APP_INTERFACE), 'does not support Aragon App interface')
 
-      assert.equal(await disputable.aragonAppInterfaceID(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
-      assert.equal(await disputable.ARAGON_APP_INTERFACE(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
+      assert.equal(await aragonApp.interfaceID(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
+      assert.equal(await aragonApp.ARAGON_APP_INTERFACE(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
     })
 
     it('supports IDisputable', async () => {

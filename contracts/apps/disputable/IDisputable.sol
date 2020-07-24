@@ -10,6 +10,8 @@ import "../../lib/standards/ERC165.sol";
 
 
 contract IDisputable is ERC165 {
+    // Includes setAgreement, onDisputableActionChallenged, onDisputableActionAllowed,
+    // onDisputableActionRejected, onDisputableActionVoided, getAgreement, canChallenge and canClose:
     bytes4 internal constant DISPUTABLE_INTERFACE_ID = bytes4(0xf3d3bb51);
 
     event AgreementSet(IAgreement indexed agreement);

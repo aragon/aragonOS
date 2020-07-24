@@ -4,8 +4,6 @@ import "../../../../apps/disputable/DisputableAragonApp.sol";
 
 
 contract DisputableAppMock is DisputableAragonApp {
-    bytes4 public constant ERC165_INTERFACE = ERC165_INTERFACE_ID;
-    bytes4 public constant ARAGON_APP_INTERFACE = ARAGON_APP_INTERFACE_ID;
     bytes4 public constant DISPUTABLE_INTERFACE = DISPUTABLE_INTERFACE_ID;
 
     event DisputableChallenged(uint256 indexed id);
@@ -43,17 +41,6 @@ contract DisputableAppMock is DisputableAragonApp {
             iDisputable.getAgreement.selector ^
             iDisputable.canChallenge.selector ^
             iDisputable.canClose.selector;
-    }
-
-    function aragonAppInterfaceID() external pure returns (bytes4) {
-        IAragonApp iAragonApp;
-        return iAragonApp.kernel.selector ^
-            iAragonApp.appId.selector;
-    }
-
-    function erc165interfaceID() external pure returns (bytes4) {
-        ERC165 erc165;
-        return erc165.supportsInterface.selector;
     }
 
     /**

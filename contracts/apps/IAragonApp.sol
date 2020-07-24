@@ -9,6 +9,7 @@ import "../lib/standards/ERC165.sol";
 
 
 contract IAragonApp is ERC165 {
+    // Includes appId and kernel methods:
     bytes4 internal constant ARAGON_APP_INTERFACE_ID = bytes4(0x54053e6c);
 
     function kernel() public view returns (IKernel);

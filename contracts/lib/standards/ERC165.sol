@@ -6,6 +6,7 @@ pragma solidity ^0.4.24;
 
 
 contract ERC165 {
+    // Includes supportsInterface method:
     bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
 
     /**
