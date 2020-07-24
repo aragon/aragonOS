@@ -1,8 +1,10 @@
 pragma solidity 0.4.24;
 
+import "../../../../apps/disputable/IAgreement.sol";
 
-contract AgreementMock {
-    function newAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */) external payable returns (uint256) {
+
+contract AgreementMock is IAgreement {
+    function newAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */) external returns (uint256) {
         // do nothing
         return 0;
     }
