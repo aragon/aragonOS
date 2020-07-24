@@ -27,14 +27,6 @@ contract KeccakConstants {
     bytes32 public constant CREATE_PERMISSIONS_ROLE = keccak256(abi.encodePacked("CREATE_PERMISSIONS_ROLE"));
     bytes32 public constant EMPTY_PARAM_HASH = keccak256(abi.encodePacked(uint256(0)));
 
-    // APMRegistry
-    bytes32 public constant CREATE_REPO_ROLE = keccak256(abi.encodePacked("CREATE_REPO_ROLE"));
-
-    // ENSSubdomainRegistrar
-    bytes32 public constant CREATE_NAME_ROLE = keccak256(abi.encodePacked("CREATE_NAME_ROLE"));
-    bytes32 public constant DELETE_NAME_ROLE = keccak256(abi.encodePacked("DELETE_NAME_ROLE"));
-    bytes32 public constant POINT_ROOTNODE_ROLE = keccak256(abi.encodePacked("POINT_ROOTNODE_ROLE"));
-
     // EVMScriptRegistry
     bytes32 public constant EVMSCRIPT_REGISTRY_APP_ID = keccak256(abi.encodePacked(APM_NODE, keccak256("evmreg")));
     bytes32 public constant REGISTRY_ADD_EXECUTOR_ROLE = keccak256("REGISTRY_ADD_EXECUTOR_ROLE");
@@ -42,9 +34,6 @@ contract KeccakConstants {
 
     // EVMScriptExecutor types
     bytes32 public constant EVMSCRIPT_EXECUTOR_CALLS_SCRIPT = keccak256(abi.encodePacked("CALLS_SCRIPT"));
-
-    // Repo
-    bytes32 public constant CREATE_VERSION_ROLE = keccak256(abi.encodePacked("CREATE_VERSION_ROLE"));
 
     // Unstructured storage
     bytes32 public constant initializationBlockPosition = keccak256(abi.encodePacked("aragonOS.initializable.initializationBlock"));
