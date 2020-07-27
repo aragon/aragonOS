@@ -20,9 +20,6 @@ import "../lib/standards/ERC165.sol";
 // ReentrancyGuard, EVMScriptRunner, and ACLSyntaxSugar are not directly used by this contract, but
 // are included so that they are automatically usable by subclassing contracts
 contract AragonApp is ERC165, AppStorage, Autopetrified, VaultRecoverable, ReentrancyGuard, EVMScriptRunner, ACLSyntaxSugar {
-    // Includes appId and kernel methods:
-    bytes4 internal constant ARAGON_APP_INTERFACE_ID = bytes4(0x54053e6c);
-
     string private constant ERROR_AUTH_FAILED = "APP_AUTH_FAILED";
 
     modifier auth(bytes32 _role) {
