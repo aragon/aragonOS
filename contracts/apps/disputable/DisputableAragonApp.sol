@@ -129,7 +129,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     */
     function _newAgreementAction(uint256 _disputableActionId, bytes _context, address _submitter) internal returns (uint256) {
         IAgreement agreement = _ensureAgreement();
-        return agreement.newAction.value(msg.value)(_disputableActionId, _context, _submitter);
+        return agreement.newAction(_disputableActionId, _context, _submitter);
     }
 
     /**
