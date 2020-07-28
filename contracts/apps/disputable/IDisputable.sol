@@ -31,13 +31,4 @@ contract IDisputable is ERC165 {
     function canChallenge(uint256 _disputableActionId) external view returns (bool);
 
     function canClose(uint256 _disputableActionId) external view returns (bool);
-
-    /**
-    * @dev Query if a contract implements a certain interface
-    * @param _interfaceId The interface identifier being queried, as specified in ERC-165
-    * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
-    */
-    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
-        return super.supportsInterface(_interfaceId) || _interfaceId == DISPUTABLE_INTERFACE_ID;
-    }
 }
