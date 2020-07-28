@@ -121,7 +121,7 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function supportsInterface(bytes4 _interfaceId) external pure returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
         // do nothing
     }
 
