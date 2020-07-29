@@ -1,6 +1,8 @@
+const { toChecksumAddress } = require('web3-utils')
 const { assertRevert } = require('../../../helpers/assertThrow')
 const { getEventArgument } = require('../../../helpers/events')
 const { getNewProxyAddress } = require('../../../helpers/events')
+const { decodeEventsOfType } = require('../../../helpers/decodeEvent')
 const { assertEvent, assertAmountOfEvents } = require('../../../helpers/assertEvent')(web3)
 
 const ACL = artifacts.require('ACL')
@@ -33,15 +35,15 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
+
+    const SET_AGREEMENT_ROLE = await kernelBase.SET_AGREEMENT_ROLE()
+    await acl.createPermission(owner, dao.address, SET_AGREEMENT_ROLE, owner, { from: owner })
   })
 
   beforeEach('install disputable app', async () => {
     const initializeData = disputableBase.contract.initialize.getData()
     const receipt = await dao.newAppInstance('0x1234', disputableBase.address, initializeData, false, { from: owner })
     disputable = await DisputableApp.at(getNewProxyAddress(receipt))
-
-    const SET_AGREEMENT_ROLE = await disputable.SET_AGREEMENT_ROLE()
-    await acl.createPermission(owner, disputable.address, SET_AGREEMENT_ROLE, owner, { from: owner })
   })
 
   describe('supportsInterface', () => {
@@ -79,17 +81,19 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
       const itSetsTheAgreementAddress = agreement => {
         it('sets the agreement', async () => {
-          await disputable.setAgreement(agreement, { from })
+          await dao.setAgreement(disputable.address, agreement, { from })
 
           const currentAgreement = await disputable.getAgreement()
           assert.equal(currentAgreement, agreement, 'disputable agreement does not match')
         })
 
         it('emits an event', async () => {
-          const receipt = await disputable.setAgreement(agreement, { from })
+          const { tx } = await dao.setAgreement(disputable.address, agreement, { from })
+          const receipt = await web3.eth.getTransactionReceipt(tx)
+          const logs = decodeEventsOfType(receipt, DisputableApp.abi, 'AgreementSet')
 
-          assertAmountOfEvents(receipt, 'AgreementSet')
-          assertEvent(receipt, 'AgreementSet', { agreement })
+          assertAmountOfEvents({ logs }, 'AgreementSet')
+          assertEvent({ logs }, 'AgreementSet', { agreement: toChecksumAddress(agreement) })
         })
       }
 
@@ -100,31 +104,31 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
         context('when trying to unset the agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+            await assertRevert(dao.setAgreement(disputable.address, ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
       })
 
       context('when the agreement was already set', () => {
         beforeEach('set agreement', async () => {
-          await disputable.setAgreement(agreement, { from })
+          await dao.setAgreement(disputable.address, agreement, { from })
         })
 
         context('when trying to re-set the agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+            await assertRevert(dao.setAgreement(disputable.address, agreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
 
         context('when trying to set a new agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(anotherAgreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+            await assertRevert(dao.setAgreement(disputable.address, anotherAgreement, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
 
         context('when trying to unset the agreement', () => {
           it('reverts', async () => {
-            await assertRevert(disputable.setAgreement(ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
+            await assertRevert(dao.setAgreement(disputable.address, ZERO_ADDRESS, { from }), 'DISPUTABLE_AGREEMENT_STATE_INVAL')
           })
         })
       })
@@ -133,8 +137,16 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     context('when the sender does not have permissions', () => {
       const from = someone
 
-      it('reverts', async () => {
-        await assertRevert(disputable.setAgreement(agreement, { from }), 'APP_AUTH_FAILED')
+      context('when going through the kernel', () => {
+        it('reverts', async () => {
+          await assertRevert(dao.setAgreement(disputable.address, agreement, { from }), 'KERNEL_AUTH_FAILED')
+        })
+      })
+
+      context('when going through the disputable', () => {
+        it('reverts', async () => {
+          await assertRevert(disputable.setAgreement(agreement, { from }), 'DISPUTABLE_SENDER_NOT_KERNEL')
+        })
       })
     })
   })
@@ -151,7 +163,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
       beforeEach('set agreement', async () => {
         agreement = await AgreementMock.new()
-        await disputable.setAgreement(agreement.address, { from: owner })
+        await dao.setAgreement(disputable.address, agreement.address, { from: owner })
       })
 
       it('does not revert', async () => {
@@ -170,7 +182,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     context('when the agreement is set', () => {
       beforeEach('set agreement', async () => {
         const agreement = await AgreementMock.new()
-        await disputable.setAgreement(agreement.address, { from: owner })
+        await dao.setAgreement(disputable.address, agreement.address, { from: owner })
       })
 
       it('does not revert', async () => {
@@ -186,7 +198,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       const agreement = someone
 
       beforeEach('set agreement', async () => {
-        await disputable.setAgreement(agreement, { from: owner })
+        await dao.setAgreement(disputable.address, agreement, { from: owner })
       })
 
       context('when the sender is the agreement', () => {
@@ -222,7 +234,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       const agreement = someone
 
       beforeEach('set agreement', async () => {
-        await disputable.setAgreement(agreement, { from: owner })
+        await dao.setAgreement(disputable.address, agreement, { from: owner })
       })
 
       context('when the sender is the agreement', () => {
@@ -258,7 +270,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       const agreement = someone
 
       beforeEach('set agreement', async () => {
-        await disputable.setAgreement(agreement, { from: owner })
+        await dao.setAgreement(disputable.address, agreement, { from: owner })
       })
 
       context('when the sender is the agreement', () => {
@@ -294,7 +306,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       const agreement = someone
 
       beforeEach('set agreement', async () => {
-        await disputable.setAgreement(agreement, { from: owner })
+        await dao.setAgreement(disputable.address, agreement, { from: owner })
       })
 
       context('when the sender is the agreement', () => {

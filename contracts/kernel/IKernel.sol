@@ -6,6 +6,8 @@ pragma solidity ^0.4.24;
 
 import "../acl/IACL.sol";
 import "../common/IVaultRecoverable.sol";
+import "../apps/disputable/IAgreement.sol";
+import "../apps/disputable/IDisputable.sol";
 
 
 interface IKernelEvents {
@@ -20,4 +22,7 @@ contract IKernel is IKernelEvents, IVaultRecoverable {
 
     function setApp(bytes32 namespace, bytes32 appId, address app) public;
     function getApp(bytes32 namespace, bytes32 appId) public view returns (address);
+
+    // solium-disable function-order
+    function setAgreement(IDisputable _disputableApp, IAgreement _agreement) external;
 }

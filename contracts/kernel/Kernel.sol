@@ -5,6 +5,8 @@ import "./KernelConstants.sol";
 import "./KernelStorage.sol";
 import "../acl/IACL.sol";
 import "../acl/ACLSyntaxSugar.sol";
+import "../apps/disputable/IAgreement.sol";
+import "../apps/disputable/IDisputable.sol";
 import "../common/ConversionHelpers.sol";
 import "../common/IsContract.sol";
 import "../common/Petrifiable.sol";
@@ -15,14 +17,23 @@ import "../lib/misc/ERCProxy.sol";
 
 // solium-disable-next-line max-len
 contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstants, Petrifiable, IsContract, VaultRecoverable, AppProxyFactory, ACLSyntaxSugar {
-    /* Hardcoded constants to save gas
-    bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
-    */
+    // bytes32 public constant APP_MANAGER_ROLE = keccak256("APP_MANAGER_ROLE");
     bytes32 public constant APP_MANAGER_ROLE = 0xb6d92708f3d4817afc106147d969e229ced5c46e65e0a5002a0d391287762bd0;
+
+    // bytes32 public constant SET_AGREEMENT_ROLE = keccak256("SET_AGREEMENT_ROLE");
+    bytes32 public constant SET_AGREEMENT_ROLE = 0x8dad640ab1b088990c972676ada708447affc660890ec9fc9a5483241c49f036;
 
     string private constant ERROR_APP_NOT_CONTRACT = "KERNEL_APP_NOT_CONTRACT";
     string private constant ERROR_INVALID_APP_CHANGE = "KERNEL_INVALID_APP_CHANGE";
     string private constant ERROR_AUTH_FAILED = "KERNEL_AUTH_FAILED";
+
+    modifier auth(bytes32 _role, uint256[] memory _params) {
+        require(
+            hasPermission(msg.sender, address(this), _role, ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)),
+            ERROR_AUTH_FAILED
+        );
+        _;
+    }
 
     /**
     * @dev Constructor that allows the deployer to choose if the base instance should be petrified immediately.
@@ -32,6 +43,19 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         if (_shouldPetrify) {
             petrify();
         }
+    }
+
+    /**
+    * @dev Set an Agreement for a disputable app
+    * @notice Set `_agreement` as the Agreement for the disputable app `_disputableApp`
+    * @param _disputableApp Address of the disputable app to set the agreement of
+    * @param _agreement Agreement instance to be set
+    */
+    function setAgreement(IDisputable _disputableApp, IAgreement _agreement)
+        external
+        auth(SET_AGREEMENT_ROLE, arr(_disputableApp, _agreement))
+    {
+        _disputableApp.setAgreement(_agreement);
     }
 
     /**
@@ -226,13 +250,5 @@ contract Kernel is IKernel, KernelStorage, KernelAppIds, KernelNamespaceConstant
         } else {
             _setApp(_namespace, _appId, _app);
         }
-    }
-
-    modifier auth(bytes32 _role, uint256[] memory _params) {
-        require(
-            hasPermission(msg.sender, address(this), _role, ConversionHelpers.dangerouslyCastUintArrayToBytes(_params)),
-            ERROR_AUTH_FAILED
-        );
-        _;
     }
 }
