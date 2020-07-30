@@ -106,11 +106,11 @@ contract IAgreement is IArbitrable, IACLOracle {
             uint256 ruling
         );
 
-    function getChallengeFees(uint256 _challengeId) external view
+    function getChallengeArbitratorFees(uint256 _challengeId) external view
         returns (
-            uint256 challengerArbitratorFeeAmount,
-            ERC20 challengerArbitratorFeeToken,
-            uint256 submitterArbitratorFeeAmount,
-            ERC20 submitterArbitratorFeeToken
+            uint256 challengerArbitratorFeesAmount,
+            ERC20 challengerArbitratorFeesToken,
+            uint256 submitterArbitratorFeesAmount,
+            ERC20 submitterArbitratorFeesToken
         );
 }

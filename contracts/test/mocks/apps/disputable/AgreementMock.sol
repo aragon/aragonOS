@@ -111,7 +111,7 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function getChallengeFees(uint256) external view
+    function getChallengeArbitratorFees(uint256) external view
         returns (
             uint256,
             ERC20,
