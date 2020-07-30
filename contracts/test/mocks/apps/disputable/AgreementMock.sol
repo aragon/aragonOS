@@ -101,8 +101,6 @@ contract AgreementMock is IAgreement {
             uint64,
             bytes,
             uint256,
-            uint256,
-            ERC20,
             ChallengeState,
             bool,
             bool,
@@ -113,15 +111,26 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function submitEvidence(uint256 _disputeId, bytes _evidence, bool _finished) external {
+    function getChallengeArbitratorFees(uint256) external view
+        returns (
+            uint256,
+            ERC20,
+            uint256,
+            ERC20
+        )
+    {
         // do nothing
     }
 
-    function rule(uint256 _disputeId, uint256 _ruling) external {
+    function submitEvidence(uint256, bytes, bool) external {
         // do nothing
     }
 
-    function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
+    function rule(uint256, uint256) external {
+        // do nothing
+    }
+
+    function supportsInterface(bytes4) public pure returns (bool) {
         // do nothing
     }
 

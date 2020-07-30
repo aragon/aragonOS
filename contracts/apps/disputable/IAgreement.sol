@@ -99,12 +99,18 @@ contract IAgreement is IArbitrable, IACLOracle {
             uint64 endDate,
             bytes context,
             uint256 settlementOffer,
-            uint256 arbitratorFeeAmount,
-            ERC20 arbitratorFeeToken,
             ChallengeState state,
             bool submitterFinishedEvidence,
             bool challengerFinishedEvidence,
             uint256 disputeId,
             uint256 ruling
+        );
+
+    function getChallengeArbitratorFees(uint256 _challengeId) external view
+        returns (
+            uint256 challengerArbitratorFeesAmount,
+            ERC20 challengerArbitratorFeesToken,
+            uint256 submitterArbitratorFeesAmount,
+            ERC20 submitterArbitratorFeesToken
         );
 }
