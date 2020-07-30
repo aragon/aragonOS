@@ -1,6 +1,4 @@
-const { assertEvent } = require('../../helpers/assertEvent')(web3)
-const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
-const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
+const { assertEvent, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')

@@ -29,6 +29,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@aragon/contract-helpers-test": "^0.1.0-rc.3",
     "@aragon/truffle-config-v4": "^1.0.1",
     "@codechecks/client": "^0.1.5",
     "coveralls": "^3.0.9",

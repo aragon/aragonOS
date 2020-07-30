@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test')
 
 contract('SafeMath8 lib test', () => {
   let safeMath8Mock

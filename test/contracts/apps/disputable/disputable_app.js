@@ -1,8 +1,5 @@
 const { sha3 } = require('web3-utils')
-const { assertRevert } = require('../../../helpers/assertThrow')
-const { getEventArgument } = require('../../../helpers/events')
-const { getNewProxyAddress } = require('../../../helpers/events')
-const { assertEvent, assertAmountOfEvents } = require('../../../helpers/assertEvent')(web3)
+const { assertRevert, assertEvent, assertAmountOfEvents, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

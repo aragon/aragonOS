@@ -1,9 +1,7 @@
 const { hash } = require('eth-ens-namehash')
 const { keccak_256 } = require('js-sha3')
 const { soliditySha3 } = require('web3-utils')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
+const { assertAmountOfEvents, assertEvent, assertRevert, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,7 +11,6 @@ const KernelProxy = artifacts.require('KernelProxy')
 const AppStub = artifacts.require('AppStub')
 
 const EMPTY_BYTES = '0x'
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 const APP_ID = hash('stub.aragonpm.test')
 const keccak256 = name => `0x${keccak_256(name)}`
@@ -241,7 +238,7 @@ contract('Kernel ACL', accounts => {
 
                     it('removes manager', async () => {
                         const noManager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
-                        assert.equal(ZERO_ADDR, noManager, 'manager should have been removed')
+                        assert.equal(ZERO_ADDRESS, noManager, 'manager should have been removed')
                     })
 
                     it('old manager lost power', async () => {

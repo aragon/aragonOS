@@ -1,7 +1,5 @@
 const { hash } = require('eth-ens-namehash')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getBalance } = require('../../helpers/web3')
+const { assertRevert, getBalance, onlyIf } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

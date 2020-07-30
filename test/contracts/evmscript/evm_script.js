@@ -1,10 +1,7 @@
-const reverts = require('../../helpers/revertStrings')
+const reverts = require('@aragon/contract-helpers-test')
 const { rawEncode } = require('ethereumjs-abi')
 const { soliditySha3 } = require('web3-utils')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
-const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
+const { assertEvent, assertAmountOfEvents, assertRevert, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

@@ -1,9 +1,6 @@
 const { toChecksumAddress } = require('web3-utils')
-const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
 const { skipCoverage } = require('../../helpers/coverage')
-const { decodeEventsOfType } = require('../../helpers/decodeEvent')
-const { assertRevert, assertOutOfGas } = require('../../helpers/assertThrow')
-const { getBalance } = require('../../helpers/web3')
+const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, decodeEventsOfType, getBalance } = require('@aragon/contract-helpers-test')
 
 // Mocks
 const DepositableDelegateProxyMock = artifacts.require('DepositableDelegateProxyMock')

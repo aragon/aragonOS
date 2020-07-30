@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test')
 const { skipSuiteCoverage } = require('../../helpers/coverage')
 const { permissionParamEqOracle } = require('../../helpers/permissionParams')
 

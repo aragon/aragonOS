@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test')
 
 // Mocks
 const ForwarderMock = artifacts.require('ForwarderMock')

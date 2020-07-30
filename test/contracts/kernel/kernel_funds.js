@@ -1,6 +1,6 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { getBalance } = require('../../helpers/web3')
+const { assertRevert } = require('@aragon/contract-helpers-test')
+const { onlyIf } = require('@aragon/contract-helpers-test')
+const { getBalance } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

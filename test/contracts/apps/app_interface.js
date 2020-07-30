@@ -1,5 +1,4 @@
-const { getEventArgument } = require('../../helpers/events')
-const { getNewProxyAddress } = require('../../helpers/events')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

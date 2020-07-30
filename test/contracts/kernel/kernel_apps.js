@@ -1,8 +1,5 @@
 const { hash } = require('eth-ens-namehash')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getNewProxyAddress } = require('../../helpers/events')
-const { assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
+const { assertAmountOfEvents, assertRevert, getNewProxyAddress, onlyIf, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -18,7 +15,6 @@ const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('Kernel apps', ([permissionsRoot]) => {
     let aclBase, appBase1, appBase2
@@ -70,7 +66,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
             * TESTS *
             *********/
             it('fails if setting app to 0 address', async () => {
-                await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, ZERO_ADDR))
+                await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, ZERO_ADDRESS))
             })
 
             it('fails if setting app to non-contract address', async () => {
@@ -130,7 +126,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                         })
 
                         it('sets the app base when not previously registered', async() => {
-                            assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
+                            assert.equal(ZERO_ADDRESS, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
                             await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
@@ -164,11 +160,11 @@ contract('Kernel apps', ([permissionsRoot]) => {
 
                             // Check that the app base has been set, but the app isn't the default app
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
-                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDR, "Default app shouldn't be set")
+                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDRESS, "Default app shouldn't be set")
                         })
 
                         it("fails if the app base is not given", async() => {
-                            await assertRevert(kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR, EMPTY_BYTES, false))
+                            await assertRevert(kernelOverload[newInstanceFn](APP_ID, ZERO_ADDRESS, EMPTY_BYTES, false))
                         })
 
                         it('fails if the given app base is different than the existing one', async() => {
@@ -193,7 +189,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                         })
 
                         it('sets the app base when not previously registered', async() => {
-                            assert.equal(ZERO_ADDR, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
+                            assert.equal(ZERO_ADDRESS, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
 
                             await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
                             assert.equal(appBase1.address, await kernel.getApp(APP_BASES_NAMESPACE, APP_ID))
@@ -211,7 +207,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
 
                             // Check that only the app base is set
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
-                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDR, "Default app shouldn't be set")
+                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDRESS, "Default app shouldn't be set")
 
                             // Make sure app is not initialized
                             assert.isFalse(await AppStub.at(appProxyAddr).hasInitialized(), "App shouldn't have been initialized")
@@ -226,11 +222,11 @@ contract('Kernel apps', ([permissionsRoot]) => {
 
                             // Check that the app base has been set, but the app isn't the default app
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
-                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDR, "Default app shouldn't be set")
+                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDRESS, "Default app shouldn't be set")
                         })
 
                         it("fails if the app base is not given", async() => {
-                            await assertRevert(kernelOverload[newInstanceFn](APP_ID, ZERO_ADDR))
+                            await assertRevert(kernelOverload[newInstanceFn](APP_ID, ZERO_ADDRESS))
                         })
 
                         it('fails if the given app base is different than the existing one', async() => {

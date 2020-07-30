@@ -1,7 +1,5 @@
 const { hash } = require('eth-ens-namehash')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { getBlockNumber } = require('../../helpers/web3')
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert, getBlockNumber, onlyIf, injectWeb3, injectArtifacts, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -16,8 +14,10 @@ const ERCProxyMock = artifacts.require('ERCProxyMock')
 const KernelSetAppMock = artifacts.require('KernelSetAppMock')
 
 const APP_ID = hash('stub.aragonpm.test')
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
+
+injectWeb3(web3)
+injectArtifacts(artifacts)
 
 contract('App proxy', ([permissionsRoot]) => {
   let aclBase, appBase1, appBase2, kernelBase, acl, kernel
@@ -122,7 +122,7 @@ contract('App proxy', ([permissionsRoot]) => {
 
       context('> Fails on bad kernel', () => {
         it('fails if kernel address is 0', async () => {
-          await assertRevert(appProxyContract.new(ZERO_ADDR, APP_ID, EMPTY_BYTES))
+          await assertRevert(appProxyContract.new(ZERO_ADDRESS, APP_ID, EMPTY_BYTES))
         })
 
         it('fails if kernel address is not a contract', async () => {

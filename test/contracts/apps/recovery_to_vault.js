@@ -1,8 +1,5 @@
 const { hash } = require('eth-ens-namehash')
-const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getNewProxyAddress } = require('../../helpers/events')
-const { getBalance } = require('../../helpers/web3')
+const { assertAmountOfEvents, assertEvent, assertRevert, getBalance, getNewProxyAddress } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')

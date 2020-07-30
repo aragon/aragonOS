@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test')
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
