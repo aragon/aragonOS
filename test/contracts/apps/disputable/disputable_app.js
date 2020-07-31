@@ -1,3 +1,4 @@
+const { keccak_256 } = require('js-sha3')
 const { assertRevert } = require('../../../helpers/assertThrow')
 const { getEventArgument } = require('../../../helpers/events')
 const { getNewProxyAddress } = require('../../../helpers/events')
@@ -320,6 +321,22 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       it('reverts', async () => {
         await assertRevert(disputable.onDisputableActionVoided(disputableId, { from: someone }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
       })
+    })
+  })
+
+  describe('roles', () => {
+    const COMPUTED_CHALLENGE_ROLE = '0x' + keccak_256("CHALLENGE_ROLE")
+    const COMPUTED_SET_AGREEMENT_ROLE = '0x' + keccak_256("SET_AGREEMENT_ROLE")
+
+    let CHALLENGE_ROLE, SET_AGREEMENT_ROLE
+
+    before('load role', async () => {
+      CHALLENGE_ROLE = await disputableBase.CHALLENGE_ROLE()
+      SET_AGREEMENT_ROLE = await disputableBase.SET_AGREEMENT_ROLE()
+    })
+    it('roles match', async () => {
+      assert.equal(CHALLENGE_ROLE, COMPUTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
+      assert.equal(SET_AGREEMENT_ROLE, COMPUTED_SET_AGREEMENT_ROLE, 'SET_AGREEMENT_ROLE doesn’t match')
     })
   })
 })
