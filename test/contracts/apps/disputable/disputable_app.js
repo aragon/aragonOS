@@ -1,4 +1,4 @@
-const { keccak_256 } = require('js-sha3')
+const { sha3 } = require('web3-utils')
 const { assertRevert } = require('../../../helpers/assertThrow')
 const { getEventArgument } = require('../../../helpers/events')
 const { getNewProxyAddress } = require('../../../helpers/events')
@@ -325,18 +325,12 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
   })
 
   describe('roles', () => {
-    const COMPUTED_CHALLENGE_ROLE = '0x' + keccak_256("CHALLENGE_ROLE")
-    const COMPUTED_SET_AGREEMENT_ROLE = '0x' + keccak_256("SET_AGREEMENT_ROLE")
+    it('computes roles properly', async () => {
+      const EXPECTED_CHALLENGE_ROLE = sha3('CHALLENGE_ROLE')
+      assert.equal(await disputableBase.CHALLENGE_ROLE(), EXPECTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
 
-    let CHALLENGE_ROLE, SET_AGREEMENT_ROLE
-
-    before('load role', async () => {
-      CHALLENGE_ROLE = await disputableBase.CHALLENGE_ROLE()
-      SET_AGREEMENT_ROLE = await disputableBase.SET_AGREEMENT_ROLE()
-    })
-    it('roles match', async () => {
-      assert.equal(CHALLENGE_ROLE, COMPUTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
-      assert.equal(SET_AGREEMENT_ROLE, COMPUTED_SET_AGREEMENT_ROLE, 'SET_AGREEMENT_ROLE doesn’t match')
+      const EXPECTED_SET_AGREEMENT_ROLE = sha3('SET_AGREEMENT_ROLE')
+      assert.equal(await disputableBase.SET_AGREEMENT_ROLE(), EXPECTED_SET_AGREEMENT_ROLE, 'SET_AGREEMENT_ROLE doesn’t match')
     })
   })
 })
