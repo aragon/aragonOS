@@ -1,3 +1,4 @@
+const { sha3 } = require('web3-utils')
 const { assertRevert } = require('../../../helpers/assertThrow')
 const { getEventArgument } = require('../../../helpers/events')
 const { getNewProxyAddress } = require('../../../helpers/events')
@@ -320,6 +321,16 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       it('reverts', async () => {
         await assertRevert(disputable.onDisputableActionVoided(disputableId, { from: someone }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
       })
+    })
+  })
+
+  describe('roles', () => {
+    it('computes roles properly', async () => {
+      const EXPECTED_CHALLENGE_ROLE = sha3('CHALLENGE_ROLE')
+      assert.equal(await disputableBase.CHALLENGE_ROLE(), EXPECTED_CHALLENGE_ROLE, 'CHALLENGE_ROLE doesn’t match')
+
+      const EXPECTED_SET_AGREEMENT_ROLE = sha3('SET_AGREEMENT_ROLE')
+      assert.equal(await disputableBase.SET_AGREEMENT_ROLE(), EXPECTED_SET_AGREEMENT_ROLE, 'SET_AGREEMENT_ROLE doesn’t match')
     })
   })
 })
