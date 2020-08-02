@@ -278,10 +278,10 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, false);
     }
 
-    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, address who, address grantee, bool expected) internal {
+    function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, address user, address who, bool expected) internal {
         Param[] memory params = new Param[](1);
         params[0] = Param(argId, uint8(op), uint240(value));
-        assertEval(params, args, who, grantee, expected);
+        assertEval(params, args, user, who, expected);
     }
 
     function assertEval(uint256[] memory args, uint8 argId, Op op, uint256 value, bool expected) internal {
@@ -296,9 +296,9 @@ contract TestACLInterpreter is ACL, ACLHelper {
         assertEval(params, args, address(0), address(0), expected);
     }
 
-    function assertEval(Param[] memory params, uint256[] memory args, address who, address grantee, bool expected) internal {
+    function assertEval(Param[] memory params, uint256[] memory args, address user, address who, bool expected) internal {
         bytes32 paramHash = _encodeAndSaveParams(params);
-        bool allow = _evalParam(paramHash, 0, who, grantee, address(0), bytes32(0), args);
+        bool allow = _evalParam(paramHash, 0, user, who, address(0), bytes32(0), args);
 
         Assert.equal(allow, expected, "eval got unexpected result");
     }
