@@ -57,13 +57,13 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     event ChangePermissionManager(address indexed app, bytes32 indexed role, address indexed manager);
 
     modifier onlyPermissionManager(address _app, bytes32 _role) {
-        require(msg.sender == _getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
+        require(msg.sender == getPermissionManager(_app, _role), ERROR_AUTH_NO_MANAGER);
         _;
     }
 
     modifier noPermissionManager(address _app, bytes32 _role) {
         // only allow permission creation (or re-creation) when there is no manager
-        require(_getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
+        require(getPermissionManager(_app, _role) == address(0), ERROR_EXISTENT_MANAGER);
         _;
     }
 
@@ -107,8 +107,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _app Address of the app in which the role will be allowed (requires app to depend on kernel for ACL)
     * @param _role Identifier for the group of actions in app given access to perform
     */
-    function grantPermission(address _entity, address _app, bytes32 _role) external onlyPermissionManager(_app, _role) {
-        _grantPermissionP(_entity, _app, _role, new uint256[](0));
+    function grantPermission(address _entity, address _app, bytes32 _role)
+        external
+    {
+        grantPermissionP(_entity, _app, _role, new uint256[](0));
     }
 
     /**
@@ -119,8 +121,12 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _role Identifier for the group of actions in app given access to perform
     * @param _params Permission parameters
     */
-    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) external onlyPermissionManager(_app, _role) {
-        _grantPermissionP(_entity, _app, _role, _params);
+    function grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params)
+        public
+        onlyPermissionManager(_app, _role)
+    {
+        bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
+        _setPermission(_entity, _app, _role, paramsHash);
     }
 
     /**
@@ -195,7 +201,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
      * @return Length of the array
      */
     function getPermissionParamsLength(address _entity, address _app, bytes32 _role) external view returns (uint) {
-        return permissionParams[permissions[_permissionHash(_entity, _app, _role)]].length;
+        return permissionParams[permissions[permissionHash(_entity, _app, _role)]].length;
     }
 
     /**
@@ -211,7 +217,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         view
         returns (uint8, uint8, uint240)
     {
-        Param storage param = permissionParams[permissions[_permissionHash(_entity, _app, _role)]][_index];
+        Param storage param = permissionParams[permissions[permissionHash(_entity, _app, _role)]][_index];
         return (param.id, param.op, param.value);
     }
 
@@ -221,8 +227,8 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _role Identifier for a group of actions in app
     * @return address of the manager for the permission
     */
-    function getPermissionManager(address _app, bytes32 _role) external view returns (address) {
-        return _getPermissionManager(_app, _role);
+    function getPermissionManager(address _app, bytes32 _role) public view returns (address) {
+        return permissionManager[roleHash(_app, _role)];
     }
 
     /**
@@ -233,50 +239,45 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     * @param _how Permission parameters
     * @return boolean indicating whether the ACL allows the role or not
     */
-    function hasPermission(address _who, address _where, bytes32 _what, bytes _how) external view returns (bool) {
-        return _hasPermission(_who, _where, _what, ConversionHelpers.dangerouslyCastBytesToUintArray(_how));
+    function hasPermission(address _who, address _where, bytes32 _what, bytes memory _how) public view returns (bool) {
+        return hasPermission(_who, _where, _what, ConversionHelpers.dangerouslyCastBytesToUintArray(_how));
     }
 
-    /**
-    * @dev Function called by apps to check ACL on kernel or to check permission status
-    * @param _who Sender of the original call
-    * @param _where Address of the app
-    * @param _what Identifier for a group of actions in app (role)
-    * @param _how Permission parameters
-    * @return boolean indicating whether the ACL allows the role or not
-    */
-    function hasPermission(address _who, address _where, bytes32 _what, uint256[] _how) external view returns (bool) {
-        return _hasPermission(_who, _where, _what, _how);
+    function hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) public view returns (bool) {
+        bytes32 whoParams = permissions[permissionHash(_who, _where, _what)];
+        if (whoParams != NO_PERMISSION && evalParams(whoParams, _who, _where, _what, _how)) {
+            return true;
+        }
+
+        bytes32 anyParams = permissions[permissionHash(ANY_ENTITY, _where, _what)];
+        if (anyParams != NO_PERMISSION && evalParams(anyParams, ANY_ENTITY, _where, _what, _how)) {
+            return true;
+        }
+
+        return false;
     }
 
-    /**
-    * @dev Function called by apps to check ACL on kernel or to check permission status
-    * @param _who Sender of the original call
-    * @param _where Address of the app
-    * @param _what Identifier for a group of actions in app (role)
-    * @return boolean indicating whether the ACL allows the role or not
-    */
-    function hasPermission(address _who, address _where, bytes32 _what) external view returns (bool) {
-        uint256[] memory emptyParams = new uint256[](0);
-        return _hasPermission(_who, _where, _what, emptyParams);
+    function hasPermission(address _who, address _where, bytes32 _what) public view returns (bool) {
+        uint256[] memory empty = new uint256[](0);
+        return hasPermission(_who, _where, _what, empty);
     }
 
-    /**
-    * @dev Function called by apps to evaluate ACL params
-    * @param _paramsHash Params hash identifier
-    * @param _who Sender of the original call
-    * @param _grantee Grantee of the role
-    * @param _where Address of the app
-    * @param _what Identifier for a group of actions in app (role)
-    * @param _how Permission parameters
-    * @return boolean indicating whether the ACL allows the role or not
-    */
-    function evalParams(bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
-        external
+    function evalParams(
+        bytes32 _paramsHash,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    )
+        public
         view
         returns (bool)
     {
-        return _evalParams(_paramsHash, _who, _grantee, _where, _what, _how);
+        if (_paramsHash == EMPTY_PARAM_HASH) {
+            return true;
+        }
+
+        return _evalParam(_paramsHash, 0, _who, _where, _what, _how);
     }
 
     /**
@@ -288,18 +289,10 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function to grant a permission with parameters
-    */
-    function _grantPermissionP(address _entity, address _app, bytes32 _role, uint256[] _params) internal {
-        bytes32 paramsHash = _params.length > 0 ? _saveParams(_params) : EMPTY_PARAM_HASH;
-        _setPermission(_entity, _app, _role, paramsHash);
-    }
-
-    /**
     * @dev Internal function called to actually save the permission
     */
     function _setPermission(address _entity, address _app, bytes32 _role, bytes32 _paramsHash) internal {
-        permissions[_permissionHash(_entity, _app, _role)] = _paramsHash;
+        permissions[permissionHash(_entity, _app, _role)] = _paramsHash;
         bool entityHasPermission = _paramsHash != NO_PERMISSION;
         bool permissionHasParams = entityHasPermission && _paramsHash != EMPTY_PARAM_HASH;
 
@@ -309,17 +302,6 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         }
     }
 
-    /**
-    * @dev Internal function that sets management of a role
-    */
-    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
-        permissionManager[_roleHash(_app, _role)] = _newManager;
-        emit ChangePermissionManager(_app, _role, _newManager);
-    }
-
-    /**
-    * @dev Internal function to save encoded params
-    */
     function _saveParams(uint256[] _encodedParams) internal returns (bytes32) {
         bytes32 paramHash = keccak256(abi.encodePacked(_encodedParams));
         Param[] storage params = permissionParams[paramHash];
@@ -335,50 +317,14 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return paramHash;
     }
 
-    /**
-    * @dev Internal function to get manager for permission
-    */
-    function _getPermissionManager(address _app, bytes32 _role) internal view returns (address) {
-        return permissionManager[_roleHash(_app, _role)];
-    }
-
-    /**
-    * @dev Internal function to perform ACL checks
-    */
-    function _hasPermission(address _who, address _where, bytes32 _what, uint256[] memory _how) internal view returns (bool) {
-        bytes32 whoParams = permissions[_permissionHash(_who, _where, _what)];
-        if (whoParams != NO_PERMISSION && _evalParams(whoParams, _who, _who, _where, _what, _how)) {
-            return true;
-        }
-
-        bytes32 anyParams = permissions[_permissionHash(ANY_ENTITY, _where, _what)];
-        if (anyParams != NO_PERMISSION && _evalParams(anyParams, _who, ANY_ENTITY, _where, _what, _how)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-    * @dev Internal function to perform an ACL check
-    */
-    function _evalParams(bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
-        internal
-        view
-        returns (bool)
-    {
-        if (_paramsHash == EMPTY_PARAM_HASH) {
-            return true;
-        }
-
-        // `_evalParam()` will internally traverse all the parameters, starting from the first parameter (0)
-        return _evalParam(_paramsHash, 0, _who, _grantee, _where, _what, _how);
-    }
-
-    /**
-    * @dev Internal function to perform an ACL check on a single permission parameter
-    */
-    function _evalParam(bytes32 _paramsHash, uint32 _paramId, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
+    function _evalParam(
+        bytes32 _paramsHash,
+        uint32 _paramId,
+        address _who,
+        address _where,
+        bytes32 _what,
+        uint256[] _how
+    )
         internal
         view
         returns (bool)
@@ -390,9 +336,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         Param memory param = permissionParams[_paramsHash][_paramId];
 
         if (param.id == LOGIC_OP_PARAM_ID) {
-            return (Op(param.op) == Op.IF_ELSE)
-                ? _evalIfElseLogicOp(param, _paramsHash, _who, _grantee, _where, _what, _how)
-                : _evalNonIfElseLogicOp(param, _paramsHash, _who, _grantee, _where, _what, _how);
+            return _evalLogic(param, _paramsHash, _who, _where, _what, _how);
         }
 
         uint256 value;
@@ -400,7 +344,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
 
         // get value
         if (param.id == ORACLE_PARAM_ID) {
-            value = _checkOracle(IACLOracle(param.value), _who, _grantee, _where, _what, _how) ? 1 : 0;
+            value = checkOracle(IACLOracle(param.value), _who, _where, _what, _how) ? 1 : 0;
             comparedTo = 1;
         } else if (param.id == BLOCK_NUMBER_PARAM_ID) {
             value = getBlockNumber();
@@ -419,45 +363,30 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             return uint256(value) > 0;
         }
 
-        return _compare(value, Op(param.op), comparedTo);
+        return compare(value, Op(param.op), comparedTo);
     }
 
-    /**
-    * @dev Internal function to eval an IF-ELSE logic operator
-    */
-    function _evalIfElseLogicOp(Param _param, bytes32 _paramsHash, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
+    function _evalLogic(Param _param, bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)
         internal
         view
         returns (bool)
     {
-        uint32 conditionParam;
-        uint32 successParam;
-        uint32 failureParam;
+        if (Op(_param.op) == Op.IF_ELSE) {
+            uint32 conditionParam;
+            uint32 successParam;
+            uint32 failureParam;
 
-        (conditionParam, successParam, failureParam) = decodeParamsList(uint256(_param.value));
-        bool result = _evalParam(_paramsHash, conditionParam, _who, _grantee, _where, _what, _how);
+            (conditionParam, successParam, failureParam) = decodeParamsList(uint256(_param.value));
+            bool result = _evalParam(_paramsHash, conditionParam, _who, _where, _what, _how);
 
-        return _evalParam(_paramsHash, result ? successParam : failureParam, _who, _grantee, _where, _what, _how);
-    }
+            return _evalParam(_paramsHash, result ? successParam : failureParam, _who, _where, _what, _how);
+        }
 
-    /**
-    * @dev Internal function to eval a non-IF-ELSE logic operator
-    */
-    function _evalNonIfElseLogicOp(
-        Param _param,
-        bytes32 _paramsHash,
-        address _who,
-        address _grantee,
-        address _where,
-        bytes32 _what,
-        uint256[] _how
-    )
-        internal
-        view
-        returns (bool)
-    {
-        (uint32 param1, uint32 param2,) = decodeParamsList(uint256(_param.value));
-        bool r1 = _evalParam(_paramsHash, param1, _who, _grantee, _where, _what, _how);
+        uint32 param1;
+        uint32 param2;
+
+        (param1, param2,) = decodeParamsList(uint256(_param.value));
+        bool r1 = _evalParam(_paramsHash, param1, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.NOT) {
             return !r1;
@@ -471,7 +400,7 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
             return false;
         }
 
-        bool r2 = _evalParam(_paramsHash, param2, _who, _grantee, _where, _what, _how);
+        bool r2 = _evalParam(_paramsHash, param2, _who, _where, _what, _how);
 
         if (Op(_param.op) == Op.XOR) {
             return r1 != r2;
@@ -480,17 +409,21 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
         return r2; // both or and and depend on result of r2 after checks
     }
 
-    /**
-    * @dev Internal function to perform an ACL oracle check
-    */
-    function _checkOracle(IACLOracle _oracleAddr, address _who, address _grantee, address _where, bytes32 _what, uint256[] _how)
-        internal
-        view
-        returns (bool)
-    {
-        // a raw call is required so we can return false if the call reverts, rather than reverting
+    function compare(uint256 _a, Op _op, uint256 _b) internal pure returns (bool) {
+        if (_op == Op.EQ)  return _a == _b;                              // solium-disable-line lbrace
+        if (_op == Op.NEQ) return _a != _b;                              // solium-disable-line lbrace
+        if (_op == Op.GT)  return _a > _b;                               // solium-disable-line lbrace
+        if (_op == Op.LT)  return _a < _b;                               // solium-disable-line lbrace
+        if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
+        if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
+        return false;
+    }
+
+    function checkOracle(IACLOracle _oracleAddr, address _who, address _where, bytes32 _what, uint256[] _how) internal view returns (bool) {
         bytes4 sig = _oracleAddr.canPerform.selector;
-        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _grantee, _where, _what, _how);
+
+        // a raw call is required so we can return false if the call reverts, rather than reverting
+        bytes memory checkCalldata = abi.encodeWithSelector(sig, _who, _where, _what, _how);
 
         bool ok;
         assembly {
@@ -522,29 +455,18 @@ contract ACL is IACL, TimeHelpers, AragonApp, ACLHelpers {
     }
 
     /**
-    * @dev Internal function to hash a role
+    * @dev Internal function that sets management
     */
-    function _roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
+    function _setPermissionManager(address _newManager, address _app, bytes32 _role) internal {
+        permissionManager[roleHash(_app, _role)] = _newManager;
+        emit ChangePermissionManager(_app, _role, _newManager);
+    }
+
+    function roleHash(address _where, bytes32 _what) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("ROLE", _where, _what));
     }
 
-    /**
-    * @dev Internal function to hash a permission
-    */
-    function _permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
+    function permissionHash(address _who, address _where, bytes32 _what) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked("PERMISSION", _who, _where, _what));
-    }
-
-    /**
-    * @dev Internal function to eval an ACL operator
-    */
-    function _compare(uint256 _a, Op _op, uint256 _b) internal pure returns (bool) {
-        if (_op == Op.EQ)  return _a == _b;                              // solium-disable-line lbrace
-        if (_op == Op.NEQ) return _a != _b;                              // solium-disable-line lbrace
-        if (_op == Op.GT)  return _a > _b;                               // solium-disable-line lbrace
-        if (_op == Op.LT)  return _a < _b;                               // solium-disable-line lbrace
-        if (_op == Op.GTE) return _a >= _b;                              // solium-disable-line lbrace
-        if (_op == Op.LTE) return _a <= _b;                              // solium-disable-line lbrace
-        return false;
     }
 }

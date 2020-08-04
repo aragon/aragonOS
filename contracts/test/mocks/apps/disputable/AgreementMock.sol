@@ -8,15 +8,7 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function activate(
-        address,
-        ERC20,
-        uint256,
-        uint256,
-        uint64
-    )
-        external
-    {
+    function activate(address, ERC20, uint256, uint256, uint64) external {
         // do nothing
     }
 
@@ -24,12 +16,12 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function newAction(uint256 /* _disputableActionId */, bytes /* _context */, address /* _submitter */) external returns (uint256) {
+    function newAction(uint256, bytes, address) external returns (uint256) {
         // do nothing
         return 0;
     }
 
-    function closeAction(uint256 /* _actionId */) external {
+    function closeAction(uint256) external {
         // do nothing
     }
 
@@ -53,14 +45,7 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function getSetting(uint256) external view
-        returns (
-            IArbitrator,
-            IAragonAppFeesCashier,
-            string,
-            bytes
-        )
-    {
+    function getSetting(uint256) external view returns (IArbitrator, IAragonAppFeesCashier, string, bytes) {
         // do nothing
     }
 
@@ -68,57 +53,19 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function getCollateralRequirement(address, uint256) external view
-        returns (
-            ERC20,
-            uint256,
-            uint256,
-            uint64
-        )
-    {
+    function getCollateralRequirement(address, uint256) external view returns (ERC20, uint256, uint256, uint64) {
         // do nothing
     }
 
-    function getAction(uint256) external view
-        returns (
-            address,
-            uint256,
-            uint256,
-            uint256,
-            address,
-            bool,
-            bytes,
-            uint256
-        )
-    {
+    function getAction(uint256) external view returns (address, uint256, uint256, uint256, address, bool, bytes, uint256) {
         // do nothing
     }
 
-    function getChallenge(uint256) external view
-        returns (
-            uint256,
-            address,
-            uint64,
-            bytes,
-            uint256,
-            ChallengeState,
-            bool,
-            bool,
-            uint256,
-            uint256
-        )
-    {
+    function getChallenge(uint256) external view returns (uint256, address, uint64, bytes, uint256, ChallengeState, bool, bool, uint256, uint256) {
         // do nothing
     }
 
-    function getChallengeArbitratorFees(uint256) external view
-        returns (
-            uint256,
-            ERC20,
-            uint256,
-            ERC20
-        )
-    {
+    function getChallengeArbitratorFees(uint256) external view returns (uint256, ERC20, uint256, ERC20) {
         // do nothing
     }
 
@@ -134,7 +81,7 @@ contract AgreementMock is IAgreement {
         // do nothing
     }
 
-    function canPerform(address, address, address, bytes32, uint256[]) external view returns (bool) {
+    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
         // do nothing
     }
 }
