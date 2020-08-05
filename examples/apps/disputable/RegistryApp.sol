@@ -4,7 +4,7 @@
 
 pragma solidity 0.4.24;
 
-import "../../../apps/disputable/DisputableAragonApp.sol";
+import "../../../contracts/apps/disputable/DisputableAragonApp.sol";
 
 
 contract RegistryApp is DisputableAragonApp {

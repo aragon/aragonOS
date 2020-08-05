@@ -1,7 +1,6 @@
 const skipFiles = [
   'lib',
   'test',
-  'examples',
   'acl/ACLSyntaxSugar.sol',
   'common/DepositableStorage.sol', // Used in tests that send ETH
   'common/UnstructuredStorage.sol' // Used in tests that send ETH
