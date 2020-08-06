@@ -1,10 +1,13 @@
 const { getEventArgument } = require('../../helpers/events')
+const { assertRevert } = require('../../helpers/assertThrow')
+const reverts = require('../../helpers/revertStrings')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')
 const TokenMock = artifacts.require('TokenMock')
 const TokenReturnFalseMock = artifacts.require('TokenReturnFalseMock')
 const TokenReturnMissingMock = artifacts.require('TokenReturnMissingMock')
+const TokenRevertViewMethods = artifacts.require('TokenRevertViewMethods')
 
 const assertMockResult = (receipt, result) => assert.equal(getEventArgument(receipt, 'Result', 'result'), result, `result does not match`)
 
@@ -128,4 +131,33 @@ contract('SafeERC20', ([owner, receiver]) => {
       })
     })
   }
+
+  context('> Reverting view methods', () => {
+    let tokenMock
+
+    beforeEach(async () => {
+      tokenMock = await TokenRevertViewMethods.new(owner, initialBalance)
+    })
+
+    it('allowance', async () => {
+      await assertRevert(
+        safeERC20Mock.allowance(tokenMock.address, owner, owner),
+        reverts.SAFE_ERC_20_ALLOWANCE_REVERTED
+      )
+    })
+
+    it('balanceOf', async () => {
+      await assertRevert(
+        safeERC20Mock.balanceOf(tokenMock.address, owner),
+        reverts.SAFE_ERC_20_BALANCE_REVERTED
+      )
+    })
+
+    it('totalSupply', async () => {
+      await assertRevert(
+        safeERC20Mock.totalSupply(tokenMock.address),
+        reverts.SAFE_ERC_20_ALLOWANCE_REVERTED
+      )
+    })
+  })
 })
