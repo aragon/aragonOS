@@ -1,7 +1,7 @@
 const { hash } = require('eth-ens-namehash')
 const { keccak_256 } = require('js-sha3')
 const { soliditySha3 } = require('web3-utils')
-const { assertAmountOfEvents, assertEvent, assertRevert, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertEvent, assertRevert, bn, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -53,11 +53,11 @@ contract('Kernel ACL', accounts => {
                 if (kernelType === 'Kernel') {
                     kernel = await Kernel.new(false) // don't petrify so it can be used
                 } else if (kernelType === 'KernelProxy') {
-                    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+                    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
                 }
 
                 await kernel.initialize(aclBase.address, permissionsRoot)
-                acl = ACL.at(await kernel.acl())
+                acl = await ACL.at(await kernel.acl())
                 kernelAddr = kernel.address
             })
 
@@ -71,7 +71,7 @@ contract('Kernel ACL', accounts => {
                 // Set up ACL proxy
                 await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot)
                 const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address, EMPTY_BYTES, false)
-                const newAcl = ACL.at(getNewProxyAddress(receipt))
+                const newAcl = await ACL.at(getNewProxyAddress(receipt))
 
                 await assertRevert(newAcl.initialize(permissionsRoot))
             })
@@ -119,7 +119,7 @@ contract('Kernel ACL', accounts => {
                     const argId = '0x00' // arg 0
                     const op = '02'      // not equal
                     const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
-                    const param = new web3.BigNumber(`${argId}${op}${value}`)
+                    const param = bn(`${argId}${op}${value}`)
 
                     const grantChildReceipt = await acl.grantPermissionP(child, kernelAddr, APP_MANAGER_ROLE, [param], { from: granted })
 

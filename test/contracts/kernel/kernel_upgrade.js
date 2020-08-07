@@ -31,14 +31,14 @@ contract('Kernel upgrade', accounts => {
     })
 
     beforeEach(async () => {
-        kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+        kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
         await kernel.initialize(aclBase.address, permissionsRoot)
-        acl = ACL.at(await kernel.acl())
+        acl = await ACL.at(await kernel.acl())
         kernelAddr = kernel.address
     })
 
     it('checks ERC897 functions', async () => {
-        const kernelProxy = KernelProxy.at(kernelAddr)
+        const kernelProxy = await KernelProxy.at(kernelAddr)
         const implementation = await kernelProxy.implementation()
         assert.equal(implementation, kernelBase.address, "App address should match")
         const proxyType = (await kernelProxy.proxyType()).toString()
@@ -47,7 +47,7 @@ contract('Kernel upgrade', accounts => {
 
     it('emits SetApp event', async () => {
         const kernelProxy = await KernelProxy.new(kernelBase.address)
-        const receipt = web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
+        const receipt = await web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
 
         const setAppLogs = decodeEvents(receipt, kernelProxy.abi, 'SetApp')
         assert.equal(setAppLogs.length, 1)
@@ -63,7 +63,7 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails to create a KernelProxy if the base is not a contract', async () => {
-        await assertRevert(KernelProxy.new('0x1234'))
+        await assertRevert(KernelProxy.new(accounts[1]))
     })
 
     it('fails to upgrade kernel without permission', async () => {
@@ -71,7 +71,7 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails when calling upgraded functionality on old version', async () => {
-        await assertRevert(UpgradedKernel.at(kernelAddr).isUpgraded())
+        await assertRevert((await UpgradedKernel.at(kernelAddr)).isUpgraded())
     })
 
     it('successfully upgrades kernel', async () => {
@@ -79,12 +79,12 @@ contract('Kernel upgrade', accounts => {
 
         await kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, upgradedBase.address)
 
-        assert.isTrue(await UpgradedKernel.at(kernelAddr).isUpgraded(), 'kernel should have been upgraded')
+        assert.isTrue(await (await UpgradedKernel.at(kernelAddr)).isUpgraded(), 'kernel should have been upgraded')
     })
 
     it('fails if upgrading to kernel that is not a contract', async () => {
         await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
 
-        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, '0x1234'))
+        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[1]))
     })
 })

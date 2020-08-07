@@ -23,7 +23,7 @@ contract('DAO Factory', ([_, root]) => {
     aclBase = await ACL.new()
     scriptsRegistryFactory = await EVMScriptRegistryFactory.new()
     scriptsRegistryConstants = await EVMScriptRegistryConstants.new()
-    scriptsRegistryBase = EVMScriptRegistry.at(await scriptsRegistryFactory.baseReg())
+    scriptsRegistryBase = await EVMScriptRegistry.at(await scriptsRegistryFactory.baseReg())
   })
 
   before('load roles and constants', async () => {
@@ -64,13 +64,13 @@ contract('DAO Factory', ([_, root]) => {
 
   const itDoesCreateAnEVMScriptsRegistry = () => {
     it('deploys an EVM script registry with a script executor', async () => {
-      const scriptsRegistry = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
+      const scriptsRegistry = await EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
 
       assert(await scriptsRegistry.hasInitialized(), 'EVM scripts registry should be initialized')
       assert.equal(await dao.getApp(APP_ADDR_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), scriptsRegistry.address)
       assert.equal(await dao.getApp(APP_BASES_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), scriptsRegistryBase.address)
 
-      const [executor] = await scriptsRegistry.executors(1)
+      const { executor } = await scriptsRegistry.executors(1)
       assert.equal(executor, await scriptsRegistryFactory.baseCallScript())
 
       assert.equal(await acl.getPermissionManager(scriptsRegistry.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDRESS)
@@ -94,8 +94,8 @@ contract('DAO Factory', ([_, root]) => {
 
       before('create a DAO', async () => {
         receipt = await daoFactory.newDAO(root)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-        acl = ACL.at(await dao.acl())
+        dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+        acl = await ACL.at(await dao.acl())
       })
 
       itCreatesADao()
@@ -109,8 +109,8 @@ contract('DAO Factory', ([_, root]) => {
 
       before('create a DAO', async () => {
         receipt = await daoFactory.newDAO(root)
-        dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-        acl = ACL.at(await dao.acl())
+        dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+        acl = await ACL.at(await dao.acl())
       })
 
       itCreatesADao()

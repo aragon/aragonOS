@@ -19,7 +19,7 @@ const EMPTY_BYTES = '0x'
 injectWeb3(web3)
 injectArtifacts(artifacts)
 
-contract('App proxy', ([permissionsRoot]) => {
+contract('App proxy', ([permissionsRoot, nonContract]) => {
   let aclBase, appBase1, appBase2, kernelBase, acl, kernel
   let APP_BASES_NAMESPACE, APP_ROLE
   let UPGRADEABLE, FORWARDING
@@ -42,9 +42,9 @@ contract('App proxy', ([permissionsRoot]) => {
   })
 
   beforeEach(async () => {
-    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
     await kernel.initialize(aclBase.address, permissionsRoot)
-    acl = ACL.at(await kernel.acl())
+    acl = await ACL.at(await kernel.acl())
 
     // Set up app management permissions
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
@@ -67,7 +67,7 @@ contract('App proxy', ([permissionsRoot]) => {
       // Suite of basic tests for each proxy type
       checkProxyType = () => {
         it('checks ERC897 functions', async () => {
-          const proxy = appProxyContract.at(app.address)
+          const proxy = await appProxyContract.at(app.address)
           const implementation = await proxy.implementation()
           assert.equal(implementation, appBase1.address, 'app address should match base')
 
@@ -82,12 +82,12 @@ contract('App proxy', ([permissionsRoot]) => {
 
         if (appProxyType === 'AppProxyUpgradeable') {
           it('is upgradeable', async () => {
-            const proxy = appProxyContract.at(app.address)
+            const proxy = await appProxyContract.at(app.address)
             assert.equal((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should be upgradeable')
           })
         } else if (appProxyType === 'AppProxyPinned') {
           it('is not upgradeable', async () => {
-            const proxy = appProxyContract.at(app.address)
+            const proxy = await appProxyContract.at(app.address)
             assert.notEqual((await proxy.proxyType()).toString(), UPGRADEABLE, 'app should not be upgradeable')
           })
         }
@@ -114,7 +114,7 @@ contract('App proxy', ([permissionsRoot]) => {
 
         it("fails if code set isn't a contract", async () => {
           const kernelMock = await KernelSetAppMock.new()
-          await kernelMock.setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, '0x1234')
+          await kernelMock.setApp(APP_BASES_NAMESPACE, FAKE_APP_ID, nonContract)
 
           await assertRevert(AppProxyPinned.new(kernelMock.address, FAKE_APP_ID, EMPTY_BYTES))
         })
@@ -136,7 +136,7 @@ contract('App proxy', ([permissionsRoot]) => {
 
           const initializationPayload = appBase1.contract.initialize.getData()
           const appProxy = await appProxyContract.new(kernel.address, APP_ID, initializationPayload)
-          app = AppStub.at(appProxy.address)
+          app = await AppStub.at(appProxy.address)
         })
 
         // Run generic checks for proxy type
@@ -174,7 +174,7 @@ contract('App proxy', ([permissionsRoot]) => {
 
           const initializationPayload = EMPTY_BYTES // don't initialize
           const appProxy = await appProxyContract.new(kernel.address, APP_ID, initializationPayload)
-          app = AppStub.at(appProxy.address)
+          app = await AppStub.at(appProxy.address)
         })
 
         // Run generic checks for proxy type
@@ -208,7 +208,7 @@ contract('App proxy', ([permissionsRoot]) => {
 
           const initializationPayload = appBase1.contract.initialize.getData()
           const appProxy = await appProxyContract.new(kernel.address, APP_ID, initializationPayload)
-          app = AppStub.at(appProxy.address)
+          app = await AppStub.at(appProxy.address)
 
           // Assign app permissions
           await acl.createPermission(permissionsRoot, appProxy.address, APP_ROLE, permissionsRoot)

@@ -1,5 +1,5 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert, getBalance, onlyIf } = require('@aragon/contract-helpers-test')
+const { assertRevert, assertBn, bn, getBalance, onlyIf } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -58,7 +58,7 @@ contract('App funds', ([permissionsRoot]) => {
           })
 
           beforeEach(async () => {
-            const kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+            const kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
             await kernel.initialize(aclBase.address, permissionsRoot)
 
             if (appType === 'App') {
@@ -66,7 +66,7 @@ contract('App funds', ([permissionsRoot]) => {
               app = await unsafeAppBaseType.new(kernel.address)
             } else {
               // Install app
-              const acl = ACL.at(await kernel.acl())
+              const acl = await ACL.at(await kernel.acl())
               const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
               await acl.createPermission(permissionsRoot, kernel.address, APP_MANAGER_ROLE, permissionsRoot)
               await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase.address)
@@ -78,7 +78,7 @@ contract('App funds', ([permissionsRoot]) => {
                 appProxy = await AppProxyPinned.new(kernel.address, APP_ID, EMPTY_BYTES)
               }
 
-              app = appBaseType.at(appProxy.address)
+              app = await appBaseType.at(appProxy.address)
             }
 
             await app.initialize()
@@ -97,14 +97,14 @@ contract('App funds', ([permissionsRoot]) => {
             })
 
             it('can receive ETH after being set to depositable', async () => {
-              const amount = 1
-              const initialBalance = await getBalance(app.address)
+              const amount = bn(1)
+              const initialBalance = bn(await getBalance(app.address))
 
               await app.enableDeposits()
               assert.isTrue(await app.isDepositable(), 'should be depositable')
 
               await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-              assert.equal((await getBalance(app.address)).valueOf(), initialBalance.plus(amount))
+              assertBn(bn(await getBalance(app.address)), initialBalance.add(amount))
             })
           })
         })

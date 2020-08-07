@@ -35,7 +35,7 @@ contract('Forwarders', () => {
 
     it('cannot forward with ETH payment', async () => {
       // Override the contract ABI to let us attempt sending value into this non-payable forwarder
-      const payableForwarder = ForwarderPayableMock.at(forwarder.address)
+      const payableForwarder = await ForwarderPayableMock.at(forwarder.address)
       await assertRevert(payableForwarder.forward(EMPTY_BYTES, { value: 1 }))
     })
   })
@@ -85,7 +85,7 @@ contract('Forwarders', () => {
 
     it('cannot forward with ETH payment', async () => {
       // Override the contract ABI to let us attempt sending value into this non-payable forwarder
-      const payableForwarder = ForwarderWithContextPayableMock.at(forwarder.address)
+      const payableForwarder = await ForwarderWithContextPayableMock.at(forwarder.address)
       await assertRevert(payableForwarder.forward(EMPTY_BYTES, EMPTY_BYTES, { value: 1 }))
     })
   })

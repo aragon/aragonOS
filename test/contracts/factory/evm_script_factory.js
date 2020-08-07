@@ -28,7 +28,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     regFact = await EVMScriptRegistryFactory.new()
     daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     callsScriptBase = await regFact.baseCallScript()
-    evmScriptRegBase = EVMScriptRegistry.at(await regFact.baseReg())
+    evmScriptRegBase = await EVMScriptRegistry.at(await regFact.baseReg())
     const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
 
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
@@ -43,10 +43,10 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
 
   beforeEach(async () => {
     const receipt = await daoFact.newDAO(permissionsRoot)
-    dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-    evmScriptReg = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
+    dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+    evmScriptReg = await EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
 
-    acl = ACL.at(await dao.acl())
+    acl = await ACL.at(await dao.acl())
   })
 
   it('factory installed EVMScriptRegistry correctly', async () => {
@@ -83,7 +83,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
       await acl.createPermission(permissionsRoot, dao.address, APP_MANAGER_ROLE, permissionsRoot)
 
       const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false)
-      scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
+      scriptRunnerApp = await AppStubScriptRunner.at(getNewProxyAddress(receipt))
       await scriptRunnerApp.initialize()
       executionTarget = await ExecutionTarget.new()
     })

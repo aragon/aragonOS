@@ -66,7 +66,7 @@ contract('Lifecycle', () => {
     it('has initialization block in the future', async () => {
       const petrifiedBlock = await lifecycle.getInitializationBlock()
       const blockNumber = await getBlockNumber()
-      assert.isTrue(petrifiedBlock.greaterThan(blockNumber), 'petrified block should be in the future')
+      assert.isTrue(petrifiedBlock.gt(blockNumber), 'petrified block should be in the future')
     })
   })
 })

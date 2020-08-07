@@ -16,7 +16,7 @@ const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
 
-contract('Kernel apps', ([permissionsRoot]) => {
+contract('Kernel apps', ([permissionsRoot, nonContract]) => {
     let aclBase, appBase1, appBase2
     let APP_BASES_NAMESPACE, APP_ADDR_NAMESPACE, APP_MANAGER_ROLE
     let UPGRADEABLE, FORWARDING
@@ -54,11 +54,11 @@ contract('Kernel apps', ([permissionsRoot]) => {
                 if (kernelType === 'Kernel') {
                     kernel = await Kernel.new(false)  // don't petrify so it can be used
                 } else if (kernelType === 'KernelProxy') {
-                    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+                    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
                 }
 
                 await kernel.initialize(aclBase.address, permissionsRoot)
-                acl = ACL.at(await kernel.acl())
+                acl = await ACL.at(await kernel.acl())
                 await acl.createPermission(permissionsRoot, kernel.address, APP_MANAGER_ROLE, permissionsRoot)
             })
 
@@ -70,7 +70,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
             })
 
             it('fails if setting app to non-contract address', async () => {
-                await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, '0x1234'))
+                await assertRevert(kernel.setApp(APP_BASES_NAMESPACE, APP_ID, nonContract))
             })
 
             const newAppProxyMapping = {
@@ -93,7 +93,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                     onlyAppProxy(() =>
                         it('creates a new upgradeable app proxy instance', async () => {
                             const receipt = await kernel.newAppInstance(APP_ID, appBase1.address, EMPTY_BYTES, false)
-                            const appProxy = AppProxyUpgradeable.at(getNewProxyAddress(receipt))
+                            const appProxy = await AppProxyUpgradeable.at(getNewProxyAddress(receipt))
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
@@ -105,7 +105,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                     onlyAppProxyPinned(() =>
                         it('creates a new non upgradeable app proxy instance', async () => {
                             const receipt = await kernel.newPinnedAppInstance(APP_ID, appBase1.address)
-                            const appProxy = AppProxyPinned.at(getNewProxyAddress(receipt))
+                            const appProxy = await AppProxyPinned.at(getNewProxyAddress(receipt))
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
@@ -147,7 +147,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                             assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), appProxyAddr, 'Default app should be set')
 
                             // Make sure app is not initialized
-                            assert.isFalse(await AppStub.at(appProxyAddr).hasInitialized(), "App shouldn't have been initialized")
+                            assert.isFalse(await (await AppStub.at(appProxyAddr)).hasInitialized(), "App shouldn't have been initialized")
                         })
 
                         it("allows initializing proxy", async () => {

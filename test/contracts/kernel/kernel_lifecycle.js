@@ -32,7 +32,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
     assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // Then set the required permission
-    const acl = ACL.at(await kernel.acl())
+    const acl = await ACL.at(await kernel.acl())
     await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root)
     assert.isTrue(await kernel.hasPermission(root, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
     assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
@@ -113,7 +113,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
 
     beforeEach(async () => {
       const kernelProxy = await KernelProxy.new(kernelBase.address)
-      kernel = Kernel.at(kernelProxy.address)
+      kernel = await Kernel.at(kernelProxy.address)
     })
 
     it('is not initialized by default', async () => {
@@ -133,7 +133,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
 
       beforeEach(async () => {
         initReceipt = await kernel.initialize(aclBase.address, root)
-        acl = ACL.at(await kernel.acl())
+        acl = await ACL.at(await kernel.acl())
       })
 
       it('set the ACL correctly', async () => {

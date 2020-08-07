@@ -96,9 +96,9 @@ contract('App base lifecycle', ([permissionsRoot]) => {
 
         beforeEach(async () => {
           const kernelProxy = await KernelProxy.new(kernelBase.address)
-          kernel = Kernel.at(kernelProxy.address)
+          kernel = await Kernel.at(kernelProxy.address)
           await kernel.initialize(aclBase.address, permissionsRoot)
-          acl = ACL.at(await kernel.acl())
+          acl = await ACL.at(await kernel.acl())
 
           await app.setKernelOnMock(kernel.address)
         })

@@ -1,6 +1,6 @@
 const { toChecksumAddress } = require('web3-utils')
 const { skipCoverage } = require('../../helpers/coverage')
-const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, decodeEvents, getBalance } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, assertBn, bn, decodeEvents, getBalance } = require('@aragon/contract-helpers-test')
 
 // Mocks
 const DepositableDelegateProxyMock = artifacts.require('DepositableDelegateProxyMock')
@@ -26,7 +26,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
 
   beforeEach(async () => {
     proxy = await DepositableDelegateProxyMock.new()
-    target = ProxyTargetWithFallback.at(proxy.address)
+    target = await ProxyTargetWithFallback.at(proxy.address)
   })
 
   const itForwardsToImplementationIfGasIsOverThreshold = () => {
@@ -93,20 +93,20 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
     })
 
     context('when call gas is below the forwarding threshold', () => {
-      const value = 100
+      const value = bn(100)
 
       const assertSendEthToProxy = async ({ value, gas, shouldOOG }) => {
-        const initialBalance = await getBalance(proxy.address)
+        const initialBalance = bn(await getBalance(proxy.address))
 
         const sendEthAction = () => proxy.sendTransaction({ from: sender, gas, value })
 
         if (shouldOOG) {
           await assertOutOfGas(sendEthAction())
-          assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance, 'Target balance should be the same as before')
+          assertBn(bn(await getBalance(proxy.address)), initialBalance, 'Target balance should be the same as before')
         } else {
           const { receipt, logs } = await sendEthAction()
 
-          assert.equal((await getBalance(proxy.address)).valueOf(), initialBalance.plus(value), 'Target balance should be correct')
+          assertBn(bn(await getBalance(proxy.address)), initialBalance.add(value), 'Target balance should be correct')
           assertAmountOfEvents({ logs }, 'ProxyDeposit')
           assertEvent({ logs }, 'ProxyDeposit', { sender, value })
 

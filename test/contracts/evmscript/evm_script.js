@@ -52,17 +52,17 @@ contract('EVM Script', ([_, boss]) => {
   })
 
   beforeEach(async () => {
-    dao = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+    dao = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
     await dao.initialize(aclBase.address, boss)
-    acl = ACL.at(await dao.acl())
+    acl = await ACL.at(await dao.acl())
 
     // Set up app management permissions
     await acl.createPermission(boss, dao.address, APP_MANAGER_ROLE, boss, { from: boss })
 
     // Set up script registry (MUST use correct app ID and set as default app)
-    const initPayload = evmScriptRegBase.contract.initialize.getData()
+    const initPayload = evmScriptRegBase.methods.initialize().encodeABI()
     const evmScriptRegReceipt = await dao.newAppInstance(EVMSCRIPT_REGISTRY_APP_ID, evmScriptRegBase.address, initPayload, true, { from: boss })
-    evmScriptReg = EVMScriptRegistry.at(getNewProxyAddress(evmScriptRegReceipt))
+    evmScriptReg = await EVMScriptRegistry.at(getNewProxyAddress(evmScriptRegReceipt))
   })
 
   context('> Registry', () => {
@@ -88,7 +88,7 @@ contract('EVM Script', ([_, boss]) => {
 
       const newExecutorId = getEventArgument(receipt, 'EnableExecutor', 'executorId')
       const [executorAddress, executorEnabled] = await evmScriptReg.executors(newExecutorId)
-      const newExecutor = IEVMScriptExecutor.at(executorAddress)
+      const newExecutor = await IEVMScriptExecutor.at(executorAddress)
 
       assert.equal(await scriptExecutorMock.executorType(), await newExecutor.executorType(), "executor type should be the same")
       assert.equal(await scriptExecutorMock.address, await executorAddress, "executor address should be the same")
@@ -195,7 +195,7 @@ contract('EVM Script', ([_, boss]) => {
 
     beforeEach(async () => {
       const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
-      scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
+      scriptRunnerApp = await AppStubScriptRunner.at(getNewProxyAddress(receipt))
       await scriptRunnerApp.initialize()
     })
 
@@ -220,7 +220,7 @@ contract('EVM Script', ([_, boss]) => {
 
         // Install new script runner app
         const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false, { from: boss })
-        scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
+        scriptRunnerApp = await AppStubScriptRunner.at(getNewProxyAddress(receipt))
         // Explicitly don't initialize the scriptRunnerApp
       })
 
@@ -381,7 +381,7 @@ contract('EVM Script', ([_, boss]) => {
 
       it('is the correct executor type', async () => {
         const CALLS_SCRIPT_TYPE = soliditySha3('CALLS_SCRIPT')
-        const executor = IEVMScriptExecutor.at(await evmScriptReg.getScriptExecutor(createExecutorId(1)))
+        const executor = await IEVMScriptExecutor.at(await evmScriptReg.getScriptExecutor(createExecutorId(1)))
         assert.equal(await executor.executorType(), CALLS_SCRIPT_TYPE)
       })
 
