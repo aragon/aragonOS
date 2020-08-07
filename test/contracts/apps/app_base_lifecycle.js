@@ -1,6 +1,6 @@
 const { hash } = require('eth-ens-namehash')
 const { soliditySha3 } = require('web3-utils')
-const { assertRevert, getBlockNumber } = require('@aragon/contract-helpers-test')
+const { assertRevert, getBlockNumber, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -11,7 +11,6 @@ const AragonApp = artifacts.require('AragonApp')
 const UnsafeAragonAppMock = artifacts.require('UnsafeAragonAppMock')
 
 const FAKE_ROLE = soliditySha3('FAKE_ROLE')
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 contract('App base lifecycle', ([permissionsRoot]) => {
   let aclBase, kernelBase
@@ -87,7 +86,7 @@ contract('App base lifecycle', ([permissionsRoot]) => {
       })
 
       it('should still not be usable without a kernel', async () => {
-        assert.equal(await app.getKernel(), ZERO_ADDR, 'app should still be missing kernel reference')
+        assert.equal(await app.getKernel(), ZERO_ADDRESS, 'app should still be missing kernel reference')
 
         assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
       })

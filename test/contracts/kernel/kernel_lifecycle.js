@@ -137,7 +137,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
       })
 
       it('set the ACL correctly', async () => {
-        assertAmountOfEvents(initReceipt, 'SetApp', 2)
+        assertAmountOfEvents(initReceipt, 'SetApp', { expectedAmount: 2 })
         assertEvent(initReceipt, 'SetApp', { namespace: APP_BASES_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: aclBase.address }, 0)
         assertEvent(initReceipt, 'SetApp', { namespace: APP_ADDR_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: acl.address }, 1)
       })

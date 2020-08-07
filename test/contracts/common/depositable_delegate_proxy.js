@@ -1,6 +1,6 @@
 const { toChecksumAddress } = require('web3-utils')
 const { skipCoverage } = require('../../helpers/coverage')
-const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, decodeEventsOfType, getBalance } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, decodeEvents, getBalance } = require('@aragon/contract-helpers-test')
 
 // Mocks
 const DepositableDelegateProxyMock = artifacts.require('DepositableDelegateProxyMock')
@@ -133,7 +133,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       it('can receive ETH from contract', async () => {
         const { tx } = await ethSender.sendEth(proxy.address, { value })
         const receipt = await web3.eth.getTransactionReceipt(tx)
-        const logs = decodeEventsOfType(receipt, DepositableDelegateProxyMock.abi, 'ProxyDeposit')
+        const logs = decodeEvents(receipt, DepositableDelegateProxyMock.abi, 'ProxyDeposit')
         assertAmountOfEvents({ logs }, 'ProxyDeposit')
         assertEvent({ logs }, 'ProxyDeposit', { sender: toChecksumAddress(ethSender.address), value })
       })

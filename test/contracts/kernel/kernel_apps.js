@@ -135,7 +135,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, false)
-                            assertAmountOfEvents(receipt, 'SetApp', 0)
+                            assertAmountOfEvents(receipt, 'SetApp', { expectedAmount: 0 })
                         })
 
                         it("also sets the default app", async () => {
@@ -198,7 +198,7 @@ contract('Kernel apps', ([permissionsRoot]) => {
                         it("doesn't set the app base when already set", async() => {
                             await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
-                            assertAmountOfEvents(receipt, 'SetApp', 0)
+                            assertAmountOfEvents(receipt, 'SetApp', { expectedAmount: 0 })
                         })
 
                         it("does not set the default app", async () => {

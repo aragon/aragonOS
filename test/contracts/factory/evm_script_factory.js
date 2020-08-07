@@ -1,4 +1,4 @@
-const { assertEvent, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
+const { assertEvent, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -11,7 +11,6 @@ const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script Factory', ([permissionsRoot]) => {
@@ -57,9 +56,9 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
   })
 
   it('factory registered just 1 script executor', async () => {
-    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(0)), ZERO_ADDR, 'spec ID 0 should always be empty')
+    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(0)), ZERO_ADDRESS, 'spec ID 0 should always be empty')
     assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(1)), callsScriptBase.address, 'spec ID 1 should be calls script')
-    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(2)), ZERO_ADDR, 'spec ID 2 and higher should be empty')
+    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(2)), ZERO_ADDRESS, 'spec ID 2 and higher should be empty')
   })
 
   it('factory cleaned up permissions', async () => {
@@ -68,8 +67,8 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     assert.isFalse(await acl.hasPermission(regFact.address, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), 'EVMScriptRegistryFactory should not have REGISTRY_ADD_EXECUTOR_ROLE for created EVMScriptRegistry')
     assert.isFalse(await acl.hasPermission(regFact.address, evmScriptReg.address, REGISTRY_MANAGER_ROLE), 'EVMScriptRegistryFactory should not have REGISTRY_MANAGER_ROLE for created EVMScriptRegistry')
 
-    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDR, 'created EVMScriptRegistry should not have manager for REGISTRY_ADD_EXECUTOR_ROLE')
-    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_MANAGER_ROLE), ZERO_ADDR, 'created EVMScriptRegistry should not have manager for REGISTRY_MANAGER_ROLE')
+    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDRESS, 'created EVMScriptRegistry should not have manager for REGISTRY_ADD_EXECUTOR_ROLE')
+    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_MANAGER_ROLE), ZERO_ADDRESS, 'created EVMScriptRegistry should not have manager for REGISTRY_MANAGER_ROLE')
   })
 
   context('> Executor app', () => {

@@ -1,3 +1,5 @@
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+
 const DAOFactory = artifacts.require('DAOFactory')
 
 const ACL = artifacts.require('ACL')
@@ -5,8 +7,6 @@ const Kernel = artifacts.require('Kernel')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EVMScriptRegistryConstants = artifacts.require('EVMScriptRegistryConstantsMock')
-
-const ZERO_ADDRES = '0x0000000000000000000000000000000000000000'
 
 const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 
@@ -56,7 +56,7 @@ contract('DAO Factory', ([_, root]) => {
     })
 
     it('does not create or grant app manager to the root address of the DAO', async () => {
-      assert.equal(await acl.getPermissionManager(dao.address, APP_MANAGER_ROLE), ZERO_ADDRES)
+      assert.equal(await acl.getPermissionManager(dao.address, APP_MANAGER_ROLE), ZERO_ADDRESS)
       assert.isFalse(await acl.hasPermission(root, dao.address, APP_MANAGER_ROLE))
       assert.isFalse(await acl.hasPermission(daoFactory.address, dao.address, APP_MANAGER_ROLE))
     })
@@ -73,7 +73,7 @@ contract('DAO Factory', ([_, root]) => {
       const [executor] = await scriptsRegistry.executors(1)
       assert.equal(executor, await scriptsRegistryFactory.baseCallScript())
 
-      assert.equal(await acl.getPermissionManager(scriptsRegistry.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDRES)
+      assert.equal(await acl.getPermissionManager(scriptsRegistry.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDRESS)
       assert.isFalse(await acl.hasPermission(root, scriptsRegistry.address, REGISTRY_ADD_EXECUTOR_ROLE))
       assert.isFalse(await acl.hasPermission(scriptsRegistryFactory.address, scriptsRegistry.address, REGISTRY_ADD_EXECUTOR_ROLE))
     })
@@ -81,8 +81,8 @@ contract('DAO Factory', ([_, root]) => {
 
   const itDoesNotCreateAnEVMScriptsRegistry = () => {
     it('does not deploy an EVM script registry with a script executor', async () => {
-      assert.equal(await dao.getApp(APP_ADDR_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), ZERO_ADDRES)
-      assert.equal(await dao.getApp(APP_BASES_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), ZERO_ADDRES)
+      assert.equal(await dao.getApp(APP_ADDR_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), ZERO_ADDRESS)
+      assert.equal(await dao.getApp(APP_BASES_NAMESPACE, EVM_SCRIPT_REGISTRY_APP_ID), ZERO_ADDRESS)
     })
   }
 
@@ -104,7 +104,7 @@ contract('DAO Factory', ([_, root]) => {
 
     context('when it was created without an EVM scripts registry factory', () => {
       before('create factory without an EVM scripts registry factory', async () => {
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDRES)
+        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, ZERO_ADDRESS)
       })
 
       before('create a DAO', async () => {

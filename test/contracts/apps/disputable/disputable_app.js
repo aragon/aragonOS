@@ -1,5 +1,5 @@
 const { sha3 } = require('web3-utils')
-const { assertRevert, assertEvent, assertAmountOfEvents, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
+const { assertRevert, assertEvent, assertAmountOfEvents, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,7 +13,6 @@ const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => {
   let disputable, disputableBase, dao, acl
 
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
   const DISPUTABLE_INTERFACE = '0xf3d3bb51'
   const ARAGON_APP_INTERFACE = '0x54053e6c'
   const ERC165_INTERFACE = '0x01ffc9a7'

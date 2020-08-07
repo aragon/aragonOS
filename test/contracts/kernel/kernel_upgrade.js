@@ -1,5 +1,4 @@
-const { assertRevert } = require('@aragon/contract-helpers-test')
-const { decodeEventsOfType } = require('@aragon/contract-helpers-test')
+const { assertRevert, decodeEvents, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -8,8 +7,6 @@ const UpgradedKernel = artifacts.require('UpgradedKernel')
 
 // Mocks
 const ERCProxyMock = artifacts.require('ERCProxyMock')
-
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 
 // Only applicable to KernelProxy instances
 contract('Kernel upgrade', accounts => {
@@ -52,7 +49,7 @@ contract('Kernel upgrade', accounts => {
         const kernelProxy = await KernelProxy.new(kernelBase.address)
         const receipt = web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
 
-        const setAppLogs = decodeEventsOfType(receipt, kernelProxy.abi, 'SetApp')
+        const setAppLogs = decodeEvents(receipt, kernelProxy.abi, 'SetApp')
         assert.equal(setAppLogs.length, 1)
 
         const setAppArgs = setAppLogs[0].args
@@ -62,7 +59,7 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails to create a KernelProxy if the base is 0', async () => {
-        await assertRevert(KernelProxy.new(ZERO_ADDR))
+        await assertRevert(KernelProxy.new(ZERO_ADDRESS))
     })
 
     it('fails to create a KernelProxy if the base is not a contract', async () => {

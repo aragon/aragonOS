@@ -97,7 +97,7 @@ contract('Kernel ACL', accounts => {
                 beforeEach(async () => {
                     const receipt = await acl.createPermission(granted, kernelAddr, APP_MANAGER_ROLE, granted, { from: permissionsRoot })
                     assertAmountOfEvents(receipt, 'SetPermission')
-                    assertAmountOfEvents(receipt, 'SetPermissionParams', 0) // should not have emitted this
+                    assertAmountOfEvents(receipt, 'SetPermissionParams', { expectedAmount: 0 }) // should not have emitted this
                     assertAmountOfEvents(receipt, 'ChangePermissionManager')
                 })
 
@@ -165,7 +165,7 @@ contract('Kernel ACL', accounts => {
                 it('can grant a public permission', async () => {
                     const receipt = await acl.grantPermission(ANY_ENTITY, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertAmountOfEvents(receipt, 'SetPermission')
-                    assertAmountOfEvents(receipt, 'SetPermissionParams', 0) // should not have emitted this
+                    assertAmountOfEvents(receipt, 'SetPermissionParams', { expectedAmount: 0 }) // should not have emitted this
 
                     // Any entity can succesfully perform action
                     for (const granteeIndex of [4, 5, 6]) {

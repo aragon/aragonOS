@@ -1,7 +1,7 @@
 const reverts = require('@aragon/contract-helpers-test')
 const { rawEncode } = require('ethereumjs-abi')
 const { soliditySha3 } = require('web3-utils')
-const { assertEvent, assertAmountOfEvents, assertRevert, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test')
+const { assertEvent, assertAmountOfEvents, assertRevert, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -18,7 +18,6 @@ const EVMScriptExecutorNoReturnMock = artifacts.require('EVMScriptExecutorNoRetu
 const EVMScriptExecutorRevertMock = artifacts.require('EVMScriptExecutorRevertMock')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script', ([_, boss]) => {
@@ -119,7 +118,7 @@ contract('EVM Script', ([_, boss]) => {
 
         assertAmountOfEvents(receipt, 'DisableExecutor')
         assert.isFalse(executorEntry[1], "executor should now be disabled")
-        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return zero addr')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDRESS, 'getting disabled executor should return zero addr')
       })
 
       it('can re-enable an executor', async () => {
@@ -128,14 +127,14 @@ contract('EVM Script', ([_, boss]) => {
         await evmScriptReg.disableScriptExecutor(installedExecutorId, { from: boss })
         let executorEntry = await evmScriptReg.executors(installedExecutorId)
         assert.isFalse(executorEntry[1], "executor should now be disabled")
-        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return zero addr')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDRESS, 'getting disabled executor should return zero addr')
 
         const receipt = await evmScriptReg.enableScriptExecutor(installedExecutorId, { from: boss })
         executorEntry = await evmScriptReg.executors(installedExecutorId)
 
         assertAmountOfEvents(receipt, 'EnableExecutor')
         assert.isTrue(executorEntry[1], "executor should now be re-enabled")
-        assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDR, 'getting disabled executor should return non-zero addr')
+        assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(installedExecutorId)), ZERO_ADDRESS, 'getting disabled executor should return non-zero addr')
       })
 
       it('fails to disable an executor without the correct permissions', async () => {
@@ -170,14 +169,14 @@ contract('EVM Script', ([_, boss]) => {
         await assertRevert(evmScriptReg.enableScriptExecutor(0, { from: boss }), reverts.EVMREG_INEXISTENT_EXECUTOR)
 
         // No executors should be installed yet
-        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDR, 'No executors should be installed yet')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDRESS, 'No executors should be installed yet')
         await assertRevert(evmScriptReg.enableScriptExecutor(1, { from: boss }), reverts.EVMREG_INEXISTENT_EXECUTOR)
       })
 
       it('fails to disable a non-existent executor', async () => {
         await acl.createPermission(boss, evmScriptReg.address, REGISTRY_MANAGER_ROLE, boss, { from: boss })
 
-        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDR, 'No executors should be installed yet')
+        assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(1)), ZERO_ADDRESS, 'No executors should be installed yet')
         await assertRevert(
           evmScriptReg.disableScriptExecutor(1, { from: boss }),
           // On disable only an enable check is performed as it doubles as an existence check

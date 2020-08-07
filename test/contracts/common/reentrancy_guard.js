@@ -1,6 +1,4 @@
-const { assertRevert } = require('@aragon/contract-helpers-test')
-
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+const { assertRevert, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 contract('ReentrancyGuard', () => {
   let reentrancyMock
@@ -26,13 +24,13 @@ contract('ReentrancyGuard', () => {
   })
 
   it('can call re-entrant function normally', async () => {
-    await reentrancyMock.reentrantCall(ZERO_ADDR)
+    await reentrancyMock.reentrantCall(ZERO_ADDRESS)
     assert.equal((await reentrancyMock.callCounter()).toString(), 1, 'should have registered one call')
     await assertReentrancyMutex(false, 're-entrancy mutex should end false')
   })
 
   it('can call non-re-entrant function normally', async () => {
-    await reentrancyMock.nonReentrantCall(ZERO_ADDR)
+    await reentrancyMock.nonReentrantCall(ZERO_ADDRESS)
     assert.equal((await reentrancyMock.callCounter()).toString(), 1, 'should have registered one call')
     await assertReentrancyMutex(false, 're-entrancy mutex should end false')
   })
@@ -44,12 +42,12 @@ contract('ReentrancyGuard', () => {
     })
 
     it('can call re-entrant function if re-entrancy mutex is enabled', async () => {
-      await reentrancyMock.reentrantCall(ZERO_ADDR)
+      await reentrancyMock.reentrantCall(ZERO_ADDRESS)
       assert.equal((await reentrancyMock.callCounter()).toString(), 1, 'should have called')
     })
 
     it('can not call non-re-entrant function if re-entrancy mutex is enabled', async () => {
-      await assertRevert(reentrancyMock.nonReentrantCall(ZERO_ADDR))
+      await assertRevert(reentrancyMock.nonReentrantCall(ZERO_ADDRESS))
       assert.equal((await reentrancyMock.callCounter()).toString(), 0, 'should not have called')
     })
   })
