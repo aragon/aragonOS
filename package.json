@@ -16,16 +16,16 @@
   "scripts": {
     "compile": "truffle compile",
     "lint": "solium --dir ./contracts",
-    "test": "TRUFFLE_TEST=true npm run test:ganache-cli",
+    "test": "TRUFFLE_TEST=true yarn test:ganache-cli",
     "test:gas": "GAS_REPORTER=true npm test",
-    "test:gas:ci": "npm run test:gas && npx codechecks",
+    "test:gas:ci": "yarn test:gas && npx codechecks",
     "test:ganache-cli": "./node_modules/@aragon/contract-helpers-test/scripts/ganache-cli.sh",
-    "coverage": "SOLIDITY_COVERAGE=true npm run test:ganache-cli",
+    "coverage": "SOLIDITY_COVERAGE=true yarn test:ganache-cli",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "bytecode:extract": "truffle-bytecode extract -o bytecode",
     "bytecode:extract:new": "truffle-bytecode extract -o bytecode_new",
-    "bytecode:compare": "npm run bytecode:extract:new && truffle-bytecode compare bytecode bytecode_new",
-    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
+    "bytecode:compare": "yarn bytecode:extract:new && truffle-bytecode compare bytecode bytecode_new",
+    "prepublishOnly": "truffle compile --all && yarn abi:extract -- --no-compile"
   },
   "dependencies": {},
   "devDependencies": {
