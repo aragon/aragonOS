@@ -77,7 +77,7 @@ contract('SafeERC20', ([owner, receiver]) => {
         await safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount)
 
         // Attempt to create another approval without reseting it back to 0
-        const receipt = await safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount - 500)
+        const receipt = await safeERC20Mock.approve(tokenMock.address, receiver, preApprovedAmount.sub(bn(500)))
 
         assertMockResult(receipt, false)
         assertBn(await tokenMock.allowance(safeERC20Mock.address, receiver), preApprovedAmount, 'Allowance of receiver should be the pre-existing value')
@@ -91,7 +91,7 @@ contract('SafeERC20', ([owner, receiver]) => {
         // Transfer to receiver through the mock
         const receipt = await safeERC20Mock.transferFrom(tokenMock.address, owner, receiver, approvedAmount)
         assertMockResult(receipt, true)
-        assertBn(await tokenMock.balanceOf(owner), initialBalance - approvedAmount, 'Balance of owner should be correct')
+        assertBn(await tokenMock.balanceOf(owner), initialBalance.sub(approvedAmount), 'Balance of owner should be correct')
         assertBn(await tokenMock.balanceOf(receiver), approvedAmount, 'Balance of receiver should be correct')
         assertBn(await tokenMock.balanceOf(safeERC20Mock.address), 0, 'Balance of mock should stay the same')
       })
