@@ -10,7 +10,7 @@ jobs:
       - name: Install node
         uses: actions/setup-node@v1
         with:
-          node-version: 10
+          node-version: 14
       - name: yarn install --frozen-lockfile
         run: yarn install
       - name: lint
