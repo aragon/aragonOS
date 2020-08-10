@@ -1,4 +1,5 @@
-const { assertBn, bn, getEventArgument } = require('@aragon/contract-helpers-test')
+const { assertBn } = require('@aragon/contract-helpers-test/src/asserts')
+const { bn, getEventArgument } = require('@aragon/contract-helpers-test')
 
 // Mocks
 const SafeERC20Mock = artifacts.require('SafeERC20Mock')

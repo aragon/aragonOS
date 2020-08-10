@@ -1,5 +1,6 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert, assertBn, bn, getBalance, onlyIf } = require('@aragon/contract-helpers-test')
+const { bn, onlyIf } = require('@aragon/contract-helpers-test')
+const { assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -98,13 +99,13 @@ contract('App funds', ([permissionsRoot]) => {
 
             it('can receive ETH after being set to depositable', async () => {
               const amount = bn(1)
-              const initialBalance = bn(await getBalance(app.address))
+              const initialBalance = bn(await web3.eth.getBalance(app.address))
 
               await app.enableDeposits()
               assert.isTrue(await app.isDepositable(), 'should be depositable')
 
               await app.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-              assertBn(bn(await getBalance(app.address)), initialBalance.add(amount))
+              assertBn(bn(await web3.eth.getBalance(app.address)), initialBalance.add(amount))
             })
           })
         })

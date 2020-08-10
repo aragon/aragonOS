@@ -1,5 +1,7 @@
 const { hash } = require('eth-ens-namehash')
-const { assertAmountOfEvents, assertRevert, getNewProxyAddress, onlyIf, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { onlyIf, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,8 +15,8 @@ const AppStub2 = artifacts.require('AppStub2')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
 const KernelOverloadMock = artifacts.require('KernelOverloadMock')
 
-const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
+const APP_ID = hash('stub.aragonpm.test')
 
 contract('Kernel apps', ([permissionsRoot, nonContract]) => {
     let aclBase, appBase1, appBase2
@@ -93,7 +95,7 @@ contract('Kernel apps', ([permissionsRoot, nonContract]) => {
                     onlyAppProxy(() =>
                         it('creates a new upgradeable app proxy instance', async () => {
                             const receipt = await kernel.newAppInstance(APP_ID, appBase1.address, EMPTY_BYTES, false)
-                            const appProxy = await AppProxyUpgradeable.at(getNewProxyAddress(receipt))
+                            const appProxy = await AppProxyUpgradeable.at(getInstalledApp(receipt))
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
@@ -105,7 +107,7 @@ contract('Kernel apps', ([permissionsRoot, nonContract]) => {
                     onlyAppProxyPinned(() =>
                         it('creates a new non upgradeable app proxy instance', async () => {
                             const receipt = await kernel.newPinnedAppInstance(APP_ID, appBase1.address)
-                            const appProxy = await AppProxyPinned.at(getNewProxyAddress(receipt))
+                            const appProxy = await AppProxyPinned.at(getInstalledApp(receipt))
                             assert.equal(await appProxy.kernel(), kernel.address, "new appProxy instance's kernel should be set to the originating kernel")
 
                             // Checks ERC897 functionality
@@ -140,23 +142,23 @@ contract('Kernel apps', ([permissionsRoot, nonContract]) => {
 
                         it("also sets the default app", async () => {
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, EMPTY_BYTES, true)
-                            const appProxyAddr = getNewProxyAddress(receipt)
+                            const appProxyAddr = getInstalledApp(receipt)
 
                             // Check that both the app base and default app are set
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
-                            assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), appProxyAddr, 'Default app should be set')
+                            assert.equal((await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID)).toLowerCase(), appProxyAddr, 'Default app should be set')
 
                             // Make sure app is not initialized
                             assert.isFalse(await (await AppStub.at(appProxyAddr)).hasInitialized(), "App shouldn't have been initialized")
                         })
 
                         it("allows initializing proxy", async () => {
-                            const initData = appBase1.initialize.request().params[0].data
+                            const initData = appBase1.contract.methods.initialize().encodeABI()
 
                             // Make sure app was initialized
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address, initData, false)
-                            const appProxyAddr = getNewProxyAddress(receipt)
-                            assert.isTrue(await AppStub.at(appProxyAddr).hasInitialized(), 'App should have been initialized')
+                            const appProxyAddr = getInstalledApp(receipt, APP_ID)
+                            assert.isTrue(await (await AppStub.at(appProxyAddr)).hasInitialized(), 'App should have been initialized')
 
                             // Check that the app base has been set, but the app isn't the default app
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
@@ -203,22 +205,22 @@ contract('Kernel apps', ([permissionsRoot, nonContract]) => {
 
                         it("does not set the default app", async () => {
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
-                            const appProxyAddr = getNewProxyAddress(receipt)
+                            const appProxyAddr = getInstalledApp(receipt)
 
                             // Check that only the app base is set
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')
                             assert.equal(await kernel.getApp(APP_ADDR_NAMESPACE, APP_ID), ZERO_ADDRESS, "Default app shouldn't be set")
 
                             // Make sure app is not initialized
-                            assert.isFalse(await AppStub.at(appProxyAddr).hasInitialized(), "App shouldn't have been initialized")
+                            assert.isFalse(await (await AppStub.at(appProxyAddr)).hasInitialized(), "App shouldn't have been initialized")
                         })
 
                         it("does not allow initializing proxy", async () => {
                             const receipt = await kernelOverload[newInstanceFn](APP_ID, appBase1.address)
-                            const appProxyAddr = getNewProxyAddress(receipt)
+                            const appProxyAddr = getInstalledApp(receipt)
 
                             // Make sure app was not initialized
-                            assert.isFalse(await AppStub.at(appProxyAddr).hasInitialized(), 'App should have been initialized')
+                            assert.isFalse(await (await AppStub.at(appProxyAddr)).hasInitialized(), 'App should have been initialized')
 
                             // Check that the app base has been set, but the app isn't the default app
                             assert.equal(await kernel.getApp(APP_BASES_NAMESPACE, APP_ID), appBase1.address, 'App base should be set')

@@ -1,15 +1,14 @@
 const { hash } = require('eth-ens-namehash')
-const { assertEvent, assertAmountOfEvents, assertRevert, getBlockNumber } = require('@aragon/contract-helpers-test')
+const { assertEvent, assertAmountOfEvents, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-
-// Mocks
 const AppStub = artifacts.require('AppStub')
+
+const EMPTY_BYTES = '0x'
 const APP_ID = hash('stub.aragonpm.test')
 const VAULT_ID = hash('vault.aragonpm.test')
-const EMPTY_BYTES = '0x'
 
 contract('Kernel lifecycle', ([root, someone]) => {
   let aclBase, appBase
@@ -151,7 +150,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
       })
 
       it('has correct initialization block', async () => {
-        assert.equal(await kernel.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+        assert.equal(await kernel.getInitializationBlock(), await web3.eth.getBlockNumber(), 'initialization block should be correct')
       })
 
       it('throws on reinitialization', async () => {

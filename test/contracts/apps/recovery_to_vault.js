@@ -1,5 +1,7 @@
 const { hash } = require('eth-ens-namehash')
-const { assertAmountOfEvents, assertEvent, assertRevert, assertBn, bn, getBalance, getNewProxyAddress } = require('@aragon/contract-helpers-test')
+const { bn } = require('@aragon/contract-helpers-test')
+const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { assertAmountOfEvents, assertEvent, assertRevert, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -27,24 +29,24 @@ contract('Recovery to vault', ([permissionsRoot]) => {
   // Helpers
   const recoverEth = async ({ shouldFail, target, vault }) => {
     const amount = bn(1)
-    const initialBalance = bn(await getBalance(target.address))
-    const initialVaultBalance = bn(await getBalance(vault.address))
+    const initialBalance = bn(await web3.eth.getBalance(target.address))
+    const initialVaultBalance = bn(await web3.eth.getBalance(vault.address))
     await target.sendTransaction({ value: amount, gas: SEND_ETH_GAS })
-    assertBn(bn(await getBalance(target.address)), initialBalance.add(amount), 'Target initial balance should be correct')
+    assertBn(bn(await web3.eth.getBalance(target.address)), initialBalance.add(amount), 'Target initial balance should be correct')
 
     const recoverAction = () => target.transferToVault(ETH)
 
     if (shouldFail) {
       await assertRevert(recoverAction)
-      assertBn(bn(await getBalance(target.address)), initialBalance.add(amount), 'Target balance should be same as before')
-      assertBn(bn(await getBalance(vault.address)), initialVaultBalance, 'Vault balance should should be same as before')
+      assertBn(bn(await web3.eth.getBalance(target.address)), initialBalance.add(amount), 'Target balance should be same as before')
+      assertBn(bn(await web3.eth.getBalance(vault.address)), initialVaultBalance, 'Vault balance should should be same as before')
     } else {
       const recoverReceipt = await recoverAction()
-      assertBn(bn(await getBalance(target.address)), bn(0), 'Target balance should be 0')
-      assertBn(bn(await getBalance(vault.address)), initialVaultBalance.add(initialBalance).add(amount), 'Vault balance should include recovered amount')
+      assertBn(bn(await web3.eth.getBalance(target.address)), bn(0), 'Target balance should be 0')
+      assertBn(bn(await web3.eth.getBalance(vault.address)), initialVaultBalance.add(initialBalance).add(amount), 'Vault balance should include recovered amount')
 
       assertAmountOfEvents(recoverReceipt, 'RecoverToVault')
-      assertEvent(recoverReceipt, 'RecoverToVault', { vault: vault.address, token: ETH, amount: amount })
+      assertEvent(recoverReceipt, 'RecoverToVault', { expectedArgs: { vault: vault.address, token: ETH, amount: amount  } })
     }
   }
 
@@ -68,7 +70,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
       assertBn((await token.balanceOf(vault.address)), initialVaultBalance.add(initialBalance).add(amount), 'Vault balance should include recovered amount')
 
       assertAmountOfEvents(recoverReceipt, 'RecoverToVault')
-      assertEvent(recoverReceipt, 'RecoverToVault', { vault: vault.address, token: token.address, amount: amount })
+      assertEvent(recoverReceipt, 'RecoverToVault', { expectedArgs: { vault: vault.address, token: token.address, amount: amount  } })
     }
   }
 
@@ -93,10 +95,10 @@ contract('Recovery to vault', ([permissionsRoot]) => {
   const failWithoutVault = async (target, kernel) => {
     const amount = bn(1)
     const vaultId = hash('vaultfake.aragonpm.test')
-    const initialBalance = bn(await getBalance(target.address))
+    const initialBalance = bn(await web3.eth.getBalance(target.address))
     await kernel.setRecoveryVaultAppId(vaultId)
     const r = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-    assertBn(bn(await getBalance(target.address)), initialBalance.add(amount), 'Target initial balance should be correct')
+    assertBn(bn(await web3.eth.getBalance(target.address)), initialBalance.add(amount), 'Target initial balance should be correct')
     await assertRevert(target.transferToVault(ETH))
   }
 
@@ -169,7 +171,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
             } else if (vaultType === 'VaultProxy') {
               // This doesn't automatically setup the recovery address
               const receipt = await kernel.newAppInstance(vaultId, vaultBase.address, EMPTY_BYTES, false)
-              const vaultProxyAddress = getNewProxyAddress(receipt)
+              const vaultProxyAddress = getInstalledApp(receipt)
               vault = await VaultMock.at(vaultProxyAddress)
             }
             await vault.initialize()
@@ -224,7 +226,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
             beforeEach(async () => {
               // Setup app
               const receipt = await kernel.newAppInstance(APP_ID, appBase.address, EMPTY_BYTES, false)
-              const appProxy = getNewProxyAddress(receipt)
+              const appProxy = getInstalledApp(receipt, APP_ID)
               const app = await AppStubDepositable.at(appProxy)
               await app.enableDeposits()
 
@@ -270,7 +272,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
             beforeEach(async () => {
               // Setup app with conditional recovery code
               const receipt = await kernel.newAppInstance(APP_ID, appConditionalRecoveryBase.address, EMPTY_BYTES, false)
-              const appProxy = getNewProxyAddress(receipt)
+              const appProxy = getInstalledApp(receipt)
               const app = await AppStubConditionalRecovery.at(appProxy)
               await app.initialize()
 
@@ -325,7 +327,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
       const vaultId = hash('vault.aragonpm.test')
       const vaultBase = await VaultMock.new()
       const vaultReceipt = await kernel.newAppInstance(vaultId, vaultBase.address, EMPTY_BYTES, true)
-      const vaultAddress = getNewProxyAddress(vaultReceipt)
+      const vaultAddress = getInstalledApp(vaultReceipt)
       vault = await VaultMock.at(vaultAddress)
       await vault.initialize()
 

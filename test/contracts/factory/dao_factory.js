@@ -1,4 +1,4 @@
-const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS, getEventArgument } = require('@aragon/contract-helpers-test')
 
 const DAOFactory = artifacts.require('DAOFactory')
 
@@ -7,8 +7,6 @@ const Kernel = artifacts.require('Kernel')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 const EVMScriptRegistryConstants = artifacts.require('EVMScriptRegistryConstantsMock')
-
-const getEventArgument = (receipt, event, arg) => receipt.logs.filter(l => l.event === event)[0].args[arg]
 
 contract('DAO Factory', ([_, root]) => {
   let daoFactory, dao, acl, receipt

@@ -1,4 +1,5 @@
-const { assertRevert, bn } = require('@aragon/contract-helpers-test')
+const { bn } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Uint256 Helpers test', () => {
   let uint256Mock

@@ -1,6 +1,6 @@
-const { toChecksumAddress } = require('web3-utils')
 const { skipCoverage } = require('../../helpers/coverage')
-const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, assertBn, bn, decodeEvents, getBalance } = require('@aragon/contract-helpers-test')
+const { bn } = require('@aragon/contract-helpers-test')
+const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
 // Mocks
 const DepositableDelegateProxyMock = artifacts.require('DepositableDelegateProxyMock')
@@ -96,19 +96,19 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       const value = bn(100)
 
       const assertSendEthToProxy = async ({ value, gas, shouldOOG }) => {
-        const initialBalance = bn(await getBalance(proxy.address))
+        const initialBalance = bn(await web3.eth.getBalance(proxy.address))
 
         const sendEthAction = () => proxy.sendTransaction({ from: sender, gas, value })
 
         if (shouldOOG) {
           await assertOutOfGas(sendEthAction())
-          assertBn(bn(await getBalance(proxy.address)), initialBalance, 'Target balance should be the same as before')
+          assertBn(bn(await web3.eth.getBalance(proxy.address)), initialBalance, 'Target balance should be the same as before')
         } else {
-          const { receipt, logs } = await sendEthAction()
+          const receipt = await sendEthAction()
 
-          assertBn(bn(await getBalance(proxy.address)), initialBalance.add(value), 'Target balance should be correct')
-          assertAmountOfEvents({ logs }, 'ProxyDeposit')
-          assertEvent({ logs }, 'ProxyDeposit', { sender, value })
+          assertBn(bn(await web3.eth.getBalance(proxy.address)), initialBalance.add(value), 'Target balance should be correct')
+          assertAmountOfEvents(receipt, 'ProxyDeposit', { decodeForAbi: DepositableDelegateProxyMock.abi })
+          assertEvent(receipt, 'ProxyDeposit', { decodeForAbi: DepositableDelegateProxyMock.abi, expectedArgs: { sender, value  } })
 
           return receipt
         }
@@ -131,11 +131,10 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       )
 
       it('can receive ETH from contract', async () => {
-        const { tx } = await ethSender.sendEth(proxy.address, { value })
-        const receipt = await web3.eth.getTransactionReceipt(tx)
-        const logs = decodeEvents(receipt, DepositableDelegateProxyMock.abi, 'ProxyDeposit')
-        assertAmountOfEvents({ logs }, 'ProxyDeposit')
-        assertEvent({ logs }, 'ProxyDeposit', { sender: toChecksumAddress(ethSender.address), value })
+        const receipt = await ethSender.sendEth(proxy.address, { value })
+
+        assertAmountOfEvents(receipt, 'ProxyDeposit', { decodeForAbi: proxy.abi })
+        assertEvent(receipt, 'ProxyDeposit', { decodeForAbi: proxy.abi, expectedArgs: { sender: ethSender.address, value } })
       })
 
       itRevertsOnInvalidDeposits()

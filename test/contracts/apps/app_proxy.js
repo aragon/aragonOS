@@ -1,5 +1,6 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert, getBlockNumber, onlyIf, injectWeb3, injectArtifacts, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { onlyIf, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,11 +14,8 @@ const AppStub2 = artifacts.require('AppStub2')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
 const KernelSetAppMock = artifacts.require('KernelSetAppMock')
 
-const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
-
-injectWeb3(web3)
-injectArtifacts(artifacts)
+const APP_ID = hash('stub.aragonpm.test')
 
 contract('App proxy', ([permissionsRoot, nonContract]) => {
   let aclBase, appBase1, appBase2, kernelBase, acl, kernel
@@ -99,7 +97,7 @@ contract('App proxy', ([permissionsRoot, nonContract]) => {
         })
 
         it('fails if initializing on constructor before setting app code', async () => {
-          const initializationPayload = appBase1.contract.initialize.getData()
+          const initializationPayload = appBase1.contract.methods.initialize().encodeABI()
 
           await assertRevert(AppProxyUpgradeable.new(kernel.address, APP_ID, initializationPayload))
         })
@@ -126,7 +124,7 @@ contract('App proxy', ([permissionsRoot, nonContract]) => {
         })
 
         it('fails if kernel address is not a contract', async () => {
-          await assertRevert(appProxyContract.new('0x1234', APP_ID, EMPTY_BYTES))
+          await assertRevert(appProxyContract.new(nonContract, APP_ID, EMPTY_BYTES))
         })
       })
 
@@ -134,7 +132,7 @@ contract('App proxy', ([permissionsRoot, nonContract]) => {
         beforeEach(async () => {
           await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
 
-          const initializationPayload = appBase1.contract.initialize.getData()
+          const initializationPayload = appBase1.contract.methods.initialize().encodeABI()
           const appProxy = await appProxyContract.new(kernel.address, APP_ID, initializationPayload)
           app = await AppStub.at(appProxy.address)
         })
@@ -151,7 +149,7 @@ contract('App proxy', ([permissionsRoot, nonContract]) => {
         })
 
         it('has correct initialization block', async () => {
-            assert.equal(await app.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+            assert.equal(await app.getInitializationBlock(), await web3.eth.getBlockNumber(), 'initialization block should be correct')
         })
 
         it('cannot reinitialize', async () => {
@@ -206,7 +204,7 @@ contract('App proxy', ([permissionsRoot, nonContract]) => {
         beforeEach(async () => {
           await kernel.setApp(APP_BASES_NAMESPACE, APP_ID, appBase1.address)
 
-          const initializationPayload = appBase1.contract.initialize.getData()
+          const initializationPayload = appBase1.contract.methods.initialize().encodeABI()
           const appProxy = await appProxyContract.new(kernel.address, APP_ID, initializationPayload)
           app = await AppStub.at(appProxy.address)
 

@@ -1,4 +1,6 @@
-const { assertEvent, createExecutorId, encodeCallScript, getEventArgument, getNewProxyAddress, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
+const { ZERO_ADDRESS, getEventArgument } = require('@aragon/contract-helpers-test')
+const { getInstalledApp, encodeCallScript, createExecutorId } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -83,7 +85,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
       await acl.createPermission(permissionsRoot, dao.address, APP_MANAGER_ROLE, permissionsRoot)
 
       const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false)
-      scriptRunnerApp = await AppStubScriptRunner.at(getNewProxyAddress(receipt))
+      scriptRunnerApp = await AppStubScriptRunner.at(getInstalledApp(receipt))
       await scriptRunnerApp.initialize()
       executionTarget = await ExecutionTarget.new()
     })
@@ -102,7 +104,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     })
 
     it('can execute calls script (spec ID 1)', async () => {
-      const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+      const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
       const script = encodeCallScript([action], 1)
 
       const receipt = await scriptRunnerApp.runScript(script)
@@ -111,7 +113,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
 
       // The executor always uses 0x for the input and callscripts always have 0x returns
       const expectedExecutor = await evmScriptReg.getScriptExecutor(createExecutorId(1))
-      assertEvent(receipt, 'ScriptResult', { executor: expectedExecutor, script, input: EMPTY_BYTES, returnData: EMPTY_BYTES })
+      assertEvent(receipt, 'ScriptResult', { expectedArgs: { executor: expectedExecutor, script, input: null, returnData: null  } })
     })
   })
 })

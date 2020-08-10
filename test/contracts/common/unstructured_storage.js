@@ -105,7 +105,7 @@ contract('Unstructured storage', () => {
     it('tests init block', async () => {
       // set values
       await initializableMock.initialize()
-      const blockNumber = await web3.eth.blockNumber()
+      const blockNumber = await web3.eth.getBlockNumber()
       // checks
       assert.equal(
         parseInt(

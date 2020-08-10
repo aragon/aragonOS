@@ -1,4 +1,5 @@
-const { assertRevert, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('ReentrancyGuard', () => {
   let reentrancyMock

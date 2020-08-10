@@ -1,6 +1,6 @@
-const { hash } = require('eth-ens-namehash')
-const { soliditySha3 } = require('web3-utils')
-const { assertRevert, getBlockNumber, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { sha3 } = require('web3-utils')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -10,7 +10,7 @@ const AragonApp = artifacts.require('AragonApp')
 // Mocks
 const UnsafeAragonAppMock = artifacts.require('UnsafeAragonAppMock')
 
-const FAKE_ROLE = soliditySha3('FAKE_ROLE')
+const FAKE_ROLE = sha3('FAKE_ROLE')
 
 contract('App base lifecycle', ([permissionsRoot]) => {
   let aclBase, kernelBase
@@ -78,7 +78,7 @@ contract('App base lifecycle', ([permissionsRoot]) => {
       })
 
       it('has correct initialization block', async () => {
-        assert.equal(await app.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+        assert.equal(await app.getInitializationBlock(), await web3.eth.getBlockNumber(), 'initialization block should be correct')
       })
 
       it('throws on reinitialization', async () => {

@@ -1,4 +1,5 @@
-const { assertRevert, decodeEvents, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertEvent, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -9,11 +10,9 @@ const UpgradedKernel = artifacts.require('UpgradedKernel')
 const ERCProxyMock = artifacts.require('ERCProxyMock')
 
 // Only applicable to KernelProxy instances
-contract('Kernel upgrade', accounts => {
+contract('Kernel upgrade', ([permissionsRoot, someone]) => {
     let aclBase, kernelBase, upgradedBase, kernelAddr, kernel, acl
     let APP_MANAGER_ROLE, CORE_NAMESPACE, KERNEL_APP_ID, UPGRADEABLE
-
-    const permissionsRoot = accounts[0]
 
     before(async () => {
         kernelBase = await Kernel.new(true) // petrify immediately
@@ -47,15 +46,9 @@ contract('Kernel upgrade', accounts => {
 
     it('emits SetApp event', async () => {
         const kernelProxy = await KernelProxy.new(kernelBase.address)
-        const receipt = await web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
+        const { logs } = await web3.eth.getTransactionReceipt(kernelProxy.transactionHash)
 
-        const setAppLogs = decodeEvents(receipt, kernelProxy.abi, 'SetApp')
-        assert.equal(setAppLogs.length, 1)
-
-        const setAppArgs = setAppLogs[0].args
-        assert.equal(setAppArgs.namespace, CORE_NAMESPACE, 'Kernel namespace should match')
-        assert.equal(setAppArgs.appId, KERNEL_APP_ID, 'Kernel app id should match')
-        assert.equal(setAppArgs.app.toLowerCase(), kernelBase.address.toLowerCase(), 'Kernel base address should match')
+        assertEvent({ rawLogs: logs }, 'SetApp', { decodeForAbi: KernelProxy.abi, expectedArgs: { namespace: CORE_NAMESPACE, appId: KERNEL_APP_ID, app: kernelBase.address } })
     })
 
     it('fails to create a KernelProxy if the base is 0', async () => {
@@ -63,11 +56,11 @@ contract('Kernel upgrade', accounts => {
     })
 
     it('fails to create a KernelProxy if the base is not a contract', async () => {
-        await assertRevert(KernelProxy.new(accounts[1]))
+        await assertRevert(KernelProxy.new(someone))
     })
 
     it('fails to upgrade kernel without permission', async () => {
-        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[0]))
+        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, permissionsRoot))
     })
 
     it('fails when calling upgraded functionality on old version', async () => {
@@ -85,6 +78,6 @@ contract('Kernel upgrade', accounts => {
     it('fails if upgrading to kernel that is not a contract', async () => {
         await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot, { from: permissionsRoot })
 
-        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, accounts[1]))
+        await assertRevert(kernel.setApp(CORE_NAMESPACE, KERNEL_APP_ID, someone))
     })
 })

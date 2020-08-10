@@ -1,5 +1,6 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert, bn, onlyIf } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { bn, onlyIf } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -11,8 +12,8 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const UnsafeAppStub = artifacts.require('UnsafeAppStub')
 
-const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
+const APP_ID = hash('stub.aragonpm.test')
 
 contract('App ACL', accounts => {
   let aclBase, kernelBase, acl, kernel
