@@ -9,7 +9,7 @@ contract('TimeHelpers', () => {
 
   it('checks block number', async () => {
     assert.equal((await timeHelpersMock.getBlockNumberExt()).toString(), (await timeHelpersMock.getBlockNumber64Ext()).toString(), "block numbers should match")
-    assert.equal((await timeHelpersMock.getBlockNumberExt()).toString(), (await timeHelpersMock.getBlockNumberDirect()).toString(), web3.eth.getBlockNumber, "block number should match with real one", "block number should match with real one")
+    assert.equal((await timeHelpersMock.getBlockNumberExt()).toString(), (await timeHelpersMock.getBlockNumberDirect()).toString(), "block number should match with real one")
   })
 
   it('checks time stamp', async () => {
