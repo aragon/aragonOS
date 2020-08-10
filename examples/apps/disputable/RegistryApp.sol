@@ -35,27 +35,10 @@ contract RegistryApp is DisputableAragonApp {
     mapping (bytes32 => Entry) private entries;
 
     /**
-    * @notice Initialize Registry app linked to the Agreement `_agreement` with the following requirements:
-    * @notice - `@tokenAmount(_collateralToken, _actionCollateral)` collateral for submitting actions
-    * @notice - `@tokenAmount(_collateralToken, _challengeCollateral)` collateral for challenging actions
-    * @notice - `@transformTime(_challengeDuration)` for the challenge duration
-    * @param _agreement Agreement instance to be linked
-    * @param _collateralToken Address of the ERC20 token to be used for collateral
-    * @param _actionCollateral Amount of collateral tokens that will be locked every time an action is submitted
-    * @param _challengeCollateral Amount of collateral tokens that will be locked every time an action is challenged
-    * @param _challengeDuration Duration in seconds of the challenge, during this time window the submitter can answer the challenge
+    * @notice Initialize Registry app
     */
-    function initialize(
-        IAgreement _agreement,
-        ERC20 _collateralToken,
-        uint256 _actionCollateral,
-        uint256 _challengeCollateral,
-        uint64 _challengeDuration
-    )
-        external
-    {
+    function initialize() external {
         initialized();
-        _agreement.activate(IDisputable(this), _collateralToken, _actionCollateral, _challengeCollateral, _challengeDuration);
     }
 
     /**
