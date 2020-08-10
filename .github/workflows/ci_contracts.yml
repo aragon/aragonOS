@@ -1,0 +1,26 @@
+name: contracts
+
+on: [push, pull_request]
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+      - name: yarn install --frozen-lockfile
+        run: yarn install
+      - name: lint
+        run: yarn lint
+      - name: test
+        run: yarn test
+      - name: coverage
+        run: yarn coverage
+      - name: test:gas
+        continue-on-error: true
+        run: yarn test:gas:ci
+env:
+  CI: true
