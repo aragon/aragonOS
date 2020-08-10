@@ -1,9 +1,8 @@
 const { hash } = require('eth-ens-namehash')
-const { keccak_256 } = require('js-sha3')
-const { soliditySha3 } = require('web3-utils')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { assertAmountOfEvents, assertEvent } = require('../../helpers/assertEvent')(web3)
-const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
+const { sha3, soliditySha3 } = require('web3-utils')
+const { bn, getEventArgument, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { getInstalledApp, ANY_ENTITY } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { assertAmountOfEvents, assertEvent, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -13,14 +12,11 @@ const KernelProxy = artifacts.require('KernelProxy')
 const AppStub = artifacts.require('AppStub')
 
 const EMPTY_BYTES = '0x'
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
-
 const APP_ID = hash('stub.aragonpm.test')
-const keccak256 = name => `0x${keccak_256(name)}`
 
 contract('Kernel ACL', accounts => {
     let aclBase, appBase
-    let APP_MANAGER_ROLE, APP_BASES_NAMESPACE, DEFAULT_ACL_APP_ID, ANY_ENTITY
+    let APP_MANAGER_ROLE, APP_BASES_NAMESPACE, DEFAULT_ACL_APP_ID
 
     const permissionsRoot = accounts[0]
     const granted = accounts[1]
@@ -37,7 +33,6 @@ contract('Kernel ACL', accounts => {
         APP_BASES_NAMESPACE = await kernel.APP_BASES_NAMESPACE()
         APP_MANAGER_ROLE = await kernel.APP_MANAGER_ROLE()
         DEFAULT_ACL_APP_ID = await kernel.DEFAULT_ACL_APP_ID()
-        ANY_ENTITY = await aclBase.ANY_ENTITY()
     })
 
     // Test both the Kernel itself and the KernelProxy to make sure their behaviours are the same
@@ -56,11 +51,11 @@ contract('Kernel ACL', accounts => {
                 if (kernelType === 'Kernel') {
                     kernel = await Kernel.new(false) // don't petrify so it can be used
                 } else if (kernelType === 'KernelProxy') {
-                    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+                    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
                 }
 
                 await kernel.initialize(aclBase.address, permissionsRoot)
-                acl = ACL.at(await kernel.acl())
+                acl = await ACL.at(await kernel.acl())
                 kernelAddr = kernel.address
             })
 
@@ -74,7 +69,7 @@ contract('Kernel ACL', accounts => {
                 // Set up ACL proxy
                 await acl.createPermission(permissionsRoot, kernelAddr, APP_MANAGER_ROLE, permissionsRoot)
                 const receipt = await kernel.newAppInstance(DEFAULT_ACL_APP_ID, aclBase.address, EMPTY_BYTES, false)
-                const newAcl = ACL.at(getNewProxyAddress(receipt))
+                const newAcl = await ACL.at(getInstalledApp(receipt))
 
                 await assertRevert(newAcl.initialize(permissionsRoot))
             })
@@ -100,7 +95,7 @@ contract('Kernel ACL', accounts => {
                 beforeEach(async () => {
                     const receipt = await acl.createPermission(granted, kernelAddr, APP_MANAGER_ROLE, granted, { from: permissionsRoot })
                     assertAmountOfEvents(receipt, 'SetPermission')
-                    assertAmountOfEvents(receipt, 'SetPermissionParams', 0) // should not have emitted this
+                    assertAmountOfEvents(receipt, 'SetPermissionParams', { expectedAmount: 0 }) // should not have emitted this
                     assertAmountOfEvents(receipt, 'ChangePermissionManager')
                 })
 
@@ -122,7 +117,7 @@ contract('Kernel ACL', accounts => {
                     const argId = '0x00' // arg 0
                     const op = '02'      // not equal
                     const value = '000000000000000000000000000000000000000000000000000000000000'  // namespace 0
-                    const param = new web3.BigNumber(`${argId}${op}${value}`)
+                    const param = bn(`${argId}${op}${value}`)
 
                     const grantChildReceipt = await acl.grantPermissionP(child, kernelAddr, APP_MANAGER_ROLE, [param], { from: granted })
 
@@ -168,7 +163,7 @@ contract('Kernel ACL', accounts => {
                 it('can grant a public permission', async () => {
                     const receipt = await acl.grantPermission(ANY_ENTITY, kernelAddr, APP_MANAGER_ROLE, { from: granted })
                     assertAmountOfEvents(receipt, 'SetPermission')
-                    assertAmountOfEvents(receipt, 'SetPermissionParams', 0) // should not have emitted this
+                    assertAmountOfEvents(receipt, 'SetPermissionParams', { expectedAmount: 0 }) // should not have emitted this
 
                     // Any entity can succesfully perform action
                     for (const granteeIndex of [4, 5, 6]) {
@@ -241,7 +236,7 @@ contract('Kernel ACL', accounts => {
 
                     it('removes manager', async () => {
                         const noManager = await acl.getPermissionManager(kernelAddr, APP_MANAGER_ROLE)
-                        assert.equal(ZERO_ADDR, noManager, 'manager should have been removed')
+                        assert.equal(ZERO_ADDRESS, noManager, 'manager should have been removed')
                     })
 
                     it('old manager lost power', async () => {
@@ -307,7 +302,7 @@ contract('Kernel ACL', accounts => {
             })
 
             context('> burning permission manager', () => {
-                const MOCK_ROLE = keccak256("MOCK_ROLE")
+                const MOCK_ROLE = sha3("MOCK_ROLE")
                 let BURN_ENTITY
 
                 before(async () => {
@@ -321,7 +316,7 @@ contract('Kernel ACL', accounts => {
                     // burn it
                     const receipt = await acl.burnPermissionManager(kernelAddr, MOCK_ROLE, { from: granted })
                     assertAmountOfEvents(receipt, 'ChangePermissionManager')
-                    assertEvent(receipt, 'ChangePermissionManager', { app: kernelAddr, role: MOCK_ROLE, manager: BURN_ENTITY })
+                    assertEvent(receipt, 'ChangePermissionManager', { expectedArgs: { app: kernelAddr, role: MOCK_ROLE, manager: BURN_ENTITY } })
                     assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
 
                     // check that nothing else can be done from now on
@@ -336,7 +331,7 @@ contract('Kernel ACL', accounts => {
                     // burn it
                     const receipt = await acl.createBurnedPermission(kernelAddr, MOCK_ROLE, { from: permissionsRoot })
                     assertAmountOfEvents(receipt, 'ChangePermissionManager')
-                    assertEvent(receipt, 'ChangePermissionManager', { app: kernelAddr, role: MOCK_ROLE, manager: BURN_ENTITY })
+                    assertEvent(receipt, 'ChangePermissionManager', { expectedArgs: { app: kernelAddr, role: MOCK_ROLE, manager: BURN_ENTITY  } })
                     assert.equal(await acl.getPermissionManager(kernelAddr, MOCK_ROLE), BURN_ENTITY)
 
                     // check that nothing else can be done from now on

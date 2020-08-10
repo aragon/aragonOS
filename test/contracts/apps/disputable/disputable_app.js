@@ -1,8 +1,7 @@
 const { sha3 } = require('web3-utils')
-const { assertRevert } = require('../../../helpers/assertThrow')
-const { getEventArgument } = require('../../../helpers/events')
-const { getNewProxyAddress } = require('../../../helpers/events')
-const { assertEvent, assertAmountOfEvents } = require('../../../helpers/assertEvent')(web3)
+const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
+const { getEventArgument, ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
+const { assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -16,7 +15,6 @@ const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => {
   let disputable, disputableBase, dao, acl
 
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
   const DISPUTABLE_INTERFACE = '0xf3d3bb51'
   const ARAGON_APP_INTERFACE = '0x54053e6c'
   const ERC165_INTERFACE = '0x01ffc9a7'
@@ -37,9 +35,9 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
   })
 
   beforeEach('install disputable app', async () => {
-    const initializeData = disputableBase.contract.initialize.getData()
+    const initializeData = disputableBase.contract.methods.initialize().encodeABI()
     const receipt = await dao.newAppInstance('0x1234', disputableBase.address, initializeData, false, { from: owner })
-    disputable = await DisputableApp.at(getNewProxyAddress(receipt))
+    disputable = await DisputableApp.at(getInstalledApp(receipt))
 
     const SET_AGREEMENT_ROLE = await disputable.SET_AGREEMENT_ROLE()
     await acl.createPermission(owner, disputable.address, SET_AGREEMENT_ROLE, owner, { from: owner })
@@ -90,7 +88,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
           const receipt = await disputable.setAgreement(agreement, { from })
 
           assertAmountOfEvents(receipt, 'AgreementSet')
-          assertEvent(receipt, 'AgreementSet', { agreement })
+          assertEvent(receipt, 'AgreementSet', { expectedArgs: { agreement  } })
         })
       }
 

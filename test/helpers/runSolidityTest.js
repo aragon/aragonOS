@@ -1,4 +1,4 @@
-const { decodeEventsOfType } = require('./decodeEvent')
+const { decodeEvents } = require('@aragon/contract-helpers-test')
 
 const ASSERT_LIB_EVENTS_ABI = [
   {
@@ -31,7 +31,7 @@ const processResult = (txReceipt, mustAssert) => {
   if (!txReceipt || !txReceipt.receipt) {
     return
   }
-  const decodedLogs = decodeEventsOfType(txReceipt.receipt, ASSERT_LIB_EVENTS_ABI, 'TestEvent')
+  const decodedLogs = decodeEvents(txReceipt.receipt, ASSERT_LIB_EVENTS_ABI, 'TestEvent')
   decodedLogs.forEach(log => {
     if (log.event === 'TestEvent' && log.args.result !== true) {
       throw new Error(log.args.message)

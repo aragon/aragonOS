@@ -1,7 +1,6 @@
-const { hash } = require('eth-ens-namehash')
-const { soliditySha3 } = require('web3-utils')
-const { getBlockNumber } = require('../../helpers/web3')
-const { assertRevert } = require('../../helpers/assertThrow')
+const { sha3 } = require('web3-utils')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { ZERO_ADDRESS } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -11,8 +10,7 @@ const AragonApp = artifacts.require('AragonApp')
 // Mocks
 const UnsafeAragonAppMock = artifacts.require('UnsafeAragonAppMock')
 
-const FAKE_ROLE = soliditySha3('FAKE_ROLE')
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+const FAKE_ROLE = sha3('FAKE_ROLE')
 
 contract('App base lifecycle', ([permissionsRoot]) => {
   let aclBase, kernelBase
@@ -80,7 +78,7 @@ contract('App base lifecycle', ([permissionsRoot]) => {
       })
 
       it('has correct initialization block', async () => {
-        assert.equal(await app.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+        assert.equal(await app.getInitializationBlock(), await web3.eth.getBlockNumber(), 'initialization block should be correct')
       })
 
       it('throws on reinitialization', async () => {
@@ -88,7 +86,7 @@ contract('App base lifecycle', ([permissionsRoot]) => {
       })
 
       it('should still not be usable without a kernel', async () => {
-        assert.equal(await app.getKernel(), ZERO_ADDR, 'app should still be missing kernel reference')
+        assert.equal(await app.getKernel(), ZERO_ADDRESS, 'app should still be missing kernel reference')
 
         assert.isFalse(await app.canPerform(permissionsRoot, FAKE_ROLE, []))
       })
@@ -98,9 +96,9 @@ contract('App base lifecycle', ([permissionsRoot]) => {
 
         beforeEach(async () => {
           const kernelProxy = await KernelProxy.new(kernelBase.address)
-          kernel = Kernel.at(kernelProxy.address)
+          kernel = await Kernel.at(kernelProxy.address)
           await kernel.initialize(aclBase.address, permissionsRoot)
-          acl = ACL.at(await kernel.acl())
+          acl = await ACL.at(await kernel.acl())
 
           await app.setKernelOnMock(kernel.address)
         })

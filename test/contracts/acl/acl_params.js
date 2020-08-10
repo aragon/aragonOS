@@ -1,4 +1,4 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 const { skipSuiteCoverage } = require('../../helpers/coverage')
 const { permissionParamEqOracle } = require('../../helpers/permissionParams')
 
@@ -28,9 +28,9 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
   })
 
   beforeEach(async () => {
-    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
     await kernel.initialize(aclBase.address, permissionsRoot)
-    acl = ACL.at(await kernel.acl())
+    acl = await ACL.at(await kernel.acl())
     await acl.createPermission(permissionsRoot, mockAppAddress, MOCK_APP_ROLE, permissionsRoot)
   })
 
@@ -142,8 +142,8 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
             it('ACL disallows and uses all gas when given large amount of gas', async () => {
               assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE }))
 
-              const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
-              const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+              const hasPermissionReceipt = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+              const hasPermissionGasConsumed = hasPermissionReceipt.receipt.gasUsed
               // Surprisingly, the actual gas used is quite a lot lower than expected, but it is
               // unclear if this is a ganache issue or if there are gas refunds we're not taking
               // into account
@@ -153,8 +153,8 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
             it('ACL disallows and uses all gas when given medium amount of gas', async () => {
               assert.isFalse(await acl.hasPermission(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS }))
 
-              const hasPermissionTxHash = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS })
-              const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+              const hasPermissionReceipt = await acl.hasPermission.sendTransaction(ANY_ADDR, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS })
+              const hasPermissionGasConsumed = hasPermissionReceipt.receipt.gasUsed
               assert.closeTo(hasPermissionGasConsumed, getExpectedGas(MEDIUM_GAS), 10000)
             })
 
@@ -179,8 +179,8 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
             it('ACL disallows and uses all gas when given large amount of gas', async () => {
               assert.isFalse(await acl.hasPermission(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE }))
 
-              const hasPermissionTxHash = await acl.hasPermission.sendTransaction(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
-              const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+              const hasPermissionReceipt = await acl.hasPermission.sendTransaction(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MAX_GAS_AVAILABLE })
+              const hasPermissionGasConsumed = hasPermissionReceipt.receipt.gasUsed
               // Surprisingly, the actual gas used is quite a lot lower than expected, but it is
               // unclear if this is a ganache issue or if there are gas refunds we're not taking
               // into account
@@ -190,8 +190,8 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
             it('ACL disallows and uses all gas when given medium amount of gas', async () => {
               assert.isFalse(await acl.hasPermission(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS }))
 
-              const hasPermissionTxHash = await acl.hasPermission.sendTransaction(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS })
-              const hasPermissionGasConsumed = web3.eth.getTransactionReceipt(hasPermissionTxHash).gasUsed
+              const hasPermissionReceipt = await acl.hasPermission.sendTransaction(specificEntity, mockAppAddress, MOCK_APP_ROLE, { gas: MEDIUM_GAS })
+              const hasPermissionGasConsumed = hasPermissionReceipt.receipt.gasUsed
               assert.closeTo(hasPermissionGasConsumed, getExpectedGas(MEDIUM_GAS), 10000)
             })
 

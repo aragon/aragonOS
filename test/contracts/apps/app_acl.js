@@ -1,6 +1,6 @@
 const { hash } = require('eth-ens-namehash')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { assertRevert } = require('../../helpers/assertThrow')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
+const { bn, onlyIf } = require('@aragon/contract-helpers-test')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -12,8 +12,8 @@ const AppProxyPinned = artifacts.require('AppProxyPinned')
 const AppStub = artifacts.require('AppStub')
 const UnsafeAppStub = artifacts.require('UnsafeAppStub')
 
-const APP_ID = hash('stub.aragonpm.test')
 const EMPTY_BYTES = '0x'
+const APP_ID = hash('stub.aragonpm.test')
 
 contract('App ACL', accounts => {
   let aclBase, kernelBase, acl, kernel
@@ -35,9 +35,9 @@ contract('App ACL', accounts => {
   })
 
   beforeEach(async () => {
-    kernel = Kernel.at((await KernelProxy.new(kernelBase.address)).address)
+    kernel = await Kernel.at((await KernelProxy.new(kernelBase.address)).address)
     await kernel.initialize(aclBase.address, permissionsRoot)
-    acl = ACL.at(await kernel.acl())
+    acl = await ACL.at(await kernel.acl())
 
     // Set up app management permissions
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
@@ -71,7 +71,7 @@ contract('App ACL', accounts => {
           } else if (appType === 'AppProxyPinned') {
             appProxy = await AppProxyPinned.new(kernel.address, APP_ID, EMPTY_BYTES)
           }
-          app = AppStub.at(appProxy.address)
+          app = await AppStub.at(appProxy.address)
         }
 
         await app.initialize()
@@ -102,7 +102,7 @@ contract('App ACL', accounts => {
         it('fails if using app proxy without reference in kernel', async () => {
           const unknownId = hash('unknown.aragonpm.test')
           const appProxy = await AppProxyUpgradeable.new(kernel.address, unknownId, EMPTY_BYTES)
-          const app = AppStub.at(appProxy.address)
+          const app = await AppStub.at(appProxy.address)
 
           await assertRevert(app.setValue(10))
         })
@@ -118,7 +118,7 @@ contract('App ACL', accounts => {
           const argId = '0x00' // arg 0
           const op = '03'    // greater than
           const value = `00000000000000000000000000000000000000000000000000000000000${paramValue}` // 5
-          const param = new web3.BigNumber(`${argId}${op}${value}`)
+          const param = bn(`${argId}${op}${value}`)
 
           await acl.grantPermissionP(paramsGrantee, app.address, APP_ROLE, [param], { from: permissionsRoot })
         })

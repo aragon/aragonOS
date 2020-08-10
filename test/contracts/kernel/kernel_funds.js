@@ -1,12 +1,9 @@
-const { assertRevert } = require('../../helpers/assertThrow')
-const { onlyIf } = require('../../helpers/onlyIf')
-const { getBalance } = require('../../helpers/web3')
+const { bn, onlyIf } = require('@aragon/contract-helpers-test')
+const { assertBn, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-
-// Mocks
 const KernelDepositableMock = artifacts.require('KernelDepositableMock')
 
 const TX_BASE_GAS = 21000
@@ -40,7 +37,7 @@ contract('Kernel funds', ([permissionsRoot]) => {
             if (kernelType === 'Base') {
               kernel = await kernelBaseType.new(false) // don't petrify so it can be used
             } else if (kernelType === 'Proxy') {
-              kernel = kernelBaseType.at((await KernelProxy.new(kernelBase.address)).address)
+              kernel = await kernelBaseType.at((await KernelProxy.new(kernelBase.address)).address)
             }
           })
 
@@ -70,16 +67,16 @@ contract('Kernel funds', ([permissionsRoot]) => {
             })
 
             it('can receive ETH after being enabled', async () => {
-              const amount = 1
-              const initialBalance = await getBalance(kernel.address)
+              const amount = bn(1)
+              const initialBalance = bn(await web3.eth.getBalance(kernel.address))
 
               await kernel.initialize(aclBase.address, permissionsRoot)
               await kernel.enableDeposits()
               assert.isTrue(await kernel.hasInitialized(), 'should have been initialized')
               assert.isTrue(await kernel.isDepositable(), 'should be depositable')
 
-              await kernel.sendTransaction({ value: 1, gas: SEND_ETH_GAS })
-              assert.equal((await getBalance(kernel.address)).valueOf(), initialBalance.plus(amount))
+              await kernel.sendTransaction({ value: amount, gas: SEND_ETH_GAS })
+              assertBn(bn(await web3.eth.getBalance(kernel.address)), initialBalance.add(amount))
             })
           })
         })
