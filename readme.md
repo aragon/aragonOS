@@ -65,9 +65,9 @@ The [reference documentation](https://hack.aragon.org/docs/aragonos-ref.html) ex
 ## Development
 
 ```sh
-npm install
-npm test
+yarn install
+yarn test
 
 # Lint needs to pass as well
-npm run lint
+yarn run lint
 ```
