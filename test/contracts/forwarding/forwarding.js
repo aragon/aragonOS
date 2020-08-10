@@ -1,4 +1,5 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { EMPTY_BYTES } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 // Mocks
 const ForwarderMock = artifacts.require('ForwarderMock')
@@ -6,7 +7,6 @@ const ForwarderPayableMock = artifacts.require('ForwarderPayableMock')
 const ForwarderWithContextMock = artifacts.require('ForwarderWithContextMock')
 const ForwarderWithContextPayableMock = artifacts.require('ForwarderWithContextPayableMock')
 
-const EMPTY_BYTES = '0x'
 const ForwarderType = {
   NOT_IMPLEMENTED: 0,
   NO_CONTEXT: 1,
@@ -35,7 +35,7 @@ contract('Forwarders', () => {
 
     it('cannot forward with ETH payment', async () => {
       // Override the contract ABI to let us attempt sending value into this non-payable forwarder
-      const payableForwarder = ForwarderPayableMock.at(forwarder.address)
+      const payableForwarder = await ForwarderPayableMock.at(forwarder.address)
       await assertRevert(payableForwarder.forward(EMPTY_BYTES, { value: 1 }))
     })
   })
@@ -85,7 +85,7 @@ contract('Forwarders', () => {
 
     it('cannot forward with ETH payment', async () => {
       // Override the contract ABI to let us attempt sending value into this non-payable forwarder
-      const payableForwarder = ForwarderWithContextPayableMock.at(forwarder.address)
+      const payableForwarder = await ForwarderWithContextPayableMock.at(forwarder.address)
       await assertRevert(payableForwarder.forward(EMPTY_BYTES, EMPTY_BYTES, { value: 1 }))
     })
   })

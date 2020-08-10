@@ -1,5 +1,5 @@
-const { getEventArgument } = require('../../helpers/events')
-const { getNewProxyAddress } = require('../../helpers/events')
+const { getEventArgument } = require('@aragon/contract-helpers-test')
+const { getInstalledApp } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
@@ -8,7 +8,7 @@ const AragonApp = artifacts.require('AragonAppMock')
 const ERC165 = artifacts.require('ERC165Mock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-contract('AragonApp', ([_, owner, agreement, anotherAgreement, someone]) => {
+contract('AragonApp', ([_, owner]) => {
   let aragonApp
 
   const ARAGON_APP_INTERFACE = '0x54053e6c'
@@ -21,15 +21,15 @@ contract('AragonApp', ([_, owner, agreement, anotherAgreement, someone]) => {
     const daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, registryFactory.address)
 
     const receiptDao = await daoFact.newDAO(owner)
-    dao = await Kernel.at(getEventArgument(receiptDao, 'DeployDAO', 'dao'))
-    acl = await ACL.at(await dao.acl())
+    const dao = await Kernel.at(getEventArgument(receiptDao, 'DeployDAO', 'dao'))
+    const acl = await ACL.at(await dao.acl())
     const aragonAppBase = await AragonApp.new()
 
     const APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
-    const initializeData = aragonAppBase.contract.initialize.getData()
+    const initializeData = aragonAppBase.contract.methods.initialize().encodeABI()
     const receiptInstance = await dao.newAppInstance('0x1234', aragonAppBase.address, initializeData, false, { from: owner })
-    aragonApp = await AragonApp.at(getNewProxyAddress(receiptInstance))
+    aragonApp = await AragonApp.at(getInstalledApp(receiptInstance))
   })
 
   describe('supportsInterface', () => {

@@ -1,4 +1,5 @@
-const { assertRevert } = require('../../../helpers/assertThrow')
+const { bn } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('SafeMath64 lib test', () => {
   let safeMath64Mock
@@ -15,7 +16,7 @@ contract('SafeMath64 lib test', () => {
   })
 
   it('fails if multplication overflows', async () => {
-    const a = new web3.BigNumber(2).pow(63)
+    const a = bn(2).pow(bn(63))
     const b = 2
     await assertRevert(safeMath64Mock.mulExt(a, b))
   })
@@ -54,8 +55,8 @@ contract('SafeMath64 lib test', () => {
   })
 
   it('fails if addition overflows', async () => {
-    const a = new web3.BigNumber(2).pow(63)
-    const b = new web3.BigNumber(2).pow(63)
+    const a = bn(2).pow(bn(63))
+    const b = bn(2).pow(bn(63))
     await assertRevert(safeMath64Mock.addExt(a, b))
   })
 

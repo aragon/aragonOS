@@ -1,6 +1,6 @@
-const { assertEvent } = require('../../helpers/assertEvent')(web3)
-const { createExecutorId, encodeCallScript } = require('../../helpers/evmScript')
-const { getEventArgument, getNewProxyAddress } = require('../../helpers/events')
+const { assertEvent } = require('@aragon/contract-helpers-test/src/asserts')
+const { ZERO_ADDRESS, getEventArgument } = require('@aragon/contract-helpers-test')
+const { getInstalledApp, encodeCallScript, createExecutorId } = require('@aragon/contract-helpers-test/src/aragon-os')
 
 const Kernel = artifacts.require('Kernel')
 const ACL = artifacts.require('ACL')
@@ -13,7 +13,6 @@ const AppStubScriptRunner = artifacts.require('AppStubScriptRunner')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 const EVMScriptRegistryConstantsMock = artifacts.require('EVMScriptRegistryConstantsMock')
 
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 const EMPTY_BYTES = '0x'
 
 contract('EVM Script Factory', ([permissionsRoot]) => {
@@ -31,7 +30,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     regFact = await EVMScriptRegistryFactory.new()
     daoFact = await DAOFactory.new(kernelBase.address, aclBase.address, regFact.address)
     callsScriptBase = await regFact.baseCallScript()
-    evmScriptRegBase = EVMScriptRegistry.at(await regFact.baseReg())
+    evmScriptRegBase = await EVMScriptRegistry.at(await regFact.baseReg())
     const evmScriptRegConstants = await EVMScriptRegistryConstantsMock.new()
 
     APP_BASES_NAMESPACE = await kernelBase.APP_BASES_NAMESPACE()
@@ -46,10 +45,10 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
 
   beforeEach(async () => {
     const receipt = await daoFact.newDAO(permissionsRoot)
-    dao = Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
-    evmScriptReg = EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
+    dao = await Kernel.at(getEventArgument(receipt, 'DeployDAO', 'dao'))
+    evmScriptReg = await EVMScriptRegistry.at(getEventArgument(receipt, 'DeployEVMScriptRegistry', 'reg'))
 
-    acl = ACL.at(await dao.acl())
+    acl = await ACL.at(await dao.acl())
   })
 
   it('factory installed EVMScriptRegistry correctly', async () => {
@@ -59,9 +58,9 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
   })
 
   it('factory registered just 1 script executor', async () => {
-    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(0)), ZERO_ADDR, 'spec ID 0 should always be empty')
+    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(0)), ZERO_ADDRESS, 'spec ID 0 should always be empty')
     assert.notEqual(await evmScriptReg.getScriptExecutor(createExecutorId(1)), callsScriptBase.address, 'spec ID 1 should be calls script')
-    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(2)), ZERO_ADDR, 'spec ID 2 and higher should be empty')
+    assert.equal(await evmScriptReg.getScriptExecutor(createExecutorId(2)), ZERO_ADDRESS, 'spec ID 2 and higher should be empty')
   })
 
   it('factory cleaned up permissions', async () => {
@@ -70,8 +69,8 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     assert.isFalse(await acl.hasPermission(regFact.address, evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), 'EVMScriptRegistryFactory should not have REGISTRY_ADD_EXECUTOR_ROLE for created EVMScriptRegistry')
     assert.isFalse(await acl.hasPermission(regFact.address, evmScriptReg.address, REGISTRY_MANAGER_ROLE), 'EVMScriptRegistryFactory should not have REGISTRY_MANAGER_ROLE for created EVMScriptRegistry')
 
-    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDR, 'created EVMScriptRegistry should not have manager for REGISTRY_ADD_EXECUTOR_ROLE')
-    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_MANAGER_ROLE), ZERO_ADDR, 'created EVMScriptRegistry should not have manager for REGISTRY_MANAGER_ROLE')
+    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_ADD_EXECUTOR_ROLE), ZERO_ADDRESS, 'created EVMScriptRegistry should not have manager for REGISTRY_ADD_EXECUTOR_ROLE')
+    assert.equal(await acl.getPermissionManager(evmScriptReg.address, REGISTRY_MANAGER_ROLE), ZERO_ADDRESS, 'created EVMScriptRegistry should not have manager for REGISTRY_MANAGER_ROLE')
   })
 
   context('> Executor app', () => {
@@ -86,7 +85,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
       await acl.createPermission(permissionsRoot, dao.address, APP_MANAGER_ROLE, permissionsRoot)
 
       const receipt = await dao.newAppInstance(SCRIPT_RUNNER_APP_ID, scriptRunnerAppBase.address, EMPTY_BYTES, false)
-      scriptRunnerApp = AppStubScriptRunner.at(getNewProxyAddress(receipt))
+      scriptRunnerApp = await AppStubScriptRunner.at(getInstalledApp(receipt))
       await scriptRunnerApp.initialize()
       executionTarget = await ExecutionTarget.new()
     })
@@ -105,7 +104,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
     })
 
     it('can execute calls script (spec ID 1)', async () => {
-      const action = { to: executionTarget.address, calldata: executionTarget.contract.execute.getData() }
+      const action = { to: executionTarget.address, calldata: executionTarget.contract.methods.execute().encodeABI() }
       const script = encodeCallScript([action], 1)
 
       const receipt = await scriptRunnerApp.runScript(script)
@@ -114,7 +113,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
 
       // The executor always uses 0x for the input and callscripts always have 0x returns
       const expectedExecutor = await evmScriptReg.getScriptExecutor(createExecutorId(1))
-      assertEvent(receipt, 'ScriptResult', { executor: expectedExecutor, script, input: EMPTY_BYTES, returnData: EMPTY_BYTES })
+      assertEvent(receipt, 'ScriptResult', { expectedArgs: { executor: expectedExecutor, script, input: null, returnData: null  } })
     })
   })
 })

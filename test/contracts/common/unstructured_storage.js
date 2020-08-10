@@ -23,12 +23,12 @@ contract('Unstructured storage', () => {
       // checks
       assert.equal(
         await web3.eth.getStorageAt(appStorage.address, (await appStorage.getKernelPosition())),
-        (await appStorage.kernel()).toString(),
+        (await appStorage.kernel()).toString().toLowerCase(),
         'Kernel should match'
       )
       assert.equal(
         await web3.eth.getStorageAt(appStorage.address, (await appStorage.getKernelPosition())),
-        kernel.address,
+        kernel.address.toLowerCase(),
         'Kernel original value should match'
       )
     })
@@ -105,7 +105,7 @@ contract('Unstructured storage', () => {
     it('tests init block', async () => {
       // set values
       await initializableMock.initialize()
-      const blockNumber = web3.eth.blockNumber
+      const blockNumber = await web3.eth.getBlockNumber()
       // checks
       assert.equal(
         parseInt(
