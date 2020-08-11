@@ -7,8 +7,8 @@ pragma solidity ^0.4.24;
 import "./IAgreement.sol";
 import "./IDisputable.sol";
 import "../AragonApp.sol";
-import "../../lib/token/ERC20.sol";
 import "../../lib/math/SafeMath64.sol";
+import "../../lib/token/ERC20.sol";
 
 
 contract DisputableAragonApp is IDisputable, AragonApp {
@@ -35,7 +35,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     /**
     * @notice Challenge disputable action #`_disputableActionId`
     * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
-    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    *      is included. Subclasses should implement the internal implementation of the hook.
     * @param _disputableActionId Identifier of the action to be challenged
     * @param _challengeId Identifier of the challenge in the context of the Agreement
     * @param _challenger Address that submitted the challenge
@@ -47,7 +47,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     /**
     * @notice Allow disputable action #`_disputableActionId`
     * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
-    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    *      is included. Subclasses should implement the internal implementation of the hook.
     * @param _disputableActionId Identifier of the action to be allowed
     */
     function onDisputableActionAllowed(uint256 _disputableActionId) external onlyAgreement {
@@ -57,7 +57,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     /**
     * @notice Reject disputable action #`_disputableActionId`
     * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
-    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    *      is included. Subclasses should implement the internal implementation of the hook.
     * @param _disputableActionId Identifier of the action to be rejected
     */
     function onDisputableActionRejected(uint256 _disputableActionId) external onlyAgreement {
@@ -67,7 +67,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     /**
     * @notice Void disputable action #`_disputableActionId`
     * @dev This hook must be implemented by Disputable apps. We provide a base implementation to ensure that the `onlyAgreement` modifier
-    *      is included. Developers of derived Disputable apps should implement an internal abstract implementation of the hook.
+    *      is included. Subclasses should implement the internal implementation of the hook.
     * @param _disputableActionId Identifier of the action to be voided
     */
     function onDisputableActionVoided(uint256 _disputableActionId) external onlyAgreement {

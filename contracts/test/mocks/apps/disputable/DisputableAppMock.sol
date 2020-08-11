@@ -45,7 +45,7 @@ contract DisputableAppMock is DisputableAragonApp {
 
     /**
     * @dev Challenge an entry
-    * @param _id Identification number of the entry to be challenged
+    * @param _id Identifier of the entry to be challenged
     */
     function _onDisputableActionChallenged(uint256 _id, uint256 /* _challengeId */, address /* _challenger */) internal {
         emit DisputableChallenged(_id);
@@ -53,7 +53,7 @@ contract DisputableAppMock is DisputableAragonApp {
 
     /**
     * @dev Allow an entry
-    * @param _id Identification number of the entry to be allowed
+    * @param _id Identifier of the entry to be allowed
     */
     function _onDisputableActionAllowed(uint256 _id) internal {
         emit DisputableAllowed(_id);
@@ -61,7 +61,7 @@ contract DisputableAppMock is DisputableAragonApp {
 
     /**
     * @dev Reject an entry
-    * @param _id Identification number of the entry to be rejected
+    * @param _id Identifier of the entry to be rejected
     */
     function _onDisputableActionRejected(uint256 _id) internal {
         emit DisputableRejected(_id);
@@ -69,7 +69,7 @@ contract DisputableAppMock is DisputableAragonApp {
 
     /**
     * @dev Void an entry
-    * @param _id Identification number of the entry to be voided
+    * @param _id Identifier of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _id) internal {
         emit DisputableVoided(_id);

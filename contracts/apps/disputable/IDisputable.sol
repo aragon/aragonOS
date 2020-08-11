@@ -5,8 +5,8 @@
 pragma solidity ^0.4.24;
 
 import "./IAgreement.sol";
-import "../../lib/token/ERC20.sol";
 import "../../lib/standards/ERC165.sol";
+import "../../lib/token/ERC20.sol";
 
 
 contract IDisputable is ERC165 {

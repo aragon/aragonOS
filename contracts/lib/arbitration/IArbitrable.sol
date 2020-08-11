@@ -20,7 +20,7 @@ contract IArbitrable is ERC165 {
     /**
     * @dev Emitted when an IArbitrable instance's dispute is ruled by an IArbitrator
     * @param arbitrator IArbitrator instance ruling the dispute
-    * @param disputeId Identification number of the dispute being ruled by the arbitrator
+    * @param disputeId Identifier of the dispute being ruled by the arbitrator
     * @param ruling Ruling given by the arbitrator
     */
     event Ruled(IArbitrator indexed arbitrator, uint256 indexed disputeId, uint256 ruling);
@@ -28,7 +28,7 @@ contract IArbitrable is ERC165 {
     /**
     * @dev Emitted when new evidence is submitted for the IArbitrable instance's dispute
     * @param arbitrator IArbitrator submitting the evidence for
-    * @param disputeId Identification number of the dispute receiving new evidence
+    * @param disputeId Identifier of the dispute receiving new evidence
     * @param submitter Address of the account submitting the evidence
     * @param evidence Data submitted for the evidence of the dispute
     * @param finished Whether or not the submitter has finished submitting evidence
@@ -45,7 +45,7 @@ contract IArbitrable is ERC165 {
 
     /**
     * @dev Give a ruling for a certain dispute, the account calling it must have rights to rule on the contract
-    * @param _disputeId Identification number of the dispute to be ruled
+    * @param _disputeId Identifier of the dispute to be ruled
     * @param _ruling Ruling given by the arbitrator, where 0 is reserved for "refused to make a decision"
     */
     function rule(uint256 _disputeId, uint256 _ruling) external;

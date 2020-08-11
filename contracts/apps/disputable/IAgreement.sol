@@ -5,9 +5,9 @@
 pragma solidity ^0.4.24;
 
 import "../../acl/IACLOracle.sol";
-import "../../lib/token/ERC20.sol";
 import "../../lib/arbitration/IArbitrable.sol";
 import "../../lib/arbitration/IAragonAppFeesCashier.sol";
+import "../../lib/token/ERC20.sol";
 
 
 contract IAgreement is IArbitrable, IACLOracle {

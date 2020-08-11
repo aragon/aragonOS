@@ -21,7 +21,8 @@ contract IAbstractForwarder {
 
     /**
     * @dev Tell whether the proposed forwarding path (an EVM script) from the given sender is allowed.
-    *      The implemented `forward()` method **MUST NOT** revert if `canForward()` returns true for the same parameters.
+    *      However, this is not a strict guarantee of safety: the implemented `forward()` method is
+    *      still allowed to revert even if `canForward()` returns true for the same parameters.
     * @return True if the sender's proposed path is allowed
     */
     function canForward(address sender, bytes evmScript) external view returns (bool);

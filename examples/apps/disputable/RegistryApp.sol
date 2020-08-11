@@ -43,17 +43,17 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @notice Register entry `_id` with value `_value`
-    * @param _id Entry identification number to be registered
+    * @param _id Entry identifier to be registered
     * @param _value Entry value to be registered
     * @param _context Link to a human-readable text giving context for the given action
     */
-    function register(bytes32 _id, bytes _value, bytes _context) external authP(REGISTER_ENTRY_ROLE, arr(_id)) {
+    function register(bytes32 _id, bytes _value, bytes _context) external authP(REGISTER_ENTRY_ROLE) {
         _register(msg.sender, _id, _value, _context);
     }
 
     /**
     * @notice Unregister entry `_id`
-    * @param _id Entry identification number to be unregistered
+    * @param _id Entry identifier to be unregistered
     */
     function unregister(bytes32 _id) external {
         Entry storage entry = entries[_id];
@@ -65,12 +65,12 @@ contract RegistryApp is DisputableAragonApp {
     }
 
     /**
-    * @dev Tell the information associated to an entry identification number
-    * @param _id Entry identification number being queried
+    * @dev Tell the information associated to an entry identifier
+    * @param _id Entry identifier being queried
     * @return submitter Address that has registered the entry
     * @return value Value associated to the given entry
     * @return challenged Whether or not the entry is challenged
-    * @return actionId Identification number of the given entry in the context of the agreement
+    * @return actionId Identifier of the given entry in the context of the agreement
     */
     function getEntry(bytes32 _id) external view returns (address submitter, bytes value, uint256 actionId) {
         Entry storage entry = _getEntry(_id);
@@ -81,7 +81,7 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Tell whether a disputable action can be challenged or not
-    * @param _id Identification number of the entry being queried
+    * @param _id Identifier of the entry being queried
     * @return True if the queried disputable action can be challenged, false otherwise
     */
     function canChallenge(uint256 _id) external view returns (bool) {
@@ -91,7 +91,7 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Tell whether a disputable action can be closed by the agreement or not
-    * @param _id Identification number of the entry being queried
+    * @param _id Identifier of the entry being queried
     * @return True if the queried disputable action can be closed, false otherwise
     */
     function canClose(uint256 _id) external view returns (bool) {
@@ -101,7 +101,7 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Challenge an entry
-    * @param _id Identification number of the entry to be challenged
+    * @param _id Identifier of the entry to be challenged
     */
     function _onDisputableActionChallenged(uint256 _id, uint256 _challengeId, address /* _challenger */) internal {
         bytes32 id = bytes32(_id);
@@ -114,7 +114,7 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Allow an entry
-    * @param _id Identification number of the entry to be allowed
+    * @param _id Identifier of the entry to be allowed
     */
     function _onDisputableActionAllowed(uint256 _id) internal {
         bytes32 id = bytes32(_id);
@@ -126,11 +126,11 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Reject an entry
-    * @param _id Identification number of the entry to be rejected
+    * @param _id Identifier of the entry to be rejected
     */
     function _onDisputableActionRejected(uint256 _id) internal {
         bytes32 id = bytes32(_id);
-        Entry storage entry = entries[id];
+        Entry storage entry = _getEntry(id);
         require(_isChallenged(entry), ERROR_ENTRY_NOT_CHALLENGED);
 
         _unregister(id, entry);
@@ -138,7 +138,7 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Void an entry
-    * @param _id Identification number of the entry to be voided
+    * @param _id Identifier of the entry to be voided
     */
     function _onDisputableActionVoided(uint256 _id) internal {
         _onDisputableActionAllowed(_id);
@@ -147,7 +147,7 @@ contract RegistryApp is DisputableAragonApp {
     /**
     * @dev Register a new entry
     * @param _submitter Address registering the entry
-    * @param _id Entry identification number to be registered
+    * @param _id Entry identifier to be registered
     * @param _value Entry value to be registered
     * @param _context Link to a human-readable text giving context for the given action
     */
@@ -163,8 +163,8 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Allow an entry
-    * @param _id Identification number of the entry to be allowed
-    * @param _entry Entry instance associated to the given identification number
+    * @param _id Identifier of the entry to be allowed
+    * @param _entry Entry instance associated to the given identifier
     */
     function _allowed(bytes32 _id, Entry storage _entry) internal {
         _entry.challenged = false;
@@ -173,8 +173,8 @@ contract RegistryApp is DisputableAragonApp {
 
     /**
     * @dev Unregister an entry
-    * @param _id Identification number of the entry to be unregistered
-    * @param _entry Entry instance associated to the given identification number
+    * @param _id Identifier of the entry to be unregistered
+    * @param _entry Entry instance associated to the given identifier
     */
     function _unregister(bytes32 _id, Entry storage _entry) internal {
         _entry.actionId = 0;
@@ -203,9 +203,9 @@ contract RegistryApp is DisputableAragonApp {
     }
 
     /**
-    * @dev Fetch an entry instance by identification number
-    * @param _id Entry identification number being queried
-    * @return Entry instance associated to the given identification number
+    * @dev Fetch an entry instance by identifier
+    * @param _id Entry identifier being queried
+    * @return Entry instance associated to the given identifier
     */
     function _getEntry(bytes32 _id) internal view returns (Entry storage) {
         Entry storage entry = entries[_id];

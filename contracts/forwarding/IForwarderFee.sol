@@ -12,7 +12,7 @@ pragma solidity ^0.4.24;
 interface IForwarderFee {
     /**
     * @dev Provide details about the required fee token and amount
-    * @return Fee token and fee amount. If ETH, expects EtherTokenConstant.
+    * @return Fee token and fee amount. If ETH, returns EtherTokenConstant for the `feeToken`.
     */
     function forwardFee() external view returns (address feeToken, uint256 feeAmount);
 }
