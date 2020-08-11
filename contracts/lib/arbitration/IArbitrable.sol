@@ -15,7 +15,6 @@ import "../../lib/standards/ERC165.sol";
 *      since we are using different solidity versions.
 */
 contract IArbitrable is ERC165 {
-    bytes4 internal constant ERC165_INTERFACE_ID = bytes4(0x01ffc9a7);
     bytes4 internal constant ARBITRABLE_INTERFACE_ID = bytes4(0x88f3ee69);
 
     /**
@@ -52,11 +51,11 @@ contract IArbitrable is ERC165 {
     function rule(uint256 _disputeId, uint256 _ruling) external;
 
     /**
-    * @dev ERC165 - Query if a contract implements a certain interface
+    * @dev Query if a contract implements a certain interface
     * @param _interfaceId The interface identifier being queried, as specified in ERC-165
-    * @return True if this contract supports the given interface, false otherwise
+    * @return True if the contract implements the requested interface and if its not 0xffffffff, false otherwise
     */
     function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
-        return _interfaceId == ARBITRABLE_INTERFACE_ID || _interfaceId == ERC165_INTERFACE_ID;
+        return super.supportsInterface(_interfaceId) || _interfaceId == ARBITRABLE_INTERFACE_ID;
     }
 }

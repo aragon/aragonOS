@@ -1,24 +1,29 @@
-const Arbitrable = artifacts.require('ArbitrableMock')
+const ArbitrableMock = artifacts.require('ArbitrableMock')
+const ERC165Mock = artifacts.require('ERC165Mock')
 
 contract('Arbitrable', () => {
   let arbitrable
 
-  beforeEach('create arbitrable instance', async () => {
-    arbitrable = await Arbitrable.new()
+  const ARBITRABLE_INTERFACE = '0x88f3ee69'
+  const ERC165_INTERFACE = '0x01ffc9a7'
+
+  before('create arbitrable instance', async () => {
+    arbitrable = await ArbitrableMock.new()
   })
 
   describe('supportsInterface', () => {
     it('supports ERC165', async () => {
-      assert.isTrue(await arbitrable.supportsInterface('0x01ffc9a7'), 'does not support ERC165')
+      const erc165 = await ERC165Mock.new()
+      assert.isTrue(await arbitrable.supportsInterface(ERC165_INTERFACE), 'does not support ERC165')
 
-      assert.equal(await arbitrable.ERC165_INTERFACE(), '0x01ffc9a7', 'ERC165 interface ID does not match')
-      assert.equal(await arbitrable.erc165interfaceID(), await arbitrable.ERC165_INTERFACE(), 'ERC165 interface ID does not match')
+      assert.equal(await erc165.interfaceID(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
+      assert.equal(await erc165.ERC165_INTERFACE(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
     })
 
     it('supports IArbitrable', async () => {
-      assert.isTrue(await arbitrable.supportsInterface('0x88f3ee69'), 'does not support IArbitrable')
+      assert.isTrue(await arbitrable.supportsInterface(ARBITRABLE_INTERFACE), 'does not support IArbitrable')
 
-      assert.equal(await arbitrable.ARBITRABLE_INTERFACE(), '0x88f3ee69', 'IArbitrable interface ID does not match')
+      assert.equal(await arbitrable.ARBITRABLE_INTERFACE(), ARBITRABLE_INTERFACE, 'IArbitrable interface ID does not match')
       assert.equal(await arbitrable.interfaceID(), await arbitrable.ARBITRABLE_INTERFACE(), 'IArbitrable interface ID does not match')
     })
 
