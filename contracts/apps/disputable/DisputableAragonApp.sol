@@ -136,6 +136,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     * @param _submitter Address that submitted the action
     * @return Unique identifier for the created action in the context of the Agreement
     */
+   // Note
     function _newAgreementAction(uint256 _disputableActionId, bytes _context, address _submitter) internal returns (uint256) {
         IAgreement agreement = _ensureAgreement();
         return agreement.newAction(_disputableActionId, _context, _submitter);
@@ -145,6 +146,7 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     * @dev Close action in the Agreement
     * @param _actionId Identifier of the action in the context of the Agreement
     */
+   // Note
     function _closeAgreementAction(uint256 _actionId) internal {
         IAgreement agreement = _ensureAgreement();
         agreement.closeAction(_actionId);

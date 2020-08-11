@@ -113,6 +113,7 @@ contract('EVM Script Factory', ([permissionsRoot]) => {
 
       // The executor always uses 0x for the input and callscripts always have 0x returns
       const expectedExecutor = await evmScriptReg.getScriptExecutor(createExecutorId(1))
+      // Note
       assertEvent(receipt, 'ScriptResult', { expectedArgs: { executor: expectedExecutor, script, input: null, returnData: null  } })
     })
   })

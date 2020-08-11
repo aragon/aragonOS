@@ -10,6 +10,7 @@ import "../../lib/arbitration/IAragonAppFeesCashier.sol";
 import "../../lib/token/ERC20.sol";
 
 
+// Note
 contract IAgreement is IArbitrable, IACLOracle {
 
     event Signed(address indexed signer, uint256 settingId);

@@ -18,6 +18,7 @@ contract AgreementMock is IAgreement {
 
     function newAction(uint256, bytes, address) external returns (uint256) {
         // do nothing
+        // Note
         return 0;
     }
 

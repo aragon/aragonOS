@@ -3,6 +3,7 @@ pragma solidity ^0.4.24;
 import "../token/ERC20.sol";
 
 
+// Note
 interface IAragonAppFeesCashier {
     event AppFeeSet(bytes32 indexed appId, ERC20 token, uint256 amount);
     event AppFeeUnset(bytes32 indexed appId);
