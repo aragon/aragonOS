@@ -66,7 +66,7 @@ interface IAragonAppFeesCashier {
     * @param _appId App identifier
     * @param _data Optional data input
     */
-    function payAppFees(bytes32 _appId, bytes _data) external;
+    function payAppFees(bytes32 _appId, bytes _data) external payable;
 
     /**
     * @dev Tell the fee token and amount set for a given app
