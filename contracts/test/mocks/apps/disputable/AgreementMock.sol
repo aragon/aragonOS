@@ -17,8 +17,6 @@ contract AgreementMock is IAgreement {
     }
 
     function newAction(uint256, bytes, address) external returns (uint256) {
-        // do nothing
-        // Note
         return 0;
     }
 
@@ -39,50 +37,34 @@ contract AgreementMock is IAgreement {
     }
 
     function getSigner(address) external view returns (uint256, bool) {
-        // do nothing
+        return (0, false);
     }
 
     function getCurrentSettingId() external view returns (uint256) {
-        // do nothing
+        return 0;
     }
 
     function getSetting(uint256) external view returns (IArbitrator, IAragonAppFeesCashier, string, bytes) {
-        // do nothing
+        return (IArbitrator(0), IAragonAppFeesCashier(0), new string(0), new bytes(0));
     }
 
     function getDisputableInfo(address) external view returns (bool, uint256) {
-        // do nothing
+        return (false, 0);
     }
 
     function getCollateralRequirement(address, uint256) external view returns (ERC20, uint256, uint256, uint64) {
-        // do nothing
+        return (ERC20(0), 0, 0, 0);
     }
 
     function getAction(uint256) external view returns (address, uint256, uint256, uint256, address, bool, bytes, uint256) {
-        // do nothing
+        return (address(0), 0, 0, 0, address(0), false, new bytes(0), 0);
     }
 
     function getChallenge(uint256) external view returns (uint256, address, uint64, bytes, uint256, ChallengeState, bool, bool, uint256, uint256) {
-        // do nothing
+        return (0, address(0), 0, new bytes(0), 0, ChallengeState.Waiting, false, false, 0, 0);
     }
 
     function getChallengeArbitratorFees(uint256) external view returns (uint256, ERC20, uint256, ERC20) {
-        // do nothing
-    }
-
-    function submitEvidence(uint256, bytes, bool) external {
-        // do nothing
-    }
-
-    function rule(uint256, uint256) external {
-        // do nothing
-    }
-
-    function supportsInterface(bytes4) public pure returns (bool) {
-        // do nothing
-    }
-
-    function canPerform(address, address, bytes32, uint256[]) external view returns (bool) {
-        // do nothing
+        return (0, ERC20(0), 0, ERC20(0));
     }
 }
