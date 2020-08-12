@@ -60,7 +60,7 @@ contract RegistryApp is DisputableAragonApp {
         require(!_isChallenged(entry), ERROR_ENTRY_CHALLENGED);
         require(entry.submitter == msg.sender, ERROR_SENDER_NOT_ALLOWED);
 
-        _closeAgreementAction(entry.actionId);
+        _closeDisputableAction(entry.actionId);
         _unregister(_id, entry);
     }
 

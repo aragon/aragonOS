@@ -142,11 +142,10 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     }
 
     /**
-    * @dev Close action in the Agreement
+    * @dev Close disputable action in the Agreement
     * @param _actionId Identifier of the action in the context of the Agreement
     */
-   // Note
-    function _closeAgreementAction(uint256 _actionId) internal {
+    function _closeDisputableAction(uint256 _actionId) internal {
         IAgreement agreement = _ensureAgreement();
         agreement.closeAction(_actionId);
     }
