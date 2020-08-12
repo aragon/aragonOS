@@ -130,14 +130,13 @@ contract DisputableAragonApp is IDisputable, AragonApp {
     function _onDisputableActionVoided(uint256 _disputableActionId) internal;
 
     /**
-    * @dev Create a new action in the Agreement
+    * @dev Register a new disputable action in the Agreement
     * @param _disputableActionId Identifier of the action in the context of the Disputable
     * @param _context Link to human-readable context for the given action
     * @param _submitter Address that submitted the action
     * @return Unique identifier for the created action in the context of the Agreement
     */
-   // Note
-    function _newAgreementAction(uint256 _disputableActionId, bytes _context, address _submitter) internal returns (uint256) {
+    function _registerDisputableAction(uint256 _disputableActionId, bytes _context, address _submitter) internal returns (uint256) {
         IAgreement agreement = _ensureAgreement();
         return agreement.newAction(_disputableActionId, _context, _submitter);
     }

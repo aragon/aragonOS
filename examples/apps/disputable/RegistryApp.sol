@@ -155,7 +155,7 @@ contract RegistryApp is DisputableAragonApp {
         Entry storage entry = entries[_id];
         require(!_isRegistered(entry), ERROR_ENTRY_ALREADY_REGISTERED);
 
-        entry.actionId = _newAgreementAction(uint256(_id), _context, _submitter);
+        entry.actionId = _registerDisputableAction(uint256(_id), _context, _submitter);
         entry.submitter = _submitter;
         entry.value = _value;
         emit Registered(_id);
