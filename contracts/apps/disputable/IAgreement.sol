@@ -5,14 +5,10 @@
 pragma solidity ^0.4.24;
 
 import "../../lib/token/ERC20.sol";
-import "../../lib/arbitration/IArbitrator.sol";
-import "../../lib/arbitration/IAragonAppFeesCashier.sol";
 
 
 contract IAgreement {
 
-    event Signed(address indexed signer, uint256 settingId);
-    event SettingChanged(uint256 settingId);
     event DisputableAppActivated(address indexed disputable);
     event DisputableAppDeactivated(address indexed disputable);
     event CollateralRequirementChanged(address indexed disputable, uint256 collateralRequirementId);
@@ -33,8 +29,6 @@ contract IAgreement {
         Accepted,
         Voided
     }
-
-    function sign() external;
 
     function activate(
         address _disputable,
@@ -57,18 +51,6 @@ contract IAgreement {
 
     function disputeAction(uint256 _actionId, bool _finishedSubmittingEvidence) external;
 
-    function getSigner(address _signer) external view returns (uint256 lastSettingIdSigned, bool mustSign);
-
-    function getCurrentSettingId() external view returns (uint256);
-
-    function getSetting(uint256 _settingId) external view
-        returns (
-            IArbitrator arbitrator,
-            IAragonAppFeesCashier aragonAppFeesCashier,
-            string title,
-            bytes content
-        );
-
     function getDisputableInfo(address _disputable) external view returns (bool activated, uint256 currentCollateralRequirementId);
 
     function getCollateralRequirement(address _disputable, uint256 _collateralId) external view
@@ -77,39 +59,5 @@ contract IAgreement {
             uint256 actionAmount,
             uint256 challengeAmount,
             uint64 challengeDuration
-        );
-
-    function getAction(uint256 _actionId) external view
-        returns (
-            address disputable,
-            uint256 disputableActionId,
-            uint256 collateralRequirementId,
-            uint256 settingId,
-            address submitter,
-            bool closed,
-            bytes context,
-            uint256 currentChallengeId
-        );
-
-    function getChallenge(uint256 _challengeId) external view
-        returns (
-            uint256 actionId,
-            address challenger,
-            uint64 endDate,
-            bytes context,
-            uint256 settlementOffer,
-            ChallengeState state,
-            bool submitterFinishedEvidence,
-            bool challengerFinishedEvidence,
-            uint256 disputeId,
-            uint256 ruling
-        );
-
-    function getChallengeArbitratorFees(uint256 _challengeId) external view
-        returns (
-            uint256 challengerArbitratorFeesAmount,
-            ERC20 challengerArbitratorFeesToken,
-            uint256 submitterArbitratorFeesAmount,
-            ERC20 submitterArbitratorFeesToken
         );
 }
