@@ -11,7 +11,7 @@ import "./IForwarderFee.sol";
 /**
 * @title Payable forwarder interface
 * @dev This is the basic forwarder interface, that only supports forwarding an EVM script.
-*      Unlike `IForwarder`, this interface allows `forward()` to receive ETH and thereby includes the IForwarderFee interface.
+*      Unlike `IForwarder`, this interface allows `forward()` to receive ETH and therefore includes the IForwarderFee interface.
 *      It is **RECOMMENDED** that only apps requiring a payable `forward()` use this interface.
 */
 contract IForwarderPayable is IAbstractForwarder, IForwarderFee {

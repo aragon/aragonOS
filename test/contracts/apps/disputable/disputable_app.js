@@ -6,18 +6,20 @@ const { assertRevert, assertEvent, assertAmountOfEvents } = require('@aragon/con
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const DAOFactory = artifacts.require('DAOFactory')
-const AgreementMock = artifacts.require('AgreementMock')
-const DisputableApp = artifacts.require('DisputableAppMock')
-const AragonApp = artifacts.require('AragonAppMock')
-const ERC165 = artifacts.require('ERC165Mock')
 const EVMScriptRegistryFactory = artifacts.require('EVMScriptRegistryFactory')
 
-contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => {
-  let disputable, disputableBase, dao, acl
+const ERC165Mock = artifacts.require('ERC165Mock')
+const AragonAppMock = artifacts.require('AragonAppMock')
+const AgreementMock = artifacts.require('AgreementMock')
+const DisputableApp = artifacts.require('DisputableAppMock')
 
-  const DISPUTABLE_INTERFACE = '0xf3d3bb51'
-  const ARAGON_APP_INTERFACE = '0x54053e6c'
-  const ERC165_INTERFACE = '0x01ffc9a7'
+const DISPUTABLE_INTERFACE = '0xf3d3bb51'
+const ARAGON_APP_INTERFACE = '0x54053e6c'
+const ERC165_INTERFACE = '0x01ffc9a7'
+
+contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => {
+  let dao, acl, agreementMock
+  let disputableBase, disputable
 
   before('deploy DAO', async () => {
     const kernelBase = await Kernel.new(true)
@@ -34,6 +36,10 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     await acl.createPermission(owner, dao.address, APP_MANAGER_ROLE, owner, { from: owner })
   })
 
+  before('deploy AgreementMock', async () => {
+    agreementMock = await AgreementMock.new()
+  })
+
   beforeEach('install disputable app', async () => {
     const initializeData = disputableBase.contract.methods.initialize().encodeABI()
     const receipt = await dao.newAppInstance('0x1234', disputableBase.address, initializeData, false, { from: owner })
@@ -45,19 +51,19 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
   describe('supportsInterface', () => {
     it('supports ERC165', async () => {
-      const erc165 = await ERC165.new()
+      const erc165 = await ERC165Mock.new()
       assert.isTrue(await disputable.supportsInterface(ERC165_INTERFACE), 'does not support ERC165')
 
       assert.equal(await erc165.interfaceID(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
       assert.equal(await erc165.ERC165_INTERFACE(), ERC165_INTERFACE, 'ERC165 interface ID does not match')
     })
 
-    it('supports Aragon App interface', async () => {
-      const aragonApp = await AragonApp.new()
-      assert.isTrue(await disputable.supportsInterface(ARAGON_APP_INTERFACE), 'does not support Aragon App interface')
+    it('supports AragonApp interface', async () => {
+      const aragonApp = await AragonAppMock.new()
+      assert.isTrue(await disputable.supportsInterface(ARAGON_APP_INTERFACE), 'does not support AragonApp interface')
 
-      assert.equal(await aragonApp.interfaceID(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
-      assert.equal(await aragonApp.ARAGON_APP_INTERFACE(), ARAGON_APP_INTERFACE, 'Aragon App interface ID does not match')
+      assert.equal(await aragonApp.interfaceID(), ARAGON_APP_INTERFACE, 'AragonApp interface ID does not match')
+      assert.equal(await aragonApp.ARAGON_APP_INTERFACE(), ARAGON_APP_INTERFACE, 'AragonApp interface ID does not match')
     })
 
     it('supports IDisputable', async () => {
@@ -130,10 +136,8 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     })
 
     context('when the sender does not have permissions', () => {
-      const from = someone
-
       it('reverts', async () => {
-        await assertRevert(disputable.setAgreement(agreement, { from }), 'APP_AUTH_FAILED')
+        await assertRevert(disputable.setAgreement(agreement, { from: someone }), 'APP_AUTH_FAILED')
       })
     })
   })
@@ -146,11 +150,8 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     })
 
     context('when the agreement is set', () => {
-      let agreement
-
       beforeEach('set agreement', async () => {
-        agreement = await AgreementMock.new()
-        await disputable.setAgreement(agreement.address, { from: owner })
+        await disputable.setAgreement(agreementMock.address, { from: owner })
       })
 
       it('does not revert', async () => {
@@ -168,8 +169,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
 
     context('when the agreement is set', () => {
       beforeEach('set agreement', async () => {
-        const agreement = await AgreementMock.new()
-        await disputable.setAgreement(agreement.address, { from: owner })
+        await disputable.setAgreement(agreementMock.address, { from: owner })
       })
 
       it('does not revert', async () => {
@@ -182,8 +182,6 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     const disputableId = 0, challengeId = 0, challenger = owner
 
     context('when the agreement was already set', () => {
-      const agreement = someone
-
       beforeEach('set agreement', async () => {
         await disputable.setAgreement(agreement, { from: owner })
       })
@@ -191,7 +189,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       context('when the sender is the agreement', () => {
         const from = agreement
 
-        it('does not fails', async () => {
+        it('does not fail', async () => {
           const receipt = await disputable.onDisputableActionChallenged(disputableId, challengeId, challenger, { from })
 
           assertAmountOfEvents(receipt, 'DisputableChallenged')
@@ -199,7 +197,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       })
 
       context('when the sender is not the agreement', () => {
-        const from = owner
+        const from = anotherAgreement
 
         it('reverts', async () => {
           await assertRevert(disputable.onDisputableActionChallenged(disputableId, challengeId, challenger, { from }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
@@ -218,8 +216,6 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     const disputableId = 0
 
     context('when the agreement was already set', () => {
-      const agreement = someone
-
       beforeEach('set agreement', async () => {
         await disputable.setAgreement(agreement, { from: owner })
       })
@@ -227,7 +223,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       context('when the sender is the agreement', () => {
         const from = agreement
 
-        it('does not fails', async () => {
+        it('does not fail', async () => {
           const receipt = await disputable.onDisputableActionAllowed(disputableId, { from })
 
           assertAmountOfEvents(receipt, 'DisputableAllowed')
@@ -235,7 +231,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       })
 
       context('when the sender is not the agreement', () => {
-        const from = owner
+        const from = anotherAgreement
 
         it('reverts', async () => {
           await assertRevert(disputable.onDisputableActionAllowed(disputableId, { from }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
@@ -254,8 +250,6 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     const disputableId = 0
 
     context('when the agreement was already set', () => {
-      const agreement = someone
-
       beforeEach('set agreement', async () => {
         await disputable.setAgreement(agreement, { from: owner })
       })
@@ -263,7 +257,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       context('when the sender is the agreement', () => {
         const from = agreement
 
-        it('does not fails', async () => {
+        it('does not fail', async () => {
           const receipt = await disputable.onDisputableActionRejected(disputableId, { from })
 
           assertAmountOfEvents(receipt, 'DisputableRejected')
@@ -271,7 +265,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       })
 
       context('when the sender is not the agreement', () => {
-        const from = owner
+        const from = anotherAgreement
 
         it('reverts', async () => {
           await assertRevert(disputable.onDisputableActionRejected(disputableId, { from }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
@@ -290,8 +284,6 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
     const disputableId = 0
 
     context('when the agreement was already set', () => {
-      const agreement = someone
-
       beforeEach('set agreement', async () => {
         await disputable.setAgreement(agreement, { from: owner })
       })
@@ -299,7 +291,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       context('when the sender is the agreement', () => {
         const from = agreement
 
-        it('does not fails', async () => {
+        it('does not fail', async () => {
           const receipt = await disputable.onDisputableActionVoided(disputableId, { from })
 
           assertAmountOfEvents(receipt, 'DisputableVoided')
@@ -307,7 +299,7 @@ contract('DisputableApp', ([_, owner, agreement, anotherAgreement, someone]) => 
       })
 
       context('when the sender is not the agreement', () => {
-        const from = owner
+        const from = anotherAgreement
 
         it('reverts', async () => {
           await assertRevert(disputable.onDisputableActionVoided(disputableId, { from }), 'DISPUTABLE_SENDER_NOT_AGREEMENT')
