@@ -1,17 +1,14 @@
 const { hash } = require('eth-ens-namehash')
-const { assertRevert } = require('../../helpers/assertThrow')
-const { getBlockNumber } = require('../../helpers/web3')
-const { assertEvent, assertAmountOfEvents } = require('../../helpers/assertEvent')(web3)
+const { assertEvent, assertAmountOfEvents, assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 const ACL = artifacts.require('ACL')
 const Kernel = artifacts.require('Kernel')
 const KernelProxy = artifacts.require('KernelProxy')
-
-// Mocks
 const AppStub = artifacts.require('AppStub')
+
+const EMPTY_BYTES = '0x'
 const APP_ID = hash('stub.aragonpm.test')
 const VAULT_ID = hash('vault.aragonpm.test')
-const EMPTY_BYTES = '0x'
 
 contract('Kernel lifecycle', ([root, someone]) => {
   let aclBase, appBase
@@ -34,7 +31,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
     assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
 
     // Then set the required permission
-    const acl = ACL.at(await kernel.acl())
+    const acl = await ACL.at(await kernel.acl())
     await acl.createPermission(root, kernel.address, APP_MANAGER_ROLE, root)
     assert.isTrue(await kernel.hasPermission(root, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
     assert.isFalse(await kernel.hasPermission(someone, kernel.address, APP_MANAGER_ROLE, EMPTY_BYTES))
@@ -115,7 +112,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
 
     beforeEach(async () => {
       const kernelProxy = await KernelProxy.new(kernelBase.address)
-      kernel = Kernel.at(kernelProxy.address)
+      kernel = await Kernel.at(kernelProxy.address)
     })
 
     it('is not initialized by default', async () => {
@@ -135,11 +132,11 @@ contract('Kernel lifecycle', ([root, someone]) => {
 
       beforeEach(async () => {
         initReceipt = await kernel.initialize(aclBase.address, root)
-        acl = ACL.at(await kernel.acl())
+        acl = await ACL.at(await kernel.acl())
       })
 
       it('set the ACL correctly', async () => {
-        assertAmountOfEvents(initReceipt, 'SetApp', 2)
+        assertAmountOfEvents(initReceipt, 'SetApp', { expectedAmount: 2 })
         assertEvent(initReceipt, 'SetApp', { namespace: APP_BASES_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: aclBase.address }, 0)
         assertEvent(initReceipt, 'SetApp', { namespace: APP_ADDR_NAMESPACE, appId: DEFAULT_ACL_APP_ID, app: acl.address }, 1)
       })
@@ -153,7 +150,7 @@ contract('Kernel lifecycle', ([root, someone]) => {
       })
 
       it('has correct initialization block', async () => {
-        assert.equal(await kernel.getInitializationBlock(), await getBlockNumber(), 'initialization block should be correct')
+        assert.equal(await kernel.getInitializationBlock(), await web3.eth.getBlockNumber(), 'initialization block should be correct')
       })
 
       it('throws on reinitialization', async () => {

@@ -1,58 +1,50 @@
 {
   "name": "@aragon/os",
-  "version": "4.4.0",
+  "version": "5.0.0-beta.8",
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "(GPL-3.0-or-later OR MIT)",
+  "repository": "https://github.com/aragon/aragonOS",
   "description": "Core contracts for Aragon",
-  "scripts": {
-    "compile": "truffle compile",
-    "test": "TRUFFLE_TEST=true npm run ganache-cli:test",
-    "test:gas": "GAS_REPORTER=true npm test",
-    "test:gas:ci": "npm run test:gas && npx codechecks",
-    "lint": "solium --dir ./contracts",
-    "coverage": "SOLIDITY_COVERAGE=true npm run ganache-cli:test",
-    "console": "truffle dev",
-    "ganache-cli:test": "scripts/ganache-cli.sh",
-    "deploy:devnet:ens": "truffle compile && truffle exec --network devnet scripts/deploy-beta-ens.js",
-    "deploy:devnet:apm": "truffle compile && truffle exec --network devnet scripts/deploy-beta-apm.js",
-    "abi:extract": "truffle-extract --output abi/ --keys abi",
-    "bytecode:extract": "truffle-bytecode extract -o bytecode",
-    "bytecode:extract:new": "truffle-bytecode extract -o bytecode_new",
-    "bytecode:compare": "npm run bytecode:extract:new && truffle-bytecode compare bytecode bytecode_new",
-    "prepublishOnly": "truffle compile --all && npm run abi:extract -- --no-compile"
-  },
-  "files": [
-    "/abi",
-    "/build",
-    "/contracts",
-    "/scripts",
-    "/test",
-    "/truffle-config.js"
-  ],
-  "author": "Aragon Association <contact@aragon.org>",
   "contributors": [
     "Jorge Izquierdo <jorge@aragon.one>"
   ],
-  "repository": "https://github.com/aragon/aragonOS",
-  "license": "(GPL-3.0-or-later OR MIT)",
+  "files": [
+    "/abi",
+    "/build",
+    "/contracts"
+  ],
+  "scripts": {
+    "compile": "truffle compile",
+    "lint": "solium --dir ./contracts",
+    "test": "TRUFFLE_TEST=true yarn test:ganache-cli",
+    "test:gas": "GAS_REPORTER=true npm test",
+    "test:gas:ci": "yarn test:gas && npx codechecks",
+    "test:ganache-cli": "./node_modules/@aragon/contract-helpers-test/scripts/ganache-cli.sh",
+    "coverage": "SOLIDITY_COVERAGE=true yarn test:ganache-cli",
+    "abi:extract": "truffle-extract --output abi/ --keys abi",
+    "bytecode:extract": "truffle-bytecode extract -o bytecode",
+    "bytecode:extract:new": "truffle-bytecode extract -o bytecode_new",
+    "bytecode:compare": "yarn bytecode:extract:new && truffle-bytecode compare bytecode bytecode_new",
+    "prepublishOnly": "truffle compile --all && yarn abi:extract -- --no-compile"
+  },
+  "dependencies": {},
   "devDependencies": {
+    "@aragon/contract-helpers-test": "^0.1.0-rc.2",
+    "@aragon/truffle-config-v5": "^1.0.1",
     "@codechecks/client": "^0.1.5",
+    "chai": "^4.2.0",
     "coveralls": "^3.0.9",
     "eth-ens-namehash": "^2.0.8",
     "eth-gas-reporter": "^0.2.14",
     "ethereumjs-abi": "^0.6.5",
     "ganache-cli": "^6.9.0",
     "mocha-lcov-reporter": "^1.3.0",
-    "solidity-coverage": "0.6.2",
+    "solidity-coverage": "0.7.5",
     "solium": "^1.2.3",
-    "truffle": "4.1.14",
+    "truffle": "^5.0.34",
     "truffle-bytecode-manager": "^1.1.1",
     "truffle-extract": "^1.2.1",
     "web3-eth-abi": "1.2.5",
     "web3-utils": "1.2.5"
-  },
-  "dependencies": {
-    "@aragon/truffle-config-v4": "^1.0.1",
-    "mkdirp": "^0.5.1",
-    "truffle-flattener": "^1.2.9",
-    "homedir": "^0.6.0"
   }
 }

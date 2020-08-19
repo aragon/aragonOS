@@ -1,4 +1,5 @@
-const { assertRevert } = require('../../helpers/assertThrow')
+const { bn } = require('@aragon/contract-helpers-test')
+const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
 
 contract('Uint256 Helpers test', () => {
   let uint256Mock
@@ -13,7 +14,7 @@ contract('Uint256 Helpers test', () => {
   })
 
   it('fails converting from uint256 to uint64 if too big', async () => {
-    const a = new web3.BigNumber(2).pow(64)
+    const a = bn(2).pow(bn(64))
     await assertRevert(uint256Mock.convert(a))
   })
 })

@@ -8,6 +8,21 @@ There are many ways to contribute, from writing tutorials or blog posts, improvi
 
 All members of our community are expected to follow our [Code of Conduct](https://wiki.aragon.org/documentation/Code_of_Conduct/). Please make sure you are welcoming and friendly in all of our spaces.
 
+## Project status
+
+aragonOS has been [deployed to Ethereum mainnet and other live networks](https://github.com/aragon/deployments).
+
+Outside of clear security issues or specific feature enhancements, we are usually not working to
+actively change the existing contracts.
+
+This is made even more difficult due to the difficult and sensitive process involved in launching changes in on-chain environments.
+
+## Branching strategy
+
+You should treat [`master`](https://github.com/aragon/aragonOS/tree/master) as the main, audited branch.
+
+We use [`next`](https://github.com/aragon/aragonOS/tree/next) as the default branch to help expose upcoming changes for new versions that have not yet undergone security review.
+
 ## Your first contribution
 
 Unsure where to begin contributing to aragonOS?
@@ -42,10 +57,10 @@ If the answer to either of those two questions are "yes", then you're probably d
 ## Fixing issues
 
 1. [Find an issue](https://github.com/aragon/aragonOS/issues) that you are interested in.
-    - You may want to ask on the issue or on Aragon Chat's [#dev channel](https://aragon.chat/channel/dev) if anyone has already started working on the issue.
+  - You may want to ask on the issue or in the [aragonOS Spectrum channel](https://spectrum.chat/aragon/aragonos) if anyone has already started working on the issue.
 1. Fork and clone a local copy of the repository.
 1. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
-	  - Make sure to add tests!
+	- Make sure to add tests!
 1. Push the changes to the remote repository.
 1. Submit a pull request in Github, explaining any changes and further questions you may have.
 1. Wait for the pull request to be reviewed.
@@ -69,4 +84,4 @@ aragonOS is generally meant to be used as a library by developers but includes c
 
 ## Community
 
-If you need help, please reach out to Aragon core contributors and community members in the Aragon Chat [#dev](https://aragon.chat/channel/dev) [#dev-help](https://aragon.chat/channel/dev-help) channels.  We'd love to hear from you and know what you're working on!
+If you need help, please reach out to Aragon core contributors and community members in the [aragonOS Spectrum channel](https://spectrum.chat/aragon/aragonos).  We'd love to hear from you and know what you're working on!
