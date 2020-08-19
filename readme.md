@@ -51,10 +51,9 @@ See [SECURITY.md](SECURITY.md) for more security-related information.
 
 #### 🛰 Deployment status: available on Ethereum mainnet
 
-aragonOS powers over a thousand organizations on Ethereum mainnet and secures over $20MM in funds.
+aragonOS powers over a thousand organizations on Ethereum mainnet, securing over $200MM in funds.
 
-Deployment logs for Ethereum mainnet and other networks are available in our [deployment
-repo](https://github.com/aragon/deployments).
+Deployment logs for Ethereum mainnet and other networks are available in our [deployment repo](https://github.com/aragon/deployments).
 
 ## Documentation
 
