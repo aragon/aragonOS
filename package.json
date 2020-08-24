@@ -20,7 +20,7 @@
     "test:gas": "GAS_REPORTER=true npm test",
     "test:gas:ci": "yarn test:gas && npx codechecks",
     "test:ganache-cli": "./node_modules/@aragon/contract-helpers-test/scripts/ganache-cli.sh",
-    "coverage": "SOLIDITY_COVERAGE=true yarn test:ganache-cli",
+    "coverage": "npx truffle run coverage",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "bytecode:extract": "truffle-bytecode extract -o bytecode",
     "bytecode:extract:new": "truffle-bytecode extract -o bytecode_new",
