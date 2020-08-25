@@ -7,7 +7,7 @@ usePlugin('solidity-coverage')
 
 module.exports = {
   networks: {
-    // Local development network using ganache. You can set any of the 
+    // Local development network using ganache. You can set any of the
     // Ganache's options. All of them are supported, with the exception
     // of accounts.
     // https://github.com/trufflesuite/ganache-core#options
@@ -16,7 +16,7 @@ module.exports = {
       gasLimit: 6000000000,
       defaultBalanceEther: 100
     },
-    // Local development network to test coverage. Solidity coverage 
+    // Local development network to test coverage. Solidity coverage
     // pluging launches its own in-process ganache server.
     // and expose it at port 8555.
     coverage: {
@@ -38,7 +38,7 @@ module.exports = {
           '0xa8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563',
       ],
     },
-    // Network configured to interact with Frame wallet. Requires 
+    // Network configured to interact with Frame wallet. Requires
     // to have Frame running on your machine. Download it from:
     // https://frame.sh
     frame: {
