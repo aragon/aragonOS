@@ -47,10 +47,8 @@ const processResult = (txReceipt, mustAssert) => {
  * Modifies bytecode in place
 */
 const linkLib = async (contract, libName) => {
-  const libPlaceholder = new RegExp(`__contracts(?:(?!${libName}).)*?${libName}(?:(?!${libName}).)*?__`, 'g')
-  const lib = await artifacts.require(libName).new()
-  const libAddr = lib.address.replace('0x', '').toLowerCase()
-  contract.bytecode = contract.bytecode.replace(libPlaceholder, libAddr)
+  const library = await artifacts.require(libName).new()
+  await contract.link(library)
 }
 
 /**
