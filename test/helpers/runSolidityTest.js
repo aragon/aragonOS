@@ -52,7 +52,7 @@ function runSolidityTest(testContract, mochaContext) {
       deployed = await artifact.new()
     })
 
-    const assertResult = async (call, mustAssert) => {
+    const assertResult = async call => {
       const receipt = await call()
       const { args: { result, message } } = getEventAt(receipt, 'TestEvent', { decodeForAbi: ASSERT_LIB_EVENTS_ABI })
       if (!result) throw new Error(message || 'No assertions made')
