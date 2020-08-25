@@ -10,8 +10,8 @@
     <img src="https://img.shields.io/badge/security-audited-green?style=flat-square" alt="Security" />
   </a>
   <!-- Coverage -->
-  <a href="https://coveralls.io/github/aragon/aragonOS?branch=master">
-    <img src="https://img.shields.io/coveralls/aragon/aragonOS/master.svg?style=flat-square" alt="Coverage" />
+  <a href="https://codecov.io/gh/aragon/aragonOS">
+    <img src="https://img.shields.io/codecov/c/gh/aragon/aragonOS" />
   </a>
 </div>
 
