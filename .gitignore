@@ -1,9 +1,11 @@
 # Dependencies
-node_modules/
+node_modules
 
-# Lock files
+# yarn
+yarn-error.log
+
+# Ignore package-lock files (only use yarn.lock)
 package-lock.json
-yarn.lock
 
 # coverage
 coverage/
@@ -12,9 +14,7 @@ coverage.json
 allFiredEvents
 scTopics
 
-# truffle build artifacts
-abi/
-build/
-bytecode/
-bytecode_new/
-flattened_contracts/
+# build artifacts
+abi
+cache
+artifacts
