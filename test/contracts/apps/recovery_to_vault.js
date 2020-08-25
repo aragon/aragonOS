@@ -241,9 +241,9 @@ contract('Recovery to vault', ([permissionsRoot]) => {
               await assertRevert(target.sendTransaction({ value: 1, data: '0x01', gas: SEND_ETH_GAS }))
             })
 
-            it('recovers ETH', async () =>
+            it('recovers ETH [@skip-on-coverage]', async () => {
               await recoverEth({ target, vault })
-            )
+            })
 
             for (const { title, tokenContract } of tokenTestGroups) {
               it(`recovers ${title}`, async () => {
@@ -334,7 +334,7 @@ contract('Recovery to vault', ([permissionsRoot]) => {
       await kernel.setRecoveryVaultAppId(vaultId)
     })
 
-    it('recovers ETH from the kernel', async () => {
+    it('recovers ETH from the kernel [@skip-on-coverage]', async () => {
       await recoverEth({ target: kernel, vault })
     })
   })

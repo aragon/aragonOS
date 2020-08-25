@@ -124,7 +124,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
         await assertSendEthToProxy({ shouldOOG: true, value, gas })
       })
 
-      it('can receive ETH from contract', async () => {
+      it('can receive ETH from contract [@skip-on-coverage]', async () => {
         const receipt = await ethSender.sendEth(proxy.address, { value })
 
         assertAmountOfEvents(receipt, 'ProxyDeposit', { decodeForAbi: proxy.abi })
