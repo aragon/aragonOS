@@ -1,5 +1,4 @@
 const { assertRevert } = require('@aragon/contract-helpers-test/src/asserts')
-const { skipSuiteCoverage } = require('../../helpers/coverage')
 const { permissionParamEqOracle } = require('../../helpers/permissionParams')
 
 const ACL = artifacts.require('ACL')
@@ -118,7 +117,7 @@ contract('ACL params', ([permissionsRoot, specificEntity, noPermission, mockAppA
       ['asserts', AssertOracle],
       ['uses all available gas', OverGasLimitOracle],
     ]) {
-      skipSuiteCoverage(describe)(`when the oracle ${description}`, () => {
+      describe(`when the oracle ${description} [@skip-on-coverage]`, () => {
         let overGasLimitOracle
 
         before(async () => {

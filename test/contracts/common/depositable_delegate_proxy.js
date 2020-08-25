@@ -1,4 +1,3 @@
-const { skipCoverage } = require('../../helpers/coverage')
 const { bn } = require('@aragon/contract-helpers-test')
 const { assertAmountOfEvents, assertEvent, assertRevert, assertOutOfGas, assertBn } = require('@aragon/contract-helpers-test/src/asserts')
 
@@ -11,7 +10,7 @@ const ProxyTargetWithFallback = artifacts.require('ProxyTargetWithFallback')
 const TX_BASE_GAS = 21000
 const SEND_ETH_GAS = TX_BASE_GAS + 9999 // <10k gas is the threshold for depositing
 const PROXY_FORWARD_GAS = TX_BASE_GAS + 2e6 // high gas amount to ensure that the proxy forwards the call
-const FALLBACK_SETUP_GAS = process.env.SOLIDITY_COVERAGE ? 5000 : 100 // rough estimation of how much gas it spends before executing the fallback code
+const FALLBACK_SETUP_GAS = 100 // rough estimation of how much gas it spends before executing the fallback code
 const SOLIDITY_TRANSFER_GAS = 2300
 
 contract('DepositableDelegateProxy', ([ sender ]) => {
@@ -45,7 +44,7 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
 
         itSuccessfullyForwardsCall()
 
-        it('can receive ETH', async () => {
+        it('can receive ETH [@skip-on-coverage]', async () => {
           const receipt = await target.sendTransaction({ value: 1, gas: SEND_ETH_GAS + FALLBACK_SETUP_GAS })
           assertAmountOfEvents(receipt, 'ReceivedEth')
         })
@@ -115,22 +114,17 @@ contract('DepositableDelegateProxy', ([ sender ]) => {
       }
 
       it('can receive ETH', async () => {
-        const { gasUsed } = await assertSendEthToProxy({ value, gas: SEND_ETH_GAS })
+        await assertSendEthToProxy({ value, gas: SEND_ETH_GAS })
       })
 
-      it(
-        'cannot receive ETH if sent with a small amount of gas',
-        // Our version of solidity-coverage is not on an istanbul context yet
-        // TODO: update solidity-coverage
-        skipCoverage(async () => {
-          const oogDecrease = 250
-          // deposit cannot be done with this amount of gas
-          const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - oogDecrease
-          await assertSendEthToProxy({ shouldOOG: true, value, gas })
-        })
-      )
+      it('cannot receive ETH if sent with a small amount of gas [@skip-on-coverage]', async () => {
+        const oogDecrease = 250
+        // deposit cannot be done with this amount of gas
+        const gas = TX_BASE_GAS + SOLIDITY_TRANSFER_GAS - oogDecrease
+        await assertSendEthToProxy({ shouldOOG: true, value, gas })
+      })
 
-      it('can receive ETH from contract', async () => {
+      it('can receive ETH from contract [@skip-on-coverage]', async () => {
         const receipt = await ethSender.sendEth(proxy.address, { value })
 
         assertAmountOfEvents(receipt, 'ProxyDeposit', { decodeForAbi: proxy.abi })
