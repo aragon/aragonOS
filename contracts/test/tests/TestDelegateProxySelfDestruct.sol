@@ -1,7 +1,6 @@
 pragma solidity 0.4.24;
 
 import "../helpers/Assert.sol";
-import "../helpers/ThrowProxy.sol";
 
 import "../../common/DelegateProxy.sol";
 import "../../evmscript/ScriptHelpers.sol";
@@ -11,7 +10,7 @@ contract Target {
     function die() public { selfdestruct(0); }
 }
 
-contract TestDelegateProxySuicide is DelegateProxy {
+contract TestDelegateProxySelfDestruct is DelegateProxy {
     using ScriptHelpers for *;
 
     Target target;
