@@ -18,9 +18,11 @@ jobs:
       - name: test
         run: yarn test
       - name: coverage
-        run: |
-          yarn coverage
-          cat coverage/lcov.info | ./node_modules/.bin/coveralls
+        run: yarn coverage
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: test:gas
         continue-on-error: true
         run: yarn test:gas:ci
