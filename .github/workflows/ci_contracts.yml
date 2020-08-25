@@ -19,6 +19,11 @@ jobs:
         run: yarn test
       - name: coverage
         run: yarn coverage
+      - name: codecov
+        uses: codecov/codecov-action@v1
+        with:
+          flags: unittests
+          fail_ci_if_error: true
       - name: test:gas
         continue-on-error: true
         run: yarn test:gas:ci

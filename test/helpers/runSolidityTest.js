@@ -47,19 +47,8 @@ const processResult = (txReceipt, mustAssert) => {
  * Modifies bytecode in place
 */
 const linkLib = async (contract, libName) => {
-  const underscores = n => '_'.repeat(n)
-  const PREFIX_UNDERSCORES = 2
-  const ADDR_LENGTH = 40
-
-  const prefix = underscores(PREFIX_UNDERSCORES)
-  const suffix = underscores(ADDR_LENGTH - PREFIX_UNDERSCORES - libName.length)
-
-  const libPlaceholder = `${prefix}${libName}${suffix}`
-
-  const lib = await artifacts.require(libName).new()
-  const libAddr = lib.address.replace('0x', '').toLowerCase()
-
-  contract.bytecode = contract.bytecode.replace(new RegExp(libPlaceholder, 'g'), libAddr)
+  const library = await artifacts.require(libName).new()
+  await contract.link(library)
 }
 
 /**
@@ -84,15 +73,16 @@ function runSolidityTest(c, mochaContext) {
         if (interface.type === 'function') {
           if (['beforeAll', 'beforeEach', 'afterEach', 'afterAll'].includes(interface.name)) {
             // Set up hooks
-            global[HOOKS_MAP[interface.name]](() =>
-              deployed[interface.name]()
-                .then(receipt => processResult(receipt, false))
-            )
+            global[HOOKS_MAP[interface.name]](async () => {
+              const receipt = await deployed[interface.name]()
+              processResult(receipt, false)
+            })
           } else if (interface.name.startsWith('test')) {
-            it(interface.name, () =>
-              deployed[interface.name]()
-                .then(receipt => processResult(receipt, true))
-            )
+            it(interface.name, async () => {
+              const { tx } = await deployed[interface.name]()
+              const receipt = await web3.eth.getTransactionReceipt(tx)
+              processResult(receipt, true)
+            })
           }
         }
       })
