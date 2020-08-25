@@ -10,7 +10,6 @@ import "../../evmscript/ScriptHelpers.sol";
 contract Target {
     function dontReturn() public pure {}
     function fail() public pure { revert(); }
-    function die() public { selfdestruct(0); }
 }
 
 
@@ -65,13 +64,5 @@ contract TestDelegateProxy is DelegateProxy {
         address nonContract = 0x1234;
         bool result = isContract(nonContract);
         Assert.isFalse(result, "should return false");
-    }
-
-    // keep as last test as it will kill this contract
-    function testDieIfMinReturn0() public {
-        Assert.isTrue(true, ''); // Make at least one assertion to satisfy the runner
-
-        delegatedFwd(target, target.die.selector.toBytes());
-        Assert.fail('should be dead');
     }
 }

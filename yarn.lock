@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aragon/contract-helpers-test@^0.1.0-rc.3":
-  version "0.1.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@aragon/contract-helpers-test/-/contract-helpers-test-0.1.0-rc.3.tgz#dec428b5f0f7ffdf851663fd308dbc890ee045c1"
-  integrity sha512-9bCQagWrrZqaM8pSZq2YAY/uavbuNeaiUnKILFXuVwrVTeX2tjExIcaVTyeiGzZDF/L52ruOMi/o+Ns+T2U/gQ==
+"@aragon/contract-helpers-test@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@aragon/contract-helpers-test/-/contract-helpers-test-0.1.0.tgz#5c5f09739a0b33ab66843bc4849cb2b997d88af0"
+  integrity sha512-xP2CqqP0Jw/6Jdo1mRg4OxL+3gmsCYV3EJRy7xN8xUrhQIqkOyRptC44X951O7Cr+VeqXJq22rpZSr01TJZhNg==
   dependencies:
     web3-eth-abi "1.2.5"
     web3-utils "1.2.5"

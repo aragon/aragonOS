@@ -1,4 +1,4 @@
-const { decodeEvents } = require('@aragon/contract-helpers-test')
+const { getEventAt } = require('@aragon/contract-helpers-test')
 
 const ASSERT_LIB_EVENTS_ABI = [
   {
@@ -27,24 +27,8 @@ const HOOKS_MAP = {
   afterAll: 'afterAll',
 }
 
-const processResult = (txReceipt, mustAssert) => {
-  if (!txReceipt || !txReceipt.receipt) {
-    return
-  }
-  const decodedLogs = decodeEvents(txReceipt.receipt, ASSERT_LIB_EVENTS_ABI, 'TestEvent')
-  decodedLogs.forEach(log => {
-    if (log.event === 'TestEvent' && log.args.result !== true) {
-      throw new Error(log.args.message)
-    }
-  })
-  if (mustAssert && !decodedLogs.length) {
-    throw new Error('No assertions made')
-  }
-}
-
 /*
- * Deploy and link `libName` to provided contract artifact.
- * Modifies bytecode in place
+ * Deploy and link `libName` to provided contract artifact
 */
 const linkLib = async (contract, libName) => {
   const library = await artifacts.require(libName).new()
@@ -55,34 +39,33 @@ const linkLib = async (contract, libName) => {
  * Runs a solidity test file, via javascript.
  * Required to smooth over some technical problems in solidity-coverage
  *
- * @param {string} c Name of solidity test file
+ * @param {string} testContract Name of solidity test file
 */
-function runSolidityTest(c, mochaContext) {
-  const artifact = artifacts.require(c)
-  contract(c, accounts => {
+function runSolidityTest(testContract, mochaContext) {
+  const artifact = artifacts.require(testContract)
+
+  contract(testContract, () => {
     let deployed
 
     before(async () => {
       await linkLib(artifact, 'Assert')
-
       deployed = await artifact.new()
     })
+
+    const assertResult = async (call, mustAssert) => {
+      const receipt = await call()
+      const { args: { result, message } } = getEventAt(receipt, 'TestEvent', { decodeForAbi: ASSERT_LIB_EVENTS_ABI })
+      if (!result) throw new Error(message || 'No assertions made')
+    }
 
     mochaContext('> Solidity test', () => {
       artifact.abi.forEach(interface => {
         if (interface.type === 'function') {
+          // Set up hooks
           if (['beforeAll', 'beforeEach', 'afterEach', 'afterAll'].includes(interface.name)) {
-            // Set up hooks
-            global[HOOKS_MAP[interface.name]](async () => {
-              const receipt = await deployed[interface.name]()
-              processResult(receipt, false)
-            })
+            global[HOOKS_MAP[interface.name]](async () => await deployed[interface.name]())
           } else if (interface.name.startsWith('test')) {
-            it(interface.name, async () => {
-              const { tx } = await deployed[interface.name]()
-              const receipt = await web3.eth.getTransactionReceipt(tx)
-              processResult(receipt, true)
-            })
+            it(interface.name, async () => await assertResult(deployed[interface.name]))
           }
         }
       })
