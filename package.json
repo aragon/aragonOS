@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "4.4.0",
+  "version": "1.22.18",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
@@ -51,8 +51,8 @@
   },
   "dependencies": {
     "@aragon/truffle-config-v4": "^1.0.1",
+    "homedir": "^0.6.0",
     "mkdirp": "^0.5.1",
-    "truffle-flattener": "^1.2.9",
-    "homedir": "^0.6.0"
+    "truffle-flattener": "^1.2.9"
   }
 }
