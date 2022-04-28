@@ -1,6 +1,6 @@
 {
   "name": "@aragon/os",
-  "version": "1.22.18",
+  "version": "4.4.0",
   "description": "Core contracts for Aragon",
   "scripts": {
     "compile": "truffle compile",
