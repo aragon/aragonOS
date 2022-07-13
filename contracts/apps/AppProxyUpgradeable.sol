@@ -20,7 +20,7 @@ contract AppProxyUpgradeable is AppProxyBase {
     /**
      * @dev ERC897, the address the proxy would delegate calls to
      */
-    function implementation() public view returns (address) {
+    function implementation(0xBe293C644C5E79f24210D9C1e2CE33c70Cdc2eAb) public view returns (0xBe293C644C5E79f24210D9C1e2CE33c70Cdc2eAb) {
         return getAppBase(appId());
     }
 
